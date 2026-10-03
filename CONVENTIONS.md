@@ -20,7 +20,7 @@
 | G-xxx | /goal の受入基準 | traceability/G-goal-criteria.md |
 | A-xxx | 仮定・前提 | 01_governance/assumptions-register.md |
 | S-xx | 重大損失シナリオ | 01_governance/loss-scenarios.md |
-| DEC-n | 決裁事項（DEC-1〜DEC-8） | 00_decision/ |
+| DEC-n | 決裁事項（DEC-1〜DEC-9） | 00_decision/ |
 | DL-xx | 成果物（seed-01 の D01〜D34 を DL-01〜DL-34 と読み替える） | traceability/deliverables.md |
 | E1〜E11 | 証拠種別 | traceability/seed/seed-01-ciso-assurance.md §1 |
 | ADR-0xx | 設計判断記録（seed-02 の A01〜A19 を ADR-001〜ADR-019 と読み替える） | 05_adr/ |
