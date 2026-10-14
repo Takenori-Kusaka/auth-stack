@@ -232,6 +232,7 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | DL-111 | 自動検査仕様と結果 | traceability/consistency-checks.md | 規約違反（主張タグ欠落、禁止表現、メタ情報欠落）、ID 整合（未定義参照、重複）、孤児 R/DL、§8 ファイル一覧との差分、リンク切れの検査仕様と実行結果を記録する。 | R-197, R-199, R-200／CONVENTIONS 冒頭（Phase 4 自動検査）／規約遵守の機械確認 | 4 | A・C | E4 |
 | DL-112 | 変更履歴 | traceability/change-log.md | 版ごとの変更点、旧提案書からの主要変更、決裁パッケージの版間差分を記録する。 | R-202／seed-03 §4 付属 L／版管理 | 1→6 | A | E2 |
 | DL-114 | Phase 1 網羅性批評 | traceability/phase1-critique-R.md, traceability/phase1-critique-G.md | R/G 分解に対する独立の completeness critic の記録。 | R-197／分解漏れの検出 | 1 | A | E3 |
+| DL-115 | claim 目録 | 04_architecture/claims-catalog.md | access token・Transaction Token・認可判定記録の3層識別子体系と trace_id との監査上の結合、claim ごとの採用区分・規格・状態・PII・理由、W3C VC Data Model 2.0 との対応と VC 受入れの将来設計、claim 追加審査のガードレール。2026-10-15 ユーザー要望で追加。 | R-161, R-162, R-118／G（将来性・証跡） | 3 | A | E2 |
 
 ## 5. ADR ファイル名（05_adr、DL-12）
 
@@ -334,9 +335,9 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 
 | 区分 | 件数 |
 |---|---|
-| DL（DL-01〜DL-114） | 114 |
+| DL（DL-01〜DL-115） | 115 |
 | うち seed-01 由来（DL-01〜DL-34） | 34 |
-| うち追加（DL-35〜DL-114） | 80 |
+| うち追加（DL-35〜DL-115） | 81 |
 | 計画ファイル数（§8、既存ファイルと 12_poc/code・data 配下の個別ファイルを除く） | 141 |
 | うち ADR（ADR-001〜ADR-029） | 29 |
 
@@ -421,6 +422,7 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 04_architecture/evolution-pqc.md | ARC-12 | DL-23 | |
 | 04_architecture/capacity-model.md | ARC-13 | DL-58 | |
 | 04_architecture/product-evaluation-exit.md | ARC-14 | DL-13 | |
+| 04_architecture/claims-catalog.md | ARC-15 | DL-115 | ユーザー要望で追加 |
 
 ### 05_adr/（DL-12）
 
