@@ -1,18 +1,17 @@
-# ADR-005 token profile（opaque/JWT 境界・寿命・sender constraint）
+# ADR-005 token profile（opaque/JWT 境界・寿命・sender constraint・claim profile）
 
 > 文書ID: ADR-005 / 版: 0.1 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-03
-> 可逆性: 可逆（条件付き・非対称）。外部境界を opaque から JWT へ移す変更は client を壊さないが、逆向きは外部の解析依存を壊し得る。不可逆側に属するのは、issuer 識別子（ADR-021）、契約に載せる typ 名・claim の意味（ADR-022、DL-75）、外部契約に書く opaque token の最大長（D10-3）である（§3.3）
-> DEC-3 対象: いいえ（traceability/deliverables.md §5 の DEC-3 列は「—」。依存先の ADR-001・ADR-007・ADR-013・ADR-021・ADR-022 は DEC-3 対象）
-> 対応要求: R-095, R-158（本書を対応成果物に含む行）／G-087, G-020（同）。関連: R-087, R-112, R-159, R-160, R-161, R-162, R-163, R-173, R-189.1, R-189.2, R-189.4, R-189.5, R-189.6, R-206, R-208, R-209, R-239, R-240, R-249, R-250, R-251, R-259, R-270, R-283, R-046／G-024, G-062, G-068, G-072, G-077, G-081, G-088, G-089, G-103, G-106, G-115, G-136(d), G-138（全件と閉じ方は末尾の対応表）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md, 01_governance/loss-scenarios.md, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/as-is-inventory.md, 03_threat-model/attacker-model.md, research/RS-03, RS-04, RS-06, RS-09, RS-11, RS-12, RS-13, RS-15, RS-16, RS-17（各 verification 記録を含む）, research/standards-status.md
-> 作成方法: 3 つの起草レンズ（sec: セキュリティ・保証、ops: 運用性・費用・組織実現性、evo: 20 年の進化・退出）の提案と、判定者 3 名の採点をもとに、AI エージェント（Claude）が最終起草した。判定者も AI エージェントであり、本書の採点と判定は模擬パネルの自己レビューで、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+> 可逆性: 条件付き可逆（非対称）。外部境界の opaque 化は可逆で、opaque から JWT へ寄せても内容を読まない client は壊れない。逆に、外部へ JWT を出してから opaque に戻す変更は、claim を解析する外部実装を壊すため事実上不可逆になる（§3.1 案A）。本書の決定のうち不可逆側に入るのは次の 5 点である。(1) issuer 識別子（ADR-021）、(2) `sub` の形式と非再割当の約束（ADR-021）、(3) 契約に載せる typ 名・claim 名・claim の意味（ADR-022、DL-75）、(4) 外部契約に書く opaque token の最大長（D10-2）、(5) 監査証跡に残す相関 ID の意味（ADR-014）
+> DEC-3 対象: いいえ（traceability/deliverables.md の ADR 表で DEC-3 列は「—」）。依存先の ADR-001・ADR-007・ADR-013・ADR-021・ADR-022 は DEC-3 対象である
+> 対応要求: R-095, R-158（本書を対応成果物に含む行）／G-087, G-020（同）。関連: R-046, R-087, R-112, R-118, R-143, R-159, R-160, R-161, R-162, R-163, R-173, R-189.1, R-189.2, R-189.4, R-189.5, R-189.6, R-206, R-239, R-240, R-249, R-250, R-251, R-259, R-270, R-283／G-024, G-062, G-068, G-072, G-088, G-089, G-106, G-115, G-138（全件と閉じ方は末尾の対応表）
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md, 03_threat-model/attacker-model.md, 02_requirements/operation-risk-tiers-assurance.md, research/RS-03, RS-04, RS-06, RS-09, RS-10, RS-11, RS-12, RS-13, RS-15, RS-16, RS-17（各 verification 記録を含む）, research/standards-status.md
+> 作成方法: 3 つの起草レンズ（sec: セキュリティ・保証、ops: 運用性・費用・組織実現性、evo: 20 年の進化・退出）の提案と、判定者 3 名の採点をもとに、AI エージェント（Claude）が最終起草した。集計上の勝者 sec を土台にし、判定者が挙げた取り込み（graft）を反映し、判定者が指摘した事実誤りを原典で確認して修正した（§4.4）。判定者も AI エージェントであり、本書の採点と判定は模擬パネルの自己レビューで、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research ノートにない原典（IANA JWT Claims registry、RFC 8417 §2.2、RFC 7519 §4・§4.1.7・§4.2・§4.3、OIDC Core §2・§8、W3C VC Data Model 2.0、OpenID Identity Assurance Schema Definition 1.0）は最終起草者が取得して照合した。照合ログの traceability/ への追記は要対応である（本書からは編集していない）。
 
 **要旨（結論）**
 
-- OAuth client（第一者の BFF・ネイティブ・CLI、第三者・顧客自作アプリ、外部 M2M）に渡す access token と refresh token はすべて opaque にし、edge が cell 内の状態ストア（AS から発行・失効を push で受ける RFC 7662 interface）に照会する [D]。内部はサービス別 aud の RFC 9068 JWT を token exchange で発行し、共通 SDK が無効化できない検証規則（V1〜V14）で局所検証する [D]。
-- 寿命は一律値を置かず、token 種別×操作階層ごとに上限（規範・剥奪反映・被害窓・session）と下限（発行容量・KMS 署名 QPS・停止耐性）から導く [D]。下限が上限を上回っても寿命は延ばさず、fail-mode で扱う [D]。値はすべて TBD（所有者・ゲート付き）である [D]。
-- refresh token は client 種別ごとに保護方式を変える（confidential は client 認証で束縛し rotation なし、public は DPoP 鍵束縛を既定）[D]。sender constraint は経路で使い分け（内部・BFF・サーバー連携は mTLS、public client と TLS を手前で終端する連携は DPoP＋nonce、privileged・FAPI 範囲は mTLS のみ）、ブラウザは BFF を必須にする [D]。第三者 grant は台帳・棚卸し・client 単位の一括失効を既定にする [D]。
-- 本案（判定集計の勝者 sec を土台とする案B）は、状態ストアの負荷試験（基準 8,402/秒、成長 28,222/秒）と停止注入（H-02・H-04）に不合格なら、BFF 経路を JWT にする案C（ops・evo の推奨）へ切り替える [D]。切替条件は §4.5・§8 に示す [D][A-040, A-030]。
+- **境界**: OAuth client（第一者の BFF・ネイティブ・CLI、第三者・顧客自作アプリ、外部 M2M）に渡す access token と refresh token はすべて opaque にする [D]。edge は cell 内の状態ストアに RFC 7662 interface で照会し、内部向けにはサービス別 aud の RFC 9068 JWT を token exchange で発行する [D]。内部 JWT は共通 SDK・sidecar が、利用側で無効化できない検証規則 V1〜V14 で検証する [D]。BFF 経路まで opaque にする点は、状態ストアの負荷試験と停止注入（H-02・H-04）に合格することを条件とし、不合格なら BFF 経路だけ JWT（案C）に切り替える [D][A-040, A-044]。
+- **寿命と保護**: 寿命は一律値を置かない [D]。token 種別×操作階層ごとに上限 U1〜U5 と下限 Lmin から導き、運用上は寿命 profile を 3 種類以内に丸める [D]。refresh token は client 種別ごとに保護する（confidential は client 認証で束縛し rotation なし、public は DPoP 鍵束縛を必須とし、鍵保護を示せない端末に限り rotation を併用）[D]。sender constraint は経路で選ぶ（内部・BFF・サーバー連携は mTLS、public client は DPoP＋nonce、privileged・FAPI 範囲は mTLS のみ）。ブラウザは BFF を必須にする [D]。
+- **利用者相談（trace id と将来 claim）への回答**: trace id は access token の claim にしない [D]。token は寿命の間に多数の要求で再利用されるので要求単位の値を表せず、trace id は外部から注入・偽造できる値だからである [D][N]（RS-10#16, #17）。「共通の認証認可を通った一貫した要求」の証跡は、目的の違う 4 層の ID（token の `jti`、grant・session 参照、要求 context の `txn`、判定の `decision_id`）を監査記録で結合して残し、trace id はその相関の補助キーにとどめる [D]。将来に備えて基盤が定める claim は、所属・役割ではなく「誰が（主体種別を含む）・どの強さで・どの鍵で・誰の代理で・何を・どのテナントで・どの版で」に対応する封筒に限る [D]。W3C VC Data Model 2.0 の概念（status・evidence・termsOfUse・schema・データ最小化）は token の外の仕組みへ割り当て、「検証済み属性の出所」を表す枠だけを版付き profile に予約する [D]（D9）。
 
 ---
 
@@ -20,403 +19,405 @@
 
 ### 1.1 解くべき問題
 
-旧提案は「一時アクセストークンは基本的に JWT」とし、寿命を一律 5〜15 分とした [D]。主張台帳は前者を否定する主張（CL-0013）を本 ADR の入力として「維持」とし、一律寿命（CL-0131、CL-0236）を「要実測」とした [D]。レビューは一律値を撤回し、リスク階層と実測で決めるよう求めた（R-087）[D]。本 ADR が答える問いは次の 7 つである [D]。
+旧提案は「access token は基本的に JWT」「寿命は一律 5〜15 分」とした [D]。主張台帳は前者を否定する主張 CL-0013 を「維持」とし、一律寿命 CL-0131・CL-0236 を「要実測」とした [D]。レビューは一律値の撤回を求めた（R-087）[D]。本 ADR は次の 9 問に答える [D]。
 
-| # | 問い | 主な R/G | 主張台帳の入力 |
+| # | 問い | 主な R/G | 本書の節 |
 |---|---|---|---|
-| Q1 | access token を外部境界と内部境界で opaque と JWT（RFC 9068）のどちらにするか | R-095, G-087 | CL-0013（維持）、CL-0026（維持） |
-| Q2 | token 種別ごとの typ 分離と検証規則（種別間の相互排他を含む） | R-161, R-162, G-088 | CL-0126（aud の粒度）、CL-0130（claim 名の修正） |
-| Q3 | 一律値を使わず、操作リスク階層と A-ID から寿命を決める方法 | R-087, R-189.1, R-189.2, R-189.6, G-024 | CL-0131, CL-0236（要実測） |
-| Q4 | refresh token を rotation と sender constraint のどちらで守るか | R-158, R-239, R-259 | CL-0235（維持） |
-| Q5 | DPoP と mTLS の使い分け | R-163, R-239 | — |
-| Q6 | ブラウザで BFF を必須にするか | R-163 | — |
-| Q7 | 第三者連携アプリの grant の寿命と棚卸し。RFC 9700 への準拠方針 | R-158, R-159, G-062 | — |
+| Q1 | 外部境界と内部境界で opaque と RFC 9068 JWT のどちらを使うか | R-095, G-087 | D1 |
+| Q2 | token 種別ごとの typ 分離と、相互排他を含む検証規則 | R-161, R-162, G-088 | D2 |
+| Q3 | 一律値を使わず、操作階層と A-ID から寿命を決める方法 | R-087, R-189.1, R-189.2, R-189.4, R-189.6, G-024 | D3 |
+| Q4 | refresh token を rotation と sender constraint のどちらで保護するか | R-158, R-259 | D4 |
+| Q5 | DPoP と mTLS の使い分け | R-163, R-239 | D5 |
+| Q6 | ブラウザで BFF を必須にするか | R-163 | D6 |
+| Q7 | 第三者 grant の寿命・棚卸しと、RFC 9700 準拠方針 | R-158, R-159, G-062, G-087 | D7, D8 |
+| Q8（利用者相談） | 要求の一貫性の証跡として trace id 的な claim を付けるか。W3C の claim 群を踏まえ、基盤として将来に備えて定める claim は何か | R-118, R-249, R-250, R-283 | D9 |
+| Q9 | 20 年の識別子永続性・暗号移行・AS 製品置換に token profile がどう備えるか | R-046, G-068, A-103, A-104 | D10, D11 |
 
-### 1.2 制約
-
-**規範（強度は原文どおり）**
+### 1.2 制約（規範。強度は原文どおり）
 
 | # | 内容 | 強度 | 根拠 |
 |---|---|---|---|
-| N-a | public client は PKCE を使う。confidential client は RECOMMENDED | MUST / RECOMMENDED | RFC 9700 §2.1.1 [N][^1]（RS-04#8, #9） |
-| N-b | public client の refresh token は sender-constrained にするか rotation を使う。confidential client の refresh token は発行先 client だけが使えることを RFC 6749 がすでに求めている（§2.2.2 と §4.14.2 の双方に記載。起草時に原文を確認） | MUST | RFC 9700 §2.2.2, §4.14.2 [N][^1]（RS-04#15） |
+| N-a | public client は PKCE を使う。confidential は RECOMMENDED | MUST / RECOMMENDED | RFC 9700 §2.1.1 [N][^1]（RS-04#8, #9） |
+| N-b | public client の refresh token は sender-constrained にするか rotation を使う | MUST | RFC 9700 §2.2.2 [N][^1]（RS-04#15） |
 | N-c | access token は sender-constrained かつ audience-restricted にすべきである。RS は自分宛てでない token を拒否する | SHOULD / MUST | RFC 9700 §2.2.1, §2.3 [N][^1]（RS-04#14, #17） |
-| N-d | JWT access token の RS は typ（at+jwt または application/at+jwt）・iss・aud・署名・exp を検証する。AS と RS は RS256 を対応アルゴリズムに含める。同じ issuer が別 resource 向けに出す token には別の aud を使う | MUST | RFC 9068 §2.1, §4, §5 [N][^7]（RS-04#60, #61） |
-| N-e | alg を allowlist で扱い、1 鍵 1 alg、鍵と issuer の結合を検証し、同じ issuer の複数種別の JWT は検証規則を互いに排他にする | MUST | RFC 8725 §3.1, §3.8, §3.12 [N][^8]（RS-04#62） |
-| N-f | FAPI 2.0 範囲では、RS は失効状態を検証し（shall）、query の access token を受け付けず（shall not）、AS は confidential client だけを支援し、例外を除き refresh token rotation を使わない（shall not）。JWT の alg は PS256・ES256・EdDSA に限る（shall） | shall / shall not | FAPI 2.0 Security Profile §5.3.2.1, §5.3.4, §5.4 [N][^2]（RS-04#41, #45, #46, #47） |
-| N-g | BFF は業務・機微・個人データのアプリに "strongly recommended"（小文字表記で BCP 14 キーワードではない） | 推奨（非 BCP 14） | RFC 10017 §6.1.4.3 [N][^13]（RS-04#73） |
-| N-h | 再認証の上限: AAL2 は全体上限を設け（SHALL）24h 以内・無操作 1h 以内（SHOULD）。AAL3 は全体 12h 以内（SHALL）・無操作 15 分以内（SHOULD） | SHALL / SHOULD | SP 800-63B-4 §2.2.3, §2.3.3 [N][^27]（RS-03#43） |
+| N-d | JWT access token は typ を宣言し、RS は typ・iss・aud・署名・exp を検証する。AS・RS は RS256 を対応 alg に含める。resource ごとに異なる aud を使う | MUST | RFC 9068 §2.1, §4, §5 [N][^7]（RS-04#60, #61） |
+| N-e | alg を allowlist で扱う。1 鍵 1 alg。鍵と issuer の結合を検証する。同じ issuer の複数種別の JWT は検証規則を互いに排他にする | MUST | RFC 8725 §3.1, §3.8, §3.12 [N][^8]（RS-04#62、RS-11#51） |
+| N-f | FAPI 範囲では次を守る。RS は失効状態を検証する（shall）。query の token を受け付けない（shall not）。AS は confidential client だけを支援し、例外を除き rotation を使わない（shall not）。alg は PS256・ES256・EdDSA（Ed25519）に限る（shall） | shall / shall not | FAPI 2.0 SP §5.3.2.1, §5.3.4, §5.4 [N][^2]（RS-04#41, #45〜#47） |
+| N-g | BFF は業務・機微・個人データのアプリに "strongly recommended"。ブラウザ内 OAuth client は同じ対象に "not recommended"。いずれも小文字表記で BCP 14 キーワードではない | 推奨 / 非推奨 | RFC 10017 §6.1.4.3, §6.3.4.3 [N][^13]（RS-04#73、RS-17#4） |
+| N-h | DPoP は XSS 下で安全性を保証しない。攻撃者は新しいフローで自分の鍵に束縛した token を得られる | 記述 | RFC 9449 §11.4 [N][^5]、RFC 10017 §6.3.4.2.2 [N][^13]（RS-04#54, #75） |
+| N-i | client は access token の内容を調べてはならない。漏えい対策として opaque への切替えを挙げる | MUST NOT | RFC 9068 §6 [N][^7]（RS-04#61） |
+| N-j | JWT access token の auth_time・acr・amr は OPTIONAL で、同じ認可応答から派生する全 token で固定される | OPTIONAL | RFC 9068 §2.2.1 [N][^7] |
+| N-k | traceparent・tracestate に個人識別情報や機微情報を入れてはならない。目的は trace の相関だけである | MUST NOT | W3C Trace Context §6 [N][^23]（RS-10#16） |
+| N-l | Txn-Token は replay に耐性がなく、短命にしなければならない。認証資格情報としても OAuth access token としても使ってはならない | MUST / MUST NOT（draft） | draft-ietf-oauth-transaction-tokens-11 §13.1, §13.12, §13.13 [N][^21]（RS-06#36） |
+| N-m | 再認証の上限: AAL2 は全体の上限を設けなければならず（SHALL）、その値は 24h 以内にすべきである（SHOULD）。無操作は 1h 以内（SHOULD）。AAL3 は全体 12h 以内（SHALL）、無操作 15 分以内（SHOULD）。適用する上限は文書化しなければならない（SHALL） | SHALL / SHOULD | SP 800-63B-4 §2.2.3, §2.3.3, §5.2 [N][^22]（RS-03#43） |
+| N-n | 理解できない claim は無視しなければならない。新しい claim 名は IANA 登録か衝突耐性のある Public Name にすべきである（should）。Private Name は衝突し得るので注意して使うべきである | MUST / should | RFC 7519 §4, §4.2, §4.3 [N][^29]（§4 は RS-16#14） |
 
-- RFC 9068 の RS256 MUST と FAPI の alg 制限は、FAPI 範囲では同時に満たせない（RS-04 §2-7）[D]。
-- レビューは一律値（全 token 一律の寿命）を未承認とした（R-087、G-024）[D]。
-
-**規模・組織・可用性**
-
-- 同時アクティブ session は 111,200（台帳 §12.2 手順 2）、有効 session は 86.5 万、edge API はピーク 16,804/秒である [A-005][A-006][A-040]。
-- 外部 OAuth client は 800・有効 grant は 3 万（成長シナリオ 2,500・12 万）である [A-013]。
-- 依存サービスは約 300、開発は 25 組織・60 チーム・1,500 人、プラットフォームチームは 24 FTE（認証 5、PEP SDK 4、SRE 6 ほか）である [A-050][A-052][A-053][A-054]。
-- 判定系の可用性帯は 99.95〜99.99%、認証系は 99.9〜99.95% と仮置きされている [A-090][A-091]。
-- BIA は、F1（login・token 発行・refresh の停止）では access token の寿命が切れた時点から F2（判定不能）と同じ影響になり得るとし、MTPD を read-sensitive 4 時間・write 2 時間・privileged（通常の管理操作）24 時間と仮置きしている（BIA NA-01、前提台帳へ追加要）[D][A-027]。
-- BIA は break-glass を「基盤に依存させない。基盤に MTPD を割り当てない」とし、REQ-03 は break-glass/P を連携に依存しないローカル資格情報としている [D]（GOV-04 §2.3、REQ-03 §3.1）。
-- 計画期間は 20 年で、token 署名の暗号移行（1 回以上）と AS/IdP 製品の置換（1 回以上）を前提にする [A-100][A-103][A-104]。
+- FAPI 範囲では、RFC 9068 の RS256 MUST と FAPI の alg 制限を同時には満たせない（RS-04 §2-7）[D]。
 
 ### 1.3 前提（A-ID）
 
 | A-ID | 値（基準） | 本 ADR での使い方 |
 |---|---|---|
-| A-005 | 同時アクティブ session 111,200 | refresh/秒と exchange/秒（D3 の感度表） |
-| A-006 | 有効 session 86.5 万（成長 251.6 万） | refresh token ストアと BFF session store の件数 |
-| A-007 | テナント 1 万 | grant の棚卸し（平均 3 件/テナント） |
-| A-012 | 本番インスタンス 1.1 万 | 内部 cnf 検証の展開対象（H-16） |
-| A-013 | client 800・grant 3 万（成長 2,500・12 万） | 第三者 grant の棚卸しと一括失効の規模 |
-| A-015 | 複数テナント所属 3% | 1 token 1 tid（V9） |
-| A-027 | access token 寿命 10 分（容量計算用の仮置き、決定値ではない） | 感度表の基準点にだけ使う。寿命の決定値には使わない |
+| A-005 | 同時アクティブ session 11.1 万 | refresh/秒、exchange/秒の分子 |
+| A-006 | 有効 session 86.5 万（成長 251.6 万） | refresh token ストアと BFF session の件数 |
+| A-007 | テナント 1 万 | grant 棚卸し |
+| A-013 | 外部 client 800・grant 3 万（成長 2,500・12 万。範囲 client 300〜3,000） | 第三者 grant の棚卸しと一括失効の規模、外部 opaque の便益 |
+| A-015 | 複数テナント所属 3% | 1 token 1 テナント |
+| A-027 | access token 寿命 10 分（容量計算用の仮置き） | 感度表の基準点にのみ使い、決定値には使わない |
 | A-028 | 下流 audience 6 | exchange の発行量 |
-| A-030 | opaque 比率 30%・cache miss 50%（案C の構成を前提にした値） | 案ごとの introspection 量 |
-| A-040 | edge API 16,804/秒（成長 56,444、規制 20,057） | 状態ストアの照会量 |
-| A-042・A-043・A-044 | refresh 185/秒、token 発行 1,374/秒（うち exchange 1,112）、introspection 2,521/秒（範囲 0〜8,402） | 案の比較 |
-| A-050・A-052・A-053・A-054 | 300 サービス、25 組織・60 チーム、1,500 人、24 FTE | 統合点と要員 |
+| A-030 | opaque 比率 30%・cache miss 50% | 案C の照会量 |
+| A-040 | edge API ピーク 16,804/秒（成長 56,444、規制 20,057） | 状態ストアの照会量、要求 context の発行量 |
+| A-042〜A-044 | refresh 185/秒、発行 1,374/秒（うち exchange 1,112）、introspection 2,521/秒（範囲 0〜8,402） | 案の比較 |
+| A-050〜A-054 | 300 サービス、25 組織・60 チーム、1,500 人、プラットフォーム 24 FTE（うち SRE 6、SDK・開発者支援 4） | 統合点と要員 |
 | A-063 | リージョン 4 | cell 内部品の配備数 |
-| A-080・A-081 | 規制業種 25%（規制強化 65%）、高保証要求テナント 50（同 600） | FAPI 範囲（ADR-020）と再検討トリガー |
-| A-090・A-091 | 判定系・認証系の可用性帯 | 状態ストアと STS の可用性要件 |
-| A-100〜A-104 | 20 年、再決裁 3→5 年、成長率、暗号移行・製品置換 各 1 回以上 | 進化・退出の規則（D10） |
-| A-110 | 独自セッション 105 サービス | BFF への移行対象 |
+| A-080・A-081 | 規制業種 25%（規制強化 65%）、高保証要求テナント 50 | FAPI 範囲と再検討トリガー |
+| A-090・A-091 | 判定系 99.95〜99.99%、認証系 99.9〜99.95%（いずれも可用性帯の仮置きで、停止許容時間ではない） | 状態ストア・STS の可用性要件 |
+| A-100〜A-104 | 20 年、再決裁周期、暗号移行・製品置換各 1 回以上 | 進化・退出 |
+| A-110 | 独自セッション 105 サービス | BFF 移行対象 |
 
-### 1.4 新規仮定（前提台帳へ追加要）
+**新規仮定（前提台帳へ追加要）**
 
-前提台帳は本書から編集しない [D]。次の仮定は前提台帳への追加が要る [D]。
+前提台帳は本書から編集しない [D]。
 
-| 仮 ID | 内容 | 本書での扱い | 由来 |
-|---|---|---|---|
-| NA-005-1 | DPoP proof の受理窓 W | 上限計算にだけ 60 秒を使う。値は H-05 で決める | RFC 9449 は受理を作成後の限られた時間（秒〜分）に限ることを MUST とする [N][^5]（RS-04#56） |
-| NA-005-2 | edge 呼出しのうち DPoP 束縛 token を提示する比率 | 上限計算では 100%。G1 の As-Is 実測で置き換える | sec NA-2、evo N-2 |
-| NA-005-3 | edge 呼出し 1 件あたりの内部 RS 呼出し数 k | 値は置かない（案D の式にだけ使う） | 台帳に該当なし |
-| NA-005-4 | 最大の第三者連携事業者が持つ grant の比率 | 値は置かない（H-08 の試験規模） | sec NA-4 |
-| NA-005-5 | 本 ADR の実装に伴う要員の増分 | 値を置かない。A-054 の内数に収まるかを H-18 で測る | 判定者が sec の「FTE 1 桁以下」と evo の「FTE 1〜3」を根拠なしと指摘したため値を削除した |
-| NA-005-6 | jti 1 件の保持長 | 128 byte と仮置き（容量の桁の計算だけに使う） | ops NA-005-4 |
-| NA-005-7 | BFF の server-side session 1 件の保持長 | 4 KB と仮置き（同上） | ops NA-005-6 |
-| NA-005-8 | privileged と break-glass/B の呼出しが edge 呼出しに占める比率 | TBD（所有者 CTO、ゲート G3）。内部 stateful 照合の負荷を決める | ops NA-005-2 |
-| NA-005-9 | 第三者 client のうち登録時点で mTLS または DPoP を実装できる比率と移行速度 | TBD（所有者 プロダクト責任者、ゲート G1） | evo N-3 |
-| NA-005-10 | 第三者サーバー型 client のうち end-to-end の mTLS を張れる（CDN・WAF で TLS を終端しない）比率 | TBD（所有者 プロダクト責任者、ゲート G1）。§2.12 決裁案 3 の入力 | 判定者 1 の条件 |
+| 仮 ID | 内容 | 扱い |
+|---|---|---|
+| NA-01 | DPoP proof の受理窓 W | 上限計算にだけ 60 秒を使う。値は H-05 で決める（RFC 9449 は秒〜分の受理を MUST とする [N][^5]、RS-04#56） |
+| NA-02 | edge 要求のうち write・privileged・break-glass/B・FAPI 範囲が占める比率 p_w | TBD（所有者 CTO、G1 の As-Is 実測）。要求 context の発行量を決める |
+| NA-03 | 第三者サーバー型 client のうち end-to-end mTLS を張れる比率 | TBD（所有者 プロダクト責任者、G1） |
+| NA-04 | ネイティブ端末のうち、ハードウェア保護鍵（非エクスポート）を示せる比率 | TBD（G1）。refresh rotation の併用範囲を決める |
+| NA-05 | 内部 hop ごとの状態照会の倍率 k（privileged の stateful jti 照合を含む） | TBD（H-02 で実測） |
+| NA-06 | AS 製品を置換するとき、既存 grant と refresh token を新製品へ移せない可能性 | ADR-001 の製品評価と TC（H-22）で判定 |
+| NA-07 | 計画期間中に、利用者が提示する検証可能な属性（W3C VC、SD-JWT 系）を認可判断の入力として受け入れる要件が生じ得る | 要件化の有無は ADR-002・ADR-004 で判断。本書は枠の予約だけを行う |
+| NA-08 | 本 ADR の実装に伴う要員の増分 | 状態ストア・edge 照会系は「SRE 6 FTE の内数で＋1〜2 FTE の桁」と仮置きする（根拠は cell 数 4×常時稼働部品 1 系統で弱い）[D][A-054, A-063]。BFF 参照実装・SDK・grant 棚卸しの増分は TBD。H-18 で A-054 と比べる |
 
-### 1.5 関連 R/G
+### 1.4 関連 R/G
 
-本書を対応成果物に含む行は R-095、R-158、G-087、G-020 である [D]。関連する R/G と閉じ方は末尾の対応表にまとめた [D]。
+本書を対応成果物に含む行は R-095・R-158・G-087・G-020 である（R-requirements.md・G-goal-criteria.md の対応成果物欄を Grep で確認）[D]。関連する R/G と閉じ方は末尾の対応表に示す [D]。
 
-### 1.6 関連研究
+### 1.5 関連研究
 
 | 研究 | 使う項目 |
 |---|---|
-| RS-04 | #1〜#39（RFC 9700 採否表の素案）、#40〜#52（FAPI 2.0）、#53〜#59（PAR・DPoP・mTLS）、#60〜#65（JWT の形式と検証、8725bis、RAR、resource）、#66（token exchange）、#67〜#70（introspection・失効・refresh）、#71・#72（RFC 9207・step-up）、#73〜#75（RFC 10017）、#76〜#80（OAuth 2.1・SSF・Token Status List） |
-| RS-03 | #43・#44・#48（再認証の上限、session の AAL、step-up） |
-| RS-06 | #30・#31・#35（Transaction Tokens） |
-| RS-09 | #8（jitter）、#10（静的安定性）、#14（fallback の害）、#15（bimodal）、#36（短命資格情報の時限爆弾）、#41・#43（break-glass の独立） |
-| RS-11 | #8（IR 8547 Table 2）、#36（RFC 7696）、#41・#43・#44（ML-DSA、fully-specified、composite）、#51・#53・#54（1 鍵 1 alg、RS256 の MTI）、#56・#59・#62・#63（サイズ） |
-| RS-12 | #1・#5・#10・#11（Storm-0558・CSRB）、#37・#41（Salesloft Drift）、#53・#54（CVE-2025-55241）、#57・#58（鍵削除障害・OAuth 停止）、#59・#61（GitHub/Heroku） |
-| RS-13 | #39（PSD2 RTS）、#48（T1528）、#57・#59（device code）、#60・#61（consent phishing）、#63・#64・#66（DBSC） |
-| RS-15 | #4〜#6・#8・#11・#45（OIDF 認定と製品の FAPI 構成） |
-| RS-16 | #14・#16（未知の claim、crit） |
-| RS-17 | #2〜#6（BFF・ネイティブ）、#13・#14・#17（device grant）、#18・#21（M2M、7523bis）、#24（offline_access）、#57・#58・#62・#64・#65（第三者連携）、#79・#83 と §2-14（gateway 迂回） |
+| RS-03 | #43（再認証上限）、#58（sub の一意性と非再割当） |
+| RS-04 | #1〜#39（RFC 9700 採否表）、#40〜#52（FAPI 2.0）、#53〜#59（PAR・DPoP・mTLS）、#60〜#65（RFC 9068・8725・8725bis・RAR・RFC 8707）、#66（RFC 8693）、#67〜#70（introspection・失効）、#72（RFC 9470）、#73〜#75（RFC 10017）、#76〜#80（OAuth 2.1・SSF・TSL） |
+| RS-06 | #31、#35、#36、#41、#42（Transaction Tokens） |
+| RS-09 | #14、#15、#36（fallback、bimodal、短命資格情報の時限爆弾） |
+| RS-10 | #16〜#19（Trace Context・Baggage）、§5.2（decision_id と trace_id の分離） |
+| RS-11 | #8（IR 8547 ipd）、#41（RFC 9964）、#43（RFC 9864）、#51（1 鍵 1 alg）、#62・#63（PQ サイズ）、結論 7・8（alg 切替と識別子） |
+| RS-12 | #5、#10、#11（Storm-0558・CSRB）、#37、#41（Salesloft Drift・Cloudflare）、#53（CVE-2025-55241）、#57（鍵削除障害）、#58（Google 2020）、#59（GitHub 2022） |
+| RS-13 | #39（PSD2 RTS）、#57（device code）、#61（consent phishing） |
+| RS-15 | 結論 6（従量課金の桁） |
+| RS-16 | #14、#16（未知 claim の無視、crit） |
+| RS-17 | #2〜#4（BFF）、#62（既存同意）、#79（gateway 迂回と署名付きヘッダ） |
 
-### 1.7 攻撃者モデルの範囲
+### 1.6 攻撃者モデル
 
-- FAPI 2.0 Attacker Model は A1、A1a、A2、A3a、A5 などを定義し、侵害された端末・ブラウザ、AS 上の RCE、誤設定 DB からの資格情報漏えい、JWKS の配布障害を範囲外とする [N][^3]（RS-04#50）。
-- 攻撃者モデル（DL-51 §5.3）は、ATK-07・08・10・12・17・18・19 を FAPI の記号で表せない類型とし、ATK-05・06・11・14・15 の一部を範囲外の部分として整理している [D]。
-- このため本 ADR は、FAPI 準拠だけでは扱えない類型に追加の統制と残余リスクの受容者案を置く（§6.3）[D]。
+- FAPI 2.0 Attacker Model は A1・A1a・A2・A3a・A5 を定義し、侵害された端末・ブラウザ、AS 上の RCE、誤設定 DB からの資格情報漏えい、JWKS 配布障害を範囲外とする [N][^3]（RS-04#50）。
+- 本 ADR は FAPI の範囲外も扱い、03_threat-model/attacker-model.md の類型のうち token に直接関わる ATK-02（悪意あるテナント管理者）、ATK-05（盗まれた token）、ATK-06（侵害された microservice）、ATK-08（クラウド管理者）、ATK-11（DB read 権限者）、ATK-12（リージョン障害）、ATK-15（悪意ある・侵害された第三者連携アプリ）、ATK-16（濫用される AI エージェント）、ATK-17（内部不正の開発者）、ATK-19（変更と自動化の誤り）に統制を割り当てる（§6.3）[D]。
+- 優先順位は次のとおりである [D]。(1) 偽造・窃取・越境の各 token が、どこかの検査点で必ず拒否されること。(2) その拒否を第三者が負例試験で再現できること。(3) 標準の強度から外れる箇所を受容票で可視化すること。(4) 20 年の暗号移行・製品置換を外部契約に波及させないこと。
 
 ---
 
 ## 2. 決定
 
-本節の決定はすべて決裁前の提案であり、決定済みではない [D]。経営・事業・法務の判断が要る点は §2.12 に決裁案として分けた [D]。本書の表で個別のタグがないセルは、同じ行の根拠・強度の列に示した区分に従う [D]。
+本節はすべて決裁前の提案である [D]。決定 ID は D1〜D13 とする。経営・事業の判断が要る点は §2.14 に決裁案としてまとめる [D]。
 
 ### D1 境界（opaque/JWT）と失効の強制点
 
-- **D1-1** OAuth client に発行する access token と refresh token はすべて opaque（参照型）にする [D]。対象は第一者の BFF・ネイティブアプリ・CLI、第三者・顧客自作アプリ、外部 M2M である [D]。RFC 9068 の JWT は OAuth client に渡さない [D]。
-- **D1-2** opaque token を検証するのは edge（基盤が運用する cell ごとの API gateway 型 PEP）だけとする [D]。edge は cell 内の状態応答系（以下「状態ストア」）に RFC 7662 の interface で照会する [D]。状態ストアは AS から発行と失効を push で受け取り、AS 本体は判定の経路に入らない [D]（RS-09#14、A-044 の注記「AS 本体か分離した状態応答系か」への回答）。introspection の要求には認可が要る（MUST）ため、edge は状態ストアに対して client 認証する [N][^9]（RS-04#67）。
-- **D1-3** AS が opaque token の状態を外部の状態ストアへ push できるかは製品に依存し、RS-15 では確認できていない（未確認）[D]。この機能は ADR-001 の必須評価項目にし、H-22 で確かめる [D]。製品が提供しない場合の自作費用は H-18 で要員と合わせて測る [D]。
-- **D1-4** edge は検証済みの opaque token を cell 内の STS で RFC 8693 の token exchange にかけ、呼出し先サービス 1 つを aud とする RFC 9068 JWT（以下「内部 access token」）に置き換えて転送する [D]。resource の指定には RFC 8707 を使う [N][^57]（RS-04#65）。exchange の可否と act の扱いは ADR-009 で決める [D]（R-251）。
-- **D1-5** trust domain 内の workload 間（P-03）は、workload identity の mTLS で client 認証して内部 access token を得る（ADR-009）[D]。
-- **D1-6** 状態ストアへの照会が失敗したとき、AS 本体へ直接問い合わせる迂回は設けない [D]。AWS は分散 fallback が "often make the outage worse" と述べている [V][^45]（RS-09#14）。失敗時の挙動は操作階層ごとに DL-19 と ADR-013 で決める（D9 の表を入力にする）[D]。
-- **D1-7** 外部から内部 RS への到達は edge 経由に限り、edge を迂回する経路はネットワークで遮断する [D]。edge は照会結果を未署名ヘッダで下流へ渡さない [D]。Google Cloud IAP の公式文書は、IAP を迂回されると未署名の ID ヘッダが偽造され得るとして、アプリに署名付きヘッダの検証を求めている [V][^66]（RS-17#79、RS-17 §2-14）。
+- **D1-1** OAuth client に発行する access token と refresh token は、client の種類によらず opaque にする [D]。RFC 9068 は client が内容を調べることを MUST NOT とし、漏えい対策に opaque を挙げる [N][^7]（RS-04#61）。外部 client 約 800 にこれを技術的に強制する手段はない [D][A-013]。opaque にすれば、内部の claim・alg・形式の変更（PQ 化を含む）を外部 client の改修なしに行える [D][A-103, A-104]。
+- **D1-2** 外部 opaque token は edge（cell ごとの gateway 型 PEP）だけが検証する [D]。edge は cell 内の状態ストアに RFC 7662 で照会し、状態ストアは AS から発行・失効の push を受ける [D]。introspection には認可が必要（MUST）で、cache は応答の exp を超えてはならない（MUST NOT）ので、edge は client 認証し、cache 齢を exp 以下に抑える [N][^9]（RS-04#67）。
+- **D1-3** 状態ストアが失敗しても AS 本体へ迂回しない [D]。AWS は分散 fallback が障害を悪化させることが多いと述べている [V][^38]（RS-09#14）。
+- **D1-4** edge は検証済みの opaque token を cell 内 STS で RFC 8693 の exchange にかけ、呼出し先 1 サービスを aud とする RFC 9068 JWT（内部 access token）に置き換える [D]。resource の指定には RFC 8707 を使う [N][^15]（RS-04#65）。共通 aud は発行しない（R-251）[D]。
+- **D1-5** 外部から内部 RS へ届く経路は edge 経由だけにし、迂回経路はネットワークで遮断する [D]。edge は照会結果を未署名ヘッダで下流へ渡さない [D]。Google Cloud IAP の公式文書は、IAP が迂回されると攻撃者が未署名の ID ヘッダを偽造できるとし、署名付きヘッダの検証を全アプリ種別に求めている [V][^48]（RS-17#79）。
+- **D1-6** privileged・break-glass/B・FAPI 範囲の内部 RS は、内部 token の jti を状態ストアと毎要求照合する（stateful）[D]。発行記録にない jti を持つ署名済み token は拒否し、警報を出す [D]。CSRB は、自社の token 生成方式に合わない偽造 token を検知・防止する仕組みがあれば Microsoft 単独で阻止または検知できた可能性が高いと認定した [I][^32]（RS-12#10）。同報告の Recommendation 6 は、そのための仕組みの例に stateful token・束縛 token・テナント単位の鍵スコープを挙げている [I][^32]（RS-12#11）。
+- **D1-7（BFF 経路も opaque にする判断と切替条件）** 第一者 BFF の経路も opaque にする [D]。理由は次の 3 つである [D]。
+  1. write・privileged の失効状態確認を edge の 1 か所で例外経路なしに満たせる。FAPI 範囲の RS は失効状態の検証が shall である [N][^2]（RS-04#45）。
+  2. edge の外部検証規則が opaque の 1 系統になり、負例試験の組合せが減る。
+  3. 主流量の BFF 経路の失効品質を、60 チームの BFF 実装と内部 JWT の寿命に依存させない [A-052]。
 
-D1-1 の理由は次のとおりである [D]。
-
-| # | 理由 | 適用する client | 根拠 |
-|---|---|---|---|
-| 1 | RFC 9068 は client が access token の内容を調べることを MUST NOT とし、情報漏えいの対策に opaque token への切替えを挙げている（§6）。外部の client にこの遵守を技術的に強制する手段はない | 第三者・顧客自作・ネイティブ・CLI | [N][^7]（RS-04#61）、[D] |
-| 2 | Microsoft は、悪性アプリを無効化しても既存の access token は期限まで有効のままだと記載している。opaque と状態ストアの組合せなら、照会の cache 上限 C(t) の範囲で既存 token も拒否できる | 第三者 | [V][^34]（RS-13#61）、[D] |
-| 3 | REQ-03 §3.1 は write・privileged・break-glass で失効状態の確認を必須とし、FAPI 範囲の RS は失効状態を検証しなければならない（shall）。edge の照会 1 か所で、経路の例外なしに満たせる | 全 client（BFF を含む） | [N][^2]（RS-04#45）、[D] |
-| 4 | 理由 1 は第一者 BFF には当てはまらない。BFF 経路も opaque にするのは、理由 3 に加えて、privileged の偽造 token 検知（D9）と同じ照会基盤を共有でき、edge の外部検証規則が opaque 1 系統になって負例試験の組合せが減るためである。この判断は H-02・H-04 の結果で見直す（§4.5） | BFF | [D]（判定者 3 の指摘を受けて理由を分けた） |
-| 5 | 外部 client を AS の署名方式から切り離す。ML-DSA-65 で署名した JWT は約 5.0KB と計算され、cookie に入れると 4,096 octets の上限を超え cookie 全体が無視される（cookie 経路の制約）。Authorization ヘッダの経路では、nginx の既定の 1 ヘッダ 8k に ML-DSA-65 の access token は収まるが、ML-DSA-65 の DPoP proof（約 8.2KB）は HTTP/1.1 で超える。DPoP proof は client が自分の鍵で署名するため、opaque にしても DPoP 経路の PQ 化の影響は残る（H-11、ADR-015） | 全 client | [N][^29]（RS-11#56）、[V][^30]（RS-11#59）、[D]（RS-11#62, #63） |
-| 6 | 外部形式を opaque に固定しておけば、後で JWT へ変えても内容を読まない client は壊れない。逆向きは client の解析依存を壊し得る | 全 client | [D] |
+  代償として状態ストアの照会は基準 8,402/秒（16,804×cache miss 0.5）・成長 28,222/秒（56,444×0.5）になり、案C（2,521/秒）の約 3.3 倍になる [D][A-040, A-044]。内部 hop の倍率 k（NA-05）を掛けた値で H-02・H-04 を判定し、**不合格なら BFF 経路だけ案C（BFF 経路は内部 JWT、第三者・ネイティブ・高リスクは opaque）に切り替える** [D]。この切替は外部契約を変えずに行える（BFF は自社の confidential client である）[D]。
 
 ### D2 token 種別・typ・検証規則
 
 **種別表** [D]
 
-| 種別 | 形式・typ | 発行者 | 署名鍵 | aud | 受け入れ先 |
-|---|---|---|---|---|---|
-| 外部 access token | opaque。128 bit 以上のエントロピー。先頭に版・種別・経路識別子（D10-4） | 外部 AS | — | 同意した resource の集合 | edge のみ（状態ストアで照会） |
-| refresh token | opaque。保存は hash のみ | 外部 AS | — | — | AS の token endpoint のみ |
-| 認可コード | opaque。一回限り、60 秒以下 | 外部 AS | — | — | AS の token endpoint のみ |
-| 内部 access token | JWT、typ=at+jwt | 内部 issuer（外部 AS と別の識別子、cell ごと） | 内部 issuer の at 専用鍵 | 呼出し先サービス 1 つ | 内部 RS（共通 SDK・sidecar 型 PEP） |
-| ID Token | JWT（OIDC） | 外部 AS（OIDC issuer） | ID Token 用の鍵 | RP の client_id | RP のみ。RS では拒否 |
-| introspection 応答（FAPI 範囲） | JWT、typ=token-introspection+jwt | 状態応答系 | 応答専用鍵 | edge | edge のみ |
-| SET（SSF/CAEP/RISC） | JWT、typ=secevent+jwt | 送信元 | SET 専用鍵 | 受信者 | 受信 endpoint のみ |
-| DPoP proof | JWT、typ=dpop+jwt | client | client の鍵（jwk ヘッダ） | —（htm/htu で束縛） | AS・edge |
-| client assertion | JWT、typ=client-authentication+jwt | client | client 登録鍵 | AS の issuer 識別子だけ | AS のみ |
-| レガシー gateway の署名ヘッダ | JWT、自社定義の版付き typ（名前空間は ADR-021） | gateway | gateway 専用鍵 | backend | レガシー backend のみ（RS-17#83、A-110） |
-| Txn-Token（ADR-009 が採る場合） | JWT、typ=txntoken+jwt | trust domain の TTS | 専用鍵 | trust domain | 内部 RS。RFC 化まで採否保留 |
+| 種別 | 形式・typ | 発行者 | aud | 受け入れ先 |
+|---|---|---|---|---|
+| 外部 access token | opaque（128 bit 以上のエントロピー、先頭に版・種別・経路識別子） | 外部 AS | 同意した resource | edge のみ |
+| refresh token | opaque（保存は hash のみ） | 外部 AS | — | AS token endpoint のみ |
+| 認可コード | opaque、一回限り、60 秒以下 | 外部 AS | — | AS のみ |
+| 内部 access token | JWT、typ=at+jwt | 内部 issuer（外部 AS とは別の識別子、cell ごと） | 呼出し先 1 サービス | 内部 RS（共通 SDK・sidecar） |
+| 要求 context（D9-3） | JWT、typ=txntoken+jwt（draft 準拠の社内 profile） | cell の TTS（edge 併設） | trust domain | 内部 RS（Txn-Token ヘッダのみ。Authorization ヘッダには置かない） |
+| ID Token | JWT（OIDC。typ を要求しない） | 外部 AS | RP の client_id | RP のみ。RS では V4・V5 で拒否 |
+| introspection 応答（FAPI 範囲） | JWT、typ=token-introspection+jwt | 状態ストア | edge | edge のみ |
+| SET | JWT、typ=secevent+jwt | 送信元 | 受信者 | 受信 endpoint のみ |
+| DPoP proof | JWT、typ=dpop+jwt | client | —（htm/htu） | AS・edge の DPoP ヘッダのみ |
 
-typ の根拠は次のとおりである [D]。
+- typ の根拠: at+jwt は RFC 9068 §2.1 で宣言が MUST、値は SHOULD であり、RS は `at+jwt` と `application/at+jwt` を受け付け、それ以外を拒否する（MUST）[N][^7]（RS-04#60）。token-introspection+jwt は RFC 9701 の MUST [N][^10]（RS-04#68）。secevent+jwt は SSF の MUST [N][^17]（RS-04#77）。dpop+jwt は RFC 9449 §4.3 の MUST [N][^5]（RS-04#55）。txntoken+jwt は draft-11 の MUST [N][^21]（RS-06#31）。
+- ID Token は typ を持たないことがあるので、ID Token と access token の判別を nonce の有無には頼らない [D]。外部 AS と内部 issuer の識別子を分け（V4）、内部 RS は typ のない JWT を拒否する（V5）ことで、RS が ID Token を受理しない構造にする [D]。
+- 128 bit 以上のエントロピーは FAPI の shall であり、本基盤では全 client に広げる [N][^2]（RS-04#47）[D]。
 
-- at+jwt: RFC 9068 §2.1 は JWT access token が media type を typ で宣言することを MUST とし、値は "at+jwt" を SHOULD とする [N][^7]。RS は "at+jwt" または "application/at+jwt" を受け付け、それ以外を拒否しなければならない（§4、MUST）[N][^7]（RS-04#60）。本基盤は発行側で "at+jwt" を使う [D]。
-- token-introspection+jwt は RFC 9701 の規定で、RS は置換攻撃を防ぐため typ を確認しなければならない（MUST）[N][^10]（RS-04#68）。
-- secevent+jwt は SSF の MUST である [N][^19]（RS-04#77）。dpop+jwt は RFC 9449 §4.3 の検査項目（MUST）である [N][^5]（RS-04#55）。
-- client-authentication+jwt と aud=issuer 単独は draft-ietf-oauth-rfc7523bis-11（IESG 承認済み、RFC 未発行）の SHOULD と MUST であり、本基盤は厳しくなる側として先行採用する [N][^24][^25]（RS-17#21）[D]。
-- txntoken+jwt は draft-ietf-oauth-transaction-tokens-11（IESG 未提出）の MUST である [N][^26]（RS-06#31）。
-- 128 bit 以上のエントロピーは FAPI の shall であり、本基盤は全 client に広げる [N][^2]（RS-04#47）[D]。
-- refresh token は保存時も秘匿しなければならない（MUST）[N][^16]（RS-04#70）。GitHub は、token を元の使用可能な形式では保存していないため自社の侵害ではないと説明した [I][^42]（RS-12#59）。本基盤は opaque token を hash だけで保存する [D]。
+**検証規則 V1〜V14（共通 SDK・sidecar・edge の既定とし、利用側では無効化できない）** [D]
 
-**検証規則（V1〜V14）**
+Storm-0558 では、開発者が「ライブラリが完全に検証する」と誤認し、issuer・scope の検証を追加していなかった [I][^33]（RS-12#5）。このため規則は既定動作にし、利用側の設定で外せないようにする [D]。
 
-V1〜V14 は共通 SDK・sidecar・edge の既定動作にし、利用側の設定では無効化できないようにする [D]。Storm-0558 では、メール系の開発者が「ライブラリが完全に検証する」と誤認し、issuer/scope の検証を追加していなかった [I][^39]（RS-12#5）。
-
-| ID | 規則 | 規範強度と自社判断の書き分け |
+| ID | 規則 | 強度と自社判断 |
 |---|---|---|
-| V1 | issuer と token 種別の組ごとの alg allowlist を設定から読む（token からは読まない）。内部 access token の初期値は ES256 だけ | allowlist の指定は RFC 8725 §3.1 の MUST [N][^8]（RS-04#62）。単一 alg にするのは自社判断 [D] |
-| V2 | 1 つの鍵を 1 つの alg と 1 つの token 種別だけに使う | 1 鍵 1 alg は RFC 8725 §3.1 の MUST [N][^8]（RS-11#51）。種別との 1 対 1 は自社判断 [D] |
-| V3 | 鍵は、設定で固定した issuer の metadata にある jwks_uri（TLS）からだけ取る。kid はその集合の中だけで引く。jku・x5u は辿らない | 鍵と issuer の結合は RFC 8725 §3.8 の MUST [N][^8]（RS-04#62）。RFC 8725 §3.10 の SHOULD は jku・x5u を辿る場合の SSRF 対策（許可した場所との照合など）であり、辿らないことの要求ではない [N][^8]（起草時に原文を確認）。辿らないのは自社判断で、FAPI §5.4 の「x5u・jku を使うべきでない（should not）」とも整合する [N][^2]（RS-04#47）[D] |
-| V4 | iss を完全一致で照合する。内部 issuer は外部 AS と別の識別子・別の鍵集合にし、cell ごとに分ける | iss の完全一致は RFC 9068 §4 の MUST [N][^7]（RS-04#60）。issuer と cell の分離は自社判断 [D]（RS-12#1, #5。鍵の範囲は ADR-007） |
-| V5 | typ を種別ごとの期待値と照合する。内部 access token は "at+jwt" と "application/at+jwt" の 2 値を受け、他は拒否する。typ のない JWT は全種別で拒否する | at+jwt の 2 値受理は RFC 9068 §4 の MUST [N][^7]。RFC 8725 §3.11 の typ は RECOMMENDED であり、全種別で必須にするのは自社判断 [D]（DS-20） |
-| V6 | aud に自サービスの識別子が含まれることを確認する。サービス共通の aud は発行しない | RFC 9068 §4・§5 の MUST [N][^7]（RS-04#60, #61）。自分宛てでない token の拒否は RFC 9700 の MUST [N][^1]（RS-04#17） |
-| V7 | exp を検証する。iat・nbf は、未来 10 秒までを受け入れ、60 秒を超える未来は拒否する。exp の許容時刻差は R-189.2 として TBD | exp は RFC 9068 §4 の MUST で、許容時刻差は "MAY ... usually no more than a few minutes" [N][^7]。iat・nbf の 10 秒／60 秒は FAPI §5.3.2.1 の AS 一般要件（AS が受け取る JWT への shall）であり、RS への適用は自社判断の拡張 [N][^2]（RS-04#42）[D] |
-| V8 | 束縛（cnf）のある token は提示者との一致を検証する。外部は x5t#S256（mTLS）か jkt（DPoP）、内部は x5t#S256（D5-3）。DPoP 束縛 token が Bearer として提示されたら拒否する | 証明書一致の検証は RFC 8705 の MUST [N][^6]（RS-04#59）。Bearer 提示の拒否は RFC 9449 §7.2 の MUST [N][^5]（RS-04#58） |
-| V9 | tid は 1 token に 1 つだけ載せ、PEP は資源から導いたテナントと突き合わせる。テナントを切り替えるときは token を取り直す | 自社判断 [D][A-015]（R-283、R-250）。CVE-2025-55241 では、送信元テナントを正しく検証しないレガシー API と内部のなりすまし token の組合せでテナント越境が起きたと発見者が開示している [I][^44]（RS-12#53） |
-| V10 | 権限の内容を token に載せず、主体・テナント・client・粗い scope と authorization_details・act を運ぶ封筒にとどめる。claim 名は RFC 9068 の名前（scope、client_id）に限り、製品独自の名前（scp など）を契約に入れない | 自社判断 [D]（R-249、CL-0129、CL-0130、R-208）。アクセス制御に使ってよい act は現在の actor だけ（RFC 8693 の MUST）[N][^12]（RS-04#66） |
-| V11 | access token を URI の query で受け付けない。SDK は query で送らない。ログ・トレース・エラー出力に token を記録しない | RS 側の不受理は FAPI §5.3.4 の shall not（FAPI 範囲）[N][^2]（RS-04#45）で、全 RS への拡張は自社判断 [D]。RFC 9700 §4.3.2 の MUST NOT は client が query で送ることの禁止である [N][^1]（RS-04#32。起草時に原文を確認）。token の平文保存・転送の禁止は RFC 9700 §4.9.3 の MUST で、ログ非記録はその実装 [N][^1]（RS-04#33）[D] |
-| V12 | JWT 内の暗号処理を 1 つでも検証できなければ全体を拒否する。none は受け付けない | RFC 8725 の MUST [N][^8]、RFC 9068 の MUST NOT・MUST [N][^7]（RS-04#60, #62） |
-| V13 | 制約を強める変更は未知の claim の追加で表さず、typ または profile 版の変更、あるいは JWS Protected Header の拡張パラメータを crit に列挙する方式で表し、ADR-016 で破壊的変更として扱う | 理解できない claim は、アプリが別の要求を定めない限り無視しなければならない（RFC 7519 §4、MUST）[N][^52]（RS-16#14）。crit に列挙した拡張を理解しない受信者にとって JWS は無効になる（RFC 7515 §4.1.11）[N][^53]（RS-16#16）。方式の選択は自社判断 [D] |
-| V14 | 8725bis-10 Appendix A の防御的検査のうち厳しくなる側を先行採用する。対象は、alg の大文字小文字の誤読、暗号化と署名の取り違え、JWT 形式の取り違え、kid・jku・x5u を攻撃者入力として扱うこと | draft の内容であり規範根拠ではない [N][^21][^20]（RS-04#63）。先行採用は自社判断 [D] |
+| V1 | issuer×種別ごとの alg allowlist を、検証側の版付き設定から読む。token・issuer metadata からは読まない。内部 access token の初期値は ES256 のみ | allowlist は RFC 8725 §3.1 の MUST [N][^8]（RS-11#51）。metadata を allowlist の出所にしないのは、配布元の誤設定・侵害に alg 判定を依存させないための自社判断 [D] |
+| V2 | 1 鍵 1 alg 1 種別 | 1 鍵 1 alg は MUST [N][^8]（RS-11#51）。種別との結合は自社判断 [D] |
+| V3 | 鍵は、設定で固定した issuer の jwks_uri だけから取る。jku・x5u は辿らない | 鍵と issuer の結合は RFC 8725 §3.8 の MUST [N][^8]。FAPI は x5u・jku を使うべきでない（should not）とする [N][^2]（RS-04#47） |
+| V4 | iss を完全一致で照合する。内部 issuer は外部 AS と別にし、cell ごとに分ける | RFC 9068 §4 の MUST [N][^7]。分離は自社判断 [D] |
+| V5 | typ を期待値と照合する。typ のない JWT は全種別で拒否する | at+jwt は MUST [N][^7]。全種別必須は自社判断（RFC 8725 §3.11 は RECOMMENDED [N][^8]）[D] |
+| V6 | aud に自サービスが含まれることを確認する。共通 aud は発行しない | RFC 9068 §4・§5 の MUST [N][^7]。RFC 9700 の MUST [N][^1]（RS-04#17） |
+| V7 | exp が現在時刻より後であることを検証する。iat・nbf は、未来方向の時刻差を許容値 S 以内なら受理し、それを超える未来の値は拒否する。S の初期値は 10 秒、上限 60 秒とし、値は R-189.2（DL-20）で決める。access token の iat が古いこと自体は拒否理由にしない（有効期間は exp で律する） | exp は MUST [N][^7]。FAPI 2.0 §5.3.2.1 の「iat/nbf が未来 0〜10 秒の JWT は受理し、未来 60 秒を超える JWT は拒否する」（shall）は AS が受け取る JWT（client assertion・request object）への規定であり [N][^2]（RS-04#42）、これを内部 RS の未来方向の許容に準用するのは自社判断 [D] |
+| V8 | cnf がある token は提示者との一致を検証する。DPoP 束縛 token を Bearer として提示されたら拒否する | RFC 8705 の MUST [N][^6]、RFC 9449 §7.2 の MUST [N][^5]（RS-04#58, #59） |
+| V9 | テナント claim は 1 token に 1 つ。PEP は資源から導いたテナントと突き合わせる | 自社判断 [D][A-015]（R-250, R-283）。CVE-2025-55241 では送信元テナントを検証しないレガシー API で越境が起きたと発見者が開示している [I][^34]（RS-12#53） |
+| V10 | token は権限 DB にせず、封筒（D9-4）にとどめる。アクセス制御に使う act は現在の actor だけ | 自社判断 [D]（R-249）。act の扱いは RFC 8693 の MUST [N][^12]（RS-04#66） |
+| V11 | query の token を受け付けない。token をログ・トレース・エラー出力に記録しない | FAPI の shall not を全 RS へ拡張する [N][^2][D]。RFC 9700 §4.9.3 の MUST [N][^1]（RS-04#33） |
+| V12 | 暗号処理のうち 1 つでも失敗したら全体を拒否する。none は拒否する | RFC 8725・RFC 9068 の MUST [N][^8][^7] |
+| V13 | 制約を強める変更は未知 claim の追加で表さない。typ・profile 版の変更か crit で表す | 理解できない claim は無視しなければならない（RFC 7519 §4、MUST）[N][^29]（RS-16#14）。crit の未理解は JWS を無効にする（RFC 7515 §4.1.11）[N][^30]（RS-16#16） |
+| V14 | 8725bis-10 の防御的検査のうち厳しくなる側を先行採用する | draft であり規範根拠ではない [N][^20]（RS-04#63）。先行採用は自社判断 [D] |
 
-- **相互排他**: 種別間の相互排他は、(iss, typ, 鍵集合, aud の形式) の 4 要素が種別ごとに異なることで実現する [D]。同じ issuer が複数種別の JWT を出す場合、検証規則を互いに排他にすることは RFC 8725 §3.12 の MUST である [N][^8]（RS-04#62）。
-- **鍵分離の位置付け**: RFC 9068 §5（Security Considerations）は、ID Token と JWT access token を別の鍵で署名しても特定の鍵の漏えいへの防御にはならないとする [N][^7]。RS は公開されたどの鍵による署名も受け入れざるを得ないためである [N][^7]（RS-04#61。起草時に原文を確認）。本 ADR は鍵だけに頼らず、issuer・JWKS・typ を分け、RS 側で受理条件を固定する [D]。
-- **RS256 の扱い**: D8-3 に置く [D]。
+- **相互排他**: (iss, typ, 鍵集合, aud の形式) の 4 要素を種別ごとに異ならせる [D]。RFC 8725 §3.12 の MUST に対応する [N][^8]（RS-04#62）。
+- RFC 9068 §5 は、ID Token と access token の鍵を分けても鍵漏えいへの防御にはならないとする [N][^7]（RS-04#61）。このため鍵分離だけに頼らず、issuer・JWKS・typ を分ける [D]。
+- 独自の JWT 検証実装は CI で検出して拒否し、例外は受容票で扱う（G-072）[D]。
 
 ### D3 寿命の決め方（一律値を置かない）
 
-寿命 L は token 種別 k と操作階層 t の組ごとに、上限 U1〜U5 の最小値として決め、下限 Lmin と突き合わせる [D]（R-087、R-189.1、G-024）。
+寿命 L(k,t) は、token 種別 k と操作階層 t の組ごとに U1〜U5 の最小値とし、下限 Lmin と突き合わせる [D]（R-087、G-024）。
 
-| 記号 | 定義 | 適用する token | 由来 |
+| 記号 | 定義 | 由来 |
+|---|---|---|
+| U1 規範上限 | 下表 | 各出典 |
+| U2 剥奪反映（JWT） | 照会しない token について L＋C(t)＋Δprop ≤ R(t)。C は edge cache の最大齢、Δprop は push の伝播時間、R は剥奪反映 SLO（R-143、DL-20） | RFC 7009 は短命化で失効後の使用時間を制限する設計を挙げる [N][^11]（RS-04#69） |
+| U2' 剥奪反映（照会型） | 毎回照会する外部 opaque token は C(t)＋Δprop ≤ R(t)。L は剥奪の速さを決めず、session・grant の性質で決める | [D] |
+| U3 被害窓 | 発覚前の悪用可能時間として事業が受容する E(t)（BIA・S-15・DEC-1） | [D]（BIA 待ち） |
+| U4 session | refresh token と BFF session の絶対寿命・無操作は、主体の AAL の再認証上限以下。token 更新で session を延長しない | 63B-4 は access token の存在を利用者在席の証拠とみなすことを SHALL NOT とする [N][^22]（RS-03#44） |
+| U5 鍵併存 | L_int＋JWKS cache 最大齢＋時刻差 ≤ 旧鍵の併存時間（R-189.4、R-189.6） | [D]。Azure AD 2021-03 の鍵誤削除障害 [I][^41]（RS-12#57） |
+| Lmin(a) 容量 | refresh/秒＝S÷L_ext、exchange/秒＝S×6÷L_int、要求 context/秒＝16,804×p_w が、AS・STS・署名 QPS の容量以下 | [D][A-005, A-028, A-040, NA-02] |
+| Lmin(b) 停止耐性 | AS・STS が止まってから業務が止まるまでの時間を、BIA の MTPD と比べる（H-15）。A-091 は可用性帯の仮置きであり、停止許容時間として使わない | [D][A-091] |
+
+**規範上限（U1）**
+
+| 対象 | 上限 | 強度 | 出典 |
 |---|---|---|---|
-| U1 規範上限 | 下の規範上限表 | 全種別 | 規範上限表の各行の出典による |
-| U2 剥奪反映 | 使用時に状態を照会しない token について、L(k,t) ＋ C(t) ＋ Δprop ≤ R(t)。C は edge の状態 cache の最大齢、Δprop は状態ストアへの push の伝播時間、R は剥奪反映 SLO（R-143、R-191、DL-20） | 内部 access token（read-sensitive・write） | [D]。RFC 7009 は self-contained token の失効後に使われ得る時間を短命化で制限する設計を挙げている [N][^11]（RS-04#69） |
-| U2' 照会型 | 使用時に照会する token は、C(t) ＋ Δprop ≤ R(t)。L は剥奪の速さを決めない | 外部 opaque token、privileged の内部 token | [D] |
-| U3 被害窓 | 発覚前の悪用可能時間として事業が受容する値 E(t)。BIA、損失シナリオ（S-07、S-15）、リスク選好（DEC-1）から決める | 全種別 | [D]（BIA 待ち） |
-| U4 session | refresh token と BFF session の絶対寿命は主体の AAL の再認証全体上限以下、非活動失効は無操作上限以下。token の更新で session を延長しない | refresh token、BFF session | 63B-4 は access token の存在を利用者在席の証拠と解釈することを SHALL NOT とする [N][^27]（RS-03#44） |
-| U5 鍵の併存 | L_int ＋ JWKS cache の最大齢（R-189.6）＋ 時刻差の上限 ≤ 旧鍵の併存時間（R-189.4、ADR-007） | 内部 access token | [D]（RS-12#57。Azure AD 2021-03-15 では署名鍵の誤削除で依存アプリが token を信頼しなくなった [I][^62]） |
-| Lmin(a) 発行容量 | refresh/秒 ＝ S ÷ L_ext ≤ AS の容量、exchange/秒 ＝ S × a ÷ L_int ≤ STS の容量、かつ発行/秒 ≤ KMS/HSM の署名 QPS（ADR-007） | 外部・内部 | [D][A-005, A-028, A-043] |
-| Lmin(b) 停止耐性 | AS・STS が止まってから業務 API が止まるまでの時間を BIA の MTPD と比べる（H-15） | 外部・内部 | [D][A-091]（BIA NA-01） |
+| 認可コード | 60 秒以下（全 client に適用） | FAPI shall | [N][^2]（RS-04#42） |
+| PAR request_uri | 600 秒未満 | FAPI shall | [N][^2]（RS-04#43） |
+| DPoP proof | 秒〜分 | MUST | [N][^5]（RS-04#56） |
+| DPoP 束縛 access token（nonce なしの配備） | 長寿命にすべきでない | SHOULD NOT | [N][^5]（RS-04#56） |
+| introspection cache | exp を超えない | MUST NOT | [N][^9]（RS-04#67） |
+| ブラウザ向け refresh token | 最大寿命か非活動失効を設ける。rotation で延長しない | MUST / MUST NOT | [N][^13]（RS-04#74） |
+| 未使用の refresh token | 一定期間で失効 | SHOULD | [N][^1]（RS-04#38） |
+| 要求 context（Txn-Token） | 短命 | MUST（draft） | [N][^21]（RS-06#36） |
+| 再認証 | N-m のとおり | SHALL / SHOULD | [N][^22]（RS-03#43） |
+| PSD2 RTS（支払口座へのアクセス） | 無操作 5 分以下 | 規則 Art. 4(3) | [N][^43]（RS-13#39） |
 
-- **下限が上限を上回る場合**: 寿命を延ばして解決しない [D]。不足は cell 内の STS・状態ストアの静的安定性（ADR-013、ADR-023）と発行容量の増強で埋め、残る差は fail-mode（DL-19）と受容票で扱う [D]。Google SRS は、短命資格情報の強制は障害が資格情報の寿命を超えると「時限爆弾」になり得ると述べている [V][^46]（RS-09#36）。BIA の MTPD（write 2 時間）は寿命の候補（A-027 の範囲 5〜60 分）より長いため、停止耐性は寿命ではなく可用性と静的安定性で確保する [D][A-027]。静的安定な設計では、依存先が劣化しても以前から動いていたものは動き続ける [V][^60]（RS-09#10）。
-- **障害時だけ寿命を延ばすモード（grace）は設けない** [D]。AWS は平常時と障害時で挙動が変わる bimodal behavior を避けるよう求め、障害時に cache を迂回させることもその例に挙げている [V][^61]（RS-09#15）。
-- **テナント設定**: テナントは寿命を短くする設定だけができる（G-115）[D]。寿命の上限は CI で検査し、違反の件数を KRI にする（G-072）[D]。
-- **揺らぎ**: exp、refresh の時刻、cache TTL に揺らぎ（jitter）を入れる [D]。AWS は相関障害の低減策として、短命資格情報・秘密の有効期限をばらつかせることを挙げている [V][^51]（RS-09#8）。幅は TBD（DL-20）[D]。
-- **感度（決定値ではない）**: refresh/秒は外部 token の寿命 L_ext で、exchange/秒は内部 token の寿命 L_int で決まる別の変数である [D][A-005, A-028]。
+- **下限が上限を上回っても寿命は延ばさない** [D]。不足は STS・状態ストアの静的安定性と容量で補い、残る差は fail-mode（DL-19）と受容票で扱う [D]。Google SRS は、障害が短命資格情報の寿命を超えると「時限爆弾」になり得ると述べている [V][^39]（RS-09#36）。障害時だけ寿命を延ばす grace は設けない [D]。AWS は平常時と障害時で挙動が変わる bimodal 動作を避けるよう求めている [V][^40]（RS-09#15）。
+- **寿命 profile は 3 種類以内** [D]。各 token の寿命は、その aud と scope で到達できる操作のうち最上位の操作階層（high-water mark、REQ-03 J6）で決め、U1〜U5 の導出結果を 3 つの profile のいずれかに丸める（短い側に丸める）[D]。API ごとの個別値は認めない [D][A-052]。60 チームが個別値を管理すると CI 検査と数値契約（DL-20）が運用できなくなるためである [D]。
+- テナントは寿命を短くする設定だけができる（G-115）[D]。上限は CI で検査し、違反数を KRI にする（G-072）[D]。
+- 値はすべて TBD である（所有者 CTO＋CISO、期限 G4、決め方: BIA の R(t)・E(t) と H-02・H-15 の実測から DL-20 で決裁）[D]。
+- 感度（決定値ではない）は次のとおりである [D][A-005, A-028]。
 
-| 寿命 | refresh/秒（S ÷ L_ext） | exchange/秒（S × 6 ÷ L_int） |
+| 寿命 | refresh/秒（S÷L_ext） | exchange/秒（S×6÷L_int） |
 |---|---|---|
 | 2 分 | 927 | 5,560 |
 | 5 分 | 371 | 2,224 |
 | 10 分（A-027） | 185 | 1,112 |
 | 30 分 | 62 | 371 |
-| 60 分 | 31 | 185 |
 
-**規範上限表（U1）**
+### D4 refresh token の保護
 
-| 対象 | 上限・規則 | 強度 | 出典 |
+| client 種別 | 束縛 | rotation | 寿命 |
 |---|---|---|---|
-| 認可コード | 60 秒以下。本基盤は全 client に適用 [D] | FAPI shall | [N][^2]（RS-04#42） |
-| PAR の request_uri | expires_in を 600 秒未満 | FAPI shall | [N][^2]（RS-04#43） |
-| DPoP proof | 作成後の限られた時間（秒〜分）だけ受理 | MUST | [N][^5]（RS-04#56） |
-| nonce を使わない DPoP 束縛 access token | 長寿命の token を発行しない（本基盤は nonce 必須。D5） | SHOULD NOT | [N][^5]（RS-04#56） |
-| introspection 応答の cache | exp を超えて cache しない | MUST NOT | [N][^9]（RS-04#67） |
-| ブラウザアプリの refresh token | 最大寿命か非活動失効のどちらかを設ける。事前に期限を定めた場合は rotation で寿命を延長しない。寿命を AS session に連動させる | MUST / MUST NOT / SHOULD | [N][^13]（RS-04#74） |
-| refresh token（一般） | 一定期間使われない refresh token は失効させる | SHOULD | [N][^1]（RS-04#38） |
-| 再認証（AAL2・AAL3） | N-h のとおり | SHALL / SHOULD | [N][^27]（RS-03#43） |
-| EU PSD2 RTS（支払口座へのオンラインアクセス） | 無操作 5 分以下 | 規則（第 4 条 3 項） | [N][^28]（RS-13#39） |
+| BFF（confidential） | 非対称 client 認証（private_key_jwt／mTLS） | 使わない | U4。AS session に連動 |
+| 第三者サーバー型（confidential） | 非対称 client 認証。scope と RS に結合 | 使わない | D7 |
+| ネイティブ・CLI（public）でハードウェア保護鍵あり | DPoP 鍵（必須） | 使わない | U4、非活動失効 |
+| ネイティブ・CLI（public）でハードウェア保護鍵を示せない | DPoP 鍵（必須） | 併用する（再利用を検知したら grant の全 token を失効） | U4、非活動失効、最大寿命 |
+| ブラウザ内 client（D6-3 の例外のみ） | DPoP | 使う（rotation で寿命を延ばさない） | 最大寿命 |
+| DPoP を実装できない既存ネイティブ | — | 使う | 受容票に期限を記す |
+| M2M（client credentials） | 発行しない | — | — |
 
-### D4 refresh token の保護（client 種別ごと）
+- 根拠: AS は client ごとのリスク評価で発行可否を決め（MUST）、発行した token を scope・RS に結合する（MUST）[N][^1]（RS-04#35, #36）。confidential の refresh token は client 認証ですでに sender-constrained であり、DPoP 鍵には束縛しない [N][^5]（RS-04#57）。FAPI は例外を除き rotation を禁じ（shall not）、confidential と sender-constrained の組合せでは rotation に利点がないとする [N][^2]（RS-04#46）。public client の refresh token は DPoP proof の鍵に束縛しなければならない（MUST）[N][^5]（RS-04#57）。
+- **併用の判断**: RFC 10017 §9.2 は、WebCrypto の非エクスポート鍵が TPM で守られる保証はなく、malware による鍵の持ち出しはセッションハイジャックと同等の経路になると述べる [N][^13]（RS-04#75）。鍵と refresh token を同時に盗まれると sender constraint は効かない（RFC 9700 §4.10.1）[N][^1]（RS-04#59）。そこで、ハードウェア保護を示せない端末に限り rotation を重ね、二重使用を検知できるようにする [D][NA-04]。H-07 の誤失効率が閾値（TBD、所有者 プロダクト責任者＋CISO）を超えたら併用範囲を縮める [D]。
+- rotation の再利用検知は製品ごとに意味論が異なり、AS 置換時に引き継ぐ状態になる [D][A-104]。このため rotation は既定にせず、上表の限られた範囲に限る [D]。
+- 未使用 refresh token の非活動失効（SHOULD）と、password 変更・logout・CAEP session-revoked での失効を採用する [N][^1][D]。
 
-| client 種別 | 発行 | 束縛 | rotation | 寿命の決め方 |
-|---|---|---|---|---|
-| BFF（第一者、confidential） | 可 | 非対称のクライアント認証（private_key_jwt または mTLS） | 使わない | U4。AS session に連動 |
-| 第三者・顧客自作のサーバー型 client（confidential） | 同意した scope に限って可 | 非対称のクライアント認証。scope と RS に結合 | 使わない | D7（非活動失効、絶対寿命、再承認） |
-| ネイティブアプリ・CLI（public） | offline 利用時に限って可 | DPoP 鍵（既定） | 既定では使わない。H-07 の誤失効率が受容範囲にあり、受容票（受容者案: プロダクト責任者＋CISO）がある client 区分に限って併用 | U4、非活動失効 |
-| DPoP を実装できない既存ネイティブ（移行期限付きの例外） | 可 | — | 使う（再利用を検知したら grant の全 token を失効） | 最大寿命と期限を受容票に記す |
-| 第三者のブラウザ内 public client（D6-4 の例外のみ） | 受容票がある場合のみ | DPoP | 使う（寿命は延長しない） | 最大寿命、AS session に連動 |
-| M2M（client credentials） | 発行しない | — | — | — |
+### D5 sender constraint（DPoP と mTLS）
 
-根拠は次のとおりである [D]。
+| 経路 × 操作階層 | 方式 |
+|---|---|
+| 内部 workload 間、edge から内部 RS | mTLS（workload identity）。内部 token の cnf は x5t#S256（I1）[D] |
+| BFF から edge | mTLS [D] |
+| 第三者サーバー型・外部 M2M（read・write） | mTLS を既定とする。CDN・WAF で TLS が終端され end-to-end mTLS を張れない相手に限り DPoP＋nonce を許す [D][NA-03] |
+| privileged・FAPI 範囲を呼ぶサーバー型 | mTLS のみ [D] |
+| ネイティブ・CLI | DPoP。nonce 必須、dpop_jkt でコードを束縛 [D] |
+| ブラウザ内 client（D6-3 の例外） | DPoP [D] |
 
-- AS は client ごとにリスク評価で refresh token の発行可否を決め（MUST）、発行した refresh token を同意済みの scope と RS に結合しなければならない（MUST）[N][^1]（RS-04#35, #36）。
-- confidential client の refresh token は、RFC 6749 がすでに発行先 client だけが使えることを求めている（RFC 9700 §2.2.2 と §4.14.2 の双方に記載）[N][^1]。DPoP を使う confidential client の refresh token はクライアント認証で sender-constrained されるため、DPoP 鍵には束縛しない [N][^5]（RS-04#57）。
-- FAPI は例外的な状況を除いて refresh token rotation を禁じ（shall not）、confidential client と sender-constrained token の組合せでは rotation に利点がなく、受け取り損ねが運用を損なうことを理由に挙げる [N][^2]（RS-04#46）。本基盤はこれを FAPI 範囲外の confidential client にも広げる [D]。
-- DPoP proof を提示した public client の refresh token は、その鍵に束縛しなければならない（MUST）[N][^5]（RS-04#57）。これで RFC 9700 §2.2.2 の MUST を sender constraint の側で満たす [D]。
-- rotation を既定にしない理由は RFC 9700 §4.14.2 の仕組みにある [D]。同節は、侵害された refresh token を攻撃者と正規 client の双方が使うと AS は侵害を知るが、どちらが提示したかは判別できず有効な refresh token を失効させ、正規 client は新しい認可を取り直すことになると述べている [N][^1]（起草時に原文を確認）。100 万人規模では再ログインと問い合わせの負荷として現れ、rotation の書込みは refresh/秒と同数発生する [D][A-001, A-042]。
-- M2M に発行しないのは、RFC 6749 §4.4.3 の SHOULD NOT を本基盤で禁止に強めたものである [N][^16]（RS-17#18）[D]。
-- 未使用の refresh token は非活動の上限で失効させる（RFC 9700 §4.14.2 の SHOULD を採用）[N][^1][D]。password 変更、AS での logout、CAEP session-revoked でも失効させる（同節の MAY を採用）[N][^1][D]。
-- refresh token ストアの件数は基準で約 89.5 万件（A-006 の 86.5 万＋A-013 の 3 万）、成長シナリオで約 263.6 万件である [D][A-006, A-013]。
-
-### D5 sender constraint（DPoP と mTLS の使い分け）
-
-| 経路 | 方式 | 条件・根拠 |
-|---|---|---|
-| D5-1 内部の workload 間、edge から内部 RS | mTLS（workload identity）。内部 access token の cnf は x5t#S256 | ADR-009 |
-| D5-2 BFF から edge | mTLS | BFF は workload identity か登録済みの client 証明書を使う [D] |
-| D5-3 第三者・パートナーのサーバー型 client、外部 M2M | mTLS を既定にし、TLS が client のコードより手前（CDN・WAF など）で終端され end-to-end の mTLS を張れない環境に限り DPoP（nonce 必須）を許す | FAPI はどちらも許す [N][^2]（RS-04#44）。RS-04 結論 5 は B2B サーバー連携を mTLS とする [D]。既定の決定は §2.12 決裁案 3 |
-| D5-4 privileged・FAPI 範囲の API を呼ぶサーバー型 client | mTLS のみ | 下の A5 対策 |
-| D5-5 ネイティブアプリ・CLI | DPoP。サーバ nonce を必須にし、dpop_jkt で認可コードを束縛する | 鍵の保護方式は端末の OS に依存し、本書では確認していない（未確認） |
-| D5-6 ブラウザ内 client（D6-4 の例外） | DPoP | D6 の制限つき |
-
-- **内部の束縛（I1 を既定、I2 を代替）**: 内部 access token に cnf（x5t#S256）を付け、PEP が呼出し元の workload 証明書との一致を検証する（I1）[D]。300 サービス・本番 1.1 万インスタンスで mesh から peer 証明書をアプリへ渡す実装費用は未評価であり、H-16 で測る [D][A-012, A-050]。sidecar 型 PEP では peer 証明書を sidecar が保持するため照合を sidecar 内で完結できる見込みだが、未実測である [D]。H-16 で費用が過大と分かった場合は、mesh mTLS と aud・呼出し元 workload の許可リスト照合（I2）に切り替える [D]。I2 は RFC 9700 §2.2.1 の SHOULD からの逸脱であり、理由・補完統制・受容票（受容者案 CISO）を準拠表に記録する [N][^1]（RS-04#14）[D]。FAPI 範囲の経路は I2 に切り替えても I1 を維持する [D]（FAPI §5.3.2.1 は sender-constrained な access token だけの発行を求める [N][^2]（RS-04#42））。
-- **DPoP**:
-  - nonce を必須にする（RFC 9449 の SHOULD NOT を本基盤で強める）[D]。サーバが nonce を提供した後は、nonce のない proof を受け入れてはならない（MUST NOT）[N][^5]（RS-04#56）。
-  - dpop_jkt による認可コードの束縛は RFC 9449 §10 で OPTIONAL であり、使った場合に鍵の thumbprint が一致しなければ AS は拒否しなければならない（MUST）[N][^5]（RS-04#58。起草時に原文を確認）。本基盤は public client で dpop_jkt を必須にする [D]。
-  - jti による再送検査は cell 内の共有ストアで行う [D]。RFC 9449 は、状態を共有しない複数サーバの背後では単回使用の検査を実現できないことがあると明記している [N][^5]（RS-04#56）。
-  - jti ストアの件数の上限は 16,804/秒 × W で、W＝60 秒なら全 cell 合計で約 101 万件、1 件 128 byte なら約 1.3 億 byte である [D][A-040, NA-005-1, NA-005-2, NA-005-6]。BFF 経路は mTLS なので実際の件数はこの上限より小さい [D]。
-- **mTLS**:
-  - TLS を中継装置で終端する経路では、受信要求の sanitize と proxy・アプリ間の経路保護を必須にする（RFC 9700 §4.13 の MUST）[N][^1]（RS-04#24）。終端点からアプリへ証明書情報を渡す方法は RFC 8705 の範囲外である [N][^6]（RS-04#59）。
-  - mTLS を要求する endpoint はホスト名で分ける [D]。RS は mTLS を使うことを TLS handshake の前に知っている必要がある [N][^6]（RS-04#59）。
-  - client 証明書を更新すると束縛された access token は無効になる [N][^6]。client SDK は証明書を更新する前に token を取り直す [D]。
-- **privileged で mTLS を選ぶ理由**: FAPI は、A5 の攻撃者が DPoP proof を再送でき、本文や大半のヘッダに署名がないため改変した要求にも proof を再利用され得るとし、緩和策の 1 つに mTLS の検討を挙げる [N][^2]（RS-04#49）。Final の Message Signing はリソース要求の署名を含まない [N][^4]（RS-04#51）。
-- **複数の AS と対話する client**: AS ごとに別の DPoP 鍵または証明書を使うことを SDK の既定にする [D]。FAPI は Cuckoo's Token Attack の緩和策として AS ごとの鍵と短命 token を挙げる [N][^2]（RS-04#49）。issuer を cell ごとに分ける場合、複数 cell と対話する client は mix-up 対策（REQUIRED）と RFC 9207 の iss 検査の対象になる [N][^1][^14]（RS-04#4, #71）[D]。
+- privileged で mTLS に限る理由: FAPI は、A5 攻撃者が DPoP proof を再送でき、本文に署名がないため改変した要求にも proof を再利用され得るとし、緩和策に mTLS を挙げる [N][^2]（RS-04#49）。Final の Message Signing はリソース要求の署名を含まない [N][^4]（RS-04#51）。
+- edge は sender constraint を `cnf` で抽象化し、introspection 応答の `cnf`（`jkt` または `x5t#S256`）と提示者の証明を照合する [N][^5][^6][D]。方式の追加・PQ 化はこの claim に閉じる [D]。
+- DPoP の運用: nonce を必須にする。nonce を提供した後は nonce のない proof を受理しない（MUST NOT）[N][^5]（RS-04#56）。jti の再送検査は cell 内の共有ストアで行う。状態を共有しない複数サーバでは単回使用の検査を実現できないことがある [N][^5]（RS-04#56）。jti ストアの上限は 16,804/秒×60 秒で約 101 万件と見積もる [D][A-040, NA-01]。
+- mTLS の運用: TLS 終端点では証明書ヘッダの sanitize と proxy・アプリ間の保護を必須にする（RFC 9700 §4.13 の MUST）[N][^1]（RS-04#24）。mTLS を要求する endpoint はホスト名で分ける [N][^6]（RS-04#59）。証明書を更新すると束縛 token は無効になるので、SDK は更新前に token を取り直す [N][^6][D]。
+- 内部束縛 I1 の実装費用は H-16 で測る [D][A-050]。費用が過大なら mesh mTLS＋aud＋呼出し元照合（I2）に切り替える [D]。I2 は RFC 9700 §2.2.1 の SHOULD からの逸脱なので受容票（受容者案 CISO）を要する [D]。FAPI 範囲では I1 を維持する [D]。
+- AS ごとに別の DPoP 鍵・証明書を使うことを SDK の既定にする（Cuckoo's Token Attack の緩和）[N][^2]（RS-04#49）[D]。
 
 ### D6 ブラウザ
 
-- **D6-1** 「公開」以外の情報を扱う第一者のブラウザアプリは BFF を必須にし、ブラウザには token を渡さない [D]。新規の例外は認めず、既存の独自セッション（105 サービス）は移行期限付きの受容票で扱う [D][A-110]。根拠は RFC 10017 の "strongly recommended" と、同じ対象のブラウザ内 OAuth client を "not recommended" としていることであり、いずれも BCP 14 キーワードではないので必須化は自社判断である [N][^13]（RS-04#73、RS-17#4）[D]（DS-21）。
-- **D6-2** BFF は confidential client として認可コードグラント・PKCE S256・PAR を使う [D]。cookie の Secure・HttpOnly（MUST）、CSRF 対策（MUST）を守り、SameSite=Strict・path=/・Domain 属性なし・`__Host-Http-` prefix（SHOULD）を本基盤では必須にする [N][^13]（RS-04#74、RS-17#2, #3）[D]。同じ site に他のアプリが同居する場合 SameSite=Strict だけでは CSRF を防げないため、CSRF 対策は BFF 部品の既定動作にする [N][^13]（RS-17#3）[D]。CSP は XSS への第二の防御層として RFC 9449 が挙げている [N][^5]（RS-04#54）。
-- **D6-3** BFF はプラットフォームチームが部品（ライブラリと配備テンプレート）として提供する [D]。session store の上限見込みは有効 session 86.5 万 × 4 KB ≈ 3.5 GB である [D][A-006, NA-005-7]。
-- **D6-4** 第三者のブラウザ内 public client は、低リスク scope（D7-2 の区分）に限り受容票付きで許し、DPoP・rotation・最大寿命を必須にする [D]。FAPI は public client を範囲外とする [N][^2]（RS-04#41）。DPoP は、攻撃者が新しいフローを始めて自分の鍵に束縛した token を得ることを防げない [N][^13]（RS-04#75）。公開情報だけを扱い認証を要しないアプリには token を発行しない [D]（evo 案 C6 の不整合を判定者 2 の指摘で修正）。
-- **D6-5** privileged 操作の前には RFC 9470 の step-up を必須にする [D]。auth_time と acr は認証時点で確定し refresh では変わらないため、step-up のたびに新しい認可要求を送る [N][^15]（RS-03#48）[D]。
-- **D6-6** DBSC は対応ブラウザで有効化する追加の層とし、統制として依存しない [D]。W3C の公表版は 2025-08-21 の First Public Working Draft だけである [N][^33]（RS-13#63）。
+- **D6-1** 「公開」以外を扱う第一者ブラウザアプリは BFF を必須にし、token をブラウザに渡さない [D]。RFC 10017 の "strongly recommended" は BCP 14 キーワードではないため、必須化は自社判断である [N][^13][D]（RS-04#73、RS-17#4）。既存の独自セッション 105 サービスは移行期限付きの受容票で扱う [D][A-110]。
+- **D6-2** BFF はプラットフォームが参照実装として提供する（cookie 属性・CSRF 対策・AS session との連動を固定したもの）[D][A-052]。各チームによる BFF の自作は例外審査の対象にする [D]。BFF は confidential client として認可コード・PKCE S256・PAR を使う [D]。cookie の Secure・HttpOnly と CSRF 対策は MUST、SameSite=Strict・`__Host-Http-` prefix は SHOULD だが本基盤では必須にする [N][^13][D]（RS-17#2, #3）。CSP を XSS の第二層にする [N][^5]（RS-04#54）。
+- **D6-3** 第三者のブラウザ内 public client は、低リスク scope に限り受容票付きで許す [D]。その場合は DPoP・rotation・最大寿命を必須にする [D]。FAPI は public client を範囲外とする [N][^2]（RS-04#41）。
+- **D6-4** privileged の前には RFC 9470 の step-up を必須にする [D]。auth_time と acr は refresh で変わらないので、step-up のたびに新しい認可要求を出す [N][^14]（RS-04#72）[D]。
+- BFF 方式では token をブラウザに置かないので、PQ 署名で JWT が大きくなっても cookie の 4096 octets 上限とは無関係になる [D]（RS-11#63）。
 
-### D7 第三者連携アプリ（P-07）の grant
+### D7 第三者連携アプリの grant
 
-- **D7-1 登録審査**: 発行者の確認、最小 scope と scope ごとの理由、redirect URI の完全一致（RFC 9700 の MUST [N][^1]（RS-04#1））、非対称のクライアント認証（private_key_jwt で aud は issuer だけ、または mTLS）を審査する [D]。新規登録では client_secret を認めない [D]（RS-17#65）。
-- **D7-2 同意**: 利用者本人が同意できるのは、検証済み発行者のアプリの低リスク scope だけにする [D]。それ以外はテナント管理者の同意とし、privileged/T の操作として扱う（REQ-03 §2.1）[D]。Microsoft は利用者の同意を検証済み発行者のアプリに限るよう推奨し、組込みポリシーで低影響の権限だけの同意を許している [V][^35]（RS-17#62）。発行者の検証バッジはアプリの品質を示さないとも明記しているため、審査は自社で行う [V][^67]（RS-17#64）[D]。
-- **D7-3 grant 台帳**: grant ごとに client、テナント、同意者（利用者かテナント管理者か）、scope、resource、作成日時、最終使用日時、満了日時を記録する台帳を正本にする [D]。
-- **D7-4 寿命**: refresh token の非活動失効、grant の絶対寿命（満了後は再同意）、テナント管理者による定期の再承認を設ける [D]。値は scope のリスク区分ごとに TBD とする（D3、DL-20）[D]。GitHub App は installation token を 1 時間、期限付き user access token を 8 時間、refresh token を 6 か月で失効させている [V][^37]（RS-17#58）が、本基盤の値の根拠にはしない [D]。
-- **D7-5 棚卸しと再評価**: 棚卸しを同意ポリシーとは独立した統制にし、自動化する [D][A-013]。Microsoft Entra では同意設定の変更は今後の同意にしか影響せず、既存の grant は残る [V][^35]（RS-17#62）。このため同意方針を変えたら、再評価ジョブで既存の grant にも適用する [D]。再承認されなかった grant は自動で失効させる [D]。規模は基準で grant 3 万（1 テナント平均 3 件）、成長シナリオで 12 万である [D][A-013, A-007]。
-- **D7-6 一括失効**: client_id（連携事業者）単位とテナント単位の一括失効を、完了時間 SLO（TBD、DL-20、R-189.5）付きの手順にする [D]。opaque の access token は状態ストアの照会で cache 上限 C(t) 以内に拒否される [D]（evo 案の「即時」は cache TTL を無視していたため改めた）。Salesloft Drift の事案では、侵害された OAuth token が遅くとも 2025-08-08 から使われ、Salesloft が Drift アプリの全 access token と refresh token を失効させたのは 08-20 だった [I][^40]（RS-12#37）。
-- **D7-7 大量取得の検知**: 大量 export の検知は DL-52 と ADR-006 に置く [D]。Cloudflare の報告では、Bulk API 2.0 による本体の持ち出しは約 3 分だった [I][^41]（RS-12#41）。
-- **D7-8 契約**: 連携事業者との契約に、token の保管方式、sender constraint への対応、侵害時の通知、一括失効への協力を入れる [D]。Heroku は事案後に RFC 8705 の mTLS と GitHub App 型の権限モデルを検討すると表明した [I][^43]（RS-12#61）。
-- **D7-9 offline_access**: offline_access を要求する場合は、別の条件がない限り prompt=consent を使う（OIDC Core §11 の MUST）[N][^32]（RS-17#24）。
-- **D7-10 device authorization grant**: 業務 API では既定で無効にする [D]。RFC 10027 は保護資源が機微・高価値・業務上重要なら device grant を避けるよう述べ（Avoid）、実装前のリスク評価を MUST とする [N][^18]（RS-13#57、RS-17#14）。Microsoft は device code flow を可能な限り遮断するよう推奨している [V][^36]（RS-13#59）。許可する場合は事前登録したデバイス種別と client_id に限り、監査属性を付ける [D]（RS-17#17、G-136(d)）。
-- **D7-11 Bearer 例外**: sender constraint に未対応の既存連携は期限付きの受容票で扱う [D]。期限は §2.12 決裁案 7 で決める [D]。
-- **D7-12 AS 移行時の再同意**: 新 AS へ移行するときは旧 AS の grant と refresh token を移送せず再同意を求め、再同意を初回の棚卸しとして扱う（as-is-inventory W5）[D]。採否は §2.12 決裁案 5 で決める [D]。
+- **D7-1** 登録時に、発行者の確認、最小 scope、redirect URI の完全一致（MUST）[N][^1]、非対称 client 認証を審査する [D]。新規登録では client_secret を認めない [D]。
+- **D7-2** 利用者本人が同意できるのは、検証済み発行者のアプリの低リスク scope に限る。それ以外はテナント管理者の同意とし、privileged 操作として扱う [D]。Microsoft は悪性アプリを無効化しても既存 access token は期限まで有効と記載している [V][^37]（RS-13#61）。opaque と状態照会の組合せなら、cache 上限 C(t) 内で既存 token も拒否できる [D]。
+- **D7-3** grant 台帳を正本にする。項目は grant ID、client、発行者（publisher）、テナント、同意者の種別、scope、resource、作成日時、最終使用日時、満了日時とする [D]。
+- **D7-4** 非活動失効、grant の絶対寿命（満了後は再同意）、テナント管理者による定期再承認を設ける [D]。値は scope のリスク区分ごとに TBD（所有者 CISO＋事業責任者、G4、DL-20）[D]。
+- **D7-5** 棚卸しは同意ポリシーとは独立した自動統制にする [D]。Entra は同意設定を変えても既存の grant は変わらないと明記している [V][^51]（RS-17#62）。同意方針を変えたら既存 grant に再評価をかけ、再承認されなかった grant は自動で失効させる [D][A-013]。
+- **D7-6** 一括失効は grant ID・client_id・publisher・テナント・scope の各単位で行えるようにし、完了時間 SLO（R-189.5、TBD）付きの手順にする [D]。結合キーとして、introspection 応答と内部 JWT に grant 参照を入れる（D9-4）[D]。Salesloft Drift では、侵害された token が遅くとも 2025-08-08 から使われ、全 token の失効は 08-20 だった [I][^35]（RS-12#37）。
+- **D7-7** device authorization grant は業務 API で既定無効とする [D]。RFC 10027 は機微・高価値の資源では避けるよう述べ、実装前のリスク評価を MUST とする [N][^44]（RS-13#57）。
+- **D7-8** sender constraint に未対応の既存連携は期限付き受容票で扱う [D]。GitHub 2022 では、第三者の integrator に発行された OAuth user token が窃取されて使われた [I][^36]（RS-12#59）。
 
 ### D8 RFC 9700 準拠方針
 
-- **D8-1** RFC 9700（BCP 240、final）を準拠基準とし、準拠表は「規範文 × 適用条件」の単位で DL-16 に置く（RS-04 §3.1 の 39 行が素案）[D]。MUST 行から外れる場合は「非準拠」とし期限付きの受容票を必須にする [D]。SHOULD 行から外れる場合は理由・補完統制・受容票を記す（RS-04 §5.1）[D]。
-- **D8-2** RFC より厳しく採る行は、BCP の要求と混同しないよう「自社の採否判断」として書き分ける（RS-04 §2-2）[D]。
+- **D8-1** RFC 9700（BCP 240、final）を準拠基準とし、「規範文×適用条件」の準拠表を DL-16 に置く（RS-04 §3.1 の 39 行が素案）[D]。MUST 行から外れる場合は「非準拠」とし、期限付き受容票を必須にする [D]。SHOULD 行から外れる場合は、理由・補完統制・受容票を記す [D]。
+- **D8-2** RFC より厳しくする採否は、BCP の要求と書き分ける [D]。
 
-| RS-04# | RFC 9700 の強度 | 本基盤の採否 |
+| RS-04# | RFC 9700 | 本基盤 |
 |---|---|---|
-| #8〜#10 | PKCE: public は MUST、confidential は RECOMMENDED | 全 client で必須、S256 のみ [D] |
-| #13 | implicit 等: SHOULD NOT | AS で無効化 [D] |
-| #14 | sender-constrained・audience-restricted: SHOULD | 外部は必須。内部は I1 を既定、I2 なら逸脱として受容票 [D] |
-| #17 | audience 制限: SHOULD（RS 側の拒否は MUST） | サービス別 aud を必須 [D] |
-| #18 | ROPC: MUST NOT | 無効化。移行の例外は非準拠として受容票 [D] |
-| #20 | 非対称クライアント認証: RECOMMENDED | 新規 client で必須 [D] |
-| #5 | RFC 9207 の iss: SHOULD | 既定（iss の検査は RFC 9207 の MUST [N][^14]（RS-04#71）） |
-| #22 | client_id と sub の混同: SHOULD NOT / MUST | client_id の自己指定を禁止し、sub の名前空間を分ける [D] |
-| #23 | end-to-end TLS: RECOMMENDED | 部分採用（逸脱）。ingress・mesh で終端する場合は #24 の MUST と、アプリまでの mTLS による再暗号化で補う [D] |
-| #30 | 認可コード二重償還時の発行済み token の失効: SHOULD | 採用 [D] |
-| #32 | client が query で token を送ること: MUST NOT | SDK で送らない。RS 側の不受理は V11 [D] |
-| #38 | refresh の非活動失効: SHOULD | 採用 [D] |
+| #8〜#10 | PKCE: public MUST／confidential RECOMMENDED | 全 client 必須、S256 のみ [D] |
+| #13 | implicit: SHOULD NOT | AS で無効化（自社判断）[D] |
+| #14 | sender-constrained: SHOULD | 外部は必須。内部 I2 は逸脱として受容票 [D] |
+| #17 | audience 制限: SHOULD（拒否は MUST） | サービス別 aud 必須 [D] |
+| #18 | ROPC: MUST NOT | 無効化 [D] |
+| #20 | 非対称 client 認証: RECOMMENDED | 新規 client で必須 [D] |
+| #23 | end-to-end TLS: RECOMMENDED | 部分採用（逸脱）。#24 の MUST と再暗号化で補う [D]（R-259） |
+| #30 | 二重償還時の失効: SHOULD | 採用 [D] |
+| #4, #5 | 複数 AS と対話する client の RFC 9207 iss 検査 | 採用 [N][^1][D]（R-046 の一部） |
 
-- **D8-3 RFC 9068 の RS256 MUST**: 内部 issuer は ES256 で署名する [D]。共通 SDK は RS256 の検証を実装するが、内部 issuer の allowlist では既定で無効にする（ops 案 V-10 を採用）[D]。RFC 9068 §2.1 の「対応アルゴリズムに RS256 を含める」MUST を、実装済みで設定により有効化できる状態で満たすと読むかには解釈の余地があるため、準拠表には「解釈に依存する行」として記録し、受容票（受容者案 CISO）を付ける [N][^7][D]。FAPI 範囲では RS256 を処理しない構成になるので、FAPI 優先の逸脱として記録する（RS-04 §2-7）[D]。外部 RP 向けの ID Token は、OIDC Core が OP に RS256 を MUST で求めるため RS256 を残し、鍵長は 3072 bit 以上にする [N][^32]（RS-11#54）[D]。
-  - sec 案は RS256 を支援しない理由に NIST IR 8547 ipd を挙げていたが、同文書の Table 2 は 112-bit 強度の RSA を「2030 年より後は deprecated、2035 年より後は disallowed」とし、128-bit 以上（ES256 と RSA-3072 を含む）を「2035 年より後は disallowed」とするため、RSA-3072 の RS256 と ES256 の扱いは同じである [N][^31]（RS-11#8）。このため IR 8547 は ES256 だけにする根拠にならず、本書では根拠から外した [D]（判定者 3 の指摘）。
-- **D8-4 FAPI 2.0**: 必須範囲は ADR-020 で決め、範囲内では FAPI の shall を RFC 9700 より優先する [D]。範囲外で部分的に採るものは「FAPI 準拠」と呼ばない [D]。準拠を名乗るプロファイルは mandatory な振る舞いを除去・上書きしてはならない（shall not）[N][^2]（RS-04#48）。confidential client の認可要求は範囲外でも PAR を既定にし、範囲の拡大を安くする [D]（RFC 9126 [N][^49]、RS-04#53）。
-- **D8-5 draft の扱い**: 次の draft は規範根拠に使わず、標準ステータス台帳（DL-84）で追跡する [D]。例外として 7523bis の aud=issuer と typ、8725bis の防御的検査（V14）は厳しくなる側として先行採用する [D]。
-  - OAuth 2.1（draft-16、WG Document、IESG 未提出）[N][^22]（RS-04#76）
-  - 8725bis（draft-10、RFC Ed Queue、RFC Editor 状態 Blocked）[N][^20]（RS-04#63）
-  - Token Status List（draft-21、RFC Ed Queue）[N][^23]（RS-04#80）
-  - 7523bis（draft-11、IESG 承認済み、RFC 未発行）[N][^25]（RS-17#21）
-  - Transaction Tokens（draft-11、IESG 未提出）[N][^26]（RS-06#30）
+- **D8-3** RS256: 内部 issuer は ES256 で署名する [D]。SDK は RS256 の検証を実装するが、既定では無効にする [D]。RFC 9068 §2.1 の MUST を満たすかは解釈に依存するため、準拠表に記録し受容票を付ける [N][^7][D]。RSA-2048（112-bit 強度）は NIST IR 8547 の初期公開草案（ipd、未確定）で「2030 年より後は Deprecated、2035 年より後は Disallowed」とされている [N][^49]（RS-11#8）。この値は ipd であり、final で変わり得る [D]。
+- **D8-4** FAPI 範囲（ADR-020）では FAPI の shall を優先する [D]。部分採用の範囲は「FAPI 準拠」と称さない（shall not の規則）[N][^2]（RS-04#48）。
+- **D8-5** 次の draft は規範根拠に使わず、標準ステータス台帳で追跡する [D]。OAuth 2.1 -16（IESG 未提出）[N][^19]、8725bis -10（RFC Editor で Blocked）[N][^20]、Token Status List -21 [N][^18]、Transaction Tokens -11（IESG 未提出）[N][^21]。
 
-### D9 失効状態の確認（操作階層ごと）
+### D9 claim profile と要求単位の証跡（利用者相談への回答）
 
-| 階層（DL-09） | edge の状態照会（外部 opaque） | 内部 RS（内部 access token） | AS・状態ストア停止時（DL-19 への入力案） |
+**D9-1 trace id を access token の claim にしない** [D]。理由は次の 4 つである。
+
+| # | 理由 | 根拠 |
+|---|---|---|
+| 1 | access token は寿命 L の間に多数の要求で再利用される。外部 opaque token も内部 token も要求単位の値を持てない。要求ごとに token を発行し直すと、exchange が 16,804/秒×6 で約 10 万/秒（A-043 の exchange 1,112/秒の約 90 倍）になり、D3 の Lmin(a) を崩す | [D][A-040, A-028, A-043] |
+| 2 | trace-id は外部から注入できる。W3C Trace Context は、公開 API で外部の trace を素直に継続すると攻撃者が trace-id の衝突を偽造し監視データを使えなくできると述べる。証跡の鍵に使えば、偽造できる値に証跡の一意性を依存させる | [N][^23]（RS-10#17）[D] |
+| 3 | traceparent・tracestate の目的は相関だけであり、個人識別情報・機微情報を入れてはならない（MUST NOT）。署名付きの主体情報と trace-id を同じ token に入れると、観測基盤の側で trace-id から主体を引ける対応表が生まれる | [N][^23]（RS-10#16）[D] |
+| 4 | W3C Baggage は利用者を識別できるデータが入り得ることへの注意を求めている。認可の文脈を baggage で運ぶ設計は採らない | [N][^24]（RS-10#19）[D] |
+
+**D9-2 「共通の認証認可を通った一貫した要求」の証跡は、目的の異なる 4 層の ID を監査記録で結合して残す** [D]。
+
+| 層 | ID | 生成者・単位 | 運び方 | 何を証明するか |
+|---|---|---|---|---|
+| L1 token | `jti` | AS・STS。JWT 1 件ごと（外部 opaque token は AS の発行記録 ID） | 内部 JWT 内、introspection 応答 | その JWT がどの発行記録から来たか。D1-6 の偽造検知と失効連動のキー。jti は JWT 自体の一意識別子であり（RFC 7519 §4.1.7、一意性は MUST）、grant や session の識別子ではない [N][^29][^7] |
+| L2 grant・session | grant 参照、session 参照（`sid`） | AS。grant・session ごと | 内部 JWT、introspection 応答 | どの同意・どのログイン session に属するか。一括失効（D7-6）と全 session 失効（R-112）の結合キー [D]。`sid` は IANA 登録済み（OIDC Front-Channel Logout）[N][^28] |
+| L3 要求 context | `txn` | edge 併設の TTS。外部要求 1 件ごとに CSPRNG で生成 | 署名付き要求 context（D9-3）を Txn-Token ヘッダで運ぶ | その要求が edge の認証・認可を通過し、どの主体・テナント・内部 token 系譜に属するか。下流は改変できない |
+| L4 判定 | `decision_id` | 各 PEP・PDP。判定 1 件ごと | 監査イベント（ADR-014、DL-77） | どの policy 版でどう判定したか。trace_id は相関専用の属性として持つ（RS-10 §5.2） |
+
+- `txn` は RFC 8417 §2.2 が定義・登録した OPTIONAL の一意な取引識別子で、関連する複数の JWT を相関させるために使え、SET 以外の profile の JWT でも使える [N][^25][^28]。Transaction Tokens draft も `txn` を必須 claim として使う [N][^21]（RS-06#31）。
+- 監査では (txn, jti, grant 参照, sid, decision_id, trace_id) を 1 行に記録し、trace_id は相関の補助としてだけ使う [D]。8 本の ADR で揃えた監査欄は、これに iss と AuthZEN の X-Request-ID（ADR-011 D5-5）を加えたものとする（05_adr/reconciliation-notes.md §3。整合調整で修正）[D]。edge は外部から届いた traceparent を信頼境界で再採番し、外部の値は別属性に退避する [D]（W3C Trace Context §7.2 の懸念への対策、RS-10#17）。外部の trace 状態で監査の記録・非記録が変わらないことを H-21 で確かめる [D]。
+- Txn-Token 全体をログに記録してはならない（MUST NOT）[N][^21]（RS-06#41）。記録するのは txn と hash だけにする [D]。
+
+**D9-3 要求 context の発行範囲** [D]
+
+- write・privileged・break-glass/B・FAPI 範囲の要求では、edge が要求ごとに要求 context を発行し、内部 RS は内部 access token と一緒に検証する [D]。public と read-sensitive は発行を任意にし、L1・L2・L4 で相関する [D]。
+- 形式は Transaction Tokens draft-11 に合わせ、版を固定した社内 profile にする（typ: txntoken+jwt、aud: trust domain、必須 claim: txn・sub・scope・req_wl、tctx にテナントと内部 token 系譜の jti を必須にする、rctx の IP 等の要求環境は採らない）[N][^21]（RS-06#31）[D]。draft はテナント claim を定義していないので、tctx にテナントを必須にするのは自社判断である [N][^21]（RS-06#42）[D]。
+- Txn-Token は replay に耐性がなく、認証資格情報として使ってはならない（MUST NOT）[N][^21]（RS-06#36）。このため各 hop の呼出し元認証は mTLS（D5）で別に行い、要求 context を単独で信頼しない [D]。
+- 発行量は 16,804×p_w/秒である [D][A-040, NA-02]。p_w が 30% なら約 5,000/秒になる（p_w は未測の例示）[D]。全要求に発行する（T4）と基準 16,804/秒・成長 56,444/秒の署名になる [D][A-040]。署名鍵は cell 内の専用鍵（ADR-007）にし、KMS の QPS を超える場合は ADR-007 の鍵階層で cell 内署名にする [D]。
+- draft が RFC にならない場合や大きく変わる場合でも、社内 profile の版として凍結し、adapter で差し替える [D]。最終的な採否と委任の表現は ADR-009 と整合させる [D]。
+- 要求 context の aud に置く「trust domain」は Txn-Token 草案の意味での trust domain であり、TTS を cell ごとに置くので値は cell ごとの内部値になる（草案は trust domain ごとに論理的に 1 つの TTS を MUST とする [N][^21]（RS-06#38））[D]。この値は内部 issuer と同じく可逆な内部値として扱い、ADR-021 D21-28 の SPIFFE trust domain 名（本番 1・非本番 1）とは別のものとする [D]（整合調整で修正）。
+- ADR-022 D-8-3 は `txn` を証跡の主キーとする。本書の発行範囲（write 以上）では public・read-sensitive の要求に `txn` がないため、その範囲の主キーは (jti, decision_id, X-Request-ID) になる [D]。全要求に発行するか（T4、署名 16,804/秒）、主キーの範囲を write 以上に限るかは未決の論点 U2（§2.15）とする [D]（整合調整で修正）。
+
+**D9-4 基盤が定義する claim（内部 access token と introspection 応答）**
+
+所属情報以外に将来に向けて定めておく claim は、「誰が（主体種別）・どの強さで・どの鍵で・誰の代理で・何を・どのテナントで・どの版で・どの grant/session から」に対応するものに限る [D]。属性そのもの（所属部署、役割、資格）は載せない [D]（R-249）。
+
+| 群 | claim | IANA 登録・定義元・強度 | 本基盤 | 将来性（なぜ今決めるか） |
+|---|---|---|---|---|
+| 識別 | iss, sub, aud, exp, iat, jti, client_id | RFC 9068 §2.2 で REQUIRED [N][^7] | 必須 | iss・sub の永続性は D10-1 |
+| 権限 | scope, authorization_details | scope は値が aud の資源で意味を持つこと（MUST）[N][^7]。authorization_details は RFC 9396 で、JWT では audience ごとに絞った値を置くことが RECOMMENDED [N][^16]（RS-04#64）。いずれも登録済み [N][^28] | scope は粗い API 能力だけ。authorization_details は高リスク操作の取引内容（金額・対象）だけ | scope で表せない取引単位の同意（決済・エクスポート）の受け皿 [D] |
+| 認証文脈 | acr, amr, auth_time | RFC 9068 §2.2.1 で OPTIONAL、認可応答ごとに固定 [N][^7]。登録済み [N][^28] | 必須（利用者主体の token） | step-up（RFC 9470）と AAL 判定（ADR-002）に使う。後から足すと 300 サービスの判定ロジックを再試験することになる [N][^14][D] |
+| 鍵束縛 | cnf | RFC 8705・RFC 9449 [N][^6][^5]。登録済み（RFC 7800）[N][^28] | 束縛時は必須 | sender constraint の方式変更（PQ 化を含む）をこの claim に閉じ込める [D] |
+| 委任 | act（may_act は AS 側の判断材料） | RFC 8693。アクセス制御は現在の actor だけ（MUST）[N][^12]。登録済み [N][^28] | 委任時は必須 | AI エージェント・非同期ジョブの委任表現（ADR-009、ADR-017）。「本人の操作」と「代理操作」を監査で区別する [D] |
+| テナント文脈 | 作用中テナント（1 値） | 標準 claim なし。`tid`・`tenant`・`org_id` は IANA 未登録 [N][^28]。Txn-Token にもテナント claim はない [N][^21]（RS-06#42） | 必須、1 つだけ（V9）。所属一覧は入れない | 複数所属（A-015 の 3%）では、テナントを切り替えるたびに token を取り直す規則を契約に固定する（R-283）[D] |
+| 主体種別 | 人間 / service account / workload / AI エージェント | 標準 claim なし | 必須（社内 claim）。sub は全種別に共通の単一名前空間から払い出し、sub の文字列から種別を推論させない（ADR-021 D21-10、02_requirements/principal-catalog.md §3.2。整合調整で修正） | ATK-16（濫用される AI エージェント）を含む非人間主体の判定と監査を、claim の追加ではなく既定項目として扱う（ADR-017）[D] |
+| grant・session 参照 | grant 参照、`sid` | `sid` は登録済み [N][^28]。grant 参照は社内 claim | 必須（利用者主体・第三者 grant） | D7-6 の一括失効と D9-2 L2 の結合キー [D] |
+| 版 | profile 版 | 社内 claim | 必須 | V13 の版管理。20 年で形式を変えるときの識別 [D][A-100] |
+| 状態参照 | `status`（Token Status List） | draft-21 [N][^18]（RS-04#80） | 採用しない。名前だけ予約し、RFC 化で再評価 | 案E の再評価トリガー（§8）[D] |
+| 検証済み属性の出所（枠のみ予約） | 派生値、出所 issuer、trust_framework、検証時刻、有効期間、状態参照 | OpenID Identity Assurance Schema Definition 1.0（2024-10-01。ページの状態表示は Final だが、同じページの Warning 節は「OIDF International Standard ではない」「draft」と述べており、状態の表記が矛盾する。2026-10-15 に整合調整で原典を再確認し、ADR-022 [^54] の指摘と一致した。状態は未確定として扱い、採否の結論には使わない）は `verified_claims` を定義し、`verification` に `trust_framework`（必須）・`time`・`evidence` を置く [N][^27]。`verified_claims` は IANA 登録済み [N][^28]。W3C VC Data Model 2.0（Recommendation、2025-05-15）[N][^26] | 版付き profile に枠だけ予約する（NA-07）。VC 本体と個人属性の原文は複写せず、認可に必要な派生値（例: 年齢要件を満たす）とその出所・検証時刻だけを入れる設計にする | 属性証明を後から受け入れるときに、claim の意味を壊さず追加できるようにする [D] |
+| 載せない | groups, roles, entitlements の全量 | RFC 9068 §2.2.3.1。載せる場合は SCIM の属性を使うべき（SHOULD）[N][^7]。登録済み [N][^28] | **載せない** | 権限は PDP で評価する（R-249）。token に載せると剥奪が寿命 L まで遅れ、U2 を悪化させる [D] |
+| 載せない | 氏名・メール・電話・所属部署などの識別属性 | RFC 9068 §6 は、JWT の内容は client から見えるため機微 claim の省略や opaque 化を対策に挙げる [N][^7]（RS-04#61） | **載せない**（必要なサービスは主体 API で取得） | email は再割当され得るため識別子に使わない [N][^31]（RS-03#58） |
+| 載せない | trace id、要求単位の ID | D9-1 | **載せない**（txn は要求 context にだけ載せる） | — |
+| 載せない | 由来する認証イベント ID（ADR-007 D7-45 の発行台帳の項目） | 社内の照合キー | **載せない**。発行台帳だけに置き、token 側は `sid`・grant 参照で台帳と結合する | ADR-007 §9.2 が本書に委ねた判断。PQ 期のサイズ予算（RS-11#63）を消費せず、`sid` で同じ結合ができる [D]（整合調整で追加） |
+
+- **D9-5 社内 claim の命名**: IANA 未登録の社内 claim（テナント文脈、主体種別、grant 参照、profile 版、出所の枠）は、自社が管理するドメインに基づく衝突耐性のある名前（Public Name）にするか、IANA に登録する [D]。RFC 7519 §4.2 は新しい claim 名を登録するか Public Name にすべきとし（should）、Private Name は衝突し得るので注意して使うべきとする [N][^29]。20 年の間に AS 製品や外部標準の claim 名と衝突する危険を避けるためである [D][A-104]。具体名と短縮表記（PQ 化後のサイズ予算との兼ね合い）は ADR-022・DL-75 で決める [D]。
+  - 整合調整による限定: 上記の Public Name 化は、外部の RP に渡す ID Token と外部に公開する応答に適用する [D]。typ が版付きの自社 profile である内部 token（内部 access token、要求 context、introspection 応答）に限り、ADR-021 D21-38 規則 3 に従って短い名前（`tid` など）を許す [D]。内部 token では typ と profile 版で意味を固定でき（V13）、受信者は共通 SDK に限られるためである [D]。名前の正本は DL-75（schema）と DL-115（claim 目録）とし、意味は本書、版の運用は ADR-016 が持つ [D]（整合調整で修正）。
+
+**D9-6 W3C VC Data Model 2.0 との関係**
+
+- VC は holder が提示する属性証明のデータモデルであり、OAuth access token の代わりにはならない [D]。形式は採らず、概念ごとに token の外の仕組みへ割り当てる [D]。
+
+| VC DM 2.0 の概念 | 原典の定義 | 本基盤での対応先 | 判断 |
 |---|---|---|---|
-| public | 不要 | 不要 | 継続 |
-| read-sensitive | 毎要求。cache ≤ C(read) | 局所検証＋CAEP の受信（ADR-006）。L_int(read) は U2 で制約 | 寿命の範囲で継続（寿命は延長しない）。限定 grace の採否は DL-19 |
-| write | 毎要求。cache ≤ C(write) | 局所検証。L_int(write) は U2 で制約。ADR-006 が内部照会を追加し得る | fail-closed（REQ-03 §3.1 の入力案） |
-| privileged | 毎要求。cache なし | 毎要求、状態ストアで jti・grant・session を照合（stateful） | fail-closed。BIA の MTPD 24 時間。侵害対応の剥奪・停止は break-glass/P 経路で代替（BIA E03） |
-| break-glass/B（テナント内の業務緊急アクセス） | 毎要求。cache なし | privileged と同じ＋緊急権限の記録を照合 | DL-19・ADR-029 で決める（TBD）。BIA 票に /B の行がないため |
-| break-glass/P（基盤の緊急経路） | 本 ADR の token 基盤（AS・状態ストア・STS）を使わない | REQ-03 §3.1 のローカル資格情報経路（DL-46、ADR-029）で照合 | 基盤の停止中も使える（BIA E04） |
-| FAPI 範囲の RS（ADR-020） | privileged と同じ | privileged と同じ | privileged と同じ |
+| credentialStatus（§4.10） | 状態仕様は個人の追跡を可能にしてはならない（MUST NOT）[N][^26] | 状態ストア（D1）と CAEP。Token Status List は RFC 化まで候補（D8-5） | 状態照会の経路が主体の追跡に使われないこと（照会ログの最小化）を H-23 の観点に入れる [D] |
+| evidence（§5.6） | 発行根拠を表す。値は 1 つ以上のオブジェクト（MUST）[N][^26] | 身元確認・認証の根拠は IdP 側の記録（ADR-002）に置き、token には acr・amr と出所の枠だけを載せる | 根拠の本体を token に載せない [D] |
+| termsOfUse（§5.5） | 1 つ以上の利用条件ポリシーを指定する（MUST）[N][^26] | 取引単位の制約は authorization_details、目的は監査の目的欄（ADR-014） | 「目的」を表す登録済み claim は確認できていないため、v1 では token に私的 claim を発行しない [D]。名前だけの予約（ADR-022 D-9-2、発行はしない）はこの判断と両立する（整合調整で修正） |
+| credentialSchema（§4.11） | スキーマの参照 [N][^26] | profile 版 claim と DL-75 のスキーマ | [D] |
+| validFrom / validUntil（§4.9） | 有効期間 [N][^26] | iat・nbf・exp | [D] |
+| データ最小化（§8.9、非規範） | 検証者は取引に厳密に必要な情報だけを求めるよう促されている [N][^26] | D9-4 の「載せない」行 | 所属・役割を token に載せない判断の補強 [D] |
+| 識別子による相関（§8.4、非規範） | VC は個人の相関に使われ得る長期識別子を含み得る [N][^26] | VC の識別子を sub・txn・grant 参照に流用しない | sub の形式（RS 別・client 別の値）は D10-1 と ADR-021 で PIA を経て決める [D] |
 
-- sec 案は「privileged と break-glass は AS 停止中に止める」としていたが、BIA は break-glass を基盤に依存させず、REQ-03 は break-glass/P を連携に依存しないローカル資格情報とするため、break-glass/P を本 ADR の token 基盤から外した [D]（判定者 3 の指摘。ops 案 D-1.7、evo 案 D5-07 も同じ扱いに改めた）。SRS は緊急用の資格情報を SSO や federated IdP から導出してはならない（依存の少ない実装に置き換えられる場合を除く）とする [V][^46]（RS-09#41）。
-- FAPI 範囲の RS は失効状態を検証しなければならない（shall）[N][^2]（RS-04#45）。BFF 経路で FAPI 範囲の API を呼ぶ場合も、edge と内部 RS の照会は privileged と同じにする [D]。
-- privileged の stateful 照合で偽造 token も検知する [D]。発行記録にない jti を持つ署名済み token は拒否し、警報を出す [D]。CSRB は、自社の token 生成方式に合わない偽造 token を検知する仕組みがあれば Microsoft 単独で阻止または検知できた可能性が高いと認定した [I][^38]（RS-12#10）。CSRB の Recommendation 6 は、stateful token、束縛 token、共通の認証ライブラリ、テナント単位の鍵スコープを例示している [I][^38]（RS-12#11）。
-- RFC 8693 は入力 token と出力 token を強く結び付けず、失効の伝播は一般的な性質ではないとする [N][^12]（RS-04#66）。このため内部 access token の jti を親の grant と session に結び付けて状態ストアに記録する [D]。記録件数は exchange/秒 × L_int で、基準（L_int＝10 分）では 1,112 × 600 ≈ 67 万件である [D][A-043]。
+- 将来、本人確認や属性証明の入力として VC を受け入れる場合でも、VC の検証は IdP・オンボーディング（ADR-002、ADR-004）で閉じる [D]。access token には検証結果の要約（acr、テナント、必要なら派生値と出所の枠）だけを載せる [D]。
 
-### D10 暗号・サイズ・進化と退出
+### D10 識別子の永続性と暗号
 
-- **D10-1** alg は fully-specified の IANA 識別子だけを使う [D]。RFC 9864 は JOSE の多相的な EdDSA を Deprecated にした [N][^48]（RS-11#43）。このため FAPI が許す 3 方式のうち EdDSA は採らない [D]。
-- **D10-2** 内部 access token の PQ 移行の候補は ML-DSA-44（RFC 9964）とし、順序は ADR-015 が決める [N][^55]（RS-11#41）[D]。draft 段階の composite JOSE の識別子は profile にも SDK にも固定しない [N][^56]（RS-11#44）[D]。
-- **D10-3** token profile の版ごとにサイズ上限を定める [D]。外部契約（DL-75 と第三者向け規約）には、client が受け付けなければならない opaque token の最大長を書く [D]。最大長は、将来 JWT へ寄せる余地を残すため ML-DSA-87 の JWT の計算値（約 6.8KB）を下回らない値とし、値は TBD とする [D]（RS-11#62）。内部 access token の計算値は ES256 で約 700 byte、ML-DSA-44 で約 3,846 byte、ML-DSA-65 で約 5,031 byte である [D]（RS-11#62）。
-- **D10-4** opaque の値の先頭に、版・種別・経路識別子（issuer と cell を指す意味のない値）を置く [D]。版と種別は漏えい走査（ログ・リポジトリ）に、経路識別子は AS 置換時に edge が照会先を選ぶ dual-run（ADR-018、ADR-027）に使う [D]。client はこの値を解釈しない（D1、RFC 9068 §6）[D]。
-- **D10-5** RFC 7696 §2.1 はプロトコルにアルゴリズム識別子の仕組みを含めることを MUST とする [N][^54]（RS-11#36）。JOSE ではこれを JWS の alg で満たす [D]。kid は鍵の識別子であり、kid の命名には alg 名と製品名を含めない（ADR-021）[D]（evo 案 D5-36 の「alg と kid で満たす」を判定者 2 の指摘で修正）。
-- **D10-6** 信頼アンカーは自社ドメインの issuer に限り、製品固有のドメイン・claim・束縛技術を基盤の契約に入れない [D]（R-208）。
+- **D10-1 識別子**: `iss` は自社が所有する FQDN にし、製品ベンダーのドメイン・alg・cell・製品名を含めない [D]（ADR-021）。issuer が変わると全 RS と全外部 client の検証が壊れるためである [D][A-104]。`sub` は iss の中で一意かつ再割当しない不透明な値にする [D]。OIDC Core は sub を「Issuer の中で局所的に一意で、再割当されない識別子」と定義し、RP が安定した識別子として頼れるのは iss と sub の組だけとする [N][^31]（RS-03#58）。第三者 client に pairwise な sub（client ごとに異なる sub を出して活動の相関を防ぐ方式、OIDC Core §8）を既定にするかは、ADR-021 で PIA を経て決める [N][^31][D]。
+- **D10-2 opaque の最大長**: 外部契約に opaque token の最大長・文字集合・128 bit 以上のエントロピー・「client は解析しない」の 4 点だけを書く [D]。最大長（TBD、所有者 CTO、G3、DL-75）は ML-DSA-87 の JWT の計算値（約 6,789 文字）を下回らない値にする [D]（RS-11#62）。将来、外部を JWT に寄せる可逆性を実際に残すためである [D]。
+- **D10-3** opaque 値の先頭に版・種別・経路識別子を置く [D]。漏えい走査と AS 置換時の dual-run に使い、client は解釈しない [D]。
+- **D10-4 alg**: alg は fully-specified の識別子だけを使う [D]。RFC 9864 は JOSE の多相的な EdDSA を Deprecated にした（新規展開では置換手段を使うべき、SHOULD）[N][^42]（RS-11#43）。このため多相的な `EdDSA` は採らない [D]。Ed25519 系を将来使う場合は fully-specified の識別子に限る [D]。
+- **D10-5 alg 名を識別子に埋め込まない**: alg 名を issuer URL・sub・kid・profile 名に埋め込まない [D]（RS-11 結論 8）。kid は不透明な値にする [D]。
+- **D10-6 JWKS と PQ**: JWKS は複数 alg の鍵を並行公開できる構成にする [D]（RS-11 結論 7）。内部 JWT の PQ 化は ML-DSA（RFC 9964 で JOSE 識別子が確定）への移行と移行期間中の鍵の並行公開を基本とし [N][^50]（RS-11#41）、composite 署名は RFC 化を待って再評価する [D]。ML-DSA-65 の JWT は計算上約 5,031 文字、DPoP proof は約 8,222 文字になり [D]（RS-11#62）、Authorization ヘッダは HPACK の既定テーブルに入らない [D]（RS-11#63）。内部 alg を ES256 から ML-DSA-65 へ利用側の改修なしで切り替えられることを H-19 で確かめる（G-068）[D]。外部 opaque により、alg 移行の範囲は edge・共通 SDK・内部 RS に閉じる [D]。DPoP の PQ 化は ADR-015 の再検討トリガーに登録する [D]。
 
-### D11 実装・組織・製品の分担
+### D11 退出可能性（AS 製品置換）
 
-- **D11-1 業務サービスの義務**は次の 4 つに限る [D]。
-  - (a) 共通検証 SDK または sidecar で内部 access token を検証する [D]。
-  - (b) 自サービスの aud を登録する [D]。
-  - (c) token をログに記録しない [D]。
-  - (d) 契約試験キット（DL-80）の負例に合格する [D]。
-  - 操作階層の登録は REQ-03 J10 と DL-67 がすでに求めており、本 ADR の追加義務ではない [D]。privileged の stateful 照合と cnf の検証は SDK・sidecar が行う [D]。
-- **D11-2** edge、状態ストア、STS、BFF 部品、検証 SDK、契約試験キット、準拠表はプラットフォームチームが所有する [D][A-054]。A-054 の内数で賄えるかは H-18 で測る（NA-005-5）[D]。
-- **D11-3** ベンダーの受入条件に、SDK の版を指定どおりに使っていることと契約試験キットに合格していることを入れる（11_contracts の連携契約）[D]。25 組織・60 チームの人材の入替えやベンダー交代があっても、検証規則の品質を機械的に判定できるようにするためである [D][A-052]。
-- **D11-4** ADR-001 の評価軸に、PAR、DPoP（nonce と dpop_jkt）、mTLS、RFC 9207・9068・7662・9701・7009・8693・8707、SSF の送信、opaque token の状態の外部 push（D1-3）を入れる [D]。OIDF の認定は特定の版の試験記録であり、採用版で FAPI 2.0 の DPoP 構成と mTLS 構成の適合試験を自社で実行して E7 として保存する [D]（RS-15#8）。Auth0 の公式文書は FAPI 2.0 の準拠設定として mTLS の送信者制約だけを示している [V][^59]（RS-15#45）。OIDF の FAPI 2.0 Final 認定一覧でも同製品の DPoP 列の認定は確認できず、DPoP 構成の認定がないと読める [D][^58]（RS-15#5）。
+- **D11-1** AS 製品を置換するときに既存 grant と refresh token を移せないと、約 3 万 grant（成長 12 万）の再同意が必要になり得る [D][A-013, NA-06]。そこで、grant と refresh token の export/import、またはそれができない場合の再同意計画を、ADR-001（製品選定）と ADR-018（出口戦略）の必須評価項目にする [D]。
+- **D11-2** AS 置換の模擬（dual-run で旧 AS の opaque と新 AS の opaque を edge が併存処理し、grant を移行または再同意させる手順）を H-22 で試験する [D]。opaque 先頭の版・種別・経路識別子（D10-3）がこの併存処理の鍵になる [D]。
+- **D11-3** H-22 で移行不能が判明し、再同意の費用が BIA で許容できない場合は、自社 token ファサード（§3.1 案G）を再評価する [D]。
 
-### 2.12 決裁案（経営・事業・法務・CISO の決定が要る点）
+### D12 費用前提
 
-いずれも決定済みではない [D]。
+- **D12-1** 内部 STS と TTS は self-host を前提にする [D]。token exchange（基準 1,112/秒）を token 単位で課金する managed サービスに載せると、月 10 万ドル以上の桁になり得る [D]（RS-15 結論 6、[A-043]）。この前提を費用比較（DL-33）の条件に入れる [D]。
+- **D12-2** 状態ストア・edge 照会系の要員増分は NA-08 の桁で仮置きし、BFF 参照実装・SDK・grant 棚卸しの増分と合わせて H-18 で A-054 と比べる [D]。金額は DL-33 で算定する（TBD、所有者 CTO、G3）[D]。
 
-| # | 論点 | 選択肢 | 推奨と理由 | 帰結 | 決める人・期限 |
+### D13 判定から追加した論点（3 提案に明示されていなかったもの）
+
+- **D13-1 jti と grant・session の区別**: 起草案の一部は jti を「grant・session 側を識別する」と説明したが、jti は JWT 自体の一意識別子である（RFC 7519 §4.1.7）[N][^29]。一括失効と session 失効の結合キーは、jti とは別の grant 参照・sid として持つ（D9-2 L2）[D]。また、外部 opaque token は claim を持たないので、外部 token の証跡は AS の発行記録 ID か introspection 応答で表す [D]。
+- **D13-2 要求 context の発行量の明示**: 外部要求すべてに要求 context を発行する設計は、基準 16,804/秒・成長 56,444/秒の署名を生む [D][A-040]。発行範囲は D9-3 で write 以上に限り、量を H-20 で判定する [D]。
+- **D13-3 時刻規則の対象と方向**: FAPI の 10 秒／60 秒は AS が受け取る JWT の未来方向の規定であり、access token の iat の古さで拒否すると寿命 1 分超の内部 token がすべて失敗する [D]。V7 で対象と方向を明記した [D]。
+
+### 2.14 決裁案（経営・事業・リスク受容の判断が要る点）
+
+| # | 論点 | 選択肢 | 推奨 | 帰結 | 決める人 |
 |---|---|---|---|---|---|
-| 1 | 寿命の値（L_ext、L_int、refresh、BFF session、grant） | (a) 規範の上限をそのまま既定値にする／(b) D3 の導出で階層別に決める／(c) テナントの自由設定 | (b)。R-087 と REQ03-D6 に沿う [D] | (b) は G4 の実測まで値が決まらず、それまでは規範上限を強制上限として適用する [D] | CISO＋プロダクト責任者（値）、事業責任者（利用者影響）。G3 で案、G4 実測後に DL-20 で確定 |
-| 2 | BFF 経路の token 形式 | (a) opaque＋edge 毎要求照会（案B）／(b) JWT（aud=edge）＋局所検証（案C） | (a) を暫定とし、H-02・H-04・H-03 で判定する [D] | (a) は照会量が約 3.3 倍（8,402 対 2,521/秒）。(b) は BFF 経路の失効が寿命と ADR-006 に依存する [D][A-044] | CTO＋CISO。G4（PoC 後） |
-| 3 | 第三者サーバー型 client の既定の sender constraint | (a) mTLS 既定・DPoP 条件付き（D5-3）／(b) DPoP 既定・mTLS 承認制（ops 案）／(c) 経路基準（evo 案） | (a)。RS-04 結論 5 と A5 対策による。ただし NA-005-10 で end-to-end mTLS を張れない相手が大半なら (b) を再評価する [D] | (a) は相手方の PKI 運用と CDN 経由の証明書受渡しの費用を課し、参入障壁になり得る（未定量）[D] | 事業責任者（連携エコシステム）＋CISO。G3 |
-| 4 | 計画している逸脱の受容 | RFC 9068 RS256 MUST の解釈（D8-3）、end-to-end TLS（#23）、内部 sender constraint（I2 に切り替えた場合） | 受容票を個別に作る [D] | 受容しなければ、RS256 の既定有効化、全区間 mTLS、I1 の強制が必要になる [D] | CISO。G3（I2 は H-16 後） |
-| 5 | AS 移行時の grant の扱い | (a) 移送せず再同意（D7-12）／(b) 移送 | (a)。再同意を初回の棚卸しにできる [D] | (a) は利用者・テナント管理者・連携開発者に摩擦を生む（client 800・grant 3 万）[D][A-013] | 事業責任者＋CISO。ADR-027 と同時 |
-| 6 | read-sensitive の stale allow の許容窓 R(read) | BIA と DEC-1 で決める | — | R(read) が L_int＋C(read) より短く決まれば、内部照会の追加か案D 寄りの構成が要る（§4.5）[D] | 事業責任者（BIA、DEC-1） |
-| 7 | 既存 Bearer 連携の受容期限 | 期限の長さ | 期限付きで受容し、KRI で移行率を追う [D] | 期限が長いほど ATK-05 の残余が残る [D] | プロダクト責任者＋CISO。G3 |
+| K-1 | BFF 経路の形式 | (a) opaque（案B）／(b) 内部 JWT（案C） | (a)。ただし H-02・H-04 不合格なら (b) | (a) は照会 8,402/秒・状態ストアが Tier-0 部品になる。(b) は BFF 経路の stale allow が L_int＋C の範囲で残る | CTO（技術）＋CISO（リスク受容）。期限 G4 |
+| K-2 | 剥奪反映 SLO R(t) と被害窓 E(t) | 操作階層ごとの値 | TBD（BIA から） | 寿命と cache 齢の上限が決まる | 事業責任者（BIA）＋CISO。期限 G4 |
+| K-3 | 第三者サーバー型の sender constraint 既定 | (a) mTLS 既定／(b) DPoP＋nonce 既定 | (a)。NA-03 の比率が低ければ (b) にし、privileged・FAPI だけ mTLS | (a) は参入障壁、(b) は A5 攻撃者への耐性が下がる | プロダクト責任者＋CISO。期限 G1 実測後 |
+| K-4 | 内部 RS256 の扱い | ES256 のみで受容票／RS256 も有効 | ES256 のみ＋受容票 | RFC 9068 §2.1 の MUST の解釈に依存する逸脱が残る | CISO。期限 G3 |
+| K-5 | AS 置換時の再同意 | export/import を必須評価にする／再同意を受容 | 必須評価にする（D11-1） | 候補製品が減り得る | 事業責任者（利用者負担）＋CTO。期限 ADR-001 決裁時 |
+| K-6 | 内部束縛 I1 か I2 | I1（cnf）／I2（mesh mTLS＋aud＋呼出し元照合） | I1。H-16 で費用過大なら I2＋受容票 | I2 は RFC 9700 SHOULD からの逸脱 | CTO＋CISO。期限 G4 |
 
-### 2.13 TBD 一覧（G-024: 根拠のない数値は置かない）
+### 2.15 未決の論点（整合調整で追加）
 
-| 指標 | 決め方 | 所有者 | ゲート |
-|---|---|---|---|
-| L_ext(t) 外部 access token の寿命 | min(U1, U3, U4) と Lmin。U2' は C(t) で満たす | CISO＋プロダクト責任者 | G3 で案、G4 実測後に DL-20 で確定 |
-| L_int(t) 内部 access token の寿命 | min(U1, U2, U3, U5) と Lmin。privileged は U2' | CTO＋CISO | 同上 |
-| refresh token の絶対寿命・非活動失効（client 種別別） | U4 と D4 | CISO＋プロダクト責任者 | G3 |
-| C(t) edge の状態 cache の最大齢 | privileged・break-glass/B・FAPI 範囲は 0（規則であり推定値ではない）。read-sensitive・write は U2 と H-02・H-03 | CTO | G4 |
-| JWKS cache の最大齢（R-189.6） | 緊急鍵失効の完了時間（R-189.5）から配布時間を引いた値以下、かつ U5 | CTO（ADR-007 と共同） | G4 |
-| 時刻差（R-189.2） | iat・nbf は V7 の値を初期値とし、exp の許容時刻差は H-05 で決める | SRE 責任者 | G4 |
-| DPoP の受理窓 W | NA-005-1、H-05 | SRE 責任者＋CISO | G4 |
-| jitter の幅 | H-04・H-15 | SRE 責任者 | G4 |
-| 第三者 grant の非活動失効・絶対寿命・再承認周期 | D7、scope のリスク区分ごと | CISO＋事業責任者 | G3 |
-| 一括失効の完了時間（R-189.5） | H-08 | CISO | G4 |
-| opaque token の最大長 | D10-3 | CTO | G3（DEC-8 の契約凍結前） |
-| rotation 併用を認める誤失効率の閾値 | H-07 | プロダクト責任者＋CISO | G4 |
-
-A-027 の 10 分は容量計算用の仮置きであり、本 ADR ではどの寿命の決定値にも使わない [D][A-027]。
+| # | 論点 | 対立している記述 | 選択肢と帰結 | 決める場 |
+|---|---|---|---|---|
+| U1 | issuer の粒度（外部 AS の issuer） | ADR-007 KD7-1（テナント／realm 別）と ADR-021 K21-1（信頼区画別） | 本書の V4（内部 issuer は cell ごと）はどちらでも変わらない。外部 RP 向けの mix-up 対策の規模（issuer 数）が変わる [D] | DEC-3。reconciliation-notes U-01 |
+| U2 | `txn` を証跡の主キーにする範囲 | ADR-022 D-8-3（主キーは `txn`、再構成率 100%）と本書 D9-3（要求 context は write 以上に限る） | (a) 全要求に要求 context を発行（署名 16,804/秒・成長 56,444/秒、H-20 で判定）。(b) 主キーを write 以上に限り、public・read-sensitive は (jti, decision_id, X-Request-ID) で相関する（R-118 の証跡が層によって異なる）[D][A-040] | CTO＋CISO（R-118 の閉じ方）。H-20 の後。reconciliation-notes U-02 |
 
 ---
 
@@ -424,57 +425,60 @@ A-027 の 10 分は容量計算用の仮置きであり、本 ADR ではどの�
 
 ### 3.1 主論点: opaque/JWT 境界
 
-起草案ごとに案の記号が異なるため、本書の記号へ揃えた（sec の B は本書の B、ops・evo の C は本書の C、ops・evo の B は本書の D）[D]。
-
-| 項目 | 案A 全境界 JWT＋局所検証 | **案B 外部全 opaque＋cell 内状態ストア＋内部サービス別 JWT（採用）** | 案C client 種別ハイブリッド（BFF・内部は JWT、第三者・ネイティブ・高リスクは opaque） | 案D 全境界 opaque＋全 RS が照会 |
+| 項目 | 案A 全境界 JWT＋局所検証 | **案B 外部全 opaque＋cell 内状態ストア＋内部サービス別 JWT（推奨。sec・evo）** | 案C client 種別ハイブリッド（BFF 経路は JWT、第三者・ネイティブ・高リスクは opaque。ops の推奨） | 案D 全境界 opaque＋全 RS が照会 |
 |---|---|---|---|---|
-| 概要 | client にも内部にも RFC 9068 JWT。失効は寿命と CAEP | §2 の D1〜D11 | ops・evo の推奨。BFF は JWT（aud=edge）、edge と BFF で失効を強制 | 内部呼出しも opaque、各 RS が照会 |
-| 利点 | introspection 0/秒、AS 停止に強い、実装が普及 [D][A-044] | 外部 token は照会時点（C(t) 以内）で失効。外部 client が内容と alg に依存しない。privileged で偽造検知 [D] | introspection 2,521/秒（成長 8,467/秒）で案B の約 3 割。BFF 経路は AS・状態ストアの停止に強い [D][A-044] | 全経路で照会時点の失効 [D] |
-| 欠点 | client が内容を読める [N][^7]。FAPI の失効状態確認に別手段が要る [N][^2]。悪性 client の無効化後も既存 token が残る [V][^34] | 状態ストアと STS が Tier-0 部品として増える。edge が全外部経路の必須部品 [D] | BFF 経由（主流量）の失効が寿命と BFF 実装の品質に依存。2 系統の外部検証規則 [D] | 照会量 16,804 ×(1＋k)× miss（NA-005-3）。全内部呼出しが状態系に同期依存 [D] |
-| 主要リスク | 偽造 token を検知できない（RS-12#10）。外部の解析依存で形式を変えられなくなる [D] | 状態ストアの障害が判定系（A-090）の可用性を下げる。edge・STS 侵害時の exchange 濫用 [D] | 依存チーム（25 組織、A-052）の BFF 実装品質がそのまま失効の品質になる [D] | 状態系の障害が全サービスの障害になる [D]。Google の 2020-12-14 の 47 分間の障害では Google OAuth を要する顧客向けサービスが使えなかった [I][^65]（RS-12#58） |
-| 費用・要員の桁 | 常時部品は増えない。発行 1,374/秒 [D][A-043]。SDK 4 名の範囲（A-054） | 照会 基準 8,402/秒（16,804×100%×miss 50%）・成長 28,222/秒・規制 10,029/秒。設計容量の例（§12.5、G1 前）は 8,402×2.0×1.4 ≈ 23,526/秒。exchange 1,112/秒。部品はリージョン 4 × 2 種で少なくとも 8 配備。要員増分は H-18 で測る [D][A-040, A-044, A-063, A-054] | 照会 2,521/秒・成長 8,467/秒 [D][A-044]。BFF 部品の運用 | 照会が案B の (1＋k) 倍。k ≥ 9 なら 1 桁増 [D] |
-| 可逆性 | 不可逆寄り（外部の JWT 依存は止められない）[D] | 可逆（JWT へ寄せても内容を読まない client は壊れない）[D] | 可逆 [D] | 可逆 [D] |
-| この案が勝つ条件 | 第三者連携がなく、全 client が SDK 統制下にあり、BIA が「剥奪反映 ≥ 寿命」を受容する [D] | 第三者連携（A-013）と規制業種（A-080）があり、H-02・H-04 に合格する [D] | H-02・H-04 が不合格、または BIA が BFF 経路の stale allow を L_int の範囲で受容し、第三者連携が A-013 の下限（300 client・1 万 grant）にとどまる [D] | 規制強化シナリオ（A-080 65%、A-081 600）で全操作に即時失効が求められ、k が小さいと実測される [D] |
+| 概要 | client にも内部にも RFC 9068 JWT。失効は寿命と CAEP | D1〜D13 | BFF から業務 API は JWT。外部は edge で照会 | 内部も opaque |
+| 利点 | 照会 0/秒、AS 停止に強い [D][A-044] | 外部 token は C(t) 以内に失効。外部 client が形式・alg に依存しない。privileged で偽造検知 [D] | 照会 2,521/秒（成長 8,467/秒）で案B の約 3 割。BFF 経路は状態ストア停止に強い [D][A-044] | 全経路で照会時点の失効 [D] |
+| 欠点 | client が内容を読める [N][^7]。FAPI の失効確認に別手段が要る [N][^2]。PQ 化と RS256 の Deprecated 期間に外部契約の変更を強いられる（RS-11#8, #62） | 状態ストア・STS・TTS が Tier-0 部品として増える [D] | 主流量の BFF 経路の失効が寿命と BFF 実装に依存する。外部検証規則が 2 系統 [D] | 照会量 16,804×(1＋k)×miss [D][NA-05] |
+| 主要リスク（攻撃者類型） | ATK-05: 盗まれた JWT が寿命まで有効。ATK-08/17: 偽造を検知できない（RS-12#10） | 状態ストア障害が判定系の可用性を下げる（ATK-12、ATK-19）。STS 侵害時の exchange 濫用（ATK-06） | 60 チームの BFF 品質が失効品質になる（ATK-19）[D][A-052] | 状態系の障害が全サービスの障害になる。Google 2020-12-14 の 47 分障害 [I][^47]（RS-12#58） |
+| 費用・要員の桁 | 常時部品の追加なし。発行 1,374/秒 [D][A-043] | 照会: 基準 8,402/秒、成長 28,222/秒（×k）。exchange 1,112/秒。部品はリージョン 4×3 種（状態ストア・STS・TTS）。要員は NA-08（＋1〜2 FTE の桁＋TBD）[D][A-040, A-044, A-063] | 照会 2,521/秒。状態ストアは小さい。BFF 参照実装の運用は案B と同じ [D][A-044] | 案B の (1＋k) 倍 [D] |
+| 可逆性 | 外部へ出すと不可逆寄り（外部の解析依存）[D] | 可逆（BFF 経路だけ案C へ切替可）[D] | 可逆 [D] | 可逆 [D] |
+| 勝つ条件 | 外部 client がほぼ第一者だけ（A-013 の下端 300 未満）で全 client が SDK の統制下にあり、BIA が剥奪反映 ≥ 寿命を受容し、alg 移行を想定しない [D] | 第三者連携（A-013）と規制業種（A-080）があり、H-02・H-04 に合格する [D] | H-02・H-04 が不合格、または BIA が BFF 経路の stale allow を L_int の範囲で受容し、要員（H-18）が A-054 に収まらない [D] | 規制強化（A-080 の 65%）で全操作の即時失効が要り、k が小さいと実測される [D] |
 
-| 項目 | 案E 全 JWT＋Token Status List | 案F 案B の外部境界＋内部を Transaction Tokens で統一 | 案G 製品の既定に従う |
+| 項目 | 案E 全 JWT＋Token Status List | 案F 製品の既定に従う | 案G 自社 token ファサード（evo 案D） |
 |---|---|---|---|
-| 概要 | 案A の失効を Token Status List（draft-21）で補う | 内部の利用者文脈を Txn-Token で運ぶ | 採用製品の既定の形式・寿命・束縛方式を使う |
-| 利点 | introspection より Issuer への問い合わせが少なく herd privacy を得られると説明されている [N][^23]（RS-04#80） | 呼出し連鎖の文脈を統一できる。草案は寿命を分単位以下、呼出しの間だけ使う（MUST）とする [N][^26]（RS-17#26） | 初期費用が最小 [D] |
-| 欠点・リスク | Internet-Draft で規範根拠にできない。反映時間は ttl に依存 [N][^23] | draft-11、IESG 未提出 [N][^26]。草案改訂のたびに 60 チームの SDK を更新 [D][A-052] | 一律寿命になり R-087・G-024 に反する。形式・claim 名・束縛方式が製品に固定され、置換時に 300 サービスと 800 client の再試験が要る [D][A-050, A-013, A-104] |
-| 費用の桁 | 案A＋状態リスト配信系 [D] | 案B＋草案追随の保守 [D] | 初期 0、置換ごとの移行費は A-104 の回数に比例 [D] |
-| 可逆性 | 可逆 [D] | 版を固定した adapter に閉じ込めれば可逆 [D] | 低い（退出費用が時間とともに増える）[D] |
-| 勝つ条件 | RFC になり、主要言語のライブラリが対応し、ttl が剥奪反映 SLO を満たす [D] | RFC 発行と複数製品の実装 [D] | 計画の時間軸が再決裁の 1 周期（A-101 の 3 年）以内で退出を想定しない [D][A-101] |
+| 概要 | 案A の失効を TSL（draft-21）で補う | 採用製品の既定の形式・寿命・束縛 | 自社 STS が外部 handle・refresh・grant を保持し、AS 製品は背後の発行エンジンにする |
+| 利点 | 問い合わせ削減 [N]（RS-04#80） | 初期費用が最小 [D] | AS 置換時に grant を自社側に残せ、再同意を避けられる可能性 [D][NA-06] |
+| 欠点・リスク | draft で規範根拠にできない [N][^18]。反映が ttl に依存 | 一律寿命で R-087 に反する。置換時に 300 サービス・800 client の再試験 [D][A-050, A-013] | ADR-001 の「AS core を自作しない」原則に抵触。refresh・失効・DPoP 検証の再実装で攻撃面が増える [D] |
+| 費用・要員 | 案A＋draft 追随 | 小 | 認証・IdP チーム（A-054 の 5 FTE）の倍の桁 [D][A-054] |
+| 可逆性 | 可逆 | 低い | 中（導入後に外すのが難しい） |
+| 勝つ条件 | RFC になり、ttl が剥奪反映 SLO を満たす [D] | 計画期間が再決裁 1 周期以内で退出を想定しない [D][A-101] | grant export/import を持つ AS 候補がなく、再同意の費用が BIA で許容できない（H-22）[D] |
 
-### 3.2 副論点
+### 3.2 Q8: 要求単位の証跡
 
-| 論点 | 案 | 概要 | 勝つ条件 | 採否 |
-|---|---|---|---|---|
-| refresh 保護 | R1 rotation を一律 | 全 client で使用ごとに rotation | DPoP を実装できない public client が大半で、FAPI 範囲がない | 棄却（FAPI の shall not、同時更新の誤失効 [N][^2]（RS-04#46）） |
-| | R2 DPoP 束縛を一律 | confidential も DPoP 鍵に束縛 | 該当なし | 棄却（RFC 9449 §5 と異なる [N][^5]） |
-| | R3 鍵束縛＋rotation を併用 | ネイティブで重ねる（sec 案） | 端末からの鍵の持ち出しが現実的な脅威で、H-07 の誤失効率が受容範囲 | 条件付き（D4） |
-| | **R4 client 種別ごとの表** | D4 | — | 採用 |
-| sender constraint | S1 DPoP のみ | 全経路 DPoP | CDN などによる TLS 終端が全経路にある | 棄却（A5 への耐性、jti の共有状態が全経路で要る（RS-04#49, #56）） |
-| | S2 mTLS のみ | 全経路 mTLS | public client がない | 棄却（ネイティブで証明書を運用するのは難しい [D]） |
-| | **S3 経路ごとに使い分け** | D5 | — | 採用 |
-| | S4 Bearer＋短命化 | 束縛しない | public 階層だけ、または閉じた内部経路だけ | 棄却（窃取 token の使用例（RS-12#59）[I][^42]）。既存連携は期限付き例外（D7-11） |
-| 内部束縛 | **I1 cnf（x5t#S256）** | D5 | mesh が peer 証明書をアプリへ確実・安価に渡せる | 既定（H-16 で確認） |
-| | I2 mesh mTLS＋aud＋呼出し元照合 | ops 案 D-5.4 | H-16 で I1 の費用が過大 | 代替（逸脱の受容票が要る） |
-| ブラウザ | **B1 BFF 必須** | D6 | — | 採用 |
-| | B2 token-mediating backend | ブラウザに access token を渡す | BFF を置けない配信形態 | 棄却（RFC 10017 は BFF より安全性が低い構成とする [N][^13]） |
-| | B3 ブラウザ内 client＋DPoP | SPA が token を保持 | 第三者の低リスク scope | 例外のみ（D6-4） |
-| 寿命 | L1 一律値 | 5〜15 分など | なし | 棄却（R-087） |
-| | **L2 導出** | D3 | — | 採用 |
-| | L3 テナントの自由設定 | — | なし | 棄却（規範上限を超える設定が生じ得る。G-115） |
-| 第三者 grant | T1 同意だけの無期限 | — | 連携が小規模で全事業者を契約で統制できる | 棄却 |
-| | **T2 台帳・寿命・棚卸し・一括失効** | D7 | — | 採用 |
-| | T3 インストール型だけ | 利用者委任の refresh token を廃止 | 連携の大半がサーバー間 | 一部（高リスク scope の offline 禁止として DL-16 で検討） |
+| 案 | 概要 | 利点 | 欠点・リスク | 費用 | 可逆性 | 勝つ条件 |
+|---|---|---|---|---|---|---|
+| T1 access token に trace id | token に trace-id を入れる | 実装が単純に見える | token 再利用で要求単位にならない。要求ごとの再発行は約 10 万/秒。外部注入値に依存（D9-1）[D] | exchange 約 90 倍 | 可逆 | なし（1 要求 1 token の設計でのみ成立し、容量前提と両立しない） |
+| T2 jti＋grant/session＋decision_id＋trace_id を監査だけで相関 | 署名付き要求 context なし | 追加発行なし [D] | 内部 hop 間の相関が未署名ヘッダと各サービスのログ実装に依存し、ATK-06 がヘッダを偽装すると「edge を通った要求か」を事後に証明できない [D] | 最小 | 可逆 | p_w が小さく内部の多段呼出しが少ない。または draft が失効 |
+| **T3 T2＋高リスク階層だけ署名付き要求 context（推奨）** | D9-2・D9-3 | write 以上で改変できない要求単位の証跡が残る [D] | draft 依存。発行量 16,804×p_w/秒 [D] | TTS と署名鍵 | adapter で可逆 | p_w と署名容量が H-20 で合格 |
+| T4 全要求に要求 context（ops 案 D-19 に相当） | T3 を全階層へ | 一様 | 発行 16,804/秒、成長 56,444/秒 [D][A-040] | 最大 | 可逆 | 規制強化で read の証跡も求められ、署名容量が確保できる |
+| T5 HTTP 要求署名 | 要求本文まで署名 | 否認防止まで届く | FAPI Http Signatures は draft で、Message Signing Final はリソース要求を含まない [N][^4]（RS-04#51） | 大 | 可逆 | 標準が Final になり、否認防止が法的に要る |
 
-### 3.3 可逆性のまとめ
+### 3.3 副論点
 
-- 外部境界を opaque にする決定は可逆で、BFF 必須は緩めることができる [D]。
-- 内部 access token の claim の意味と typ 名は 300 サービスとの契約（DL-75、ADR-022）になり、変更には ADR-016 の版管理が要る（条件付き可逆）[D]。
-- issuer 識別子は ADR-021 の不可逆識別子に属する [D]。
-- 外部契約に書いた opaque token の最大長は、引き下げると client を壊し得るため不可逆側に置く [D]。
+| 論点 | 案 | 採否と条件 |
+|---|---|---|
+| refresh 保護 | R1 rotation を一律 | 棄却（FAPI の shall not、同時更新での誤失効 [N][^2]、AS 置換時の状態引継ぎ） |
+| | R2 DPoP 束縛を一律（confidential を含む） | 棄却（RFC 9449 §5 と異なる [N][^5]） |
+| | R3 sender constraint のみ（rotation 併用なし） | 棄却（鍵と token の同時窃取への補完がない [N][^1][^13]） |
+| | **R4 client 種別表＋鍵保護不明の public だけ rotation 併用** | 採用（D4） |
+| sender constraint | S1 外部 DPoP 既定（ops 案） | 条件付き棄却（A5 への耐性。K-3 で NA-03 が低ければ第三者の既定を DPoP＋nonce に変更） |
+| | S2 mTLS のみ | 棄却（ネイティブで証明書を運用するのは難しい [D]） |
+| | S3 第三者 confidential は DPoP・mTLS 任意（evo 案） | 棄却（試験組合せが倍、privileged の境界条件がない） |
+| | **S4 経路×操作階層別** | 採用（D5） |
+| | S5 Bearer＋短命化 | 棄却。既存連携だけ期限付き例外 |
+| ブラウザ | **B1 BFF 必須＋参照実装** | 採用 |
+| | B2 token-mediating backend | 棄却（ブラウザ内に access token が残る [N][^13]） |
+| | B3 ブラウザ内 client＋DPoP | 第三者の低リスク scope の例外のみ |
+| 寿命 | L1 一律値 | 棄却（R-087） |
+| | L2 導出のみ（API 個別値を許す） | 棄却（60 チームで運用できない [A-052]） |
+| | **L3 導出＋profile 3 種類以内** | 採用 |
+| | L4 テナントの自由設定 | 棄却（G-115） |
+| alg allowlist の出所 | V1' issuer metadata と profile から取得（evo 案） | 棄却（配布元の誤設定・侵害に alg 判定を依存させる。RFC 8725 §3.1 の趣旨を弱める）[D] |
+| | **V1 検証側の版付き設定** | 採用 |
+| claim | C1 属性を厚く載せる（groups/roles/所属） | 棄却（R-249、U2、RFC 9068 §6） |
+| | **C2 封筒＋将来の拡張点（D9-4）** | 採用 |
+| | C3 VC 形式で token を表現 | 棄却（OAuth RS の検証規則・失効と整合しない [D]） |
 
 ---
 
@@ -482,124 +486,103 @@ A-027 の 10 分は容量計算用の仮置きであり、本 ADR ではどの�
 
 ### 4.1 評価軸
 
-judge panel は次の 6 軸を 1〜5 で採点した（高いほど良い）[D]。
+判定者 3 名は 6 軸を 1〜5 点（高いほど良い）で採点した [D]。
 
-| 軸 | 内容 |
+| 軸 | 意味 |
 |---|---|
-| 要求網羅 | 7 つの問いと R/G への回答の網羅性 |
-| リスク低減 | 攻撃者モデルと事故の型に対する統制 |
-| 規模での実現性 | 300 サービス・60 チーム・100 万人規模での運用と費用 |
-| 進化・退出 | 暗号移行、製品置換、標準の変化への対応 |
-| 根拠の質 | 原典・強度の正確さ |
-| 可逆性・費用 | 戻しやすさと費用 |
+| 要求網羅（requirement_coverage） | 9 問と R/G への応答 |
+| リスク低減（risk_reduction） | 攻撃者類型ごとの残余リスク |
+| 規模での実現性（feasibility_at_scale） | 300 サービス・60 チーム・24 FTE で運用できるか |
+| 進化・退出（evolvability_exit） | 暗号移行・製品置換・識別子の永続性 |
+| 根拠の質（evidence_quality） | 原典・強度の正確さ |
+| 可逆性・費用（reversibility_cost） | 後戻りの費用 |
 
-### 4.2 judge panel の採点
+### 4.2 採点表（判定者×提案×6 軸）
 
-本採点は AI エージェントによる模擬パネルであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
-
-| 判定者 | 提案 | 要求網羅 | リスク低減 | 規模での実現性 | 進化・退出 | 根拠の質 | 可逆性・費用 | 計 | その判定者の勝者 |
+| 判定者 | 提案 | 網羅 | リスク | 規模 | 進化 | 根拠 | 可逆 | 合計 | 勝者票 |
 |---|---|---|---|---|---|---|---|---|---|
-| 判定者 1 | sec | 5 | 5 | 3 | 4 | 4 | 3 | 24 | evo |
-| | ops | 4 | 3 | 4 | 3 | 4 | 4 | 22 | |
-| | evo | 4 | 4 | 3 | 5 | 4 | 4 | 24 | |
+| 判定者 1 | sec | 5 | 5 | 3 | 4 | 5 | 3 | 25 | |
+| 判定者 1 | ops | 4 | 3 | 5 | 3 | 4 | 4 | 23 | |
+| 判定者 1 | evo | 5 | 4 | 4 | 5 | 3 | 4 | 25 | evo |
 | 判定者 2 | sec | 5 | 5 | 3 | 4 | 4 | 3 | 24 | sec |
-| | ops | 4 | 3 | 5 | 4 | 4 | 4 | 24 | |
-| | evo | 4 | 4 | 4 | 5 | 4 | 4 | 25 | |
-| 判定者 3 | sec | 5 | 5 | 3 | 4 | 4 | 3 | 24 | ops |
-| | ops | 4 | 4 | 4 | 4 | 4 | 4 | 24 | |
-| | evo | 4 | 4 | 3 | 5 | 3 | 4 | 23 | |
-| **合計** | sec | 15 | 15 | 9 | 12 | 12 | 9 | **72** | 1 票 |
-| | ops | 12 | 10 | 13 | 11 | 12 | 12 | **70** | 1 票 |
-| | evo | 12 | 12 | 10 | 15 | 11 | 12 | **72** | 1 票 |
+| 判定者 2 | ops | 4 | 3 | 4 | 4 | 4 | 4 | 23 | |
+| 判定者 2 | evo | 4 | 4 | 3 | 5 | 3 | 4 | 23 | |
+| 判定者 3 | sec | 5 | 5 | 3 | 4 | 4 | 3 | 24 | sec |
+| 判定者 3 | ops | 4 | 3 | 4 | 3 | 3 | 4 | 21 | |
+| 判定者 3 | evo | 4 | 4 | 3 | 5 | 3 | 3 | 22 | |
+| **計** | sec / ops / evo | | | | | | | **73 / 67 / 70** | **sec 2・evo 1・ops 0** |
 
-- 票は 3 案に 1 票ずつ割れ、得点合計は sec と evo が 72 で同点である [D]。集計（票と得点の合算）は sec を勝者とした [D]。同点の解消は集計側の規則による [D]。軸別に見ると、sec は要求網羅とリスク低減の合計が最も高く（各 15）、規模での実現性と可逆性・費用が最も低い（各 9）[D]。
-- 本書は sec を土台にし、判定者が挙げた graft を取り込んだ [D]。取り込んだ主な要素は次のとおりである [D]。
-  - evo: 退出の仕組み（経路識別子と dual-run、opaque の最大長の契約化）、crit・profile 版による制約強化（V13）、grant 台帳、fully-specified alg と PQ の扱い。
-  - ops: 業務サービスの義務の限定とベンダー受入条件（D11）、grace 禁止・短縮のみ・CI 検査（D3）、RS256 の既定無効（D8-3）、移行時の再同意（D7-12）、KRI と runbook（§6.5）、製品健全性トリガー（§8）。
+- 集計上の勝者は sec（票 2、得点 73）である [D]。合計は表の点の単純和で、重みは付けていない [D]。
 
-### 4.3 判定者間の不一致
+### 4.3 判定者間の一致点と不一致
 
-| 論点 | 不一致の内容 | 本書の扱い |
-|---|---|---|
-| 勝者 | 判定者 1 は evo（退出可能性）、判定者 2 は sec（要求網羅・リスク低減）、判定者 3 は ops（運用負荷と障害面）を選んだ [D] | 3 者の条件を §4.5 にまとめ、§7・§8 に反映した [D] |
-| 判定者内の整合 | 判定者 2 は得点合計が最も高い evo（25）ではなく sec（24）を勝者とした。判定者 3 は sec と ops を同点（24）とし ops を選んだ [D] | 得点と勝者選択の根拠の差として記録する [D] |
-| 規模での実現性 | sec は 3 名とも 3。ops は 4・5・4 [D] | BFF 経路の判断を決裁案 2 とし、H-02・H-04 で切り替える [D] |
-| BFF 経路の opaque 化 | sec は REQ-03 §3.1 を例外なく満たすと評価、判定者 1・3 は照会量 3.3 倍と Tier-0 部品の増加を減点 [D] | 理由を分けて書き直し（D1 理由 4）、切替条件を明示した [D] |
-| 内部の束縛 | sec・evo は cnf を必須、ops は付けない。判定者は ops の封じ込めが弱いと評価し、sec・evo は費用未評価と指摘 [D] | I1 を既定にし、H-16 で費用を測って I2 へ切り替える条件を置いた [D] |
-| 第三者の既定 | sec は mTLS、ops は DPoP、evo は経路基準。判定者 1 は sec の参入障壁を未定量と指摘し、判定者 2・3 は ops の DPoP 既定が RS-04 結論 5 と製品認定の状況に逆らうと指摘 [D] | mTLS 既定を推奨し、事業判断として決裁案 3 にした [D] |
-| ネイティブの rotation | sec は DPoP 束縛と rotation を併用。判定者 2・3 は誤失効の運用負担を指摘 [D] | DPoP 束縛を既定、rotation は H-07 と受容票による条件付きにした [D] |
-| break-glass | 判定者 3 だけが、3 案とも break-glass を token 基盤に依存させている点を BIA・REQ-03 との不整合として指摘した [D] | 原典（BIA §2.3、REQ-03 §3.1）で確認し、break-glass/P を token 基盤から外した（D9）[D] |
-| 事実誤りの指摘の正誤 | 判定者 1 は「confidential client の refresh token は RFC 6749 で発行先 client だけが使える」の記載箇所を §2.2.2 であって §4.14.2 ではないとした。原文では §2.2.2 と §4.14.2 の双方に同趣旨の文がある [N][^1]（起草時に確認） | 本書は双方の節を引いた [D] |
-| 共通の誤り | 3 名とも、3 案が FAPI の iat/nbf 規則（AS 一般要件）を RS の shall として、RFC 9700 §4.3.2（client の送信禁止）を RS の MUST NOT として引いた点を指摘した [D] | 原典で確認し、V7・V11 で規範と自社判断を書き分けた [D] |
+**一致点** [D]
 
-### 4.4 案の比較（sec レンズの重みと感度）
+- 3 名とも、sec の「規模での実現性」を 3 点とし、状態ストア照会が案C の約 3.3 倍になる点と Tier-0 部品の増加を最大の弱点に挙げた。いずれも H-02・H-04 不合格時に BFF 経路を案C（ops 型）へ切り替える条件を付けた（D1-7、§8）。
+- 3 名とも、evo の「進化・退出」を 5 点とし、識別子の永続性（D10-1）、grant export の必須要件化（D11）、主体種別と検証済み属性の出所の枠（D9-4）を取り込むべきとした。
+- 3 名とも、ops の寿命 profile 3 種類以内、BFF 参照実装、SDK 習得工数の実測、self-host STS の費用前提を取り込むべきとした（D3、D6-2、H-17、D12）。
+- 3 名とも、sec の「privileged での stateful jti 照合」と「要求 context を write 以上に限る」を採るべきとした（D1-6、D9-3）。
 
-sec 案の 9 軸評価を検算し、本書の案の記号で再掲する [D]。採点は起草者による設計推論であり、実測ではない [D]。
+**不一致** [D]
 
-| 軸（重み） | A | B | C | D | E |
-|---|---|---|---|---|---|
-| X1 攻撃者モデルに対する残余リスク（25） | 2 | 4 | 3 | 4 | 3 |
-| X2 失効の即時性と被害窓（15） | 1 | 4 | 3 | 5 | 3 |
-| X3 独立検証可能性（15） | 4 | 4 | 3 | 3 | 3 |
-| X4 標準準拠（10） | 3 | 4 | 4 | 4 | 2 |
-| X5 可用性・静的安定性（10） | 5 | 3 | 4 | 1 | 4 |
-| X6 20 年の進化性（10） | 2 | 5 | 3 | 4 | 3 |
-| X7 容量・性能（5） | 5 | 3 | 4 | 1 | 4 |
-| X8 依存サービスと連携開発者の負担（5） | 4 | 3 | 4 | 3 | 3 |
-| X9 費用・要員（5） | 5 | 3 | 4 | 2 | 3 |
-| 加重（Σ点×重み÷5） | 59.0 | **77.0** | 67.0 | 68.0 | 61.0 |
-| 可用性・費用重視の重み（X1 15、X2 10、X3 10、X4 10、X5 20、X6 10、X7 10、X8 10、X9 5） | 69.0 | **73.0** | 71.0 | 58.0 | 64.0 |
+| 論点 | 判定者 1 | 判定者 2・3 | 本書の扱い |
+|---|---|---|---|
+| 勝者 | evo（進化・退出 5、規模 4 と評価） | sec（リスク低減と監査証跡の厚さを重視） | 票で sec を土台にし、evo の進化・退出の決定（D10・D11）を本文の決定として採った |
+| evo の規模での実現性 | 4 | 3 | evo の要員見積り（＋1〜2 FTE）は根拠が弱いとの指摘が共通。NA-08 で桁として仮置きし、H-18 で判定する |
+| ops の進化・退出 | 3（判定者 1・3） | 4（判定者 2） | AS 置換時の grant 移行と issuer 永続性の扱いが浅いとの指摘を、D10・D11 で補った |
+| 第三者サーバー型の既定 | sec の mTLS 既定を採る | 判定者 2・3 は NA-03 が低ければ DPoP＋nonce に変える条件を付けた | K-3 の決裁案とし、条件を §8 に置いた |
 
-- 可用性・費用重視の重みで B の X5 が 3 から 2 に下がると、B は 69.0 になり C（71.0）が上回る [D]。X5 が下がるのは H-04 で状態ストアの可用性が届かない場合である [D]。
-- ops レンズ（運用負荷・要員を重視）の自己採点では案C が 76.0 で首位、evo レンズ（置換・暗号移行を重視）の W1 でも案C が 3.70 で首位だった [D]。いずれも sec の案B は採点対象に含まれていない [D]。順位はレンズの重みに依存し、本書は重みの選択を §2.12 決裁案 2 の判断材料として示す [D]。
+### 4.4 判定者が指摘した事実誤りと本書での処置
 
-### 4.5 判定が覆る条件
+原典（research ノートの検証済み項目、または最終起草者が取得した原典）で確認し、本書では次のとおり扱った [D]。
 
-| # | 条件 | 覆る決定 | 確かめる手段 | §8 のトリガー |
-|---|---|---|---|---|
-| C1 | 状態ストアが成長シナリオの照会量 × 安全係数で A-090 の帯または DL-20 の SLI に届かない。停止時の fail-mode が DL-19 どおりに動かない | 決裁案 2 を (b) 案C へ | H-02、H-04 | 実測 1 |
-| C2 | BIA・DEC-1 が read-sensitive・write の剥奪反映窓を L_int＋C(t) より短く決める、または規制強化シナリオ（A-080 65%、A-081 600）が現実化する | 内部照会の追加、案D 寄りの構成 | H-03、BIA | 規制 1、前提 1 |
-| C3 | BIA が BFF 経路の stale allow を L_int の範囲で受容し、第三者連携が A-013 の下限にとどまる | 決裁案 2 を (b) へ | BIA、G1 実測 | 前提 2 |
-| C4 | mesh が peer 証明書をアプリへ確実・安価に渡せない | D5 の内部束縛を I2 へ（受容票 CISO） | H-16 | 実測 6 |
-| C5 | 採用 AS・edge が opaque token の状態 push、RFC 9701、DPoP nonce・dpop_jkt のいずれかを支えない | D1-2 の再設計、または D5-3・D5-5 の方式変更 | H-22、ADR-001 | 製品 1・2 |
-| C6 | 第三者サーバー型 client の大半が CDN・WAF で TLS を終端し end-to-end mTLS を張れない | 決裁案 3 を (b) へ | NA-005-10 | 前提 3 |
-| C7 | 要員の実測が A-054 の内数（SRE 6 名で 2 系統の on-call）に収まらず、DEC-4 で追加要員が確約されない | 運用範囲の狭い案C へ寄せる | H-18 | 実測 7 |
-| C8 | 2 つの AS を edge の背後で並行稼働させる演習で client・内部サービスの変更が 0 件にならない | 退出の仕組み（D10-4）の見直し | H-17 | 実測 8 |
-| C9 | H-07 の誤失効率が閾値を超える、または H-05 の DPoP 拒否率・再試行率が許容外 | D4 のネイティブ行、D5 の使い分け | H-05、H-07 | 実測 4・5 |
-| C10 | Token Status List が RFC になり、主要言語に成熟した実装があり、ttl が剥奪反映 SLO を満たす | 案E の再評価 | 標準ステータス台帳 | 標準 1 |
-| C11 | ADR-020 が FAPI 範囲を第一者 BFF 経路の外に限り、REQ-03 §3.1 の write の失効状態確認が緩められる | 決裁案 2 を (b) へ | ADR-020、REQ-03 改訂 | 規制 2 |
+| 提案 | 指摘 | 確認結果 | 本書の処置 |
+|---|---|---|---|
+| sec | D5 表の「D6-4 の例外」は D6-3 が正しい | 指摘どおり（sec の D6-3 がブラウザ内 client の例外、D6-4 は step-up） | D5 表を「D6-3 の例外」に修正 |
+| sec | N-m の AAL2「24h 以内（SHALL）」は誤読を招く | RS-03#43: 上限の設定が SHALL、24h 以内は SHOULD | N-m を書き分けた |
+| sec | RS-17#79・RS-12#41・#58 の原典脚注がない | 各ノートの脚注の原典を確認 | 脚注 [^48]・[^46]・[^47] を追加 |
+| sec | V7 の 60 秒規定の対象・方向の取違え | RS-04#42: FAPI §5.3.2.1 は AS が受け取る JWT の iat/nbf について「未来 0〜10 秒は受理、未来 60 秒超は拒否」 | V7 を未来方向の許容に限定し、iat の古さを拒否理由にしないと明記（D13-3） |
+| sec | ATK-15 の「約 3 分」は一括失効の時間ではない | RS-12#41: Bulk API 2.0 による本体持出しの所要時間 | §6.3 で「持出しの所要時間」と明記 |
+| sec | §4.1 の加重合計の誤り | 判定者 3 の再計算どおり | 自己採点表は本書に載せず、判定者の採点（§4.2）に置き換えた |
+| ops | jti を「grant・session 側を識別する」と説明 | RFC 7519 §4.1.7: jti は JWT の一意識別子 | D9-2・D13-1 で区別 |
+| ops | 外部 opaque token の (iss, jti) は存在しない | opaque は claim を持たない | 発行記録 ID か introspection 応答で表す（D13-1） |
+| ops | FAPI 範囲で EdDSA を許す | RS-11#43: RFC 9864 が多相的 EdDSA を Deprecated | D10-4 で不採用 |
+| ops | ID Token を nonce の有無で判別 | nonce は認可コードフローで任意 | D2 で issuer 分離と typ 必須で判別 |
+| ops | §4.1 の加重点の誤り | 判定者 3 の再計算どおり | 自己採点表は採らない |
+| evo | 内部 allowlist に EdDSA | 上と同じ | D10-4 |
+| evo | 照合日 2026-10-15 が文書日付と矛盾 | 指摘どおり | 本書の照合日はすべて 2026-10-03 に統一し、最終起草者が照合した原典を明示した |
+| evo | opaque 最大長 512 octets の例が「外部を JWT にできる」と矛盾 | RS-11#62: ES256 JWT は約 700 文字 | 512 の例を撤回し、ML-DSA-87 JWT の約 6,789 文字以上とした（D10-2） |
+| evo | RS256 の 2030 年 deprecated は ipd | RS-11#8: IR 8547 ipd | D8-3 で ipd・未確定と明記 |
+| evo | A-091 を停止許容時間として使用 | A-091 は可用性帯の仮置き | Lmin(b) は BIA の MTPD と比べると明記 |
+| evo | RFC 10017 の "not recommended" の出典 | RS-17#4: §6.3.4.3 でブラウザ内 OAuth client を "not recommended"（小文字） | 記述は正しい。N-g に出典を付けた |
+| evo | V1 で alg allowlist を metadata から取得 | RFC 8725 §3.1 の趣旨（呼出し側が許可集合を指定） | V1 を検証側設定に置き換え、evo 案は §3.3 で棄却 |
 
 ---
 
 ## 5. 決定理由と棄却理由
 
-棄却した案は traceability/rejected-hypotheses.md（DL-107）に集約する [D]。
+- **案B を推す理由**: 次の 4 つを外部経路に例外なく満たせ、しかも AS core の自作を伴わない唯一の案だからである [D]。(1) ATK-05・ATK-15 について既存 token を C(t) 以内に拒否する。(2) ATK-08・ATK-17 について privileged で発行記録との照合により偽造を検知する。(3) FAPI の失効状態検証（shall）。(4) 暗号移行（A-103）と製品置換（A-104）を外部契約から切り離す。
 
-**案B を推奨する理由** [D]
+以下の棄却理由は traceability/rejected-hypotheses.md に棄却仮説として集約される [D]。
 
-1. 案B は、第三者 token の照会時点での失効（RS-12#37 の事故の型）、FAPI RS の失効状態確認（RS-04#45）、REQ-03 §3.1 の write 以上の失効状態確認、privileged での偽造 token 検知（RS-12#10）を、経路の例外なしに満たす [D]。案A・C・E はこのいずれかを寿命か BFF 実装に委ねる [D]。
-2. 外部 client を token の内容と AS の署名方式から切り離し、PQ 移行（A-103）と製品置換（A-104）の影響を自社の管理下（edge・STS・SDK）に閉じ込める [D]。
-3. 案B の弱点（照会量、Tier-0 部品、要員）は §4.5 の条件で測れる形にし、不合格なら案C へ移る経路を事前に決めてある [D]。
-
-| ID | 棄却した仮説 | 棄却理由 | 変えた設計 | 再評価の条件 |
-|---|---|---|---|---|
-| ADR-005/RH-01 | 一時アクセストークンは基本的に JWT（案A） | 外部 client が内容を読める、無効化後も既存 token が残る、FAPI 範囲の失効状態確認を満たさない、外部へ出した形式を戻すのが不可逆寄り [D]（RS-04#45, #61、RS-13#61） | 外部を opaque にし、JWT を内部だけにした（D1） | 案A の勝つ条件（§3.1） |
-| ADR-005/RH-02 | access token の寿命は一律 5〜15 分 | レビューが未承認（R-087）。寿命の役割は種別ごとに違い（外部は被害窓 U3、内部は剥奪反映 U2）、1 つの値では表せない [D] | D3 の式と TBD 表 | なし |
-| ADR-005/RH-03 | 案C（client 種別ハイブリッド）が最良 | 主流量である BFF 経由の失効と横流し防止を依存チームの BFF 実装品質に委ねる。Storm-0558 の教訓（RS-12#5）と同じ型 [D] | — | §4.5 の C1・C3・C7・C11 |
-| ADR-005/RH-04 | 全経路 opaque で各 RS が照会すれば失効が最も単純（案D） | 内部の全呼出しが状態系に同期依存し、A-090 の帯と両立する見込みが示せない。照会量は (1＋k) 倍 [D][A-090] | — | §4.5 の C2 で k が小さいと実測された場合 |
-| ADR-005/RH-05 | JWT に状態一覧を足せば introspection なしで失効できる（案E） | Token Status List が draft で規範根拠にできない [N][^23] | — | §4.5 の C10 |
-| ADR-005/RH-06 | 内部文脈は Txn-Token で統一すべき（案F） | draft-11、IESG 未提出 [N][^26] | ADR-009 で採否 | RFC 発行と複数製品の実装 |
-| ADR-005/RH-07 | 製品の既定で十分（案G） | 一律値と製品への固定が R-087・R-208 に反する [D] | D10-6 | 時間軸が 1 再決裁周期以内 |
-| ADR-005/RH-08 | refresh は全 client で rotation が最も安全で簡単 | FAPI の shall not（RS-04#46）[N][^2]。rotation は事後検知で正規 client に再認可を強いる [N][^1] | D4 | DPoP を実装できない public client が大半の場合 |
-| ADR-005/RH-09 | DPoP か mTLS の一方で統一できる | A5 への耐性（RS-04#49）、jti の共有状態（RS-04#56）、TLS 終端時の証明書受渡しが規定外（RS-04#59）[N][^2][^5][^6] | D5 | 経路が一様になった場合 |
-| ADR-005/RH-10 | DPoP を使えば第一者 SPA に token を持たせてよい | 実行環境の乗っ取りに対して DPoP は安全性を保証せず、攻撃者は自分の鍵に束縛した token を新しいフローで得られる [N][^5][^13]（RS-04#54, #75） | D6 | DBSC 等の端末束縛が勧告となり広く提供された場合 |
-| ADR-005/RH-11 | 第三者 grant は同意だけで無期限に保ってよい | 同意設定を変えても既存 grant は残り（RS-17#62）[V][^35]、長寿命の第三者 token が事故の運搬手段になった（RS-12#37, #59）[I][^40][^42] | D7 | なし |
-| ADR-005/RH-12 | 障害時だけ寿命を延ばせば AS 停止に耐えられる | bimodal behavior になる [V][^61]（RS-09#15） | D3 | なし |
-| ADR-005/RH-13 | edge が照会結果を未署名ヘッダで下流に渡せば内部 JWT は要らない | gateway の迂回で偽造され得る（RS-17#79、§2-14）[D] | D1-7 | なし |
-| ADR-005/RH-14 | 寿命はテナント管理者が自由に設定できればよい | 規範上限と基盤の最低基準を超える設定が生じ得る（G-115、REQ03-D6 案C）[D] | D3 | なし |
-| ADR-005/RH-15 | NIST IR 8547 を理由に RS256 を支援しない | IR 8547 ipd は RSA-3072 と ES256 を同じく 2035 年より後に disallowed とするため根拠にならない [N][^31]（RS-11#8） | D8-3（SDK に実装し既定無効） | なし |
-| ADR-005/RH-16 | break-glass も token 基盤の stateful 照合に載せる | BIA と REQ-03 は break-glass/P を基盤に依存させない [D] | D9 | なし |
-| ADR-005/RH-17 | 内部 access token に束縛は不要で、mesh mTLS と aud で足りる（I2 を既定） | ATK-06 と内部での窃取に対する封じ込めが弱く、RFC 9700 §2.2.1 の SHOULD からの逸脱になる [D][N][^1] | I1 を既定 | §4.5 の C4 |
+| 棄却仮説 ID（案） | 棄却した案 | 理由 |
+|---|---|---|
+| RH-005-A | 全境界 JWT | 外部 client の解析依存で形式を変えられなくなり、偽造 token を検知できない（RS-12#10, #11）。悪性 client を無効化しても既存 token が期限まで残る [V][^37]。外部へ出した後は事実上不可逆 [D] |
+| RH-005-C | client 種別ハイブリッド（条件付き棄却） | 主流量の BFF 経路で失効品質が 60 チームの実装と寿命に依存し、外部検証規則が 2 系統になる [D]。H-02・H-04 に不合格なら採用に切り替える |
+| RH-005-D | 全境界 opaque（内部も照会） | 全内部呼出しが状態系に同期依存し、状態系の障害がそのまま全サービスの障害になる [D]（RS-12#58） |
+| RH-005-E | 全 JWT＋Token Status List | TSL が draft である [N][^18] |
+| RH-005-F | 製品の既定に従う | R-087・G-024 に反し、製品置換（A-104）のたびに全契約を作り直す [D] |
+| RH-005-G | 自社 token ファサード | ADR-001 の原則に抵触し、要員が倍の桁で増える [D]。代わりに grant export/import を必須評価にする（D11） |
+| RH-005-T1 | access token に trace id | D9-1 の 4 理由 |
+| RH-005-T2 | 監査相関だけ（要求 context なし） | ATK-06 に対して要求の真正性を事後に証明できない [D] |
+| RH-005-T4 | 全要求に要求 context | read で発行量（基準 16,804/秒）に見合う便益の根拠がない [D] |
+| RH-005-T5 | HTTP 要求署名 | Final の標準がない [N][^4] |
+| RH-005-R1 | rotation を一律 | FAPI の shall not と誤失効 [N][^2] |
+| RH-005-S1 | 外部 DPoP 既定 | A5 攻撃者への耐性（RS-04#49）。ただし K-3 の条件で再採用し得る |
+| RH-005-V1' | alg allowlist を metadata から取得 | 配布元の誤設定・侵害に alg 判定を依存させる [D] |
+| RH-005-EdDSA | 多相的 EdDSA の採用 | RFC 9864 で Deprecated [N][^42] |
+| RH-005-C1 | 属性を厚く載せる | 剥奪の遅れと情報漏えい（RFC 9068 §6）[N][^7]、R-249 |
+| RH-005-C3 | VC 形式の token | VC は holder 提示型の属性証明であり、RS の検証規則と失効モデルに置き換えられない [D] |
 
 ---
 
@@ -607,337 +590,240 @@ sec 案の 9 軸評価を検算し、本書の案の記号で再掲する [D]。
 
 ### 6.1 良い帰結
 
-- 外部 token の失効が状態ストアへの照会時点（cache 上限 C(t) 以内）で効き、悪性クライアントの無効化や連携事業者単位の一括失効が寿命を待たずに反映される [D]。
-- 内部 token を issuer・鍵・typ・aud の 4 要素で区別し、Storm-0558 型の鍵スコープの誤り（RS-12#5）と ID Token の転用を別々の機構で拒否する [D]。
-- 外部 client を token の内容と AS の alg から切り離し、AS の置換（dual-run、D10-4）と内部の PQ 移行で外部 client を改修せずに済む範囲が広がる [D][A-103, A-104]。
-- 業務サービスの義務が 4 つに限られ、ベンダー受入を契約試験の合否で機械的に判定できる [D]（D11）。
-- V1〜V14 は機械検証できる形で、DL-80 の負例ベクタと OIDF 適合試験で第三者が再現できる [D]。
+- 外部 client は token の形式・alg・claim に依存しなくなり、PQ 移行（ADR-015）と AS 置換を外部契約に波及させずに行える [D]。
+- 検証規則が SDK の既定動作になり、ベンダー交代があっても契約試験で品質を機械的に判定できる [D][A-052]。
+- write 以上の要求は (txn, jti, grant 参照, sid, decision_id) で「edge の認証認可を通った要求」として事後に再構成できる [D]。
+- 主体種別・検証済み属性の出所の枠を予約したので、AI エージェントや属性証明の受入れを claim の意味を壊さずに追加できる [D]。
 
 ### 6.2 悪い帰結
 
-- 状態ストアと STS が Tier-0 部品として増え、判定系の可用性（A-090）がそれらに依存する [D][A-090]。
-- edge が全外部経路の必須部品になり、レガシーの直結経路（A-110）の移行費用が発生する [D][A-110]。
-- 照会量は案C の約 3.3 倍になり、SRE の on-call 範囲が広がる [D][A-044, A-054]。
-- 第三者サーバー型 client に mTLS を既定で求めるため、相手方の PKI 運用と CDN 経由の証明書受渡しが参入障壁になり得る（未定量、NA-005-10）[D]。
-- RFC 9068 の RS256 MUST の解釈、end-to-end TLS、場合により内部 sender constraint で、準拠表に逸脱・解釈行が残る [D]（D8-3、D5）。
+- 状態ストア・STS・TTS が Tier-0 部品として増え、判定系の可用性帯（A-090）を共有する [D]。
+- 第三者には mTLS 既定の参入障壁が生じる（NA-03 未測）[D]。
+- ネイティブでは DPoP と rotation の併用で SDK が扱う状態の組合せが増える [D]。
+- 要求 context の draft 依存が残る [D]。
+- 内部 JWT の RS256 逸脱を記録・維持する作業が生じる [D]。
 
 ### 6.3 残余リスクと受容者案
 
-| 攻撃者（DL-51） | 主な統制 | 残余リスク | 受容者案 |
-|---|---|---|---|
-| FAPI A1/A1a/A2/A3a（ATK-01 を含む） | redirect URI の完全一致、PKCE S256、PAR、RFC 9207、認可コード 60 秒、implicit・ROPC の無効化、AS ごとの鍵 | 正規登録の redirect URI を使ったフィッシングと consent phishing（RS-13#60, #61） | CISO |
-| FAPI A5（RS 側で要求を読める攻撃者） | sender constraint、DPoP nonce と jti、privileged は mTLS、token を記録しない | DPoP 利用 client で受理窓の間に proof を再送され本文を改変される。リソース要求の署名は Final 仕様にない（RS-04#49, #51） | CISO |
-| ATK-02 悪意あるテナント管理者 | 第三者アプリの基盤側審査、管理者同意を privileged/T にする、監査、テナント単位の棚卸し | テナント内での正規権限の濫用 | 顧客（責任分界は DL-26）＋CISO |
-| ATK-03 侵害された一般ユーザー／ATK-14 infostealer | BFF、CSP、step-up、DBSC（任意）、異常検知（DL-52） | 端末に攻撃者が常駐している間の session 乗っ取り。RFC 9449 §11.4 [N][^5]、DBSC の非目標（RS-13#64）、Google は「ソフトウェアだけでは cookie の持ち出しを確実に防ぐ方法はない」とする [V][^47]（RS-13#66） | 事業責任者＋CISO |
-| ATK-04 侵害された顧客 IdP | 発行元 IdP を示す claim（DL-75）、IdP 単位の一括失効（状態ストア）、ADR-004 の FAL 統制 | 検知前に発行された token が失効まで使われる | 顧客＋CISO（DL-26） |
-| ATK-05 盗まれた token | 外部 token の sender constraint、状態ストアでの失効、内部 token の aud と cnf | token と鍵の両方を盗まれる（RFC 9700 §4.10.2 [N][^1]）。Bearer 例外の期限内 | CISO（受容票は期限付き） |
-| ATK-06 侵害された microservice | サービス別 aud、workload 証明書への cnf（I1）、token の中継禁止、exchange policy（ADR-009） | 侵害中に正当に受け取った token を exchange policy の範囲で悪用される。I2 に切り替えた場合は L_int の間の横流し | CTO＋CISO（検知と kill switch は ADR-019） |
-| ATK-06 の特例: edge・STS・状態ストアの侵害 | 最小構成、cell 単位、exchange の監査（act に edge を記録） | 侵害中に見えた token を exchange される | CISO |
-| ATK-07 CI/CD 侵害 | 無効化できない SDK、CI の負例契約試験（DL-80）、設定変更の統制（ADR-008） | 悪性の SDK 版を配布される | CISO（ADR-008） |
-| ATK-08 クラウド管理者 | token は hash だけで保存、鍵は KMS/HSM（ADR-007）、状態ストアの書込み権限を分離 | 状態ストアの改ざん（失効の取消し） | CISO（完全性の監視は ADR-014） |
-| ATK-09 内部 support | token を記録しない、support tool では token を扱わない、HAR のサニタイズ（DL-52） | 利用者がアップロードした資料への session 情報の混入 | CISO |
-| ATK-10 policy author | 寿命・alg allowlist・scope 対応を privileged/P の変更として二者承認、上限の CI 検査（G-072） | 承認済みの誤設定 | CTO |
-| ATK-11 DB read 権限者 | refresh token と状態ストアは hash で保存、鍵を DB に置かない | grant のメタデータ（誰がどのアプリを許可したか）の漏えい | 個人情報保護責任者 |
-| ATK-12 リージョン障害 | cell 内の状態ストアと STS、静的安定性、jitter、grace 禁止 | AS・状態ストア停止中、privileged は止まり、read-sensitive は寿命の範囲だけ継続する | 事業責任者（BIA） |
-| ATK-15 悪意ある・侵害された第三者連携アプリ | 登録審査、同意制限、grant 台帳、client 単位の一括失効、大量取得の検知、契約 | 検知までの間の大量 export（Cloudflare の事例で本体の持ち出しは約 3 分 [I][^41]） | CISO（契約は法務） |
-| 横断: 内部 issuer の鍵侵害 | cell 単位の鍵、privileged の stateful 照合 | read-sensitive と write では鍵を切り替えるまで偽造 token を検知できない | CISO（ADR-007・ADR-019） |
-| 横断: 外部 RP 向け RS256 の継続 | 3072 bit、ADR-015 の移行計画 | IR 8547 ipd の期限（2035 年より後は disallowed）[N][^31] | CTO＋CISO |
+| 攻撃者類型 | 統制 | 証拠 | 残余リスク | 受容者案 |
+|---|---|---|---|---|
+| ATK-05 盗まれた token | opaque＋照会、sender constraint、BFF | H-01・H-05 の負例 | C(t) の間の stale allow。鍵と token を同時に盗まれた場合 | CISO（R(t) は事業責任者） |
+| ATK-06 侵害 microservice | サービス別 aud、cnf、要求 context、mTLS | H-16・H-20 | 侵害サービス宛ての token の範囲内での濫用。Txn-Token の replay（draft が認める） | CISO |
+| ATK-08/17 鍵の不正使用・偽造 | privileged の stateful 照合、鍵の分離 | H-09 | read・write の内部 token は U2 の範囲で偽造を検知できない | CISO |
+| ATK-02 悪意あるテナント管理者 | 1 token 1 テナント、資源由来テナントとの照合 | H-10 | PEP の照合漏れ（R-250 の多層化に依存） | CISO |
+| ATK-15 悪性第三者アプリ | 台帳・一括失効・同意制限 | H-08 | 一括失効の完了までに行われる大量取得。Cloudflare の事案では、Bulk API 2.0 による本体の持出しが約 3 分で終わった [I][^46]（RS-12#41） | 事業責任者＋CISO |
+| ATK-16 濫用される AI エージェント | 主体種別 claim、act、要求 context | H-01（主体種別の負例） | 正規の委任範囲内での濫用（ADR-017 で扱う） | CISO |
+| ATK-12/19 障害・変更の誤り | 静的安定性、grace なし、CI 検査、寿命 profile 3 種類 | H-04・H-15 | 状態ストア停止中の write・privileged の fail-closed | 事業責任者（BIA） |
+| 範囲外（端末侵害） | DPoP＋rotation 併用、CSP | — | 端末上での正規 proof の生成 | CISO |
+| 退出（AS 置換） | grant export/import の必須評価 | H-22 | grant を移せない場合の再同意の利用者負担 | 事業責任者 |
 
-### 6.4 依存サービスと連携開発者への影響
+### 6.4 依存サービス・連携開発者への影響
 
-| 対象 | 影響 |
-|---|---|
-| 依存サービス（約 300、A-050） | 共通 SDK・sidecar で at+jwt だけを受け入れる。opaque token・ID Token・外部 issuer の token は受け入れず、introspection も呼ばない。義務は D11-1 の 4 つ。失効イベントの受信と DPoP の実装は不要 [D] |
-| 第一者 Web アプリのチーム | BFF 部品を採用する。cookie と CSRF の設定は部品の既定に従う。独自セッションの 105 サービスが移行対象 [D][A-110] |
-| 第一者ネイティブ・CLI のチーム | 外部ブラウザ（RFC 8252 は embedded user-agent を MUST NOT とする [N][^17]（RS-17#6））、PKCE、DPoP（nonce 再試行）、dpop_jkt に対応する [D] |
-| 第三者・顧客自作アプリの開発者（client 800、A-013） | opaque token を解析しない。非対称のクライアント認証と mTLS（または条件付き DPoP）に対応する。grant の失効と再同意、一括失効への協力が要る。規約は DL-64 の P-07 に載せる [D] |
-| 顧客のテナント管理者 | grant の定期再承認（平均 3 件/テナント）と一括失効の操作が増える。寿命は短くする設定だけができる [D][A-013, A-007] |
+- 業務サービスの義務は 4 つに限る [D]。SDK・sidecar による検証、aud の登録、token をログに残さないこと、契約試験の合格である。独自の JWT 検証は CI で拒否する [D]。
+- write 以上を扱うサービスは、要求 context を無改変で下流へ渡す（draft の MUST）[N][^21]（RS-06#35）[D]。
+- 業務サービスが受け取る token は内部 JWT（at+jwt）と Txn-Token の 2 種類に限られる [D]。
+- 第三者は、opaque を解析しないこと、opaque の最大長、sender constraint（既定 mTLS、例外 DPoP＋nonce）、grant の満了・再承認に対応する必要がある [D]。sandbox と SDK で支援する [D]。
+- 独自セッションの 105 サービスは BFF 参照実装へ移行する [D][A-110]。
 
-連携パターンごとの token 系インタフェースと契約の対応を次に示す（G-138 のうち token 系の行。行列の正本は DL-64）[D]。
+### 6.5 運用・要員
 
-| パターン | client 登録・discovery | token の取得・更新 | token の検証 | 失効・継続評価 | token exchange |
-|---|---|---|---|---|---|
-| P-01 ブラウザ→BFF→業務 API | DL-16（RFC 8414 metadata、PAR） | DL-16（認可コード＋PKCE＋PAR、private_key_jwt） | edge（基盤内）、内部は DL-75 | DL-78・DL-79（SSF/CAEP）、DL-56 | DL-74（edge が実行） |
-| P-02 ネイティブ・CLI | DL-16 | DL-16（DPoP、dpop_jkt） | edge、内部は DL-75 | DL-78・DL-79 | DL-74（edge が実行） |
-| P-03 サービス間 | ADR-009・DL-55 | DL-74（workload mTLS） | DL-75（共通 SDK） | DL-56 | DL-74 |
-| P-07 第三者連携 | DL-16（登録審査は D7-1） | DL-16（mTLS 既定、条件付き DPoP） | edge、内部は DL-75 | DL-78・DL-79、一括失効は DL-24 | DL-74（edge が実行） |
-
-### 6.5 運用と要員への影響
-
-- 状態ストア・STS・edge を SRE の on-call 対象（A-054 の SRE 6 名、2 系統）に加える [D][A-054]。
-- KRI の候補は次のとおりで、DL-06 に渡す [D]。
-  - 状態照会・exchange の p99 と容量比、状態ストアの push 遅延（Δprop）
-  - DPoP の拒否率（nonce・時刻差）と再試行率
-  - 一括失効の完了時間、非活動 grant の件数、sender constraint 付き第三者 token の比率
-  - 寿命上限の違反件数（CI）、300 サービスの SDK 版のばらつき、偽造 token 警報の件数
-- runbook の候補は次のとおりで、DL-24 と ADR-019 に渡す [D]。
-  - client の kill switch、テナントの停止、連携事業者単位の一括失効
-  - 内部 issuer の鍵の緊急交換、DPoP nonce 鍵の交換
-  - 状態ストアの切替と、状態ストア停止時の fail-mode の発動
-- RFC 9700 と FAPI の準拠表は、標準ステータス台帳（四半期）と同じ周期で見直す [D]。
+- 状態ストア・STS・TTS・BFF 参照実装・SDK・準拠表・grant 棚卸しはプラットフォームチームが所有する [D][A-054]。増分は NA-08 の桁で仮置きし H-18 で測る [D]。
+- KRI: 寿命上限の違反数、Bearer 例外の残数、期限切れ grant の未失効数、要求 context の欠落率（write 以上）、独自 JWT 検証の検出数 [D]。
+- runbook: 一括失効、状態ストア停止、署名鍵の緊急失効（ADR-007）、AS dual-run 切替 [D]。
 
 ---
 
 ## 7. 検証
 
-### 7.1 PoC で確かめる仮説と TC 案
+### 7.1 PoC の仮説と TC 案（TC-ID は 12_poc で採番する）
 
-TC-ID は DL-22 で採番する [D]。合否の数値は A-ID・BIA・DL-20 に結び付け、未定の間は TBD とする [D]。
-
-| 仮説 | TC 案 | 合否基準 |
-|---|---|---|
-| H-01 V1〜V14 に反する token は全 SDK・sidecar・edge で拒否される | 負例: API A 用 token の API B への提示、redirect URI の差異、issuer mix-up、盗まれた refresh token、DPoP replay と事前生成、typ の混同（ID Token・introspection 応答・SET を access token として提示）、typ なし、alg の混同と downgrade（FAPI issuer への RS256 を含む）、別 cell・別種別の鍵、kid・jku・x5u の注入、tid の改ざん、DPoP 束縛 token の Bearer 提示、aud に token endpoint を入れた client assertion、query で渡した token、opaque token の内部への直送、未知の crit（G-088、R-173、RS-04 §5.3-1） | 全負例を拒否（G-088）。application/at+jwt の正例は受理 |
-| H-02 状態ストアは成長シナリオの照会量でも判定系の遅延予算に収まる | 基準 8,402/秒と成長 28,222/秒に §12.5 の安全係数（k_u × k_g）をかけた負荷で p50/p99/p99.9 を測る | 可用性は A-090 の帯。p99/p99.9 は DL-20 の SLI（TBD、所有者 CTO、ゲート G4） |
-| H-03 剥奪は階層ごとの SLO 以内に反映される | grant・session・client の失効から拒否までを、階層ごと、push と poll ごとに測る。exchange で派生した token を含める（RS-04 §5.3-7） | R(t)（TBD、BIA・DL-20） |
-| H-04 AS・STS・状態ストアが停止しても階層ごとの fail-mode どおりに動く | login・refresh・exchange の停止と状態ストアの停止を注入する | DL-19 の表どおり。AS 本体への直接照会 0 件。障害時の寿命延長 0 件 |
-| H-05 DPoP の運用値が許容範囲にある | nonce の更新頻度と再試行率、時刻差による拒否率、cell 内 jti ストアの整合性と実容量（上限見積り約 101 万件）（RS-04 §5.3-4） | TBD（プロダクト責任者） |
-| H-06 mTLS の終端時に証明書ヘッダを偽装できない | 偽装ヘッダの注入、証明書更新後の token 無効化と再取得時間 | 偽装を全件拒否。再取得時間は TBD |
-| H-07 ネイティブの rotation 併用時の誤失効率 | 同時更新と再試行を再現する（RS-04 §5.3-6）。DPoP 束縛だけの場合と比べる | 閾値は TBD（プロダクト責任者＋CISO） |
-| H-08 連携事業者単位の一括失効が SLO 以内に完了する | NA-005-4 の規模で client_id の全 grant を失効させ、全 PEP で拒否されるまでの時間を測る（RS-12 §5.2-6） | R-189.5（TBD、DL-20） |
-| H-09 BFF の cookie・CSRF・CSP の統制が働く | cookie 属性の検査、サブドメインからの CSRF、XSS を想定した privileged の step-up 要求 | 属性の欠落 0 件、CSRF を全件拒否、step-up なしの privileged 0 件 |
-| H-10 device grant の既定無効が強制される | 許可リスト外の client_id で device grant を試す | 全件拒否（G-136(d)） |
-| H-11 内部 token と DPoP proof の PQ 署名が経路を通る | ML-DSA-44・65 の JWT と DPoP proof を CDN・LB・nginx/Envoy・mesh に通す（RS-11 P-1） | 4xx と切り捨て 0 件。不可なら D10-3 の上限か方式を改める |
-| H-12 alg を切り替えても RS の改修は要らない | 内部 issuer の alg 切替演習（RS-11 P-3） | RS のコード変更 0 件（G-068） |
-| H-13 複数テナント所属の利用者で tenant confusion が起きない | テナント X 用 token をテナント Y の資源に提示（A-015） | 全件拒否 |
-| H-14 偽造 token を検知できる | 発行記録にない jti を持つ署名済み token を privileged に送る | 全件拒否し警報が出る |
-| H-15 寿命と停止耐性の関係 | 寿命 5・10・30・60 分（A-027 の範囲）で、AS・STS 停止から業務 API 停止までの時間を測る | BIA の MTPD（write 2h、read-sensitive 4h）との差を DL-20 に記録 |
-| H-16 内部 cnf の展開費用 | mesh から peer 証明書をアプリ・sidecar へ渡す方式を代表言語で実装し、遅延・実装工数・失敗率を測る（A-012） | 費用の判定基準は TBD（CTO）。過大なら I2（§4.5 C4） |
-| H-17 2 つの AS を edge の背後で並行稼働できる | 経路識別子（D10-4）で照会先を振り分ける演習 | 第三者 client と内部サービスの変更 0 件（A-104） |
-| H-18 SDK 導入と要員 | 異なるベンダーの 3 チームが SDK を導入して契約試験に合格するまでの日数と運用工数、状態ストア・STS の運用工数を測る | A-054 の内数に収まるか（合格値 TBD、プラットフォームチーム長） |
-| H-19 JWKS の鍵の追加・撤去で認証エラーが出ない | canary で鍵を追加・撤去する（RS-12#57） | U5 が成り立ち、認証エラー 0 件（R-189.4、R-189.6） |
-| H-20 grant の棚卸しと再評価 | grant 12 万件で、同意方針の変更後に残る grant の検出、非活動 grant の自動失効、再評価ジョブを実行する | 検出漏れ 0 件（A-013） |
-| H-21 発行負荷が KMS/HSM の署名 QPS に収まる | 寿命を変えて refresh/秒と exchange/秒を測り、KMS の quota と比べる | A-042・A-043 との誤差を記録し、Lmin(a) を確定 |
-| H-22 製品が必要機能を支える | 採用候補の AS・edge で、opaque token の状態の外部 push、RFC 9701、DPoP nonce・dpop_jkt、mTLS を試す | 全機能が動作。欠ける機能は §4.5 C5 |
-| H-23 テナント設定と CI 検査 | 最低基準より長い寿命の設定と、上限を超える寿命の構成変更を投入する | 全件拒否・全件検出（G-115、G-072） |
+| H | 仮説 | 合否基準 | 判定が覆る先 |
+|---|---|---|---|
+| H-01 | 負例が全件拒否される。audience 混同、typ 混同（ID Token・introspection 応答・SET・Txn-Token を access token として提示）、typ なし JWT、alg 混同、mix-up、PKCE downgrade、query token、DPoP の Bearer 提示、盗まれた refresh token の別鍵使用（G-088、R-173） | 拒否率 100%（規則であり推定値ではない） | — |
+| H-02 | 状態ストアが基準 8,402/秒・成長 28,222/秒（×k、NA-05）で p99 遅延 TBD 以内、判定系可用性帯 A-090 を満たす | p99 は TBD（所有者 CTO、G4、BIA から） | 不合格なら BFF 経路を案C へ（K-1） |
+| H-04 | 状態ストア・STS の停止を注入したとき、read の継続と write・privileged の fail-closed が設計どおりに動き、AS 本体への迂回が起きない | DL-19 に一致 | 不合格なら案C へ |
+| H-05 | DPoP の受理窓 W と時刻差による拒否率、nonce 再試行率 | TBD（NA-01） | — |
+| H-07 | rotation 併用時の正規 client の誤失効率 | TBD（プロダクト責任者＋CISO） | 超過なら併用範囲を縮める |
+| H-08 | grant・client・publisher・テナント単位の一括失効の完了時間 | R-189.5（TBD） | — |
+| H-09 | 発行記録にない jti を持つ偽造 token を privileged で検知・拒否する | 100% | — |
+| H-10 | 複数所属主体によるテナント取違え・越境が拒否される（R-283） | 100% | — |
+| H-15 | AS・STS 停止から業務停止までの時間と MTPD の比較 | BIA の MTPD | — |
+| H-16 | I1（cnf 検証）の実装費用と遅延 | TBD（CTO） | 過大なら I2＋受容票 |
+| H-17 | 新しいサービスが SDK と契約試験キットだけで検証の適合に達するまでの工数（ops TC案-05-06） | TBD（DL-27） | 過大なら SDK を簡素化 |
+| H-18 | 要員の増分（状態ストア・BFF 参照実装・SDK・grant 棚卸し）が A-054 の内数に収まる。状態ストアは NA-08 の＋1〜2 FTE の桁と比べる | A-054 | 不合格なら要求 context を privileged・FAPI に縮め、それでも不合格なら案C |
+| H-19 | 内部 alg を ES256 から ML-DSA-65 へ利用側の改修なしで切り替えられ、ヘッダ上限・HPACK の範囲で動く（G-068） | 改修 0 件、到達不可 0 件 | 不合格なら内部形式の進化可能性の前提を見直す |
+| H-20 | 要求 context: 発行量 16,804×p_w/秒で署名・検証の遅延が TBD 以内。下流での改変・剥ぎ取りを検知できる。監査で (txn, jti, grant 参照, sid, decision_id) から要求を再構成できる | 再構成率 100%、遅延 TBD | 不合格なら T3 を privileged・FAPI に縮める。極端な場合は T2 |
+| H-21 | 外部の traceparent を偽造・衝突させても、監査の相関と記録の有無が変わらない | 影響 0 件 | — |
+| H-22 | AS 製品置換を模擬し、opaque の dual-run と grant 移行または再同意の手順が成り立つ（evo TC-005-10） | 移行率・利用者影響は TBD（事業責任者） | 移行不能かつ再同意不可なら案G を再評価 |
+| H-23 | 状態照会のログ・経路から主体の追跡ができない（VC DM 2.0 §4.10 の趣旨の準用） | 照会ログに主体と利用先の対応が残らない | — |
+| H-24 | 寿命 profile 3 種類で、全 API の寿命が U1〜U5 を満たす | 違反 0 件 | 満たせない API があれば profile を追加する前に API の階層分割を検討 |
 
 ### 7.2 第三者評価で確かめること
 
-- FAPI 範囲の AS と代表 client で、OIDF の FAPI 2.0 Security Profile Final 適合試験（DPoP 構成と mTLS 構成の両方）を採用版で実行し、ログを E7 として保存する（DL-60）[D]。OIDF は AS と client の双方向けに適合試験と認定を提供すると告知している [N][^63]（RS-04#52）。
-- edge、BFF、状態ストア、STS の pentest と、consent phishing・device code の red team 演習を行う（DL-59）[D]。
-- RFC 9700 準拠表を作成者以外が原文と 1 行ずつ照合し、空欄 0 件を確認する（G-087）[D]。
-- これらはすべて未達であり、達成済みとは扱わない（CONVENTIONS §8）[D]。
+- OIDF の FAPI 2.0 Security Profile Final・Message Signing Final の適合試験を、採用版で mTLS 構成と DPoP 構成の両方について自前で実行し、E7 として保存する（適合試験の提供は告知済み [N][^45]、RS-04#52）（G-089）[D]。
+- pentest の範囲に、edge 迂回、状態ストアへの token scanning、STS による exchange の濫用、要求 context の replay・付け替え、BFF の CSRF、主体種別の偽装を含める [D]。
+- RFC 9700 準拠表の空欄 0 件と、逸脱行ごとの受容票を、独立の確認者が検証する（G-087）[D]。
 
 ---
 
 ## 8. 再検討トリガーと見直し時期
 
-| 区分 | # | トリガー | 見直す内容 |
-|---|---|---|---|
-| 標準 | 1 | Token Status List の RFC 化 | 案E の再評価（§4.5 C10） |
-| 標準 | 2 | 8725bis の RFC 化 | V1〜V14 との差分の取込み、V14 の [N] への格上げ |
-| 標準 | 3 | OAuth 2.1 の RFC 化 | 準拠表の基準 |
-| 標準 | 4 | 7523bis の RFC 化 | client assertion の規則を [N] に格上げ |
-| 標準 | 5 | Transaction Tokens の RFC 化 | 案F、ADR-009 |
-| 標準 | 6 | FAPI 2.0 HTTP Signatures の Final 化（現在は FAPI WG 一覧で Drafts に区分 [N][^50]） | privileged での DPoP の可否（D5-4） |
-| 標準 | 7 | DBSC が W3C の勧告段階に進み複数ブラウザで提供される | D6-6、RH-10 |
-| 標準 | 8 | 新しい BCP 195 の公表 | 12 か月以内の追随（FAPI の期待 [N][^2]） |
-| 標準 | 9 | NIST IR 8547・SP 800-131A Rev.3 の final 版、composite JOSE の RFC 化 | D8-3、D10、ADR-015 |
-| 標準 | 10 | RFC 9068 errata 8802（iss を OPTIONAL に改める提案、Reported）の状態変化 [N][^64]（RS-04#60） | V4、DL-75 の必須 claim |
-| 製品の健全性 | 1 | 採用 AS・edge が PAR、DPoP（nonce・dpop_jkt）、mTLS、RFC 9207・9701、opaque 状態の push の支援を失う、または FAPI の DPoP 構成の認定がない（RS-15#4〜#6, #45） | D1-2、D5-3（§4.5 C5）、ADR-001 |
-| 製品の健全性 | 2 | 主要構成要素の EOL・置換（A-104） | 案全体、H-17 の再実施 |
-| 製品の健全性 | 3 | gateway・CDN のヘッダ上限の変更 | D10-3 |
-| 実測値の逸脱 | 1 | H-02 または H-04 が不合格 | 決裁案 2 を案C へ（C1） |
-| 実測値の逸脱 | 2 | H-03 が SLO を超過 | C(t)、L_int |
-| 実測値の逸脱 | 3 | edge 呼出しが A-102 の成長率を上回る | 状態ストアの容量 |
-| 実測値の逸脱 | 4 | H-07 が閾値を超過 | D4 のネイティブ行（C9） |
-| 実測値の逸脱 | 5 | H-05 の拒否率・再試行率が許容外 | D5（C9） |
-| 実測値の逸脱 | 6 | H-16 で内部 cnf の費用が過大、または I2 運用中に edge を迂回したアクセスを検知 | I1/I2 の切替（C4） |
-| 実測値の逸脱 | 7 | H-18 で要員が A-054 を超え、DEC-4 で確約されない | 案C への寄せ（C7） |
-| 実測値の逸脱 | 8 | H-17 が不合格 | D10-4（C8） |
-| 規制 | 1 | PSD2/PSR、金融庁の監督指針、業界規制で寿命・無操作時間・token 方式が指定される、または規制強化シナリオ（A-080 65%、A-081 600）が現実化する | 規制プロファイル（DL-09 §5）、C2 |
-| 規制 | 2 | ADR-020 の FAPI 範囲、または REQ-03 §3.1 の失効状態確認の要件が変わる | 決裁案 2（C11） |
-| 前提 | 1 | BIA・DEC-1 で R(t) が決まる | U2、C(t)、C2 |
-| 前提 | 2 | A-013 の grant が 10 万を超える、または下限（300 client・1 万 grant）にとどまる | D7 の自動化、C3 |
-| 前提 | 3 | NA-005-2（DPoP 比率）が 60% を超える、NA-005-10 が判明する、A-030 が改訂される | D5、決裁案 3（C6） |
-| 事故 | 1 | 鍵スコープ、第三者 token、内部 token に関する新しい一次報告 | §6.3、D7 |
-| 定期 | 1 | 標準ステータス台帳の四半期確認（DL-84）、ゲート G3・G4・G6、再決裁周期（A-101: 初回 3 年以内、以後 5 年以内） | 本 ADR 全体 |
+- **定期見直し**: G3・G4 の各ゲート、標準ステータス台帳の四半期更新、再決裁の周期（A-101）で見直す [D]。
+- **実測値の逸脱**:
+  - H-02・H-04 が不合格なら、BFF 経路を案C に切り替える。費用と tail latency の差が決定的なら勝者は ops 型に近い構成になる [D]。
+  - H-18 で要員が A-054 に収まらなければ、要求 context を privileged・FAPI に限定し、それでも収まらなければ案C を採る [D]。
+  - H-20 で p_w または署名容量が不合格なら、T3 を privileged・FAPI に絞る [D]。
+  - H-16 で費用が過大なら I2 に切り替え、受容票を作る [D]。
+  - H-07 が閾値超過なら、rotation 併用をやめる（FAPI の論理に合わせる）[D]。
+  - H-22 で grant を移せず再同意の費用が BIA で許容できなければ、案G を再評価する [D]。
+  - H-19 で ML-DSA 化が利用側の改修 0 件で済まなければ、内部形式の進化可能性の前提を見直す [D]。
+- **前提の変化**:
+  - NA-03（end-to-end mTLS を張れる第三者の比率）が低ければ、第三者の既定を DPoP＋nonce に変え、mTLS は privileged・FAPI だけに限る（K-3）[D]。
+  - A-013 の実態が下端（client 300 未満）でほぼ第一者だけなら、外部 opaque の便益が下がり、案A・案C の勝利条件に近づく [D]。grant が上端（10 万）を超えた場合も見直す [D]。
+  - BIA と事業責任者が BFF 経路の stale allow を L_int の範囲で受容すると決裁した場合は、BFF も opaque にする根拠が弱まる [D]。
+  - NA-07（VC 受入れ）が要件として確定した場合は、D9-4 の出所の枠を具体化する [D]。
+- **標準の状態変化**:
+  - Transaction Tokens が IESG 提出・RFC 発行、または `txn`・`tctx`・typ の意味が変わったとき（社内 profile を改版）。draft が失効した場合は T2 への後退を判断し直す [D]。
+  - Token Status List の RFC 化（案E を再評価）、8725bis の RFC 化（V14 を正式化）、OAuth 2.1 の RFC 化、FAPI Http Signatures の Final 化（T5 を再評価）、CAEP Interoperability Profile の Final 化、JOSE composite 署名の RFC 化、NIST IR 8547 の final 化 [D]。
+  - RFC 9068 errata 8802（iss の扱い）の判定（RS-04#60）、または RS256 MUST の解釈（K-4）が監査で非準拠と判定された場合は、内部 issuer の alg 方針を見直す [D]。
+- **製品の健全性**: 採用 AS が opaque 状態の push、DPoP nonce、dpop_jkt、RFC 9701、grant export のいずれかの提供をやめた場合、または OIDF 認定を更新しない場合 [D]。
+- **規制変更**: 規制業種比率が A-080 の規制強化シナリオへ移り全操作で即時失効が求められた場合は、案D と T4 を再評価する [D]。決済・医療の規則で無操作・再認証の上限が変わった場合、PQC 移行期限が前倒しされた場合も見直す [D]。
+- **事故**: 自社または公表事案で、bearer token の大量窃取や署名鍵による偽造 token が発覚した場合 [D]。
 
 ---
 
 ## 9. 依存関係
 
-| 種別 | 対象 | 内容 |
-|---|---|---|
-| ADR | ADR-001 | AS・edge の必須機能（D11-4）、opaque 状態の push、OIDF 適合試験の自社実行 |
-| ADR | ADR-002・DL-09 | 操作階層、AAL、再認証の上限（U4） |
-| ADR | ADR-004 | mix-up 対策、FAL、発行元 IdP 単位の失効、tid の切替 |
-| ADR | ADR-006・DL-56 | 状態ストアへの push、CAEP、伝播 SLO、write 以上の内部照会 |
-| ADR | ADR-007 | 種別ごと・cell ごとの鍵、HSM の署名 QPS、JWKS、旧鍵の併存（U5） |
-| ADR | ADR-009・DL-55 | STS、exchange policy、act、workload の mTLS、内部 cnf、Txn-Token |
-| ADR | ADR-013・ADR-023・DL-19 | 階層ごとの fail-mode、cell、静的安定性 |
-| ADR | ADR-015・DL-23 | alg 移行、サイズ予算 |
-| ADR | ADR-016・DL-70 | token profile の版管理、V13 の破壊的変更 |
-| ADR | ADR-017 | AI エージェントを外部 client として扱う場合の D1 適用 |
-| ADR | ADR-018・ADR-027 | 退出、dual-run、grant の非移送 |
-| ADR | ADR-019・DL-24 | 一括失効、kill switch、鍵の緊急交換 |
-| ADR | ADR-020 | FAPI の適用範囲 |
-| ADR | ADR-021 | issuer 識別子、kid の命名、opaque の経路識別子の名前空間 |
-| ADR | ADR-022（DEC-3）・DL-75 | RFC 9068 系の契約 |
-| ADR | ADR-026 | offline grant と非同期ジョブ |
-| ADR | ADR-029・DL-46 | break-glass/P のローカル資格情報経路、break-glass/B の fail-mode |
-| 設計文書 | DL-16（04_architecture/token-profile.md） | 準拠表と検証規則の正本 |
-| 設計文書 | DL-20（07_slo/numeric-contracts.md） | §2.13 の TBD の確定先 |
-| 設計文書 | DL-22（12_poc/preregistered-test-plan.md） | §7 の TC 採番 |
-| 設計文書 | DL-51・DL-52 | 攻撃者モデル、大量取得の検知 |
-| 設計文書 | DL-58（04_architecture/capacity-model.md） | 状態ストア・STS の設計容量 |
-| 設計文書 | DL-64 | 連携パターン（P-01、P-02、P-03、P-07）と G-138 の行列 |
-| 設計文書 | DL-84 | 標準ステータス台帳 |
-| 契約 | DL-74・DL-75・DL-78・DL-79・DL-80 | token exchange、claims、SSF/CAEP、契約試験キット |
-| 契約 | DL-26・連携事業者規約 | 責任分界、token 保管、sender constraint、侵害通知、一括失効への協力、opaque の最大長 |
-| 契約 | DL-30・ベンダー契約 | AS ベンダーの必須機能、SDK 版と契約試験合格を受入条件にする |
+| 依存先 | 内容 |
+|---|---|
+| ADR-001 | AS 製品の必須機能（PAR、DPoP nonce・dpop_jkt、mTLS、RFC 9207/9068/7662/9701/7009/8693/8707/9396、opaque 状態の外部 push、SSF 送信、grant・refresh token の export/import） |
+| ADR-002 | acr・amr の値域と AAL・IAL の対応、step-up、検証済み属性の受入れ |
+| ADR-004 | 属性証明・VC の受入れ（オンボーディング） |
+| ADR-006 | CAEP 受信と剥奪反映 SLO（R-143）、U2 の R(t) |
+| ADR-007 | 内部 issuer・要求 context の鍵、cell 別鍵、JWKS の併存時間 |
+| ADR-009 | exchange の可否、act、Txn-Token の採否（D9-3 と整合させる） |
+| ADR-013 / ADR-023 / DL-19 | 状態ストアの配置、fail-mode と静的安定性 |
+| ADR-014 / DL-77 | 監査スキーマ（txn・jti・grant 参照・sid・decision_id・trace_id） |
+| ADR-015 | PQ 移行の順序とサイズ、DPoP の PQ 化 |
+| ADR-016 | profile 版と破壊的変更 |
+| ADR-017 | 主体種別 claim、AI エージェント |
+| ADR-018 | 出口戦略（grant 移行） |
+| ADR-020 | FAPI 範囲 |
+| ADR-021 / ADR-022 / DL-75 | issuer 識別子、sub の形式（pairwise）、claim 名・意味・スキーマ |
+| DL-16 | RFC 9700 準拠表と検証規則の詳細 |
+| DL-20 | 寿命・時刻差・cache 齢の数値契約 |
+| DL-33 | 費用比較（self-host STS の前提） |
+| 11_contracts | 第三者向け規約（opaque 最大長、sender constraint、一括失効への協力） |
 
 ---
 
 ## 対応表（R/G）
 
-### 本書を対応成果物に含む行（R-requirements.md・G-goal-criteria.md から抽出）
+閉じ方は CONVENTIONS §6（A 机上／B 組織決定／C 実測／D 第三者）。状態は「本書で閉じた」「決裁案まで」「要実測」「要第三者」のいずれか [D]。
 
 | ID | 本書の節 | 閉じ方 | 状態 |
 |---|---|---|---|
-| R-095 opaque/JWT 境界 | D1、§3.1、§5 | A | 本書で閉じた（決裁前の案。決裁は §2.12 決裁案 2） |
-| R-158 RFC 9700 の準拠基準化 | D4、D5、D8 | C | 決裁案まで（準拠表の本体は DL-16、実測は H-01） |
-| G-087 準拠表、opaque/JWT 境界、FAPI 採否 | D1、D8（FAPI 採否は ADR-020） | B | 決裁案まで（準拠表の空欄 0 件は DL-16） |
-| G-020 全 ADR の必須節 | §1〜§9（文脈、選択肢、棄却案と理由、決定と決定条件・期限、帰結、可逆性、再検討トリガー、証拠） | A | 本書で閉じた（ADR-005 分。自動検査は DL-111） |
-
-### 関連する行
-
-| ID | 本書の節 | 閉じ方 | 状態 |
-|---|---|---|---|
-| R-087 一律値の撤回 | D3、§2.13 | B | 決裁案まで（決裁案 1） |
-| R-189.1 access/refresh 寿命を別値 | D3、D4 | C | 要実測（H-15、H-21） |
-| R-189.2 clock skew | V7、§2.13 | C | 要実測（H-05） |
-| R-189.4 旧鍵併存時間 | U5 | C | 要実測（H-19、ADR-007） |
-| R-189.5 緊急失効完了時間 | D7-6、§2.13 | C | 要実測（H-08） |
-| R-189.6 JWKS cache 最大齢 | §2.13、U5 | C | 要実測（H-19） |
-| R-159 BCP 準拠 profile の文書化 | D8 | A | 決裁案まで（本体は DL-16） |
-| R-160・R-240・R-270 FAPI 2.0 | D5-4、D8-4、D9 | B（R-240 は A） | 決裁案まで（ADR-020） |
-| R-161 JWT 厳格検証 | D2 V1〜V14 | C | 要実測（H-01、DL-75） |
-| R-162 相互排他 | D2（4 要素） | C | 要実測（H-01） |
-| R-163 DPoP の限界と BFF 等の併用 | D5、D6 | C | 要実測（H-05、H-09） |
-| R-173 token 誤用の PoC | §7 H-01 | C | 要実測（DL-22） |
-| R-239・R-259 PKCE、redirect、refresh 保護、JWT 検証、DPoP、end-to-end TLS | D4、D5、D8 | A | 本書で閉じた（end-to-end TLS は逸脱として決裁案 4） |
-| R-249 JWT を権限 DB にしない | V10 | A | 本書で閉じた |
-| R-250 テナント境界の多層化 | V9 | A | 本書で閉じた（token 側。PEP 側は DL-15） |
-| R-251・R-206 サービス別 aud と exchange | D1-4、V6 | C（R-251 は A） | 要実測（ADR-009、H-01） |
-| R-283 複数所属 | V9 | C | 要実測（H-13） |
-| R-046 iss・aud の厳格検証（FAL2 の部分） | V4、V6 | D | 要第三者（ADR-004、G-089） |
-| R-112 全 session 失効の token 側手段 | D1-2、D7-6、D9 | C | 要実測（DL-24、ADR-019） |
-| R-208・R-209 過度依存の回避、進化への互換性 | D10、D11-4 | A | 本書で閉じた（token 範囲。全体は DL-13・DL-23） |
-| G-024 数値の導出鎖・一律値 0 件 | D3、§2.13 | A | 本書で閉じた（本書の数値は A-ID・規範・TBD のいずれか） |
-| G-062・G-081 第三者 grant の濫用と事故型の負例 | D7、§6.3 | C | 要実測（H-08、H-20、DL-52） |
-| G-068 alg 切替・PQ サイズ | D10、H-11、H-12 | C | 要実測 |
-| G-072 寿命上限の CI 検査 | D3 | C | 要実測（H-23） |
-| G-077 FAPI Attacker Model との対応 | §1.7、§6.3 | A | 本書で閉じた（token 範囲。正本は DL-51） |
-| G-088 負例の全件拒否 | D2、H-01 | C | 要実測 |
-| G-089 適合試験 | §7.2 | D | 要第三者（DL-60） |
-| G-103 P-01・P-07 の負例 | H-01、H-13 | C | 要実測 |
-| G-106 検証 cache と JWKS cache の最大齢 | §2.13 | C（B 併用） | 決裁案まで（DL-20 で決裁） |
-| G-115 テナントは短縮のみ | D3 | C | 要実測（H-23） |
-| G-136(d) device code | D7-10、H-10 | C | 要実測 |
-| G-138 パターン×インタフェース×契約 | §6.4（token 系の行のみ） | A | 決裁案まで（行列の正本は DL-64） |
-
-### 主張台帳で本書を処置先とする主張
-
-| CL | 処置 | 本書の節 |
-|---|---|---|
-| CL-0013 JWT を設計要件として固定しない | 維持。外部 opaque・内部 JWT とした | D1 |
-| CL-0026 外部 API の JWT と社内の JWT 解釈は同義でない | 維持。外部と内部の issuer・形式を分けた | D1、V4 |
-| CL-0126 aud は service または API product 単位 | 維持。粒度はサービス単位 | V6 |
-| CL-0130 scp/roles | 修正。claim 名は RFC 9068 の scope とし、roles は載せない | V10 |
-| CL-0131・CL-0236 一律 5〜15 分 | 要実測。D3 の導出と TBD | D3、§2.13 |
-| CL-0235 rotation 付き refresh か BFF session | 維持（修正）。client 種別ごとの表にした | D4 |
-
-### DL-12 を含むが別の ADR を指す行（本書の対象外）
-
-G-042、G-049、G-051、G-060、G-061、G-066、G-067、G-069、G-070、G-074、G-075、G-084、G-091、G-092、G-093、G-095、G-102、G-109、G-110、G-111、G-113、G-114、G-120、G-126、G-134、G-140 は、対応成果物欄に DL-12 を含むが、ADR-005 以外の ADR（ADR-001〜004、006〜011、013、016、018、019、021〜025、027〜029）を指す [D]。本書はこれらを閉じない [D]。このうち G-068（ADR-015）と G-102（ADR-009）は token に関わる部分を上の関連表に載せた [D]。
+| **R-095**（本書を対応成果物とする） | D1、§3.1 | A | 本書で閉じた（方針）。BFF 経路は H-02・H-04 で要実測 |
+| **R-158**（同） | D4、D7、D8 | C | 要実測（H-01・H-07）。準拠表本体は DL-16 |
+| **G-087**（同） | D1、D8、§2.14 | B | 決裁案まで（準拠表は DL-16、FAPI 採否は ADR-020） |
+| **G-020**（同） | 本書の構成（文脈・選択肢・棄却・決定・帰結・可逆性・再検討トリガー・証拠） | A | 本書で閉じた（ADR-005 分） |
+| R-046 | D8-2（RFC 9207）、D10-1 | D | 要第三者（DL-16・適合試験） |
+| R-087 | D3 | B | 決裁案まで（値は G4、K-2） |
+| R-112 | D9-2 L2（sid） | C | 要実測（ADR-006） |
+| R-118 | D9-2 | A | 本書で閉じた（ADR-014 と整合を要す） |
+| R-143 | D3 U2、D1-2 | C | 要実測（ADR-006） |
+| R-159 | D8 | A | 本書で閉じた（方針。準拠表は DL-16） |
+| R-160 / R-240 / R-270 | D8-4（ADR-020 へ） | B | 決裁案まで（ADR-020） |
+| R-161 | D2 V1〜V14 | C | 要実測（H-01） |
+| R-162 | D2 の相互排他 | C | 要実測（H-01） |
+| R-163 | D5、D6 | C | 要実測（H-05） |
+| R-173 | H-01 | C | 要実測 |
+| R-189.1 / R-189.2 / R-189.4 / R-189.6 | D3（U2、U5、V7） | C | 要実測（値は DL-20） |
+| R-189.5 | D7-6、H-08 | C | 要実測 |
+| R-206 / R-251 | D1-4（サービス別 aud、共通 aud 禁止） | C | 要実測（ADR-009） |
+| R-239 / R-259 | D4、D5、D8-2 | A | 本書で閉じた（方針） |
+| R-249 | V10、D9-4 | A | 本書で閉じた |
+| R-250 / R-283 | V9、D9-4 テナント文脈、H-10 | C | 要実測 |
+| G-024 | D3（一律値なし、TBD に所有者） | B/C | 決裁案まで（値は G4） |
+| G-062 | D7 | C | 要実測（H-08） |
+| G-068 | D10-6、H-19 | C | 要実測 |
+| G-072 | D2（独自検証の CI 拒否）、D3 の CI 検査 | C | 要実測 |
+| G-088 | D2、H-01 | C | 要実測 |
+| G-089 | §7.2 | D | 要第三者 |
+| G-106 | D3、D1-2 | B | 決裁案まで（DL-20） |
+| G-115 | D3 のテナント設定 | A | 本書で閉じた |
+| G-138 | D9-4、D10-2（DL-75 への入力） | A | 決裁案まで（DL-75・DL-64 で行列化） |
 
 ---
 
 ## 残課題
 
-| # | 本書で閉じないもの | 担当 | 閉じるゲート |
-|---|---|---|---|
-| 1 | 寿命・cache・時刻差・grant などの値（§2.13） | CISO＋プロダクト責任者、CTO | G3 で案、G4 実測後に DL-20 |
-| 2 | 決裁案 1〜7（§2.12）の決裁 | 各決める人 | G3・G4 |
-| 3 | RFC 9700 準拠表の本体と作成者以外の照合（G-087） | プラットフォームチーム（DL-16） | G3 |
-| 4 | 状態ストアの負荷・停止試験と案B/案C の確定（H-02〜H-04） | CTO＋SRE 責任者 | G4 |
-| 5 | AS・edge 製品が opaque 状態の push と DPoP 構成を支えるかの確認（H-22、ADR-001） | CTO | G3（選定） |
-| 6 | 内部 cnf の展開費用（H-16）と I1/I2 の確定 | CTO＋CISO | G4 |
-| 7 | 要員が A-054 の内数に収まるか（H-18、NA-005-5） | プラットフォームチーム長 | G4（DEC-4） |
-| 8 | 新規仮定 NA-005-1〜10 と BIA NA-01 の前提台帳への登録 | 前提台帳の所有者 | G1 |
-| 9 | break-glass/B の fail-mode | CISO＋事業責任者 | ADR-029・DL-19 |
-| 10 | OIDF 適合試験、pentest、red team（§7.2） | CISO（DEC-5） | 段階 2 |
-| 11 | 第三者向け規約への opaque 最大長・sender constraint・協力義務の記載 | プロダクト責任者＋法務 | DEC-8 の契約凍結前 |
-| 12 | 棄却仮説（§5）の traceability/rejected-hypotheses.md への集約 | 本書の所有者 | Phase 4 |
+| 残課題 | 担当（案） | 閉じるゲート |
+|---|---|---|
+| 寿命・cache 齢・時刻差・jti ストア・grant 寿命の数値（TBD） | CTO＋CISO、事業責任者（BIA） | G4（DL-20） |
+| H-02・H-04 による BFF 経路の形式の確定（K-1） | CTO＋CISO | G4 |
+| NA-01〜NA-08 の前提台帳への追加と値の確定 | 前提台帳の所有者 | G1〜G4 |
+| RFC 9700 準拠表（DL-16）の作成と独立確認 | プラットフォームチーム、独立確認者 | G3 |
+| 社内 claim の具体名と Public Name の名前空間（D9-5） | ADR-022・DL-75 の所有者 | G3 |
+| sub の pairwise 既定の採否（D10-1） | ADR-021（DEC-3） | G3 |
+| grant export/import の製品評価（D11-1） | ADR-001（DEC-3） | G3 |
+| 要員増分と費用の金額（NA-08、DL-33） | CTO | G3〜G4 |
+| 最終起草者が新たに照合した原典（IANA JWT Claims registry、RFC 8417、RFC 7519、OIDC Core §8、VC DM 2.0、OpenID IDA）の照合ログを traceability/ に追記し、作成者以外が検証する | 照合ログの所有者 | G3 |
+| OIDF 適合試験と pentest（§7.2） | CISO、独立評価者 | G5 |
+| 判定者採点は模擬パネルの自己レビューであり、実在の CTO/CISO の決裁は未達 | CTO・CISO | G3 |
 
 ---
 
 ## 参考文献
 
-[^1]: IETF (T. Lodderstedt, J. Bradley, A. Labunets, D. Fett)『RFC 9700: Best Current Practice for OAuth 2.0 Security』BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.1, §2.1.1, §2.1.2, §2.2.1, §2.2.2, §2.3, §2.4, §2.5, §2.6, §4.3.2, §4.4.2, §4.9.3, §4.10.2, §4.13, §4.14.2, §4.15.1。§2.2.2・§4.3.2・§4.14.2 は本書の起草時に原文テキストを取得して確認、確認日: 2026-10-03）
-[^2]: OpenID Foundation FAPI WG (D. Fett, D. Tonge, J. Heenan)『FAPI 2.0 Security Profile』Final, 2025-02-22. https://openid.net/specs/fapi-security-profile-2_0-final.html （参照箇所: Introduction, §5.2, §5.3.2.1, §5.3.2.2, §5.3.3, §5.3.4, §5.4, §6.2, §6.3、確認日: 2026-10-03）
-[^3]: OpenID Foundation FAPI WG (D. Fett)『FAPI 2.0 Attacker Model』Final, 2025-02-22. https://openid.net/specs/fapi-attacker-model-2_0-final.html （参照箇所: §5, §6, §8.2, §8.4、確認日: 2026-10-03）
-[^4]: OpenID Foundation FAPI WG (D. Tonge, D. Fett, J. Heenan)『FAPI 2.0 Message Signing』Final, 2025-09-25. https://openid.net/specs/fapi-message-signing-2_0-final.html （参照箇所: Introduction, §5、確認日: 2026-10-03）
-[^5]: IETF (D. Fett, B. Campbell, J. Bradley, T. Lodderstedt, M. Jones, D. Waite)『RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)』2023-09. https://www.rfc-editor.org/rfc/rfc9449 （参照箇所: §2, §4.3, §5, §7.2, §10（dpop_jkt の使用は OPTIONAL、不一致時の拒否は MUST。本書の起草時に原文を確認）, §11.1〜§11.4, §11.7、確認日: 2026-10-03）
-[^6]: IETF (B. Campbell, J. Bradley, N. Sakimura, T. Lodderstedt)『RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §3, §6.3, §6.5、確認日: 2026-10-03）
-[^7]: IETF (V. Bertocci)『RFC 9068: JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens』2021-10. https://www.rfc-editor.org/rfc/rfc9068 （参照箇所: §2.1, §2.2, §4, §5（鍵分離が鍵漏えいの防御にならない旨、resource ごとの aud）, §6（client の内容検査の MUST NOT、opaque への切替え）。本書の起草時に §2.1・§4・§5・§6 の原文を確認、確認日: 2026-10-03）
-[^8]: IETF (Y. Sheffer, D. Hardt, M. Jones)『RFC 8725: JSON Web Token Best Current Practices』BCP 225, 2020-02. https://www.rfc-editor.org/rfc/rfc8725 （参照箇所: §3.1, §3.8, §3.9, §3.10（jku・x5u を辿る場合の SSRF 対策の SHOULD。本書の起草時に原文を確認）, §3.11, §3.12、確認日: 2026-10-03）
-[^9]: IETF (J. Richer, Ed.)『RFC 7662: OAuth 2.0 Token Introspection』2015-10. https://www.rfc-editor.org/rfc/rfc7662 （参照箇所: §2.1, §4、確認日: 2026-10-03）
-[^10]: IETF (T. Lodderstedt, V. Dzhuvinov)『RFC 9701: JSON Web Token (JWT) Response for OAuth Token Introspection』2025-01. https://www.rfc-editor.org/rfc/rfc9701 （参照箇所: §5, §8.1, §8.2、確認日: 2026-10-03）
-[^11]: IETF (T. Lodderstedt, Ed., S. Dronia, M. Scurtescu)『RFC 7009: OAuth 2.0 Token Revocation』2013-08. https://www.rfc-editor.org/rfc/rfc7009 （参照箇所: §2, §3 Implementation Note、確認日: 2026-10-03）
-[^12]: IETF (M. Jones, A. Nadalin, B. Campbell, J. Bradley, C. Mortimore)『RFC 8693: OAuth 2.0 Token Exchange』2020-01. https://www.rfc-editor.org/rfc/rfc8693 （参照箇所: §2.1, §4.1, §4.4、確認日: 2026-10-03）
-[^13]: IETF (A. Parecki, P. De Ryck, D. Waite)『RFC 10017: OAuth 2.0 for Browser-Based Applications』BCP 212, 2026-08. https://www.rfc-editor.org/rfc/rfc10017 （参照箇所: §6, §6.1.3.1〜§6.1.3.3, §6.1.4.3, §6.3.2.3, §6.3.4.2.2, §6.3.4.3, §9.2、確認日: 2026-10-03）
-[^14]: IETF (K. Meyer zu Selhausen, D. Fett)『RFC 9207: OAuth 2.0 Authorization Server Issuer Identification』2022-03. https://www.rfc-editor.org/rfc/rfc9207 （参照箇所: §2, §2.4、確認日: 2026-10-03）
-[^15]: IETF (V. Bertocci, B. Campbell)『RFC 9470: OAuth 2.0 Step Up Authentication Challenge Protocol』2023-09. https://www.rfc-editor.org/rfc/rfc9470 （参照箇所: §3, §6.1, §9、確認日: 2026-10-03）
-[^16]: IETF (D. Hardt, Ed.)『RFC 6749: The OAuth 2.0 Authorization Framework』2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §4.4.3, §10.4、確認日: 2026-10-03）
-[^17]: IETF (W. Denniss, J. Bradley)『RFC 8252: OAuth 2.0 for Native Apps』BCP 212, 2017-10. https://www.rfc-editor.org/rfc/rfc8252 （参照箇所: §4, §8.12、確認日: 2026-10-03）
-[^18]: IETF (P. Kasselman, D. Fett, F. Skokan)『RFC 10027: Best Current Practice for Security of Cross-Device Flows』BCP 247, 2026-08. https://www.rfc-editor.org/rfc/rfc10027 （参照箇所: §2, §6.2.1.5、確認日: 2026-10-03）
-[^19]: OpenID Foundation Shared Signals WG『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所: §4.1.1, §4.1.5、確認日: 2026-10-03）
-[^20]: IETF Datatracker『draft-ietf-oauth-rfc8725bis』文書状態ページ. https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/ （参照箇所: rev 10、IESG 状態 RFC Ed Queue、RFC Editor 状態 Blocked、確認日: 2026-10-03）
-[^21]: IETF OAuth WG (Y. Sheffer, D. Hardt, M. Jones)『JSON Web Token Best Current Practices』draft-ietf-oauth-rfc8725bis-10, 2026-08-21（Internet-Draft、状態: draft）. https://www.ietf.org/archive/id/draft-ietf-oauth-rfc8725bis-10.txt （参照箇所: §3.1, Appendix A、確認日: 2026-10-03）
-[^22]: IETF Datatracker『draft-ietf-oauth-v2-1』文書状態ページ. https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/ （参照箇所: rev 16、WG Document、IESG 状態 I-D Exists、確認日: 2026-10-03）
-[^23]: IETF Datatracker『draft-ietf-oauth-status-list』文書状態ページ. https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/ （参照箇所: rev 21、IESG 状態 RFC Ed Queue、RFC Editor 状態 In Progress、確認日: 2026-10-03）
-[^24]: IETF (M.B. Jones, B. Campbell, C. Mortimore, F. Skokan)『Updates to OAuth 2.0 JSON Web Token (JWT) Client Authentication and Assertion-Based Authorization Grants』draft-ietf-oauth-rfc7523bis-11, 2026-04-28 投稿（Internet-Draft、状態: draft）. https://www.ietf.org/archive/id/draft-ietf-oauth-rfc7523bis-11.txt （参照箇所: Abstract、RFC 7523 §3 項目 3 の置換文、§3.2 への追加要件、確認日: 2026-10-03）
-[^25]: IETF Datatracker『draft-ietf-oauth-rfc7523bis』文書記録. https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc7523bis/ （参照箇所: IESG 状態 RFC Ed Queue、2026-04-30 IESG 承認、確認日: 2026-10-03）
-[^26]: A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11, 2026-07-30（Internet-Draft、IESG 未提出、状態: draft）. https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11 （参照箇所: §1, §6, §9.1, §9.2, §12、確認日: 2026-10-03）
-[^27]: NIST『SP 800-63B-4 Digital Identity Guidelines: Authentication and Authenticator Management』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63b.html （参照箇所: §2.2.3, §2.3.3, §5.1, §5.1.2, §5.2、確認日: 2026-10-03）
-[^28]: European Commission『Commission Delegated Regulation (EU) 2018/389 (RTS on strong customer authentication and common and secure open standards of communication)』OJ L 69, 2018-03-13. https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R0389 （参照箇所: Art. 4(3)、確認日: 2026-10-03）
-[^29]: IETF HTTPBIS WG『Cookies: HTTP State Management Mechanism』draft-ietf-httpbis-rfc6265bis-22, 2025-12-01（Internet-Draft、RFC Editor Queue、状態: draft）. https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/ （参照箇所: §5.6 手順 5, §5.7 手順 4、確認日: 2026-10-03）
-[^30]: NGINX『Module ngx_http_core_module: large_client_header_buffers』公式文書. https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers （参照箇所: Default と本文、確認日: 2026-10-03）
-[^31]: NIST『IR 8547 ipd Transition to Post-Quantum Cryptography Standards』Initial Public Draft, 2024-11-12（状態: ipd）. https://csrc.nist.gov/pubs/ir/8547/ipd （参照箇所: §4.1.1 Table 2、確認日: 2026-10-03）
-[^32]: OpenID Foundation『OpenID Connect Core 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-core-1_0.html （参照箇所: §11 Offline Access, §15.1、確認日: 2026-10-03）
-[^33]: W3C Web Application Security WG『Device Bound Session Credentials』First Public Working Draft, 2025-08-21（状態: draft）. https://www.w3.org/TR/2025/WD-dbsc-1-20250821/ （参照箇所: Status of this document、確認日: 2026-10-03）
-[^34]: Microsoft Learn『Protect against consent phishing』ms.date 2023-12-11. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/protect-against-consent-phishing （参照箇所: Mitigating consent phishing attacks, Best practices、確認日: 2026-10-03）
-[^35]: Microsoft Learn『Configure how users consent to applications』ms.date 2025-06-15. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent （参照箇所: 冒頭、組込みポリシーの表、既存の同意に関する注記、確認日: 2026-10-03）
-[^36]: Microsoft Learn『Authentication flows as a condition in Conditional Access policy』ms.date 2026-03-24. https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-authentication-flows （参照箇所: Device code flow、確認日: 2026-10-03）
-[^37]: GitHub『Best practices for creating a GitHub App』GitHub Docs. https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app （参照箇所: Expire tokens、確認日: 2026-10-03）
-[^38]: Cyber Safety Review Board (CISA/DHS)『Review of the Summer 2023 Microsoft Exchange Online Intrusion』2024-03-20. https://www.cisa.gov/sites/default/files/2025-03/CSRBReviewOfTheSummer2023MEOIntrusion508.pdf （参照箇所: p.17（反実仮想）, p.20–21（Recommendation 6）、確認日: 2026-10-03）
-[^39]: Microsoft Security Response Center『Results of Major Technical Investigations for Storm-0558 Key Acquisition』2023-09-06（2024-03-12 追記）. https://www.microsoft.com/en-us/msrc/blog/2023/09/results-of-major-technical-investigations-for-storm-0558-key-acquisition （参照箇所: 「Why a consumer key was able to access enterprise mail」、確認日: 2026-10-03）
-[^40]: Google Threat Intelligence Group『Widespread Data Theft Targets Salesforce Instances via Salesloft Drift』2025-08-26（2025-08-28 追記）. https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift （参照箇所: 冒頭の Update 段落、Overview、確認日: 2026-10-03）
-[^41]: Cloudflare『The impact of the Salesloft Drift breach on Cloudflare and our customers』2025-09-02. https://blog.cloudflare.com/response-to-salesloft-drift-incident/ （参照箇所: Timeline、Exposure analysis、確認日: 2026-10-03）
-[^42]: GitHub (M. Hanley)『Security alert: Attack campaign involving stolen OAuth user tokens issued to two third-party integrators』2022-04-15（2022-04-27 更新）. https://github.blog/news-insights/company-news/security-alert-stolen-oauth-user-tokens/ （参照箇所: 冒頭、確認日: 2026-10-03）
-[^43]: Heroku (Salesforce)『April 2022 Incident Review』Last Updated 2022-06-14. https://www.heroku.com/blog/april-2022-incident-review/ （参照箇所: 序文（RFC 8705 への言及）、確認日: 2026-10-03）
-[^44]: Dirk-jan Mollema『One Token to rule them all - obtaining Global Admin in every Entra ID tenant via Actor tokens』2025-09-17. https://dirkjanm.io/obtaining-global-admin-in-every-entra-id-tenant-with-actor-tokens/ （参照箇所: 冒頭、「Actor tokens」、「The fatal flaw leading to cross-tenant compromise」、確認日: 2026-10-03）
-[^45]: Jacob Gabrielson（Amazon Web Services）『Avoiding fallback in distributed systems』Amazon Builders' Library（Wayback Machine 2024-08-16 取得版）. https://web.archive.org/web/20240816011626/https://aws.amazon.com/builders-library/avoiding-fallback-in-distributed-systems/ （参照箇所: Distributed fallback、How Amazon avoids fallback、確認日: 2026-10-03）
-[^46]: Google『Building Secure and Reliable Systems』Chapter 9 "Design for Recovery", 2020. https://google.github.io/building-secure-and-reliable-systems/raw/ch09.html （参照箇所: Time 節、Emergency Access 節、確認日: 2026-10-03）
-[^47]: Google『Protecting cookies with Device Bound Session Credentials』2026-04-09. https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/ （参照箇所: How DBSC Works、Future improvements、確認日: 2026-10-03）
-[^48]: M.B. Jones, O. Steele『RFC 9864: Fully-Specified Algorithms for JOSE and COSE』2025-10. https://www.rfc-editor.org/rfc/rfc9864 （参照箇所: Abstract, §4.1.2, §4.4、確認日: 2026-10-03）
-[^49]: IETF (T. Lodderstedt, B. Campbell, N. Sakimura, D. Tonge, F. Skokan)『RFC 9126: OAuth 2.0 Pushed Authorization Requests』2021-09. https://www.rfc-editor.org/rfc/rfc9126 （参照箇所: §1, §2.2, §7.2、確認日: 2026-10-03）
-[^50]: OpenID Foundation『FAPI Working Group Specifications』（仕様一覧ページ）. https://openid.net/wg/fapi/specifications/ （参照箇所: Final Specifications、Drafts の各区分、確認日: 2026-10-03）
-[^51]: Joe Magerramov（Amazon Web Services）『Minimizing correlated failures in distributed systems』Amazon Builders' Library（AWS Builder Center）. https://builder.aws.com/content/3Ev2H7t3l2eZa9xBXiZcAjz12JK/minimizing-correlated-failures-in-distributed-systems （参照箇所: Reducing correlated behaviors の jitter 列挙、確認日: 2026-10-03）
-[^52]: M. Jones, J. Bradley, N. Sakimura『RFC 7519: JSON Web Token (JWT)』2015-05. https://www.rfc-editor.org/rfc/rfc7519 （参照箇所: §4、確認日: 2026-10-03）
-[^53]: M. Jones, J. Bradley, N. Sakimura『RFC 7515: JSON Web Signature (JWS)』2015-05. https://www.rfc-editor.org/rfc/rfc7515 （参照箇所: §4.1.11、確認日: 2026-10-03）
-[^54]: R. Housley『RFC 7696: Guidelines for Cryptographic Algorithm Agility and Selecting Mandatory-to-Implement Algorithms』BCP 201, 2015-11. https://www.rfc-editor.org/rfc/rfc7696 （参照箇所: §2.1。本書の起草時に原文を確認、確認日: 2026-10-03）
-[^55]: M. Prorock, O. Steele『RFC 9964: ML-DSA for JSON Object Signing and Encryption (JOSE) and CBOR Object Signing and Encryption (COSE)』2026-05. https://www.rfc-editor.org/rfc/rfc9964 （参照箇所: §3, §5、確認日: 2026-10-03）
-[^56]: IETF JOSE WG『PQ/T Hybrid Composite Signatures for JOSE and COSE』draft-ietf-jose-pq-composite-sigs-04, 2026-09-11（Internet-Draft、WG Document、IESG 状態 I-D Exists、状態: draft）. https://datatracker.ietf.org/doc/draft-ietf-jose-pq-composite-sigs/ （参照箇所: Datatracker の状態欄、確認日: 2026-10-03）
-[^57]: IETF (B. Campbell, J. Bradley, H. Tschofenig)『RFC 8707: Resource Indicators for OAuth 2.0』2020-02. https://www.rfc-editor.org/rfc/rfc8707 （参照箇所: §2、確認日: 2026-10-03）
-[^58]: OpenID Foundation『Certified FAPI 2.0 OP Security Profile Final & Message Signing Final』公開一覧（随時更新）. https://openid.net/certification/certified-fapi-2-0-op-security-profile-final-message-signing-final/ （参照箇所: Okta / Auth0 – Highly Regulated Identity – 202527 行と添付ファイル名、Filip Skokan / node oidc-provider >= 9.2.0 行、確認日: 2026-10-03）
-[^59]: Okta (Auth0)『Configure FAPI Compliance』Auth0 Docs. https://auth0.com/docs/get-started/applications/configure-fapi-compliance （参照箇所: プランの要件、選択できる準拠レベル、確認日: 2026-10-03）
-[^60]: Becky Weiss, Mike Furr（Amazon Web Services）『Static stability using Availability Zones』Amazon Builders' Library. https://aws.amazon.com/builders-library/static-stability-using-availability-zones/ （参照箇所: Static stability 節、確認日: 2026-10-03）
-[^61]: Amazon Web Services『REL11-BP05 Use static stability to prevent bimodal behavior』AWS Well-Architected Framework Reliability Pillar. https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_withstand_component_failures_static_stability.html （参照箇所: 冒頭定義、Implementation guidance、確認日: 2026-10-03）
-[^62]: Microsoft Azure『Azure status history: RCA - Authentication errors across multiple Microsoft services (Tracking ID LN01-P8Z)』2021-03. Wayback Machine 2021-04-02 取得版 https://web.archive.org/web/20210402023547/https://status.azure.com/en-us/status/history/ （参照箇所: Summary of Impact、Root Cause and Mitigation、確認日: 2026-10-03）
-[^63]: OpenID Foundation『FAPI 2.0 Security Profile and FAPI 2.0 Message Signing: Final Conformance Tests and Certifications Now Available』2025-07-09. https://openid.net/fapi2-0-final-conformance-tests-available/ （参照箇所: 本文、確認日: 2026-10-03）
-[^64]: RFC Editor『RFC Errata: RFC 9068』. https://www.rfc-editor.org/errata/rfc9068 （参照箇所: Errata ID 8802（Reported、Technical、2026-03-04 報告、§2.2）、確認日: 2026-10-03）
-[^65]: Google Cloud『Google Cloud Infrastructure Components Incident #20013（2020-12-14 User ID Service）』. https://status.cloud.google.com/incident/zall/20013 （参照箇所: ISSUE SUMMARY、確認日: 2026-10-03）
-[^66]: Google Cloud『Securing your app with signed headers』Identity-Aware Proxy 文書, 2026-09-30 更新. https://docs.cloud.google.com/iap/docs/signed-headers-howto （参照箇所: 冒頭（secondary security）, Verifying the JWT header / payload、確認日: 2026-10-03）
-[^67]: Microsoft Learn『Publisher verification overview』Microsoft identity platform, ms.date 2024-08-13. https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview （参照箇所: 冒頭、FAQ「What does publisher verification not tell me」、確認日: 2026-10-03）
+[^1]: IETF (T. Lodderstedt, J. Bradley, A. Labunets, D. Fett)『RFC 9700: Best Current Practice for OAuth 2.0 Security』BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.1.1, §2.1.2, §2.2.1, §2.2.2, §2.3, §2.4, §2.5, §4.3.2, §4.9.3, §4.10.1, §4.13, §4.14.2、確認日: 2026-10-03）RS-04#1〜#39
+[^2]: OpenID Foundation FAPI WG『FAPI 2.0 Security Profile』Final, 2025-02-22. https://openid.net/specs/fapi-security-profile-2_0-final.html （参照箇所: Introduction, §5.2, §5.3.2.1, §5.3.2.2, §5.3.4, §5.4, §6.2, §6.3、確認日: 2026-10-03）RS-04#41〜#49
+[^3]: OpenID Foundation FAPI WG『FAPI 2.0 Attacker Model』Final, 2025-02-22. https://openid.net/specs/fapi-attacker-model-2_0-final.html （参照箇所: §5, §6, §8、確認日: 2026-10-03）RS-04#50
+[^4]: OpenID Foundation FAPI WG『FAPI 2.0 Message Signing』Final, 2025-09-25. https://openid.net/specs/fapi-message-signing-2_0-final.html （参照箇所: Introduction, §5、確認日: 2026-10-03）RS-04#51
+[^5]: IETF (D. Fett ほか)『RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)』2023-09. https://www.rfc-editor.org/rfc/rfc9449 （参照箇所: §2, §4.3, §5, §6, §7.2, §10, §11.1〜§11.4、確認日: 2026-10-03）RS-04#54〜#58
+[^6]: IETF (B. Campbell ほか)『RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §3, §6.3, §6.5、確認日: 2026-10-03）RS-04#59
+[^7]: IETF (V. Bertocci)『RFC 9068: JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens』2021-10. https://www.rfc-editor.org/rfc/rfc9068 （参照箇所: §2.1, §2.2, §2.2.1, §2.2.2, §2.2.3, §2.2.3.1, §4, §5, §6、確認日: 2026-10-03）RS-04#60, #61
+[^8]: IETF (Y. Sheffer, D. Hardt, M. Jones)『RFC 8725: JSON Web Token Best Current Practices』BCP 225, 2020-02. https://www.rfc-editor.org/rfc/rfc8725 （参照箇所: §3.1, §3.8, §3.11, §3.12、確認日: 2026-10-03）RS-04#62、RS-11#51
+[^9]: IETF (J. Richer, Ed.)『RFC 7662: OAuth 2.0 Token Introspection』2015-10. https://www.rfc-editor.org/rfc/rfc7662 （参照箇所: §2.1, §4、確認日: 2026-10-03）RS-04#67
+[^10]: IETF (T. Lodderstedt, V. Dzhuvinov)『RFC 9701: JSON Web Token (JWT) Response for OAuth Token Introspection』2025-01. https://www.rfc-editor.org/rfc/rfc9701 （参照箇所: §5, §8.1、確認日: 2026-10-03）RS-04#68
+[^11]: IETF (T. Lodderstedt, Ed. ほか)『RFC 7009: OAuth 2.0 Token Revocation』2013-08. https://www.rfc-editor.org/rfc/rfc7009 （参照箇所: §2, §3 Implementation Note、確認日: 2026-10-03）RS-04#69
+[^12]: IETF (M. Jones ほか)『RFC 8693: OAuth 2.0 Token Exchange』2020-01. https://www.rfc-editor.org/rfc/rfc8693 （参照箇所: §2.1, §4.1, §4.4、確認日: 2026-10-03）RS-04#66
+[^13]: IETF (A. Parecki, P. De Ryck, D. Waite)『RFC 10017: OAuth 2.0 for Browser-Based Applications』BCP 212, 2026-08. https://www.rfc-editor.org/rfc/rfc10017 （参照箇所: §6.1.3, §6.1.4.3, §6.3.2.3, §6.3.4.2.2, §6.3.4.3, §9.2、確認日: 2026-10-03）RS-04#73〜#75、RS-17#2〜#4
+[^14]: IETF (V. Bertocci, B. Campbell)『RFC 9470: OAuth 2.0 Step Up Authentication Challenge Protocol』2023-09. https://www.rfc-editor.org/rfc/rfc9470 （参照箇所: §3, §6.1、確認日: 2026-10-03）RS-04#72
+[^15]: IETF (B. Campbell, J. Bradley, H. Tschofenig)『RFC 8707: Resource Indicators for OAuth 2.0』2020-02. https://www.rfc-editor.org/rfc/rfc8707 （参照箇所: §2、確認日: 2026-10-03）RS-04#65
+[^16]: IETF (T. Lodderstedt, J. Richer, B. Campbell)『RFC 9396: OAuth 2.0 Rich Authorization Requests』2023-05. https://www.rfc-editor.org/rfc/rfc9396 （参照箇所: §5, §9, §12、確認日: 2026-10-03）RS-04#64
+[^17]: OpenID Foundation『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所: §4.1.1, §4.1.5、確認日: 2026-10-03）RS-04#77
+[^18]: IETF OAuth WG (T. Looker ほか)『Token Status List』draft-ietf-oauth-status-list-21, 2026-06-21（Internet-Draft、状態: draft、RFC Ed Queue）. https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/ （参照箇所: rev 21、Abstract, §1.1、確認日: 2026-10-03）RS-04#80
+[^19]: IETF Datatracker『draft-ietf-oauth-v2-1』. https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/ （参照箇所: rev 16、WG Document、I-D Exists、状態: draft、確認日: 2026-10-03）RS-04#76
+[^20]: IETF Datatracker『draft-ietf-oauth-rfc8725bis』. https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc8725bis/ （参照箇所: rev 10、RFC Ed Queue、RFC Editor 状態 Blocked、状態: draft、確認日: 2026-10-03）RS-04#63
+[^21]: A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11, 2026-07-30（Internet-Draft、WG Consensus: Waiting for Write-Up、IESG 未提出、状態: draft）. https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11 （参照箇所: §6, §9.1, §9.2, §12.2, §13.1, §13.2, §13.12, §13.13, §15.2、確認日: 2026-10-03）RS-06#31, #35, #36, #41, #42
+[^22]: NIST『SP 800-63B-4 Digital Identity Guidelines: Authentication and Authenticator Management』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63b.html （参照箇所: §2.2.3, §2.3.3, §5.1, §5.2、確認日: 2026-10-03）RS-03#43, #44
+[^23]: W3C『Trace Context』W3C Recommendation, 2021-11-23. https://www.w3.org/TR/trace-context/ （参照箇所: §6, §6.1, §6.2, §7.2, §8、確認日: 2026-10-03）RS-10#16〜#18
+[^24]: W3C『Propagation format for distributed context: Baggage』W3C Candidate Recommendation Snapshot, 2024-05-30（状態: CR）. https://www.w3.org/TR/baggage/ （参照箇所: Security Considerations, Privacy Considerations、確認日: 2026-10-03）RS-10#19
+[^25]: IETF (P. Hunt, Ed., M. Jones, W. Denniss, M. Ansari)『RFC 8417: Security Event Token (SET)』Proposed Standard, 2018-07. https://www.rfc-editor.org/rfc/rfc8417 （参照箇所: §2.2 "txn"（OPTIONAL、関連する JWT の相関、SET 以外の profile でも使用可）、確認日: 2026-10-03。research ノート未収録のため最終起草者が原典を照合）
+[^26]: W3C Verifiable Credentials WG『Verifiable Credentials Data Model v2.0』W3C Recommendation, 2025-05-15. https://www.w3.org/TR/vc-data-model-2.0/ （参照箇所: §4.9 Validity Period, §4.10 Status（"Credential status specifications MUST NOT enable tracking of individuals"）, §4.11 Data Schemas, §5.5 Terms of Use, §5.6 Evidence, §8.4 Identifier-Based Correlation（非規範）, §8.9 The Principle of Data Minimization（非規範）、確認日: 2026-10-03。research ノート未収録のため最終起草者が原典を照合）
+[^27]: OpenID Foundation eKYC & IDA WG『OpenID Identity Assurance Schema Definition 1.0』Final, 2024-10-01. https://openid.net/specs/openid-ida-verified-claims-1_0-final.html （参照箇所: §5.2 verified_claims, §5.4.2 verification（trust_framework, time, evidence）、確認日: 2026-10-03。research ノート未収録のため最終起草者が原典を照合）
+[^28]: IANA『JSON Web Token (JWT) — JSON Web Token Claims』registry. https://www.iana.org/assignments/jwt/jwt.xhtml （参照箇所: txn（RFC 8417 §2.2）, sid（OIDC Front-Channel Logout §3）, act・may_act・client_id・scope（RFC 8693）, cnf（RFC 7800）, authorization_details（RFC 9396）, acr・amr・auth_time（OIDC Core）, roles・groups・entitlements（RFC 7643, RFC 9068）, jti（RFC 7519）, verified_claims（OpenID IDA）の登録行。tid・tenant・org_id・aal・ial が未登録であること、確認日: 2026-10-03。research ノート未収録のため最終起草者が原典を照合）
+[^29]: IETF (M. Jones, J. Bradley, N. Sakimura)『RFC 7519: JSON Web Token (JWT)』Standards Track, 2015-05. https://www.rfc-editor.org/rfc/rfc7519 （参照箇所: §4, §4.1.7, §4.2, §4.3、確認日: 2026-10-03。§4 は RS-16#14、§4.1.7・§4.2・§4.3 は最終起草者が原典を照合）
+[^30]: IETF (M. Jones, J. Bradley, N. Sakimura)『RFC 7515: JSON Web Signature (JWS)』Standards Track, 2015-05. https://www.rfc-editor.org/rfc/rfc7515 （参照箇所: §4.1.11 "crit"、確認日: 2026-10-03）RS-16#16
+[^31]: OpenID Foundation『OpenID Connect Core 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-core-1_0.html （参照箇所: §2（sub: "locally unique and never reassigned"）, §5.7, §8（public／pairwise）、確認日: 2026-10-03。§2・§5.7 は RS-03#58、§8 は最終起草者が原典を照合）
+[^32]: Cyber Safety Review Board『Review of the Summer 2023 Microsoft Exchange Online Intrusion』2024-03-20. https://www.cisa.gov/sites/default/files/2025-03/CSRBReviewOfTheSummer2023MEOIntrusion508.pdf （参照箇所: p.17, p.20–21 Recommendation 6、確認日: 2026-10-03）RS-12#10, #11
+[^33]: Microsoft Security Response Center『Results of Major Technical Investigations for Storm-0558 Key Acquisition』2023-09-06（2024-03-12 追記）. https://www.microsoft.com/en-us/msrc/blog/2023/09/results-of-major-technical-investigations-for-storm-0558-key-acquisition （参照箇所: 「Why a consumer key was able to access enterprise mail」、確認日: 2026-10-03）RS-12#5
+[^34]: Dirk-jan Mollema『One Token to rule them all - obtaining Global Admin in every Entra ID tenant via Actor tokens』2025-09-17. https://dirkjanm.io/obtaining-global-admin-in-every-entra-id-tenant-with-actor-tokens/ （参照箇所: 「The fatal flaw leading to cross-tenant compromise」、確認日: 2026-10-03）RS-12#53
+[^35]: Google Threat Intelligence Group『Widespread Data Theft Targets Salesforce Instances via Salesloft Drift』2025-08-26（08-28 追記）. https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift （参照箇所: Update 段落、Overview、確認日: 2026-10-03）RS-12#37
+[^36]: GitHub『Security alert: Attack campaign involving stolen OAuth user tokens issued to two third-party integrators』2022-04-15. https://github.blog/news-insights/company-news/security-alert-stolen-oauth-user-tokens/ （参照箇所: 冒頭、確認日: 2026-10-03）RS-12#59
+[^37]: Microsoft Learn『Protect against consent phishing』ms.date 2023-12-11. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/protect-against-consent-phishing （参照箇所: Mitigating consent phishing attacks、確認日: 2026-10-03）RS-13#61
+[^38]: Amazon Web Services『Avoiding fallback in distributed systems』Amazon Builders' Library（Wayback 2024-08-16 取得版）. https://web.archive.org/web/20240816011626/https://aws.amazon.com/builders-library/avoiding-fallback-in-distributed-systems/ （参照箇所: Distributed fallback、確認日: 2026-10-03）RS-09#14
+[^39]: Google『Building Secure and Reliable Systems』Chapter 9, 2020. https://google.github.io/building-secure-and-reliable-systems/raw/ch09.html （参照箇所: Time 節、確認日: 2026-10-03）RS-09#36
+[^40]: Amazon Web Services『REL11-BP05 Use static stability to prevent bimodal behavior』Well-Architected Reliability Pillar. https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_withstand_component_failures_static_stability.html （参照箇所: 冒頭定義、確認日: 2026-10-03）RS-09#15
+[^41]: Microsoft Azure『RCA - Authentication errors across multiple Microsoft services (LN01-P8Z)』2021-03（Wayback 2021-04-02 取得版）. https://web.archive.org/web/20210402023547/https://status.azure.com/en-us/status/history/ （参照箇所: Root Cause and Mitigation、確認日: 2026-10-03）RS-12#57
+[^42]: M.B. Jones, O. Steele『RFC 9864: Fully-Specified Algorithms for JOSE and COSE』Standards Track, 2025-10. https://www.rfc-editor.org/rfc/rfc9864 （参照箇所: Abstract, §4.1.2, §4.2.2, §4.4、確認日: 2026-10-03）RS-11#43
+[^43]: European Commission『Commission Delegated Regulation (EU) 2018/389』OJ L 69, 2018-03-13. https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R0389 （参照箇所: Art. 4(3)、確認日: 2026-10-03）RS-13#39
+[^44]: IETF (P. Kasselman, D. Fett, F. Skokan)『RFC 10027: Best Current Practice for Security of Cross-Device Flows』BCP 247, 2026-08. https://www.rfc-editor.org/rfc/rfc10027 （参照箇所: §2, §6.2.1.5、確認日: 2026-10-03）RS-13#57
+[^45]: OpenID Foundation『FAPI 2.0 Security Profile and FAPI 2.0 Message Signing: Final Conformance Tests and Certifications Now Available』2025-07-09. https://openid.net/fapi2-0-final-conformance-tests-available/ （参照箇所: 本文、確認日: 2026-10-03）RS-04#52
+[^46]: Cloudflare『The impact of the Salesloft Drift breach on Cloudflare and our customers』2025-09-02. https://blog.cloudflare.com/response-to-salesloft-drift-incident/ （参照箇所: 冒頭 2 段落、Timeline（2025-08-09〜08-17、08-23）、Exposure analysis（104 API tokens）、確認日: 2026-10-03）RS-12#41
+[^47]: Google Cloud『Google Cloud Infrastructure Components Incident #20013（2020-12-14 User ID Service）』. https://status.cloud.google.com/incident/zall/20013 （参照箇所: ISSUE SUMMARY、ROOT CAUSE、DETAILED DESCRIPTION OF IMPACT、確認日: 2026-10-03）RS-12#58
+[^48]: Google Cloud『Securing your app with signed headers』Identity-Aware Proxy 文書, 2026-09-30 更新. https://docs.cloud.google.com/iap/docs/signed-headers-howto （参照箇所: 冒頭（secondary security）, Verifying the JWT header / payload、確認日: 2026-10-03）RS-17#79
+[^49]: NIST『IR 8547 ipd Transition to Post-Quantum Cryptography Standards』Initial Public Draft, 2024-11-12（状態: ipd）. https://csrc.nist.gov/pubs/ir/8547/ipd （参照箇所: §4.1.1 Table 2、確認日: 2026-10-03）RS-11#8
+[^50]: M. Prorock, O. Steele『RFC 9964: ML-DSA for JOSE and COSE』Standards Track, 2026-05. https://www.rfc-editor.org/rfc/rfc9964 （参照箇所: §3, §5 Table 1、確認日: 2026-10-03）RS-11#41
+[^51]: Microsoft『Configure how users consent to applications』Microsoft Entra ID, Microsoft Learn, ms.date 2025-06-15. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent （参照箇所: 既存の同意に関する注記、確認日: 2026-10-03）RS-17#62
