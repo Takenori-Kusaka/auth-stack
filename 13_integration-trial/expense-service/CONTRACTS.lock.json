@@ -1,0 +1,38 @@
+{
+  "pinned_commit": "664a5ed685806b9d0efbc5ad1d84c9041221e243",
+  "pinned_at": "2026-10-15T11:25:28.404Z",
+  "files": {
+    "CON-03": {
+      "file": "11_contracts/authorization-api.openapi.yaml",
+      "sha256": "7ec582d56559046c898b81c7c2d9c51f6beee6b3e23c4f35fb72ed2dba543231"
+    },
+    "CON-04": {
+      "file": "11_contracts/relationship-model-registry.openapi.yaml",
+      "sha256": "df63450d0a743723b8a3c0af1b314b1211ec4bdbb0bdcbac2bb7ad977630248f"
+    },
+    "CON-05": {
+      "file": "11_contracts/token-exchange.openapi.yaml",
+      "sha256": "1a51dd15f078861989070bc869dde389fb66a49a776718f3c934630613b8eead"
+    },
+    "CON-06": {
+      "file": "11_contracts/schemas/access-token-claims.schema.json",
+      "sha256": "d852d2ff0753cc2c2436097e652141f06bfae3fd1f752e24de4d701adb5155fc"
+    },
+    "CON-08": {
+      "file": "11_contracts/schemas/audit-event.schema.json",
+      "sha256": "be00beb2d26119907c9e840ae29a411369cd0966456c5f876de3e07f97d51c5d"
+    },
+    "CON-12": {
+      "file": "11_contracts/lifecycle-events.asyncapi.yaml",
+      "sha256": "15e62be0d50f32200c9d8dc2b3ca731ad4754084dc468263335358e02f4b5628"
+    },
+    "CON-13": {
+      "file": "11_contracts/schemas/lifecycle-event.schema.json",
+      "sha256": "7b3577e64bb3fd6b1c1ced0e53895cbd3bb1f9ce6b6bbf7f13103ad76138d594"
+    },
+    "CON-02": {
+      "file": "11_contracts/schemas/common.schema.json",
+      "sha256": "fe7569aeab3012150229139559b718d051112bb2f7c9f55d9aaad918a5b8a22b"
+    }
+  }
+}

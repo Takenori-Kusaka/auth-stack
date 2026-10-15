@@ -1,0 +1,101 @@
+{
+  "base_revision": "mr_TRIALBASE",
+  "change_request_ref": "trial-expense-0001",
+  "semantic_change": { "declared": false },
+  "modules": [
+    {
+      "namespace_code": "expense",
+      "content": {
+        "types": [
+          {
+            "name": "expense/book",
+            "relations": [
+              { "name": "member", "directly_related": ["core/user", "core/group#member"] },
+              { "name": "accountant", "directly_related": ["core/user", "core/group#member", "core/role#assignee"] }
+            ],
+            "permissions": [
+              { "name": "file_report", "expression": "member | accountant", "tier": "write", "marks": ["tenant_delegable"] },
+              { "name": "process", "expression": "accountant", "tier": "write", "marks": ["tenant_delegable"] }
+            ],
+            "list_method": "L1"
+          },
+          {
+            "name": "expense/report",
+            "relations": [
+              { "name": "book", "directly_related": ["expense/book"], "max_direct": 1 },
+              { "name": "unit", "directly_related": ["core/unit"], "max_direct": 1 },
+              { "name": "requester", "directly_related": ["core/user"], "max_direct": 1 },
+              { "name": "approver", "directly_related": ["core/user"], "max_direct": 4 },
+              { "name": "approved_in", "directly_related": ["expense/book"], "max_direct": 1 }
+            ],
+            "permissions": [
+              { "name": "view", "expression": "requester | approver | book->process", "tier": "read_sensitive" },
+              { "name": "edit", "expression": "requester", "tier": "write" },
+              { "name": "submit", "expression": "requester", "tier": "write" },
+              { "name": "approve", "expression": "approver", "tier": "write" },
+              { "name": "pay", "expression": "approved_in->process", "tier": "write" }
+            ],
+            "list_method": "L2"
+          }
+        ],
+        "write_declarations": [
+          {
+            "workload": "spiffe://sandbox.invalid/ns/expense/sa/api",
+            "relations": ["expense/report#book", "expense/report#unit", "expense/report#requester"]
+          },
+          {
+            "workload": "spiffe://sandbox.invalid/ns/expense/sa/approval-workflow",
+            "relations": ["expense/report#approver", "expense/report#approved_in"]
+          },
+          {
+            "workload": "spiffe://sandbox.invalid/ns/expense/sa/admin",
+            "relations": ["expense/book#member", "expense/book#accountant"]
+          }
+        ]
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "report: requester, approver, accountant",
+      "kind": "positive_negative",
+      "tuples": [
+        { "resource": { "type": "expense/book", "id": "b1" }, "relation": "member", "subject": { "type": "core/user", "id": "alice" } },
+        { "resource": { "type": "expense/book", "id": "b1" }, "relation": "accountant", "subject": { "type": "core/user", "id": "carol" } },
+        { "resource": { "type": "expense/report", "id": "r1" }, "relation": "book", "subject": { "type": "expense/book", "id": "b1" } },
+        { "resource": { "type": "expense/report", "id": "r1" }, "relation": "requester", "subject": { "type": "core/user", "id": "alice" } },
+        { "resource": { "type": "expense/report", "id": "r1" }, "relation": "approver", "subject": { "type": "core/user", "id": "bob" } }
+      ],
+      "check": [
+        { "subject": { "type": "core/user", "id": "alice" }, "resource": { "type": "expense/report", "id": "r1" }, "expected": { "view": true, "edit": true, "submit": true, "approve": false, "pay": false } },
+        { "subject": { "type": "core/user", "id": "bob" }, "resource": { "type": "expense/report", "id": "r1" }, "expected": { "view": true, "edit": false, "approve": true, "pay": false } },
+        { "subject": { "type": "core/user", "id": "carol" }, "resource": { "type": "expense/report", "id": "r1" }, "expected": { "view": true, "approve": false, "pay": false } },
+        { "subject": { "type": "core/user", "id": "mallory" }, "resource": { "type": "expense/report", "id": "r1" }, "expected": { "view": false, "approve": false } },
+        { "subject": { "type": "core/user", "id": "alice" }, "resource": { "type": "expense/book", "id": "b1" }, "expected": { "file_report": true, "process": false } }
+      ]
+    },
+    {
+      "name": "report: payable only after approved_in",
+      "kind": "positive_negative",
+      "tuples": [
+        { "resource": { "type": "expense/book", "id": "b1" }, "relation": "accountant", "subject": { "type": "core/user", "id": "carol" } },
+        { "resource": { "type": "expense/report", "id": "r2" }, "relation": "book", "subject": { "type": "expense/book", "id": "b1" } },
+        { "resource": { "type": "expense/report", "id": "r2" }, "relation": "approved_in", "subject": { "type": "expense/book", "id": "b1" } }
+      ],
+      "check": [
+        { "subject": { "type": "core/user", "id": "carol" }, "resource": { "type": "expense/report", "id": "r2" }, "expected": { "pay": true } }
+      ]
+    },
+    {
+      "name": "cross-tenant: accountant of another tenant's book",
+      "kind": "cross_tenant_negative",
+      "tuples": [
+        { "resource": { "type": "expense/book", "id": "b2" }, "relation": "accountant", "subject": { "type": "core/user", "id": "dave" } },
+        { "resource": { "type": "expense/report", "id": "r1" }, "relation": "book", "subject": { "type": "expense/book", "id": "b1" } }
+      ],
+      "check": [
+        { "subject": { "type": "core/user", "id": "dave" }, "resource": { "type": "expense/report", "id": "r1" }, "expected": { "view": false, "pay": false } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "expense-service-integration-trial",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-simulated integration trial: minimal expense service built only from 10_integration and 11_contracts",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "extract-con15": "node scripts/extract-con15.js",
+    "mocks": "node scripts/start-mocks.js",
+    "test": "node --test --test-reporter=spec \"test/*.test.js\"",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "js-yaml": "4.1.0"
+  },
+  "devDependencies": {
+    "@stoplight/prism-cli": "5.12.0"
+  }
+}

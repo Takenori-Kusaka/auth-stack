@@ -1,0 +1,83 @@
+# INT-03 §15.2 S-4: hand copy of model/expense.model-change-request.json into OpenFGA DSL (schema 1.1) for
+# `fga model test`. Development-only; never deployed (ADR-011 D2-3 via INT-03 §15.2).
+# core/* types are NOT ours. Minimal stand-ins are declared only so that the DSL compiles; the real core
+# definitions (ARC-05 §3.1/§3.6) are not part of the hand-off set to integration teams.
+name: expense-trial
+model: |
+  model
+    schema 1.1
+  type core/user
+  type core/group
+    relations
+      define member: [core/user]
+  type core/role
+    relations
+      define assignee: [core/user]
+  type core/unit
+  type expense/book
+    relations
+      define member: [core/user, core/group#member]
+      define accountant: [core/user, core/group#member, core/role#assignee]
+      define file_report: member or accountant
+      define process: accountant
+  type expense/report
+    relations
+      define book: [expense/book]
+      define unit: [core/unit]
+      define requester: [core/user]
+      define approver: [core/user]
+      define approved_in: [expense/book]
+      define view: requester or approver or process from book
+      define edit: requester
+      define submit: requester
+      define approve: approver
+      define pay: process from approved_in
+tests:
+  - name: report-requester-approver-accountant
+    tuples:
+      - { user: "core/user:alice", relation: member, object: "expense/book:b1" }
+      - { user: "core/user:carol", relation: accountant, object: "expense/book:b1" }
+      - { user: "expense/book:b1", relation: book, object: "expense/report:r1" }
+      - { user: "core/user:alice", relation: requester, object: "expense/report:r1" }
+      - { user: "core/user:bob", relation: approver, object: "expense/report:r1" }
+    check:
+      - user: core/user:alice
+        object: expense/report:r1
+        assertions: { view: true, edit: true, submit: true, approve: false, pay: false }
+      - user: core/user:bob
+        object: expense/report:r1
+        assertions: { view: true, edit: false, approve: true, pay: false }
+      - user: core/user:carol
+        object: expense/report:r1
+        assertions: { view: true, approve: false, pay: false }
+      - user: core/user:mallory
+        object: expense/report:r1
+        assertions: { view: false, approve: false }
+      - user: core/user:alice
+        object: expense/book:b1
+        assertions: { file_report: true, process: false }
+    list_objects:
+      - user: core/user:bob
+        type: expense/report
+        assertions: { view: ["expense/report:r1"], approve: ["expense/report:r1"] }
+  - name: payable-only-after-approved_in
+    tuples:
+      - { user: "core/user:carol", relation: accountant, object: "expense/book:b1" }
+      - { user: "expense/book:b1", relation: book, object: "expense/report:r2" }
+      - { user: "expense/book:b1", relation: approved_in, object: "expense/report:r2" }
+      - { user: "expense/book:b1", relation: book, object: "expense/report:r3" }
+    check:
+      - user: core/user:carol
+        object: expense/report:r2
+        assertions: { pay: true }
+      - user: core/user:carol
+        object: expense/report:r3
+        assertions: { pay: false, view: true }
+  - name: cross-tenant-negative
+    tuples:
+      - { user: "core/user:dave", relation: accountant, object: "expense/book:b2" }
+      - { user: "expense/book:b1", relation: book, object: "expense/report:r1" }
+    check:
+      - user: core/user:dave
+        object: expense/report:r1
+        assertions: { view: false, pay: false }

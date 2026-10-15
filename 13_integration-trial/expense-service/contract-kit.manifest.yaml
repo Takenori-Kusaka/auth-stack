@@ -1,0 +1,24 @@
+# CON-11 §7.2 consumer manifest (provisional name/format; DL-120 not delivered). Trial draft.
+consumer_id: { client_id: "TBD-sandbox-registration", workload_id: "spiffe://sandbox.invalid/ns/expense/sa/api" }
+roles: [CR-1, CR-2, CR-3, CR-5, CR-8, CR-9]
+contracts:
+  - { id: CON-03, version: "profile 1.x", operations: [evaluation, evaluations, search_resource], depends_on: ["/decision", "/context/x-authz-profile/decision_id", "/context/x-authz-profile/reason", "/context/x-authz-profile/consistency/mode", "/context/x-authz-profile/consistency/token", "/context/x-authz-profile/obligations", "/evaluations", "/results", "/page/next_token", "/context/x-authz-profile/completeness"] }
+  - { id: CON-04, version: "0.3.x", operations: [writeRelationships], depends_on: ["/consistency_token"] }
+  - { id: CON-05, version: "0.1.x", operations: [token, txn-token], depends_on: ["/access_token", "/issued_token_type", "/expires_in", "/scope"] }
+  - { id: CON-06, version: "0.1.x", depends_on_claims: [iss, sub, aud, exp, iat, jti, client_id, tid, ptype, ver] }
+  - { id: CON-08, version: "1.0.0-draft.1", event_types: [pep.enforce] }
+  - { id: CON-12, version: "0.5.x", channels: [tenantLifecycle, principalLifecycle], sends: [deletionReports] }
+  - { id: CON-13, version: "1.x(dataschema)", types: ["example.id-domain.lifecycle.tenant.suspended", "example.id-domain.lifecycle.tenant.resumed", "example.id-domain.lifecycle.membership.suspended", "example.id-domain.lifecycle.membership.removed", "example.id-domain.lifecycle.user.suspended", "example.id-domain.lifecycle.tenant.deletion.requested", "example.id-domain.lifecycle.tenant.deletion.withdrawn", "example.id-domain.lifecycle.user.deletion.requested", "example.id-domain.lifecycle.user.deletion.withdrawn"] }
+  - { id: CON-15, version: "0.1.x", operations: [verifyLifecycleAction] }
+open_enum_unknown: deny
+options: { sender_constrained: false, long_lived_connections: false, list_endpoints: ["GET /t/{tid}/expenses"], own_session: false }
+preview_dependencies:   # CON-00 §2.5 step 2 / INT-05 RD-04: preview elements used and why
+  - { element: "CON-03 searchResources", why: "candidate generator only; P-09 says SDK-internal -> not used by the business path (see report)" }
+  - { element: "CON-03 model_revision/consistency token", why: "required by GA Decision; read-sensitive consistency" }
+  - { element: "CON-05 requestTxnToken (internal start)", why: "P-04 consumer needs a Txn-Token at execution time" }
+  - { element: "CON-15 verifyLifecycleAction", why: "RO-12 mandatory before irreversible deletion" }
+test:
+  sut_start: "npm test"
+  config_points: env
+  fixture_adapter: "test/harness.js#fixtureReport"
+kit: { version: "none (DL-120 not delivered)", sha256: "n/a" }

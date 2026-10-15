@@ -1,0 +1,165 @@
+# Prism 5.12.0 log excerpts (first 40 lines per mock; full logs in .mocks/, not versioned)
+## port 4010
+[20:13:20] » [CLI] ...  awaiting  Starting Prism…
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4010/.well-known/authzen-configuration
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4010/access/v1/evaluation
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4010/access/v1/evaluations
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4010/access/v1/search/resource
+[20:13:20] » [CLI] ►  start     Prism is listening on http://127.0.0.1:4010
+[20:13:21] » [HTTP SERVER] post /access/v1/evaluation i  info      Request received
+[20:13:21] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:13:21] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:13:21] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:13:21] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:13:21] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:13:21] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:13:21] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:13:21] »     [VALIDATOR] ×  error     Violation: response.header.deprecation Response header parameter deprecation must match pattern "^@-?[0-9]{1,15}$"
+[20:13:31] » [HTTP SERVER] post /access/v1/search/resource i  info      Request received
+[20:13:31] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:13:31] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:13:31] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:13:31] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:13:31] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:13:31] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:13:31] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:13:31] »     [VALIDATOR] ×  error     Violation: response.header.deprecation Response header parameter deprecation must match pattern "^@-?[0-9]{1,15}$"
+[20:13:32] » [HTTP SERVER] post /access/v1/evaluations i  info      Request received
+[20:13:32] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:13:32] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:13:32] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:13:32] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:13:32] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:13:32] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:13:32] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:13:32] »     [VALIDATOR] ×  error     Violation: response.header.deprecation Response header parameter deprecation must match pattern "^@-?[0-9]{1,15}$"
+[20:17:43] » [HTTP SERVER] get /.well-known/authzen-configuration i  info      Request received
+[20:17:43] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:17:43] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:17:43] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:17:43] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:17:43] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:17:43] »     [NEGOTIATOR] i  info      > Responding with "200"
+## port 4011
+[20:13:20] » [CLI] ...  awaiting  Starting Prism…
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4011/token
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4011/txn-token
+[20:13:20] » [CLI] ►  start     Prism is listening on http://127.0.0.1:4011
+[20:13:31] » [HTTP SERVER] post /token i  info      Request received
+[20:13:31] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:13:31] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:13:31] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:13:31] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:13:31] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:13:31] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:13:31] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:17:43] » [HTTP SERVER] post /txn-token i  info      Request received
+[20:17:43] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:17:43] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:17:43] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:17:43] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:17:43] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:17:43] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:17:43] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:22:03] » [HTTP SERVER] post /token i  info      Request received
+[20:22:03] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:22:03] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:22:03] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:22:03] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:22:03] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:22:03] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:22:03] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:22:12] » [HTTP SERVER] post /token i  info      Request received
+[20:22:12] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:22:12] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:22:12] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:22:12] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:22:12] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:22:12] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:22:12] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:22:27] » [HTTP SERVER] post /token i  info      Request received
+[20:22:27] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:22:27] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:22:27] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+## port 4012
+[20:13:20] » [CLI] ...  awaiting  Starting Prism…
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4012/v1/lifecycle/verifications
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4012/v1/lifecycle/tenants/%25FS-%24%3Ad%7DsJ.I%21%25G%3E
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4012/v1/lifecycle/principals/%3C-%3B6G%22k_y
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4012/v1/lifecycle/tenants/%3E4f%7B_%2BFO-%5E%22s%60w%60%220%2B41~%2CX%24i0W8%29DLz7%3AYsQjuL6SyRl/memberships/b4jgZ%28z%2C_%29%2Bq%7C%5C%5C*K%5C%3F%7CEP1G%5E%5Ejvfx%5BXFh%7DB%2Cl
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4012/v1/lifecycle/mappings/8pdHH_IoUzz%7B_%5EkO%5Dy%5EIuwn7%26Z%27y%3Be9BI%60~C5bm%3CXNu*-CT%3C%5E7E
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4012/v1/lifecycle/snapshots/membership
+[20:13:20] » [CLI] ►  start     Prism is listening on http://127.0.0.1:4012
+[20:13:31] » [HTTP SERVER] post /v1/lifecycle/verifications i  info      Request received
+[20:13:31] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:13:31] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:13:31] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:13:31] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:13:31] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:13:31] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:13:31] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:24:46] » [HTTP SERVER] post /v1/lifecycle/verifications i  info      Request received
+[20:24:46] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:24:46] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:24:46] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:24:46] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:24:46] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:24:46] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:24:46] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:25:43] » [HTTP SERVER] post /v1/lifecycle/verifications i  info      Request received
+[20:25:43] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:25:43] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:25:43] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:25:43] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:25:43] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:25:43] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:25:43] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:25:47] » [HTTP SERVER] post /v1/lifecycle/verifications i  info      Request received
+[20:25:47] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:25:47] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:25:47] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:25:47] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:25:47] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:25:47] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:25:47] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+## port 4013
+[20:13:20] » [CLI] ...  awaiting  Starting Prism…
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/qUv/relationships/write
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/6F2qscN6ydKy79fynRM_b6r_zw8CPD4ywZ_qQBEFa3nELoJ_LTX03BZMX/relationships/delete
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/PNXAVRGNCW/relationships/read
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/tenants/4DbL48k_Nl7sdERt2H_4BktGvkr10BNmMEwVt6mhXBg_r7lDttcA-O_v/relationship-changes
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/relationship-imports
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/relationship-imports/imp_2TARHcbIRhVUbdVQq563PS4A2PZ
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/relationship-exports
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/relationship-exports/exp_1hPM8RG2xQFsUZuKKWLi
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/model-validations
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/models
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/models
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/models/mr_UGgv6EUf1oKBnw8Zvb3Nl
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/models/mr_zxCuk8ROVNM/shadow-runs
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/shadow-runs/shd_hS6XYb2seRzHAQ8hVkxvYTEjQsJr3OvRntrbRL
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/models/mr_qXknIB4aivw9oCb2umWSL36DYpD/rollouts
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/rollouts/rol_cmE6VP1JVQVJCTaxbObxNPcgmhtQlNGgPFkEEkFT
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/tenants/CWfPCFl40eDv87cTFXdAHhtKFwIpa/model-pin
+[20:13:20] » [CLI] i  info      PUT        http://127.0.0.1:4013/v1/tenants/j5w_8vW62uy3fPdHguwH7wHfqBK1palai0Ob0Le_qq7gVWvz4EUU/model-pin
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/model-pins/rollback
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/freeze-status
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/namespaces
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/namespaces/qnech06z_1k7108pgwjp8ux0irt2lcmgympd2u_2jhlt2pimkv35_o9d2
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/namespace-requests
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/namespace-requests/nsr_xNnnXWfARAJyAkQbt4xRTkEEOnx26Z0fnWrqVN
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/546Y5rmm9Ruwm7SNJE86_CZ92PWEcK7ixQ6H/units
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/tenants/6jRGXFl9tD/units/wqkbWznUs-Eg93cDMrvBl5Zt3gnQntWW0bjVioCE32Db_CO_3oAybHexdRuqUwDPdUWBPGcb5mQDsoZsvw0U24Nf96-Kd9D0rQi5P
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/MEN/hierarchy/attach
+[20:13:20] » [CLI] i  info      POST       http://127.0.0.1:4013/v1/tenants/liM68hrsH-qtvhGKP0LvuxAQIDiwkNksNKh/hierarchy/move
+[20:13:20] » [CLI] i  info      GET        http://127.0.0.1:4013/v1/tenants/wF7yHdswzjkmwyGDsOJQraH0QVLPduRbAell7dBh2AlP2/hierarchy/ancestors?type=etvtffiqhm2atd8mb8gwb2cv2suz1uy1m%2Fgjfqsx68gptar63y2b9pfv52sadjmymcavin1wut3xs&id=h_3nxRomYcNPNs6Hwxno3VGgINXzfao0o6DIRfmhoYCW-FFoGPGRksAdYThdSFn_EWN0hFuK3wbAn2aNq
+[20:13:20] » [CLI] ►  start     Prism is listening on http://127.0.0.1:4013
+[20:17:43] » [HTTP SERVER] post /v1/tenants/t1/relationships/write i  info      Request received
+[20:17:43] »     [NEGOTIATOR] i  info      Request contains an accept header: */*
+[20:17:43] »     [VALIDATOR] ‼  warning   We currently do not support this type of security scheme: mutualTLS
+[20:17:43] »     [VALIDATOR] √  success   The request passed the validation rules. Looking for the best response
+[20:17:43] »     [NEGOTIATOR] √  success   Found a compatible content for */*
+[20:17:43] »     [NEGOTIATOR] √  success   Responding with the requested status code 200
+[20:17:43] »     [NEGOTIATOR] i  info      > Responding with "200"
+[20:17:43] »     [VALIDATOR] ‼  warning   Violation: request We currently do not support this type of security scheme: mutualTLS
+[20:21:42] » [HTTP SERVER] post /v1/tenants/tenant-1/relationships/write i  info      Request received

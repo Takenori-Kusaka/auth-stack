@@ -1,0 +1,509 @@
+TAP version 13
+# Subtest: INT-03 S-3: ModelChangeRequest validates against CON-04 ModelChangeRequest
+ok 1 - INT-03 S-3: ModelChangeRequest validates against CON-04 ModelChangeRequest
+  ---
+  duration_ms: 50.3773
+  type: 'test'
+  ...
+# Subtest: INT-03 S-3: each module validates against CON-04 CamModule
+ok 2 - INT-03 S-3: each module validates against CON-04 CamModule
+  ---
+  duration_ms: 2.158
+  type: 'test'
+  ...
+# Subtest: INT-03 E-2 (CAM 式 v0): no mixed operators without parentheses (manual check per §15.1 cond.2)
+ok 3 - INT-03 E-2 (CAM 式 v0): no mixed operators without parentheses (manual check per §15.1 cond.2)
+  ---
+  duration_ms: 0.248
+  type: 'test'
+  ...
+# Subtest: INT-03 D-5: every relation is covered by at least one positive and one negative check (self-computed)
+ok 4 - INT-03 D-5: every relation is covered by at least one positive and one negative check (self-computed)
+  ---
+  duration_ms: 0.916
+  type: 'test'
+  ...
+# Subtest: INT-03 N-24: action names the app sends are catalog verbs only
+ok 5 - INT-03 N-24: action names the app sends are catalog verbs only
+  ---
+  duration_ms: 0.7171
+  type: 'test'
+  ...
+# Subtest: CON-13: all examples conform, all x-negative-examples (LC-NE-01..11) are rejected
+ok 6 - CON-13: all examples conform, all x-negative-examples (LC-NE-01..11) are rejected
+  ---
+  duration_ms: 24.8696
+  type: 'test'
+  ...
+# Subtest: CON-13 DeletionReport: examples conform, LC-DR-NE-01/02 rejected
+ok 7 - CON-13 DeletionReport: examples conform, LC-DR-NE-01/02 rejected
+  ---
+  duration_ms: 7.9156
+  type: 'test'
+  ...
+# Subtest: NP24-1 / NP04-3 (static): the outbox message schema carries no token, role or permission list
+ok 8 - NP24-1 / NP04-3 (static): the outbox message schema carries no token, role or permission list
+  ---
+  duration_ms: 0.5522
+  type: 'test'
+  ...
+# Subtest: CON-11 §16.2 step 3 (static): no URL literal in src/ except contract-copied constants
+ok 9 - CON-11 §16.2 step 3 (static): no URL literal in src/ except contract-copied constants
+  ---
+  duration_ms: 1.6356
+  type: 'test'
+  ...
+# Subtest: OBSERVATION: raw Prism (no shim) cannot satisfy the X-Request-ID echo rule -> PEP fails closed (503)
+ok 10 - OBSERVATION: raw Prism (no shim) cannot satisfy the X-Request-ID echo rule -> PEP fails closed (503)
+  ---
+  duration_ms: 69.1197
+  type: 'test'
+  ...
+# Subtest: OBSERVATION: Prism + echo only (W-1) still fails closed on write: static allow example is at_least_as_fresh
+ok 11 - OBSERVATION: Prism + echo only (W-1) still fails closed on write: static allow example is at_least_as_fresh
+  ---
+  duration_ms: 45.1227
+  type: 'test'
+  ...
+# Subtest: OBSERVATION: PDP metadata policy_decision_point does not match the mock base URL (MUST NOT use)
+ok 12 - OBSERVATION: PDP metadata policy_decision_point does not match the mock base URL (MUST NOT use)
+  ---
+  duration_ms: 12.4032
+  type: 'test'
+  ...
+# Subtest: create (P-01 entry point, write): evaluateAccess + writeRelationships through mocks -> 201
+ok 13 - create (P-01 entry point, write): evaluateAccess + writeRelationships through mocks -> 201
+  ---
+  duration_ms: 76.1743
+  type: 'test'
+  ...
+# Subtest: view (read-sensitive): consistency at_least_as_fresh with the stored consistency token
+ok 14 - view (read-sensitive): consistency at_least_as_fresh with the stored consistency token
+  ---
+  duration_ms: 32.7181
+  type: 'test'
+  ...
+# Subtest: submit -> approver tuple written, approval notification enqueued (P-24, references only)
+ok 15 - submit -> approver tuple written, approval notification enqueued (P-24, references only)
+  ---
+  duration_ms: 43.6949
+  type: 'test'
+  ...
+# Subtest: approve stage 1 by manager, stage 2 by director (amount > threshold), then token exchange to payment (P-03)
+ok 16 - approve stage 1 by manager, stage 2 by director (amount > threshold), then token exchange to payment (P-03)
+  ---
+  duration_ms: 116.0094
+  type: 'test'
+  ...
+# Subtest: list (P-09): candidates from domain index, post-check with evaluateAccessBatch execute_all
+ok 17 - list (P-09): candidates from domain index, post-check with evaluateAccessBatch execute_all
+  ---
+  duration_ms: 41.2425
+  type: 'test'
+  ...
+# Subtest: OBSERVATION: Prism evaluations always returns 2 items -> a 3-item page fails closed (503, never an empty list)
+ok 18 - OBSERVATION: Prism evaluations always returns 2 items -> a 3-item page fails closed (503, never an empty list)
+  ---
+  duration_ms: 40.6628
+  type: 'test'
+  ...
+# \# audit events 6 invalid(write w/o txn) 3
+# Subtest: searchResources (preview) as candidate generator: request conforms, x-constraint of completeness checked
+ok 19 - searchResources (preview) as candidate generator: request conforms, x-constraint of completeness checked
+  ---
+  duration_ms: 31.6583
+  type: 'test'
+  ...
+# Subtest: audit: pep.enforce events conform to CON-08, except write events without a Txn-Token (no txn available)
+ok 20 - audit: pep.enforce events conform to CON-08, except write events without a Txn-Token (no txn available)
+  ---
+  duration_ms: 15.1442
+  type: 'test'
+  ...
+# Subtest: baseline: valid token -> 200
+ok 21 - baseline: valid token -> 200
+  ---
+  duration_ms: 64.7259
+  type: 'test'
+  ...
+# Subtest: CV-001 aud of another API -> reject
+ok 22 - CV-001 aud of another API -> reject
+  ---
+  duration_ms: 6.4456
+  type: 'test'
+  ...
+# Subtest: CV-002 typ confusion: txntoken+jwt / secevent+jwt / JWT (ID Token style) -> reject
+ok 23 - CV-002 typ confusion: txntoken+jwt / secevent+jwt / JWT (ID Token style) -> reject
+  ---
+  duration_ms: 29.0552
+  type: 'test'
+  ...
+# Subtest: CV-003 issuer mix-up (iss differs from discovery issuer) -> reject
+ok 24 - CV-003 issuer mix-up (iss differs from discovery issuer) -> reject
+  ---
+  duration_ms: 4.3898
+  type: 'test'
+  ...
+# Subtest: CV-004 alg=none / HS256 (not allowlisted) / ES384 header on P-256 key -> reject
+ok 25 - CV-004 alg=none / HS256 (not allowlisted) / ES384 header on P-256 key -> reject
+  ---
+  duration_ms: 11.5727
+  type: 'test'
+  ...
+# Subtest: CV-005 unknown kid: found after JWKS re-fetch -> accept; not found -> reject
+ok 26 - CV-005 unknown kid: found after JWKS re-fetch -> accept; not found -> reject
+  ---
+  duration_ms: 46.1621
+  type: 'test'
+  ...
+# Subtest: CV-006 unknown crit -> reject
+ok 27 - CV-006 unknown crit -> reject
+  ---
+  duration_ms: 15.6126
+  type: 'test'
+  ...
+# Subtest: CV-007 expired -> reject
+ok 28 - CV-007 expired -> reject
+  ---
+  duration_ms: 16.8316
+  type: 'test'
+  ...
+# Subtest: CV-010 Txn-Token presented in Authorization -> reject
+ok 29 - CV-010 Txn-Token presented in Authorization -> reject
+  ---
+  duration_ms: 3.1208
+  type: 'test'
+  ...
+# Subtest: CV-011 sandbox issuer (issuer B, validly signed by B) at the production-role verifier -> reject
+ok 30 - CV-011 sandbox issuer (issuer B, validly signed by B) at the production-role verifier -> reject
+  ---
+  duration_ms: 10.1591
+  type: 'test'
+  ...
+# Subtest: CV-013 unknown claim -> ACCEPT and continue (mandatory compatibility test)
+ok 31 - CV-013 unknown claim -> ACCEPT and continue (mandatory compatibility test)
+  ---
+  duration_ms: 35.3178
+  type: 'test'
+  ...
+# Subtest: CV-014 older profile major (ver 0.9) -> reject (unsupported_profile)
+ok 32 - CV-014 older profile major (ver 0.9) -> reject (unsupported_profile)
+  ---
+  duration_ms: 2.497
+  type: 'test'
+  ...
+# Subtest: CV-009 DPoP replay: NOT APPLICABLE (manifest options.sender_constrained=false)
+ok 33 - CV-009 DPoP replay: NOT APPLICABLE (manifest options.sender_constrained=false) # SKIP not applicable to this service
+  ---
+  duration_ms: 0.1185
+  type: 'test'
+  ...
+# Subtest: CON-06 NE-01..06, NE-12, NE-14 signed with own key -> all rejected by the verifier
+ok 34 - CON-06 NE-01..06, NE-12, NE-14 signed with own key -> all rejected by the verifier
+  ---
+  duration_ms: 85.2523
+  type: 'test'
+  ...
+# Subtest: NE-07 / NE-09 (roles, email, unregistered dept) are receiver-ignorable: accepted, never used for authz
+ok 35 - NE-07 / NE-09 (roles, email, unregistered dept) are receiver-ignorable: accepted, never used for authz
+  ---
+  duration_ms: 15.6751
+  type: 'test'
+  ...
+# Subtest: CV-012 timeout: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 36 - CV-012 timeout: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 683.144
+  type: 'test'
+  ...
+# Subtest: CV-012 late_allow: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 37 - CV-012 late_allow: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 617.8559
+  type: 'test'
+  ...
+# Subtest: CV-012 body_delay: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 38 - CV-012 body_delay: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 619.3673
+  type: 'test'
+  ...
+# Subtest: CV-012 overload: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 39 - CV-012 overload: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 34.3142
+  type: 'test'
+  ...
+# Subtest: CV-012 quota: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 40 - CV-012 quota: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 58.4421
+  type: 'test'
+  ...
+# Subtest: CV-012 engine_unreachable: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 41 - CV-012 engine_unreachable: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 44.6951
+  type: 'test'
+  ...
+# Subtest: CV-012 indeterminate: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 42 - CV-012 indeterminate: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 60.5967
+  type: 'test'
+  ...
+# Subtest: CV-012 unsupported_profile: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 43 - CV-012 unsupported_profile: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 29.3331
+  type: 'test'
+  ...
+# Subtest: CV-012 no_decision_id: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 44 - CV-012 no_decision_id: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 62.6984
+  type: 'test'
+  ...
+# Subtest: CV-012 request_id_mismatch: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 45 - CV-012 request_id_mismatch: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 59.5343
+  type: 'test'
+  ...
+# Subtest: CV-012 downgrade: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 46 - CV-012 downgrade: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 47.0202
+  type: 'test'
+  ...
+# Subtest: CV-012 unknown_reason: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+ok 47 - CV-012 unknown_reason: read -> 503 + Retry-After, write -> 503, write allows = 0 (no fail-open)
+  ---
+  duration_ms: 32.0499
+  type: 'test'
+  ...
+# Subtest: CV-012 connection-establishment delay beyond D(t) (PoC TC-010 lesson): no allow on write
+ok 48 - CV-012 connection-establishment delay beyond D(t) (PoC TC-010 lesson): no allow on write
+  ---
+  duration_ms: 727.2464
+  type: 'test'
+  ...
+# Subtest: CV-012 TLS handshake stall: NOT EXECUTED (no mTLS in this trial; Prism ignores mutualTLS)
+ok 49 - CV-012 TLS handshake stall: NOT EXECUTED (no mTLS in this trial; Prism ignores mutualTLS) # SKIP mTLS not reproducible locally without SVIDs
+  ---
+  duration_ms: 0.1676
+  type: 'test'
+  ...
+# Subtest: CV-012 deny -> identical response to not-found and other-tenant (IC-09)
+ok 50 - CV-012 deny -> identical response to not-found and other-tenant (IC-09)
+  ---
+  duration_ms: 48.0107
+  type: 'test'
+  ...
+# Subtest: CV-012 revocation: allow, then deny on the next request (no allow cached outside the PEP)
+ok 51 - CV-012 revocation: allow, then deny on the next request (no allow cached outside the PEP)
+  ---
+  duration_ms: 45.0895
+  type: 'test'
+  ...
+# Subtest: CV-012 G-stage cross-tenant deny_guardrail from PDP -> same as deny
+ok 52 - CV-012 G-stage cross-tenant deny_guardrail from PDP -> same as deny
+  ---
+  duration_ms: 1.7259
+  type: 'test'
+  ...
+# Subtest: CON-03 obligation the PEP does not understand on an allow -> treated as deny
+ok 53 - CON-03 obligation the PEP does not understand on an allow -> treated as deny
+  ---
+  duration_ms: 30.2963
+  type: 'test'
+  ...
+# Subtest: CV-008 cross-tenant: other tenant real id vs nonexistent id -> identical responses
+ok 54 - CV-008 cross-tenant: other tenant real id vs nonexistent id -> identical responses
+  ---
+  duration_ms: 14.1886
+  type: 'test'
+  ...
+# Subtest: evaluations short batch (fewer results than requests) -> list is 503 "unavailable", not empty
+ok 55 - evaluations short batch (fewer results than requests) -> list is 503 "unavailable", not empty
+  ---
+  duration_ms: 31.3259
+  type: 'test'
+  ...
+# Subtest: SoD (workflow, INT-03 §9.5 note): requester who is also an approver cannot approve own report
+ok 56 - SoD (workflow, INT-03 §9.5 note): requester who is also an approver cannot approve own report
+  ---
+  duration_ms: 14.914
+  type: 'test'
+  ...
+# Subtest: approval after content change is refused (content binding)
+ok 57 - approval after content change is refused (content binding)
+  ---
+  duration_ms: 15.0096
+  type: 'test'
+  ...
+# Subtest: CON-13 examples as-is (dummy lcsig) are quarantined, not processed (RO-11; INT-00 §6.1 "正例 lcsig はダミー")
+ok 58 - CON-13 examples as-is (dummy lcsig) are quarantined, not processed (RO-11; INT-00 §6.1 "正例 lcsig はダミー")
+  ---
+  duration_ms: 28.0439
+  type: 'test'
+  ...
+# Subtest: LC-NE-01..11: every negative is rejected (schema) before any processing
+ok 59 - LC-NE-01..11: every negative is rejected (schema) before any processing
+  ---
+  duration_ms: 10.7595
+  type: 'test'
+  ...
+# Subtest: RO-11 own-key positive: re-signed tenant.suspended is processed; tenant is suspended
+ok 60 - RO-11 own-key positive: re-signed tenant.suspended is processed; tenant is suspended
+  ---
+  duration_ms: 3.8933
+  type: 'test'
+  ...
+# Subtest: RO-11 negatives with own key: wrong key / env / iss / payload tamper / alg none (non-empty sig) -> quarantined
+ok 61 - RO-11 negatives with own key: wrong key / env / iss / payload tamper / alg none (non-empty sig) -> quarantined
+  ---
+  duration_ms: 3.9742
+  type: 'test'
+  ...
+# Subtest: RO-3/RO-4: duplicate (source,id) acked once; gap held then drained in order
+ok 62 - RO-3/RO-4: duplicate (source,id) acked once; gap held then drained in order
+  ---
+  duration_ms: 4.9082
+  type: 'test'
+  ...
+# Subtest: RO-5: unknown type (tenant.future_event) accepted and ignored, sequence advances
+ok 63 - RO-5: unknown type (tenant.future_event) accepted and ignored, sequence advances
+  ---
+  duration_ms: 1.2403
+  type: 'test'
+  ...
+# Subtest: RO-13: tenant.deletion.withdrawn is a KNOWN type -> outcome=withdrawn report (conforms to DeletionReport)
+ok 64 - RO-13: tenant.deletion.withdrawn is a KNOWN type -> outcome=withdrawn report (conforms to DeletionReport)
+  ---
+  duration_ms: 3.8034
+  type: 'test'
+  ...
+# Subtest: RO-12/RO-13 + CON-15 via Prism: user.deletion.requested -> grace -> verifyLifecycleAction
+ok 65 - RO-12/RO-13 + CON-15 via Prism: user.deletion.requested -> grace -> verifyLifecycleAction
+  ---
+  duration_ms: 52.7843
+  type: 'test'
+  ...
+# Subtest: CON-15 proceed for our target -> delete and report completed (affected_count)
+ok 66 - CON-15 proceed for our target -> delete and report completed (affected_count)
+  ---
+  duration_ms: 30.5407
+  type: 'test'
+  ...
+# Subtest: LQN-03 do_not_proceed/LQ01 -> failed source_of_truth_mismatch, nothing deleted
+ok 67 - LQN-03 do_not_proceed/LQ01 -> failed source_of_truth_mismatch, nothing deleted
+  ---
+  duration_ms: 11.8479
+  type: 'test'
+  ...
+# Subtest: LQN-04 do_not_proceed/LQ02 -> outcome=withdrawn
+ok 68 - LQN-04 do_not_proceed/LQ02 -> outcome=withdrawn
+  ---
+  duration_ms: 11.0724
+  type: 'test'
+  ...
+# Subtest: LQN-07 LQ08 with grace_until -> re-query later, nothing reported
+ok 69 - LQN-07 LQ08 with grace_until -> re-query later, nothing reported
+  ---
+  duration_ms: 7.1712
+  type: 'test'
+  ...
+# Subtest: LQN-12 503 + Retry-After -> held, nothing deleted
+ok 70 - LQN-12 503 + Retry-After -> held, nothing deleted
+  ---
+  duration_ms: 5.4936
+  type: 'test'
+  ...
+# Subtest: LQN-13 unknown verdict / missing verdict -> not executed
+ok 71 - LQN-13 unknown verdict / missing verdict -> not executed
+  ---
+  duration_ms: 12.1884
+  type: 'test'
+  ...
+# Subtest: LQN-17 proceed with LQ05, or LQ08 without grace_until -> not executed
+ok 72 - LQN-17 proceed with LQ05, or LQ08 without grace_until -> not executed
+  ---
+  duration_ms: 17.2216
+  type: 'test'
+  ...
+# Subtest: LQN-18 LQ11 (stale read) -> held as unavailable
+ok 73 - LQN-18 LQ11 (stale read) -> held as unavailable
+  ---
+  duration_ms: 5.6516
+  type: 'test'
+  ...
+# Subtest: CON-05 N-09 unregistered pair -> 400 invalid_target (R06): approval succeeds locally but the downstream hand-over is NOT performed
+ok 74 - CON-05 N-09 unregistered pair -> 400 invalid_target (R06): approval succeeds locally but the downstream hand-over is NOT performed
+  ---
+  duration_ms: 83.7738
+  type: 'test'
+  ...
+# Subtest: CON-05 N-12 scope widening -> 400 invalid_scope (R07): approval succeeds locally but the downstream hand-over is NOT performed
+ok 75 - CON-05 N-12 scope widening -> 400 invalid_scope (R07): approval succeeds locally but the downstream hand-over is NOT performed
+  ---
+  duration_ms: 48.1648
+  type: 'test'
+  ...
+# Subtest: CON-05 N-08 unregistered SVID -> 401 invalid_client (R01): approval succeeds locally but the downstream hand-over is NOT performed
+ok 76 - CON-05 N-08 unregistered SVID -> 401 invalid_client (R01): approval succeeds locally but the downstream hand-over is NOT performed
+  ---
+  duration_ms: 76.4253
+  type: 'test'
+  ...
+# Subtest: CON-05 STS unavailable -> 503: approval succeeds locally but the downstream hand-over is NOT performed
+ok 77 - CON-05 STS unavailable -> 503: approval succeeds locally but the downstream hand-over is NOT performed
+  ---
+  duration_ms: 72.1064
+  type: 'test'
+  ...
+# Subtest: CON-05 profile (client side): request never carries actor_token / audience; resource exactly one
+ok 78 - CON-05 profile (client side): request never carries actor_token / audience; resource exactly one
+  ---
+  duration_ms: 70.233
+  type: 'test'
+  ...
+# Subtest: P-04 consumer via Prism TTS: static Txn-Token has no tctx -> dead letter (fail closed), no notification
+ok 79 - P-04 consumer via Prism TTS: static Txn-Token has no tctx -> dead letter (fail closed), no notification
+  ---
+  duration_ms: 9.097
+  type: 'test'
+  ...
+# Subtest: P-04 with tctx-bearing TTS stub: re-authorized at execution -> sent; revoked in between -> dead letter (NP04-1)
+ok 80 - P-04 with tctx-bearing TTS stub: re-authorized at execution -> sent; revoked in between -> dead letter (NP04-1)
+  ---
+  duration_ms: 37.3935
+  type: 'test'
+  ...
+# Subtest: NP04-2 message tid tampered (≠ tctx.tid / resource tid) -> dead letter
+ok 81 - NP04-2 message tid tampered (≠ tctx.tid / resource tid) -> dead letter
+  ---
+  duration_ms: 5.5498
+  type: 'test'
+  ...
+# Subtest: PDP unavailable at execution -> message kept for retry (not silently dropped, not run)
+ok 82 - PDP unavailable at execution -> message kept for retry (not silently dropped, not run)
+  ---
+  duration_ms: 9.877
+  type: 'test'
+  ...
+# Subtest: tenant.suspended (via lifecycle) stops async notification work
+ok 83 - tenant.suspended (via lifecycle) stops async notification work
+  ---
+  duration_ms: 0.4633
+  type: 'test'
+  ...
+1..83
+# tests 83
+# suites 0
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 3939.7649
