@@ -1,6 +1,6 @@
 # CON-06 Access token claims スキーマ 独立レビュー記録
 
-> 文書ID: CON-06（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-06-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-161, R-162, R-249, R-250, R-283（DL-75）
 > 依存文書: 11_contracts/schemas/access-token-claims.schema.json, CONVENTIONS.md, traceability/deliverables.md（DL-75）, 05_adr/ADR-005, ADR-009, ADR-016, ADR-017, ADR-021, 04_architecture/claims-catalog.md（ARC-15）, 04_architecture/token-profile.md（ARC-02）, 11_contracts/schemas/common.schema.json（CON-02）, 11_contracts/token-exchange.openapi.yaml, research/RS-04, RS-06
 

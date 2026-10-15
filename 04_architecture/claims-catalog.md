@@ -1,8 +1,9 @@
 # claim 目録（token・Transaction Token・判定記録・監査の識別子体系）
 
-> 文書ID: ARC-15 / 版: 0.2 / 状態: draft（独立レビュー反映済み、末尾「レビュー記録」）/ 最終更新: 2026-10-15
+> 文書ID: ARC-15 / 版: 0.3 / 状態: draft（独立レビュー反映済み、末尾「レビュー記録」）/ 最終更新: 2026-10-15
 > 対応要求: R-118, R-161, R-162（deliverables.md の DL-115 行）。関連: R-109, R-128, R-249, R-250, R-283／G-063, G-064, G-065, G-068, G-069, G-088, G-102, G-118（全件と閉じ方は末尾の対応表）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-115 行）, 05_adr/README.md, 05_adr/reconciliation-notes.md（§3 統一モデル）, 05_adr/ADR-002, ADR-005, ADR-006, ADR-007, ADR-009, ADR-011, ADR-013, ADR-014, ADR-016, ADR-017, ADR-020, ADR-021, ADR-022, ADR-026, ADR-029, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/principal-catalog.md, 03_threat-model/threat-catalog.md, traceability/claims-ledger.md（CL-0013, CL-0137, CL-0144）, traceability/rejected-hypotheses.md（RH-018, RH-019, RH-049）, research/RS-03, RS-04, RS-06, RS-10, RS-11, RS-16, research/standards-status.md
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-115 行）, 05_adr/README.md, 05_adr/reconciliation-notes.md（§3 統一モデル）, 05_adr/ADR-002, ADR-005, ADR-006, ADR-007, ADR-009, ADR-011, ADR-013, ADR-014, ADR-016, ADR-017, ADR-020, ADR-021, ADR-022, ADR-026, ADR-029, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/principal-catalog.md, 03_threat-model/threat-catalog.md, traceability/claims-ledger.md（CL-0013, CL-0137, CL-0144）, traceability/rejected-hypotheses.md（RH-018, RH-019, RH-049）, research/RS-03, RS-04, RS-06, RS-10, RS-11, RS-16, research/RS-18（独立検証記録なし）, research/standards-status.md, 04_architecture/authorization-model.md（ARC-05 §3.6）
+> 改版: v0.3（RS-18反映（2026-10-15））で、主体を表す 4 つの軸（`sub`・主体種別 `subject_type`・`client_id`・`act`）の区別（§3.9）と、テナント配下の階層を token に載せない規則（§3.6 の載せないもの）を加えた。RS-18 は独立検証を経ていないため設計の入力として引き、規範の根拠は既存の脚注の原典に限った[^42] [D]。
 > 作成方法: AI エージェント（Claude）が上記の ADR・調査ノート・台帳を通読して起草した。research ノートにない原典（IANA JWT Claims registry、Transaction Tokens draft-11 の本文と Datatracker の状態、RFC 8176、RFC 9901、SD-JWT VC draft-19 と Datatracker の状態、W3C VC Data Model 2.0、VC-JOSE-COSE、Bitstring Status List、OpenID4VP 1.0、OpenID4VCI 1.0、RFC 9964 §6）は起草者が 2026-10-15 に取得して該当箇所を照合した。作成者以外のレビュー（別の AI エージェント）が 2026-10-15 に主要な原典（IANA registry、Transaction Tokens draft-11 と Datatracker、SD-JWT VC draft-19 と Datatracker、RFC 8176、RFC 9901、RFC 9964 §6、VC DM 2.0 §1.3、VC-JOSE-COSE、OpenID4VP 1.0）を再取得して照合した（末尾「レビュー記録」）。traceability/ への照合ログの追記は未了である（§10 残課題）。本書の判断は自己レビューであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 > 正本の分担: claim の**名前**は本書と DL-75（schema）、名前の**規則**は ADR-021 D21-38、**意味と発行条件**は ADR-005、**版の運用**は ADR-016、**契約の凍結区分**は ADR-022 が持つ（reconciliation-notes §3.3）。本書は ADR の決定を目録として集約し、ADR が DL-115 に委ねた点（§7）だけを新たに提案する [D]。
 
@@ -13,7 +14,7 @@
 1. **trace id は access token に入れない。証跡は「token 層・取引層・判定層」の 3 層の識別子を監査イベントで結合して残し、trace_id は索引にだけ使う** [D]。access token は寿命の間に多数の要求で再利用されるので要求単位の値を持てない [D][A-027]。trace-id は外部から注入・偽造でき、Trace Context は traceparent・tracestate に個人識別情報を入れることを MUST NOT とする [N][^23]（RS-10#16, #17）。3 層は (1) access token の `iss`+`jti` と `sid`・grant 参照、(2) Transaction Token の `txn`（`tctx` 付き）、(3) AuthZEN 応答と監査イベントの `decision_id`・`model_revision`・`reason` である（ADR-005 D9-2、reconciliation-notes §3.2）[D]。ADR と整合調整記録はこれを L1〜L4 の 4 層（token・session/grant・取引・判定）と数えるが、識別子の集合は同じで、本書の 3 層は L1・L2 を「token 層」にまとめた呼び方である（§2.1 の対応列）[D]。
 2. **「共通基盤を通った一貫したリクエスト」は、署名付き token と発行台帳の照合・PEP/PDP の decision_id 突合・連鎖の再構成・封印済み記録の改ざん検知の 4 照合で示す** [D]（ADR-014 D14-19）。改ざん検知は producer ハッシュ連鎖、Merkle 封印＋法域の二重署名、WORM、別管理主体の透明性ログの 4 層である（ADR-014 D14-29）[D]。ただし、取引層の `txn` は write 以上にしか発行しない現状（未決 U-02）と判定記録の個別署名（未決 U-04）が残り、証跡の強さは操作階層で異なる [D]。
 3. **Transaction Tokens は Internet-Draft（draft-11、WG 状態 WG Consensus: Waiting for Write-Up（research/standards-status.md SS-B04、2026-10-03 確認）、IESG 状態 I-D Exists（IESG 未提出）、2027-01-31 失効予定、2026-10-15 確認）であり、`txn` 以外は版固定の社内 profile `txn-v1`・契約上は preview に置く** [N][^13][D]（RS-06#29、SS-B04）。`txn` の名前と意味は RFC 8417 の IANA 登録で固定済みなので、草案が失効しても監査欄の意味は変わらない [N][^2][^11]。草案の `purp` は draft-07 で `scope` に改名されており、`purp` という名前は採らない（ADR-009 D09-31、ADR-016 D16-44）[N][^12][D]。
-4. **v1 で発行する claim は「誰が（主体種別）・どの強さで・どの鍵で・誰の代理で・何を・どのテナントで・どの版で・どの grant/session から」の封筒に限る** [D]（ADR-005 D9-4）。所属・役割・属性・VC の本体・trace id・認証イベント ID は載せない [D]。将来候補（`status`・`authorization_details`・`verified_claims`・利用目的・AI エージェント関連・PQ 化後の `cnf`/alg）は、ADR-016 D16-42 の 9 ガードレールに本書 §6 の 4 つの害（万能 JWT 化・stale・PII・結合）の定量・定性基準を加えた追加審査を通らない限り発行しない [D]。
+4. **v1 で発行する claim は「誰が（主体種別）・どの強さで・どの鍵で・誰の代理で・何を・どのテナントで・どの版で・どの grant/session から」の封筒に限る** [D]（ADR-005 D9-4）。所属・役割・属性・VC の本体・trace id・認証イベント ID は載せない [D]。RS-18反映（2026-10-15）: 主体は `sub`（人もシステムも共通の単一名前空間の不透明 ID）、主体種別（概念名 `subject_type`、内部 claim 名案 `ptype`）、`client_id`（要求元ソフトウェア）、`act`（代理の現在の actor）の 4 軸に分けて運び、一つの値に押し込まない。テナント配下の階層（unit・プロジェクト・祖先列）と選択中の unit は載せない（§3.9）[D][^42]。将来候補（`status`・`authorization_details`・`verified_claims`・利用目的・AI エージェント関連・PQ 化後の `cnf`/alg）は、ADR-016 D16-42 の 9 ガードレールに本書 §6 の 4 つの害（万能 JWT 化・stale・PII・結合）の定量・定性基準を加えた追加審査を通らない限り発行しない [D]。
 5. **W3C VC Data Model 2.0（W3C Recommendation）・OpenID4VP 1.0／OpenID4VCI 1.0（いずれも OpenID Final）・SD-JWT（RFC 9901）は確定標準、SD-JWT VC は draft-19（IESG 状態 Waiting for AD Go-Ahead）である** [N][^15][^16][^17][^20][^21]。VC は将来「本人確認・B2B 属性・資格」の**入力**として IdP・オンボーディング・PIP で検証して受け入れ、access token には検証結果の要約（`acr` と予約枠の参照）だけを渡す [D]（ADR-005 D9-6、ADR-022 D-9-4）。VC を access token の代わりにすること、RS・PEP に VC を直接提示させること、VC の属性を token に複写することは受け入れない [D]。
 
 ---
@@ -191,7 +192,7 @@ flowchart LR
 | `typ`（JOSE header。claim ではない） | token 種別 | RFC 9068 §2.1 は `at+jwt` を MUST [N][^3]。RFC 8725 §3.11 は明示的な型付けを RECOMMENDED [N][^31] | 必（`at+jwt`） | 条（FAPI 範囲の JWT 応答は `token-introspection+jwt`） | 必（`txntoken+jwt`） | —（OIDC は typ を要求しない） | 種別間の相互排他の要。typ のない JWT は内部 RS で全種別拒否（V5）。ID Token は iss 分離（V4）と typ なし拒否で RS が受理しない構造にする | 無 | 無 | 約 15〜35 B | 共通 SDK・sidecar、edge | ADR-005 D2, V4, V5 |
 | `alg`・`kid`（JOSE header） | 署名 alg・鍵 ID | RFC 7515 [N][^32]。1 鍵 1 alg は MUST（RFC 8725 §3.1）[N][^31] | 必 | 条（JWT 応答） | 必 | 必 | alg は issuer 別の allowlist（検証側の版付き設定）で照合し token・metadata から読まない（V1）。kid は不透明値で alg 名を埋め込まない（D10-5） | 無 | 無 | 約 20〜60 B | 共通 SDK・sidecar | ADR-005 V1, V2, D10-5 |
 | `iss` | 発行者 | RFC 7519 §4.1.1、final [N][^1] | 必 | 必 | 必 | 必 | 完全一致照合（V4）と種別間の相互排他 (iss, typ, 鍵集合, aud) に要る。Txn-Token の草案では OPTIONAL だが [N][^12]、社内 profile で必須にする | 無 | 無（不可逆の識別子） | 約 40 B | 共通 SDK・sidecar、edge、RP | ADR-005 V4、ADR-021 D21-03、U-01 |
-| `sub` | 主体 | RFC 7519 §4.1.2 [N][^1]。OIDC は「issuer 内で一意かつ再割当しない」と定義 [N][^9]（RS-03#58） | 必 | 必（active 時） | 必 | 必 | 全類型共通の単一名前空間。類型を推論させない。Txn-Token の `sub` は trust domain 内で一意であればよく `iss` と結び付かない [N][^12]（RS-06#42） | 仮名 | 無 | 約 35〜45 B | 同上。TX は AT の `sub` と一致を検証（ADR-009 D09-32） | ADR-021 D21-09, D21-10 |
+| `sub` | 主体 | RFC 7519 §4.1.2 [N][^1]。OIDC は「issuer 内で一意かつ再割当しない」と定義 [N][^9]（RS-03#58） | 必 | 必（active 時） | 必 | 必 | 全類型共通の単一名前空間。類型を推論させない。RS-18反映（2026-10-15）: 人もシステム（service account・workload・AI エージェント・client の service principal）も同じ値域の「種別付き不透明 ID」で、種別は sub の文字列ではなく主体種別 claim で運ぶ（§3.9）。依存サービスは `user_id` ではなく `subject_id`＋`subject_type` の 2 欄で保存する。Txn-Token の `sub` は trust domain 内で一意であればよく `iss` と結び付かない [N][^12]（RS-06#42） | 仮名 | 無 | 約 35〜45 B | 同上。TX は AT の `sub` と一致を検証（ADR-009 D09-32） | ADR-021 D21-09, D21-10 |
 | `aud` | 宛先 | RFC 7519 §4.1.3。RFC 9068 は resource ごとに異なる aud（MUST）[N][^3] | 必（1 サービス） | 条（照会元 edge） | 必（cell ごとの trust domain 値） | 必（client_id） | 共通 aud は発行しない（V6）。TX の aud 外での受理は禁止（MUST NOT）[N][^12] | 無 | 無 | 約 30〜60 B | SDK・sidecar、edge | ADR-005 V6、ADR-009 D09-09 |
 | `exp` | 失効時刻 | RFC 7519 §4.1.4 [N][^1] | 必 | 必 | 必 | 必 | 有効期間は exp で律する（V7） | 無 | 無 | 約 16 B | 全受信者 | ADR-005 D3, V7 |
 | `iat` | 発行時刻 | RFC 7519 §4.1.6 [N][^1] | 必 | 必 | 必 | 必 | 未来方向の時刻差 S を超えたら拒否 | 無 | 無 | 約 16 B | 全受信者 | ADR-005 V7 |
@@ -253,13 +254,14 @@ flowchart LR
 | 意味（ADR の正本） | 内部 token の名前案 | 外部（ID Token・公開応答）の名前案 | AT | IR | TX | ID | 理由 | PII | stale | サイズ | 検証主体 | 関連 ADR |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 作用中テナント（1 値） | `tid`（ADR-021 で固定） | `https://<id-domain>/claims/tid` | 必 | 必 | 必（`tctx` 内） | 条（B2B RP が要る場合） | PEP は資源から導いたテナントと突き合わせる（V9、R-250）。所属一覧は入れない（R-283） | 無（テナントは組織。ただし個人事業主など 1 人だけのテナントでは個人に結び付くので仮名として扱う） | 有（所属喪失・テナント停止） | 約 35 B | SDK、PEP、PDP | ADR-005 V9、ADR-021 D21-12, D21-38 |
-| 主体の種別 | `ptype`（案） | 外部に出さない | 必 | 必 | 不（`sub` の種別は AT 側で判定） | 不 | AuthZEN の subject.type（REQUIRED）へ変換表なしで写像する [N][^26]（RS-07#63）。v1 の値は人・service account・workload・AI エージェントの 4 つ（ADR-005 D9-4）。デバイスを 5 つ目に加える案は**未決（ADR-017 L17-4、D17-50）**で、判定に使う enum なので追加は DL-75 の版変更になる | 無 | 無 | 約 20 B | SDK、PDP | ADR-005 D9-4、ADR-017 D17-50、ADR-022 D-9-1 |
+| 主体の種別（概念名 `subject_type`。RS-18反映（2026-10-15）） | `ptype`（案。KC-1） | 外部に出さない | 必 | 必 | 不（`sub` の種別は AT 側で判定） | 不 | AuthZEN の subject.type（REQUIRED）へ変換表なしで写像する [N][^26]（RS-07#63）。v1 の値は人・service account・workload・AI エージェントの 4 つ（ADR-005 D9-4）。データモデル・API・監査の欄名と AuthZEN の subject.type への写像では `subject_type` と呼ぶ（§3.9）。デバイスを 5 つ目に加える案は**未決（ADR-017 L17-4、D17-50）**で、判定に使う enum なので追加は DL-75 の版変更になる | 無 | 無 | 約 20 B | SDK、PDP | ADR-005 D9-4、ADR-017 D17-50、ADR-022 D-9-1 |
 | grant 参照 | `gref`（案） | 外部に出さない | 条（利用者主体・第三者 grant 由来） | 条 | 条（`tctx` 内、利用者主体で必） | 不 | grant・client・publisher 単位の一括失効の結合キー（D7-6）。昇格 grant ID もこの欄で運ぶ案（§7.3） | 仮名 | 有（grant 取消） | 約 40 B | SDK（失効照合）、監査 | ADR-005 D7-6, D9-4、ADR-029 L29-3 |
 | token profile の版 | `ver`（案。CL-0137 の候補） | 外部 RP に要求しない（ADR-016 D16-11 の外部行） | 必 | 必 | 必（`tctx` 内） | 不 | 版 claim がない token を判別できないので必須（ADR-016 D16-02）。値は major.minor | 無 | 無 | 約 12 B | SDK（受理 major の集合で判定） | ADR-016 D16-02, D16-10 |
 | 予約: 発行元 IdP、保証の根拠への参照、資格の状態参照、利用目的 | 予約名前空間内で DL-75 に登録 | 同左（衝突耐性名） | 不(予) | 不(予) | 不 | 不 | 予約だけでは発行を許さない（ADR-016 D16-45）。発行開始は §6 の審査を通す | 種類による | — | — | — | ADR-022 D-9-2 |
 
 - 名前案の根拠: 内部 token は typ と profile 版で意味を固定でき受信者が共通 SDK に限られるため、短い名前を許す（ADR-021 D21-38 規則 3、ADR-005 D9-5 の整合調整による限定）[D]。RFC 7519 §4.3 は Private Name は衝突し得るので注意して使うべきとし [N][^1]、managed IdP 製品が同じ短い名前（例: Entra の `tid`）を別の意味で出し得る（ADR-021 D21-38）[D]。このため外部に出す名前は自社ドメインに基づく衝突耐性名（Public Name）にする [N][^1][D]。名前案の確定は KC-1（§8）とする [D]。
 - 載せないもの（全種別）: trace id・要求単位の ID、所属・役割・属性の全量、VC の本体と属性、認証イベント ID（発行台帳だけに置き、`sid`・grant 参照で結合）[D]（ADR-005 D9-4、reconciliation-notes §3.3）。
+- RS-18反映（2026-10-15）: テナント配下の階層（`core/unit`・プロジェクト・ワークスペースの ID、祖先列、表示パス）と「選択中の unit・ワークスペース」も載せない [D][^42]。階層は PDP が正本（ARC-05 §3.6）から評価し、選択中の unit は UI の文脈として BFF のセッション状態か要求パラメータで運ぶ [D]。token に入れると unit の改名・移動・削除のたびに寿命の間古い値が残り、ADR-021 D21-38 規則 2（組織階層を焼き込まない）に反する [D]。製品要件で「選択中の unit を session に束縛する」必要が出た場合も、claim 名を DL-75 の registry で予約するにとどめ、PDP は値を信じずに所属を検証する [D][^42]。
 
 ### 3.7 判定記録（claim ではない）の項目
 
@@ -290,6 +292,21 @@ flowchart LR
 | DEV-7 | trace | `trace_id` を認可・真正性の判断に使わない。traceparent・tracestate・baggage に主体・テナント・資源の識別子を載せない | ADR-014 D14-03, D14-04、Trace Context §6 の MUST NOT [N][^23]（RS-10#16） |
 | DEV-8 | 未知・予約 claim | 目録にない claim は無視し、予約名（§3.6 の予約行、`status`・`authorization_details`・`verified_claims`）が発行されていることを前提にしない。新しい claim が要るときは §6.3 の様式で契約変更審査会に申請する | ADR-016 D16-41, D16-45 [D] |
 | DEV-9 | 判定の cache | allow の判定を PEP SDK の外で cache しない | ADR-006 D6-10 [D] |
+
+### 3.9 主体の 4 軸: `sub`・`subject_type`・`client_id`・`act`（RS-18反映（2026-10-15））
+
+「誰か」「どの種別か」「何を通じてか」「誰の代わりにか」を一つの ID や一つの列に押し込まない [D][^42]。これは組織の側で containment・membership・管理委任を分ける（ARC-05 §3.6）のと同じ設計原理である [D]。
+
+| 軸 | 運び方 | 意味 | してはならないこと | 根拠 |
+|---|---|---|---|---|
+| 主体 ID | `sub` | 権利の主体。人（PC-01〜PC-10）もシステム（service account・workload・AI エージェント・client の service principal）も、全類型に共通の単一名前空間から基盤が払い出す不透明 ID。テナントに属さず、所属変更・統合・分割で変わらない | 型の接頭辞を付ける、文字列から種別を推論する、テナントごとに値を変える | ADR-021 D21-09, D21-10 [D]。OIDC の sub は issuer 内で一意かつ再割当しない [N][^9] |
+| 主体種別 | 別 claim（概念名 `subject_type`、内部 claim 名案 `ptype`、KC-1） | sub が指す主体の種別（v1 は 4 値。ADR-005 D9-4） | sub の形式や `user_id`／`service_id` のような列名の使い分けで種別を表す | ADR-021 D21-10・D21-23。AuthZEN の subject.type（REQUIRED）へ写像 [N][^26] |
+| 要求元ソフトウェア | `client_id` | どのソフトウェアが要求しているか。値域は sub と分ける | client の識別子を sub に使い、client 登録者が値を選べる状態にする | RFC 9068 §5 の危険の指摘 [N][^3]、ADR-021 D21-22・D21-23 [D] |
+| 代理 | `act`（現在の actor） | 誰の代わりに動いているか（sub＝委任元、act＝行為者） | 入れ子の過去 actor でアクセス制御する | RFC 8693 §4.1 の MUST [N][^4]、ADR-005 V10、ADR-011 D9-2 [D] |
+
+- 依存サービスのデータモデルと API では、主体の列を `user_id` と名付けない [D][^42]。`user_id` は人間の主体を暗に前提にし、AI エージェントや workload が主体になると `user_id` と `service_id` が並ぶ命名の揺れを主体の側で再現するからである [D]。列は `subject_id`（値は sub）と `subject_type` の 2 つにし、AuthZEN の Subject `{type, id}` と同じ形にする [D]。
+- `subject_type` の値は主体の種別（人・service account・workload・AI エージェント）を表す claim の値で、認可モデルの主体の型（`core/user`・`core/workload`・`core/client`。ARC-05 §3.1）への対応表は DL-75 と CAM 生成器が持つ [D]。AI エージェントを独立の型にするか属性にするかは未決（ADR-017）である [D]。
+- 内部 claim 名を `subject_type` にそろえる案は KC-1 の選択肢 (d) として加えた。既存の契約（CON-06 の access-token-claims.schema.json、token-exchange.openapi.yaml、audit-event.schema.json）は `ptype` で書かれており、本書からは変更していない [D]。
 
 ---
 
@@ -512,7 +529,7 @@ flowchart TD
 
 | # | 論点 | 選択肢 | 推奨 | 帰結 | 決める人・期限 |
 |---|---|---|---|---|---|
-| KC-1 | 独自 claim の内部名 | (a) 短い名前（`ptype`・`gref`・`ver`。`tid` は確定済み）／(b) 内部も衝突耐性 URI 名／(c) 接頭辞付き短縮名（例 `x_` 接頭辞） | (a) [D] | (a) はサイズ最小、製品の同名 claim との衝突は typ・profile 版と CI で防ぐ（RR21-06）。(b) は 1 claim あたり数十 B 増え PQ 期のサイズ予算を圧迫する [D] | CTO。DL-75 凍結前（DEC-8 前） |
+| KC-1 | 独自 claim の内部名 | (a) 短い名前（`ptype`・`gref`・`ver`。`tid` は確定済み）／(b) 内部も衝突耐性 URI 名／(c) 接頭辞付き短縮名（例 `x_` 接頭辞）／(d) RS-18反映（2026-10-15）: (a) のうち主体種別だけをデータモデル・API・AuthZEN と同じ `subject_type` にする | (a)。(d) は名前の揺れを減らすが、1 token あたり約 7 B 増え、CON-06 ほか 3 契約の改訂が要る。DEC-8 前なら改訂費用は小さいので (a) と (d) を KC-1 で比べる [D] | (a) はサイズ最小、製品の同名 claim との衝突は typ・profile 版と CI で防ぐ（RR21-06）。(b) は 1 claim あたり数十 B 増え PQ 期のサイズ予算を圧迫する [D] | CTO。DL-75 凍結前（DEC-8 前） |
 | KC-2 | 束縛認証器の印（U2-02） | §7.1 の (a)(b)(c) | (a) [D] | 内部値の定義を DL-75 に置く [D] | CTO。DL-72・DL-115 凍結前 |
 | KC-3 | 昇格 grant ID（L29-3） | (a) `gref` で運ぶ／(b) 新 claim | (a) [D] | grant 台帳の属性が正本になる [D] | CISO＋CTO。ADR-029 の決裁時 |
 | KC-4 | 内部開始の `tctx` 例外（L26-1） | (a) 例外を設ける／(b) 内部開始にも起点 jti を擬似的に発行 | (a) [D] | (b) は存在しない token の jti を作ることになり発行台帳の意味を崩す [D] | ADR-009 の決裁者。G3 |
@@ -555,6 +572,8 @@ flowchart TD
 | 10 | §11 の ADR への指摘（6 件）を各 ADR の所有者に申し送り、ADR 側の記述を揃える（本書からは ADR を編集していない） | 各 ADR の所有者 | DEC-8 前 |
 | 11 | §3.8 の DEV-1〜DEV-9 を連携ガイド（10_integration/ の連携パターン）と契約試験（DL-80）に写す | 契約チーム | DL-80 の作成時 |
 | 12 | §3.7 の失効 epoch の欄名と `cell_id` の値の形式を DL-77 で決める | 監査スキーマの所有者 | DL-77 の作成時 |
+| 13 | RS-18反映（2026-10-15）: research/RS-18 は独立検証記録がない。§3.9 と §3.6 の階層の扱いは既存 ADR（ADR-021 D21-10・D21-23・D21-38、ADR-011 D9-1）から導いた [D] で、RS-18 の事実記述（各社の claim の上限など）は根拠にしていない。RS-18 のモデル例はエンジンの検証器を実行していない（ARC-05 残課題 16） | 作成者以外の照合者、認可・PDP チーム | G3 |
+| 14 | RS-18反映: KC-1 で (d)（`subject_type`）を採る場合、CON-06・token-exchange 契約・audit-event schema の `ptype` を改名する（DEC-8 前に限る） | 契約チーム | DEC-8 前 |
 
 ---
 
@@ -592,7 +611,7 @@ flowchart TD
 | G-065 | 20 年の 7 性質（識別子の永続性・暗号の俊敏性ほか） | §3.6 名前規則、§6.2 PQ 行、§6.4 | B（DEC-2 の承認） | open |
 | G-068 | alg・版付き profile・PQC サイズ | §6.2 PQ 行、§6.3 G5、§9 | C（ADR-005 H-19） | open |
 | G-069 | token・audit の versioning と演習 | §6.3 G6・G7、§6.4 | C | open |
-| G-102 | workload・token exchange・act・AI エージェントの委任 | §3.3 `act` 行、§3.6 `ptype` 行、§4.2、§6.2 AI 行 | C（ADR-009・ADR-017 の PoC） | open |
+| G-102 | workload・token exchange・act・AI エージェントの委任 | §3.3 `act` 行、§3.6 `ptype` 行、§3.9（RS-18反映）、§4.2、§6.2 AI 行 | C（ADR-009・ADR-017 の PoC） | open |
 | G-118 | 連携契約（access token claims・監査イベント）の機械検証 | §3、§3.8、§6.4、§9（DL-75・DL-77・DL-80 への入力） | A（schema は DL-75・DL-77） | open（schema 未作成、残課題 6） |
 
 件数: R 8 件、G 8 件、計 16 件 [D]。
@@ -642,6 +661,7 @@ flowchart TD
 [^39]: P. Kasselman ほか / IETF『AI Identity Management System』draft-ietf-wimse-aims-00（Internet-Draft、Informational、WG Document）, 2026-09-15. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-aims-00 （参照箇所: §4, §6、確認日: 2026-10-03）RS-06#68〜#73、SS-B17
 [^40]: H. Booth, B. Fisher, R. Galluzzo, J. Roberts / NIST NCCoE『Accelerating the Adoption of Software and AI Agent Identity and Authorization』Concept Paper（Initial Public Draft、状態: ipd）, 2026-02. https://csrc.nist.gov/pubs/other/2026/02/05/accelerating-the-adoption-of-software-and-ai-agent/ipd （参照箇所: 公開日と意見募集の終了表示、確認日: 2026-10-03）RS-06#13、SS-E19
 [^41]: M.B. Jones, O. Steele『RFC 9864: Fully-Specified Algorithms for JOSE and COSE』Standards Track, 2025-10. https://www.rfc-editor.org/rfc/rfc9864 （参照箇所: Abstract, §4.1.2, §4.4、確認日: 2026-10-03）RS-11#43
+[^42]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 「token には tid だけを載せ、階層は PDP で評価する」, 「補足: user_id ではなく sub、client_id、act を分ける」、確認日: 2026-10-15。項目番号と独立検証記録がないため節名で参照する。設計の入力としてだけ使い、事実の根拠には使わない）
 
 ---
 

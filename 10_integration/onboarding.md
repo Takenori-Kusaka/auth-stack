@@ -90,7 +90,7 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 |---|---|---|---|---|
 | OB-0 準備完了 | DoR 申告（DL-67）: Tier 仮申告、P-xx の選定、entry point ごとの操作階層の草案、BIA 票 A6、要員確約、移行見積り（C_改修） | サービスオーナー（申告）、事業責任者（要員と移行費用の確約）。Tier 1 の追加は事業責任者（ADR-023 D23-50、KD23-1） | 中央待ちなし。サービス側の所要日数を記録だけする（§5.4） | ドメイン負担（自サービスの作業）。様式・FAQ・office hours は中央負担 |
 | OB-1 登録 | consumer 台帳の行（CC-01）、サービス正規識別子（ADR-021 の名前空間台帳）、連絡先・所有組織・使用版、リリースノートの購読 | プラットフォーム（契約管理）。識別子の払い出しは不可逆なので形式検査を自動で行い、例外だけ人が見る | SLI-086（TBD） | 中央負担 |
-| OB-2 資格情報 | (a) sandbox の client・workload・テナント 2 つ以上（CON-11 §5.2）、(b) 本番の SVID 登録エントリ（ARC-04 W55-08）、(c) 交換可能な組の登録簿（ADR-009 D09-13）、(d) 本番 client の登録 | (a) セルフサービス（承認なし）。(b) プラットフォームチーム（作成者≠承認者。selector の妥当性）。(c) 申請は呼出し元の所有者、承認は呼出し先の所有者（D09-13）。(d) 未決（§4.3） | (a) SLI-087（TBD）。(b)(c)(d) は SLI 未採番（DL-20 へ申し送り、ONB-R3） | (a)(b) 中央負担。(c) 承認作業は呼出し先ドメイン負担。共有秘密の置換（A-113）はドメイン負担 |
+| OB-2 資格情報 | (a) sandbox の client・workload・テナント 2 つ以上（CON-11 §5.2）、(b) 本番の SVID 登録エントリ（ARC-04 W55-08）、(c) 交換可能な組の登録簿（ADR-009 D09-13）、(d) 本番 client の登録 | (a) セルフサービス（承認なし）。(b) プラットフォームチーム（作成者≠承認者。selector の妥当性）。(c) 申請は呼出し元の所有者、承認は呼出し先の所有者（D09-13）。(d) 案: 認証・IdP チームの有資格者（作成者≠承認者）。層 F・app-only などは承認者を加える（§4.3、ONB-R2 で確定） | (a) SLI-087（TBD）。(b)(c)(d) は SLI 未採番（DL-20 へ申し送り、ONB-R3） | (a)(b) 中央負担。(c) 承認作業は呼出し先ドメイン負担。共有秘密の置換（A-113）はドメイン負担 |
 | OB-3 モデル登録 | CAM モジュール、関係テスト、変更区分の申告（INT-03 §8） | M0: ドメイン内 peer review。M1: ＋プラットフォームのセキュリティレビュアー（非同期）。M2: プラットフォームが多段手順と shadow を確認。M3: プラットフォーム 2 名以上＋CISO 同意（GOV-05 §6.4） | SLI-088（TBD）、M1 の待ちは K-31(c)。SLA の決め方は GOV-05 DP-6 | 自ドメインの型はドメイン負担。審査要員と自動ゲートは中央負担 |
 | OB-4 PEP 組込み | entry point 台帳（IDL から生成）、ARC-06 §4.3 の 12 項目、SDK 導入または SDK なしの自前実装の登録、storage guardrail | CI の配備ゲート（自動。ARC-06 §6.5）。例外は例外台帳: privileged 以上とテナントデータを返す read-sensitive は CISO、それ以外はプラットフォームチーム長（ARC-06 §6.6） | 中央待ちなし。例外の承認待ちは K-31 に計上（SLI 未採番、ONB-R3） | ドメイン負担（C_改修）。SDK・静的規則・生成器は中央負担 |
 | OB-5 契約試験合格 | DL-80 の判定記録（版・ハッシュ・ベクタごとの結果・CI 署名）の契約レジストリへの登録 | 自己判定（CON-11 §10.1）。ベクタの適用除外は契約変更審査会 | SLI-089（TBD。提出から合否確定まで） | ドメイン負担（CI の実行）。キット・共有 sandbox は中央負担 |
@@ -133,9 +133,10 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 | sandbox テナント | consumer ごとに 2 つ以上払い出す（cross-tenant 試験のため） | なし | 合成データ生成器の書式以外の属性値は拒否される（CON-11 §5.2 (e)） |
 | 本番の SVID 登録エントリ | selector を、基盤が管理し workload が書き換えられない属性の組合せで申請する（ARC-04 W55-08） | プラットフォームチーム（作成者≠承認者） | 主所有者・副所有者のない主体には発行しない（W55-11）。無関係なインスタンス間で鍵を共有しない（W55-06） |
 | 交換可能な組（呼出し元 × 呼出し先 × scope 上限） | 呼出し元の所有者が申請する（ADR-009 D09-13） | 呼出し先の所有者 | 登録簿にない exchange は STS が拒否する |
-| 本番の client（外部・M2M） | 共有 client secret を使わず、private_key_jwt か mTLS で登録する（ADR-009 D09-18、D09-19） | **未決**。ADR-022 は非本番の動的登録だけを preview に置き（D-2）、本番の client 登録の手段を定めていない（INT-02 §10.3 の I-01） | 本書は暫定で、プラットフォームチームが作成者≠承認者で登録する運用にする [D] |
+| 本番の client（第一者・第三者・外部 RP・M2M） | client-registration.openapi.yaml（CON-14、DL-119）の登録申請 API（`submitClientRegistrationRequest`）に、sandbox で通ったのと同じ ClientMetadata を本番の値で申請する。共有 client secret は登録できず、private_key_jwt か mTLS（public client は none＋DPoP）に限る（ADR-009 D09-18、D09-19、同契約 §3）。承認がそろうと払い出され、`getClientRegistrationRequest` で sandbox と別の `client_id` を受け取る（ADR-021 D21-22） | **案**（同契約の x-approval-rules。既存の変更区分への当てはめで、新しい承認者は置かない）[D]。AR-1 全申請: 認証・IdP チームの有資格者（作成者≠承認者。operating-model §7.2 の CP-2 相当）。AR-2 第三者・外部 RP: 発行者確認を加える（ADR-005 D7-1）。AR-3 層 F・privileged scope: CISO 組織のセキュリティレビュアー（非同期）を加える（ADR-020 D20-03）。AR-4 複数テナントにまたがる app-only の権限: 別報告系統の二者（CP-1 相当、ADR-008 D8-54）。AR-5 第三者サーバー型で DPoP を使う例外: 受容票を必須にする（ADR-005 K-3）。廃止（retire）は所有者だけで成立する。確定は ONB-R2 | 本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34）。申請の時点で種別ごとの規則に反するものは 400 で返る（理由コード CR01〜CR13）。ADR-022 が本番の登録手段を定めていないので、申請 API は preview である（同契約 §6）[D] |
 
-- sandbox の client 登録を RFC 7591 の software statement と initial access token で自動化することは RS-16 §5.1 の検討事項であり、ADR-022 D-2 は preview に置いている [D]。RFC 7591 は、AS が登録できる者を限定する場合に initial access token を使うことを定め、software statement には署名または MAC と `iss` を求める（MUST）[N][^4]（RS-16#20）。
+- sandbox の client 登録は、client-registration.openapi.yaml の RFC 7591/7592 profile（preview、ADR-022 D-2）で行う [D]。OB-1 を終えたチームに sandbox 専用の initial access token を発行し、チームはそれを付けて sandbox の AS に自分で登録する（承認なし。CON-11 §5.2 (c)）[D]。RFC 7591 は、AS が登録できる者を限定する場合に initial access token を使うことを定め、software statement には署名または MAC と `iss` を求める（MUST）[N][^4]（RS-16#20）。software statement は署名者の台帳がないため v0.1 では受け付けない（同契約 §4）[D]。
+- sandbox への本番 redirect URI・本番の公開鍵の登録は拒否され、sandbox の `client_id` は本番の AS で使えない（同契約の負例 CRN-01・CRN-12・CRN-13）[D]。
 - 共有 sandbox の提供時期と運用水準は K11-3（CTO、DEC-8 前）で決まり、提供時期は DL-42・DL-62 で公開される [D]。sandbox がない間は、ローカルのモック（MK-01〜MK-07）で OB-5 の準備を進める [D]（CON-11 §16.2）。
 
 ### 4.4 OB-3 モデル登録
@@ -422,7 +423,7 @@ flowchart LR
 
 | マイルストーン | 前提 | その時点で始められること | まだできないこと |
 |---|---|---|---|
-| M-a 今（DEC-8 前） | なし | OB-0 の全項目、契約 0.x とモックによる実装と単体試験（CON-00 §2.5、INT-01 §7.4、INT-02 §10.2、CON-11 §16.2） | 自 CI での契約試験の合否、ライフサイクル事象の受信（G-137 の契約が未作成）、本番の SVID |
+| M-a 今（DEC-8 前） | なし | OB-0 の全項目、契約 0.x とモックによる実装と単体試験（CON-00 §2.5、INT-01 §7.4、INT-02 §10.2、CON-11 §16.2） | 自 CI での契約試験の合否、ライフサイクル事象の配送の保証に依存する結合試験（CON-12・CON-13 は draft で受信の実装と単体試験は今できる。モックは未提供）、本番の SVID |
 | M-b DEC-8（契約 v1 凍結） | DEC-3 で U-01 が決まっている（ADR-022 D-10b） | OB-1 の登録（台帳の様式が DEC-8 前に整う。CON-01 残課題 7）、GA の契約に限った本格実装 | キットの負例・署名付き試験（DL-82 の配布待ち） |
 | M-c キット・sandbox の提供（G3 予定） | DL-82、K11-3 | OB-2(a)、OB-5 の自己判定 | 本番の判定 |
 | M-d PoC 基盤・パイロット（DEC-4、G4） | パイロットの確約（G-052） | PoC 基盤での負例の再実行（ADR-022 D-6-3）、SLI-086〜091 の実測、§5.3 の c_s・h_s の実測 | 本番の正本切替 |
@@ -467,14 +468,14 @@ flowchart LR
 | ID | 内容 | 所有者 | 期限 |
 |---|---|---|---|
 | ONB-R1 | 新規サービス（旧判定なし）の OB-6 の扱いを ADR-027 で決める（本書 §4.7 は暫定） | CTO＋CISO（ADR-027 の改版） | G3 |
-| ONB-R2 | 本番 client の登録手段と承認者を契約（CON-00 の I-01）と ADR-022 で決める | CTO（契約管理） | DEC-8 前 |
+| ONB-R2 | 本番 client の登録手段は client-registration.openapi.yaml（CON-14、DL-119、preview）の申請 API として契約にした（2026-10-15）。残りは、承認者案 AR-1〜AR-5（同契約の x-approval-rules、§4.3）の決裁と、ADR-022 D-2 の改版で申請 API の凍結区分を決めること | CTO（契約管理）。CISO が協議先 | DEC-8 前 |
 | ONB-R3 | 未採番の SLI（本番 SVID 登録、交換登録簿の承認、OB-4 の例外承認）を DL-20 で採番し、K-31 の対象に加える | DL-20 の作成者、プラットフォームチーム長 | G3 |
 | ONB-R4 | SLI-086〜091 の目標値をパイロットで実測し決裁する（G-144） | CTO（決裁）、独立立会人（実測） | G4 |
 | ONB-R5 | ONB-K1〜ONB-K5 の決裁 | §8 の各決める人 | G3／DEC-8 前 |
 | ONB-R6 | オンボーディング記録（§5.4）を SRC-18 として実装し、KRI 集計へ接続する | プラットフォームチーム長 | パイロット開始前 |
 | ONB-R7 | DL-67（Definition of Ready）に OB-0 の項目（§4.1）と早期本番の E-1〜E-6 を反映する（本書は DL-67 を編集していない） | DL-67 の作成者 | DEC-8 前 |
 | ONB-R8 | NA-ONB-1〜NA-ONB-3 を前提台帳へ追加する | 前提台帳の所有者 | G1〜G3 |
-| ONB-R9 | ライフサイクル事象の契約（G-137）がない間、OB-2 以降で依存サービスが独自 session を無効化する手段がない（INT-02 §10.3）。契約の作成を待つ | 契約管理（CON-00 §8） | DEC-8 前 |
+| ONB-R9 | 独自 session の無効化は CON-12 RO-6 で閉じる。独自 session を持つサービスは、tenant.suspended・membership.suspended・membership.removed・user.suspended・revocation.bulk（preview）を受けて session を無効にする（CON-12・CON-13 は 2026-10-15 に draft で配置済み。INT-02 §5.2）。閉じる条件は、CON-12 の LC-CV-08 を自 CI で合格することである。残りは、モック MK-08（CON-11 版 0.3 で仕様化。キット本体 DL-82 は未実装）、期限 T_user_susp ほかの値（DL-20）、LC-OI-1〜3 | 契約管理（CON-00 §8）。LC-CV-08 の合格は各サービス | DEC-8 前（LC-CV-08 の合格はキット配布後） |
 | ONB-R10 | 本書の承認者・段の定義を、作成者以外のレビュアーが G-124 の合格条件で判定する | 作成者以外のレビュアー | 段階1 |
 
 ---
@@ -509,3 +510,18 @@ flowchart LR
 [^7]: デジタル庁 地方業務システム基盤チーム『標準仕様書の改定・運用について（基本的な考え方）』2025-01-29. https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/c58162cb-92e5-4a43-9ad5-095b7c45100c/394352a4/20250129_policies_local_governments_outline_01.pdf （参照箇所: p.1〜p.4、確認日: 2026-10-03。RS-16#74）
 [^8]: DORA (Google Cloud)『Capabilities: Streamlining change approval』. https://dora.dev/capabilities/streamlining-change-approval/ （参照箇所: 冒頭, How to implement a change approval process, Common pitfalls、確認日: 2026-10-03。RS-16#59, #60）
 [^9]: Team Topologies『Key Concepts』. https://teamtopologies.com/key-concepts （参照箇所: Four fundamental topologies, Three team interaction modes、確認日: 2026-10-03。RS-16#67）
+
+---
+
+## レビュー記録
+
+本節の模擬パネルは AI エージェント（Claude）による自己レビューであり、実在の CTO・CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+### ラウンド 2（模擬パネル、2026-10-15）
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R2-1 | High・devlead | CON-12・CON-13 が作成され CON-00 §2.5 は受信を「条件付きで着手可」としたのに、§9 の M-a 行は「ライフサイクル事象の受信（G-137 の契約が未作成）」を「まだできないこと」に挙げ、ONB-R9 は「契約の作成を待つ」のままだった。このままでは ONB-R9 が閉じない | 対応済み。M-a 行の「まだできないこと」を、配送の保証に依存する結合試験（モック未提供）に限った。ONB-R9 を CON-12 RO-6 を閉じ方とする記述に書き換え、閉じる条件（LC-CV-08 の自 CI 合格）と残り（モック、T_* の値、DL、LC-OI-1〜3）を書いた | §9 M-a 行、残課題 ONB-R9 |
+
+- 根拠として確認した箇所: CON-00 §2.5（判定と役割別の表）・§2.6.1・§3 の client 登録行、lifecycle-events.asyncapi.yaml（CON-12）の RO-6・LC-OI-1〜3・LC-CV-08、client-registration.openapi.yaml の `info`（x-status draft）。いずれも 2026-10-15 に本リポジトリで確認した [D]。再発防止の DL-111 の検査規則は INT-00「他文書への申し送り」S-1 で申し送った [D]。
+- 対応件数: 1 件（対応済み 1）[D]。

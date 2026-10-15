@@ -1,6 +1,6 @@
 # CON-07 SCIM API profile 独立レビュー記録
 
-> 文書ID: CON-07（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-07-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-040, R-132（主）、R-039, R-044, R-047, R-172, G-118, G-119, G-137（関連）（DL-76）
 > 依存文書: 11_contracts/scim.openapi.yaml, CONVENTIONS.md, traceability/deliverables.md（DL-76 行）, 05_adr/ADR-004, ADR-005, ADR-016, ADR-021, ADR-022, ADR-023, 02_requirements/identity-lifecycle.md（DL-08 §15）, 04_architecture/reference-architecture-v2.md（ARC-01）, 04_architecture/revocation-continuous-evaluation.md（ARC-09）, research/RS-03, RS-14, standards-status.md
 

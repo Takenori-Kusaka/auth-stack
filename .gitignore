@@ -1,3 +1,5 @@
 12_poc/tools/
 node_modules/
 *.log
+12_poc/code/.run/
+*.key.pem

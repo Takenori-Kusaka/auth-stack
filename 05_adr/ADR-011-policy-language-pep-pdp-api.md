@@ -131,7 +131,7 @@ RS-07#12〜#29, #32, #35, #39〜#59, #60〜#79。RS-17#84〜#96。RS-16#14〜#16
   6. データ所在地・cell の不一致、および緊急 freeze
   - 規則の追加は基盤の変更審査（二者承認）を通す。規則 ID を reason に出す [D]。
 - **D1-3** R 段の ABAC は、要求 context（時刻、接続元、認証強度、端末状態、データ区分）を入力とする CEL 部分集合の条件に限る [D]。使える関数は基盤の条件カタログに限り、CEL コストと context の上限はカタログ側で engine の既定値（OpenFGA の CEL コスト 100、SpiceDB の context 4,096 バイト）以下に保つ [V][^10][^13][D]（RS-07#22, #32）。資源属性に基づく条件は関係か型に写して表す [D]。任意 script や汎用 policy（Rego の汎用ルールなど）の持込みは例外承認制とする（CL-0254 を維持）[D]。
-- **D1-4** entity の階層を呼出側が要求ごとに組み立てる方式（RS-07#79 の (b)）は主経路にしない [D]。深度 8・fanout 10 万の階層を PEP が毎回用意する必要が生じ、Cedar の skip-on-error と組み合わさると entity の欠落が許可に変わり得るからである [D][A-036]（RS-07#41, #44）。
+- **D1-4** entity の階層を呼出側が要求ごとに組み立てる方式（RS-07#79 の (b)）は主経路にしない [D]。深度 8・fanout 10 万の階層を PEP が毎回用意する必要が生じ、Cedar の skip-on-error と組み合わさると entity の欠落が許可に変わり得るからである [D][A-036]（RS-07#41, #44）。RS-18反映（2026-10-15、追記のみ）: 組織の木（`core/unit`）を継承経路に入れる場合も、階層は呼出側ではなく基盤の階層サービスが正本と祖先閉包として持ち、深度 8 [A-036] の前提を保つ案を ARC-05 K05-8 に置いた [D][^55]。
 
 ### 2.2 正本（CAM）と変更管理（Q2）
 
@@ -276,7 +276,7 @@ RS-07#12〜#29, #32, #35, #39〜#59, #60〜#79。RS-17#84〜#96。RS-16#14〜#16
 
 | 区分 | 属性 | 用途 | 関連 |
 |---|---|---|---|
-| 所属 | テナント、所属組織・部門、複数テナント所属時の現在 context | G 段のテナント照合 | ADR-004、[A-015] |
+| 所属 | テナント、所属組織・部門、複数テナント所属時の現在 context | G 段のテナント照合 | ADR-004、[A-015]。RS-18反映（2026-10-15、追記のみ）: 所属組織・部門と「選択中の unit」は token claim にも PIP の属性にもせず、R 段の関係（ARC-05 §3.6 の `core/unit`・`core/group`・`core/admin_scope`）として PDP が正本から評価する案とする（D9-1・ADR-021 D21-38 規則 2 と同じ向き）。ARC-05 K05-6〜K05-8 の決裁で確定する [D][^55] |
 | 主体種別 | 人間／workload／AI エージェント／service account | 主体種別ごとの permission catalog | ADR-017 |
 | 認証の文脈 | 認証強度（acr/amr）、認証時刻、session ID | 最低認証強度、session 失効との突合 | ADR-002、ADR-006 |
 | 委任 | 現在の actor と委任連鎖、委任の範囲 | 代理操作の認可 | ADR-017、RS-06 |
@@ -759,3 +759,4 @@ RS-07#12〜#29, #32, #35, #39〜#59, #60〜#79。RS-17#84〜#96。RS-16#14〜#16
 [^52]: A. Parecki, K. McGuinness, B. Campbell / IETF『Identity Assertion JWT Authorization Grant』draft-ietf-oauth-identity-assertion-authz-grant-04（Internet-Draft）, 2026-05-21. https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04 （参照箇所: §3.1、確認日: 2026-10-03。RS-06#49）
 [^53]: A. Tainter (Carta)『AuthZ: Carta's highly scalable permissions system』Building Carta, 2021-06-11. https://medium.com/building-carta/authz-cartas-highly-scalable-permissions-system-782a7f2c840f （参照箇所: Experimenting with tokens、確認日: 2026-10-03。RS-07#74。当事者による公開記事で、測定条件の記載はない）
 [^54]: OpenFGA『Release v1.21.0』GitHub, 2026-09-20. https://github.com/openfga/openfga/releases/tag/v1.21.0 （参照箇所: リリース日、リポジトリのライセンス表示 Apache-2.0、確認日: 2026-10-03。RS-07#25）
+[^55]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 「token には tid だけを載せ、階層は PDP で評価する」, 「木を保ち、循環を断ち、深さを予算に収める」、確認日: 2026-10-15。独立検証記録がなく、設計の入力としてだけ参照する。RS-18 のモデル例はエンジンの検証器を実行していない（ARC-05 残課題 16））

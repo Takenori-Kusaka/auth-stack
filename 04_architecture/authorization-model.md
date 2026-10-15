@@ -1,8 +1,9 @@
 # 認可モデル・整合性・剥奪仕様
 
-> 文書ID: ARC-05 / 版: 0.2 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: ARC-05 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-142〜R-149, R-191.3, R-205, R-250, R-252, R-253, R-271, G-107, G-108, G-109, G-110, G-112, G-113（本書を対応成果物に含む全行。閉じ方は末尾の対応表）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-17）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-024・ADR-025（設計判断の正本）, 05_adr/ADR-006・ADR-013・ADR-017・ADR-021・ADR-026・ADR-027・ADR-029, 05_adr/reconciliation-notes.md（U-03, U-04）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-027〜T-034, T-080）, research/RS-07, RS-08, RS-17（各 verification 記録を含む）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md（DS-15, DS-16）
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-17）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-024・ADR-025（設計判断の正本）, 05_adr/ADR-006・ADR-013・ADR-017・ADR-021・ADR-026・ADR-027・ADR-029, 05_adr/reconciliation-notes.md（U-03, U-04）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-027〜T-034, T-080）, research/RS-07, RS-08, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし。§3.6 の注記）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md（DS-15, DS-16）
+> 改版: v0.3（RS-18反映（2026-10-15））で、テナント配下の階層モデル（§3.6）、core 型の追加案（§3.1）、containment の命名規則 X-11〜X-13（§3.3）、深度と祖先閉包の関係（§3.4）、§8.3・§8.4 の例の書換え、決裁案 K05-6〜K05-8、残課題 15〜19 を加えた。RS-18 は独立検証（research/README.md の P3）を経ていないため、本書は RS-18 を設計の入力として引き、事実の根拠には本反映で再取得した原典だけを使った[^37] [D]。
 > 作成方法: AI エージェント（Claude）が上記の ADR と調査ノートから起草した。本書の判断は ADR の決定を仕様に落としたものであり、ADR に反する設計は置いていない。ADR で決まっていない点は「未決（ADR-0xx）」と書いた。v0.2 は作成者とは別の AI エージェント（Claude）による独立レビューの修正を反映した（末尾「レビュー記録」）。CTO/CISO の決裁を経ていない（CONVENTIONS §8）[D]。
 
 ---
@@ -14,7 +15,8 @@
 3. **剥奪から拒否までの最大時間は単一の値ではなく、階層ごとに 5 つの項（正本への確定、エンジンの鮮度窓、レプリカ遅延、フェンス反映、PEP 判定 cache）の和で構成する** [D]（ADR-010 D-19、ADR-006 D6-10）。経路ごとの失効状態の配布遅延 Δ_p と、再判定しない経路の残存 Z_p を加えた全体の式は §10.1 に置き、ARC-09 §4 と ARC-01 §6.8 の R(t, c) の分解と同じ形にしている [D]（ADR-006 D6-29）。調べた公式文書に上限を保証する記述はない [D]（RS-07 §2 第 2 項）。各項の値は TBD で、BIA と PoC の実測（§15 の TC-ARC05-03〜07）で決める [D]。予算は ADR-006 D6-29 と ADR-010 D-19 に従い項の和で置く [D]。
 4. **コンテンツ更新と relation 更新は、分散トランザクションではなく「順序規則＋整合性トークン＋transactional outbox＋差分照合」で因果的に結合する** [D]。剥奪は façade への同期書込を内容変更より先に確定させ、付与は outbox による非同期反映を許す（付与の遅れは deny 側に倒れる）[D]。移動のように「旧関係の削除と新関係の追加」を伴う変更は、1 回の relationship 書込要求にまとめる。両候補とも 1 要求の中の書込・削除を全体として成功または失敗させると公式に記述している [V][^34][^35]。内容 DB と relationship store をまたぐ原子性は得られないので、残る窓を PoC で測る（R-145）[D]。
 5. **モデル変更は model revision の pin → CI 検査 → shadow → canary cell → wave → テナント固定の更新の 6 段で展開し、剥奪状態はモデル版から切り離す** [D]（ADR-016 D16-30〜D16-36、ADR-013 D13-35）。SpiceDB には schema の版がないため、テナント別の pin を façade とレジストリで実現する方式は未決とし、Gate 3 の決裁案にした（§16 K05-5）[D]。
-6. **閉じ方**: 本書で机上（A）として閉じるのは R-142（記述方式）・R-250・R-252・R-253・G-107（定義と測定方法）・G-109 の 6 件である [D]。R-142 の「実保証範囲」は公式文書の範囲で書いたが、構成ごとの実挙動は実測（TC-ARC05-01）を待つ [D]。残る 14 件は PoC（E4・E5）または決裁が要る [D]（末尾の対応表）。
+6. **テナント配下の階層は「どこに属すか（containment）」「誰が属すか（membership）」「誰が管理するか（管理委任範囲）」の 3 つの関係に分け、一本の木に押し込まない（RS-18反映（2026-10-15））** [D][^37]。containment は単一親の木（`core/tenant` を根、再帰コンテナ `core/unit`、ドメインの型付き葉）、membership は n:n の `core/group`、管理委任は非ネストの `core/admin_scope` で表す案とし、containment の relation 名は `parent` に統一する（§3.6、決裁案 K05-6・K05-7）[D]。循環と深さは階層サービスが書込時に検査し、組織の木を辿る継承は祖先閉包（`ancestor`）の事前計算で 1 hop に畳んで解決深度の設計値 8 [A-036] に収める案を決裁案 K05-8 とした [D]。階層・所属・選択中の unit は token に載せず、PDP が正本から評価する（ADR-021 D21-38 規則 2）[D]。いずれもエンジンの検証器を通していない（残課題 16）[D]。
+7. **閉じ方**: 本書で机上（A）として閉じるのは R-142（記述方式）・R-250・R-252・R-253・G-107（定義と測定方法）・G-109 の 6 件である [D]。R-142 の「実保証範囲」は公式文書の範囲で書いたが、構成ごとの実挙動は実測（TC-ARC05-01）を待つ [D]。残る 14 件は PoC（E4・E5）または決裁が要る [D]（末尾の対応表）。
 
 ---
 
@@ -97,10 +99,12 @@ core の型は基盤チームだけが変更でき、変更は基盤の変更審
 
 | 型（CAM 名） | 主な relation | 用途・制約 | 根拠 |
 |---|---|---|---|
-| `core/user` | （主体。relation なし） | 人間の主体。sub は全類型共通の単一名前空間から払い出した不透明 ID（ADR-021 D21-10）[D] | ADR-021 |
+| `core/user` | （主体。relation なし） | 人間の主体。sub は全類型共通の単一名前空間から払い出した不透明 ID（ADR-021 D21-10）[D]。RS-18反映（2026-10-15）: tuple・AuthZEN の主体は `(type, id)` の組で運び、id は人もシステムも同じ sub の値域、type が主体の型を表す（§3.6.5）。主体の型を sub の文字列や `user_id` のような列名から推論させない [D][^37] | ADR-021 |
 | `core/workload`, `core/client` | （主体） | 非人間主体。AI エージェントの主体種別の表し方（`core/user` と分けた型にするか属性にするか）は未決（ADR-017）[D] | ADR-017 D17-16、ADR-021 D21-26 |
 | `core/tenant` | `member`, `external_member`, `admin`, `security_admin`, `role_manager` | テナントの根。`external_member` は外部付与で入る主体の userset で、façade が外部付与の作成・失効と同時に書き換える（ドメインは書けない。X-8）。G 段規則 1 の所属確認（ADR-024 D24-08）の入力 [D] | ADR-024 D24-08 |
-| `core/group` | `member`（`core/user`, `core/group#member`） | 入れ子は深度予算に含める（§3.4）。既定のグループ（全メンバー等）に外部主体を入れない [D] | ADR-024 D24-02 |
+| `core/group` | `member`（`core/user`, `core/group#member`）。RS-18反映（2026-10-15）で `owner_unit`（`core/unit`, `core/tenant`。継承に使わない帰属）を追加する案（K05-6） | 入れ子は深度予算に含める（§3.4）。既定のグループ（全メンバー等）に外部主体を入れない [D]。containment の木に入れない（`parent` を持たない）。入れ子は DAG を許す唯一の構造とする（§3.6.2）[D] | ADR-024 D24-02 |
+| `core/unit`（新設案。RS-18反映（2026-10-15）、K05-6 の決裁前） | `parent`（`core/unit`, `core/tenant`。単一値）, `admin`, `member`, `admin_scope` | テナント内の部署・子会社・支社などを表す単一親の再帰コンテナ。呼び名の違いは表示属性 `kind`（テナントが定義する語彙。認可判定に使わない）で持つ。深さ上限は 5 を初期案とする（NA-ARC05-1、§3.6.3）[D][^37] | RS-18、ADR-021 D21-26 |
+| `core/admin_scope`（新設案。同上） | `delegate`（`core/user`, `core/group#member`）、`owner_unit` | 管理委任の範囲。ネストしない（`parent` を持たない）。主体・unit は複数の admin_scope に属し得る。管理操作の permission にだけ効き、閲覧系 permission には効かない [D][^37] | RS-18 |
 | `core/role` | `assignee`（`core/user`, `core/group#member`） | custom role。policy ではなくデータで表す（§5）[D] | ADR-011 D4-1 |
 | `core/external_grant` | `grantee`（`core/user` に期限条件付き） | 越境共有の外部付与。付与 ID・期限・双方ポリシー版は付与記録に持ち、tuple には期限条件だけを付ける（§6）[D] | ADR-024 D24-01, D24-11 |
 | `core/share_link` | `holder`（リンク利用で作られる外部付与） | 認証付きリンク。匿名リンクは公開分類に限り R 段で判定しない（public）[D] | ADR-024 D24-06 |
@@ -137,12 +141,15 @@ permission catalog は CAM の一部で、各 permission に次の印を付け�
 | X-8 書込権限 | サービスが書ける relation をレジストリで宣言し、宣言外の relation の書込を façade が拒否する | 関係データの書込権限は判定権限と等価になる（T-033）[D] | façade の受付制御、TH-TC-033 |
 | X-9 識別子 | tuple の主体・資源 ID は不透明 ID。業務上の識別名（患者名、ファイル名）を入れない。テナント ID を資源 ID に埋め込まない | ADR-010 D-12、T-034、A-071 [D] | lint＋書込時検査 |
 | X-10 破壊的変更 | データがある relation の削除と改名を拒否し、改名は追加 → 二重書込 → backfill → 旧参照削除 → 旧定義削除の順に限る。削除した名前は再利用しない | SpiceDB はデータがある relation・参照中の relation の削除を拒否し、移行の多段手順を示す [V][^22]（RS-17#88）。ADR-021 D21-27 [D] | CI（ADR-011 D2-5 の 2） |
+| X-11 containment の名前（RS-18反映（2026-10-15）、K05-7） | containment（「どこに属すか」。ライフサイクルと下方継承の経路）の辺は、どの型でも `parent` という名前の単一値 relation にする。直接型は宣言した親の型に限る（例: `parent: [core/unit, core/tenant]`）。v0.2 の §8.3・§8.4 の `unit`・`project` のように containment を別名で書かない | 上下関係を名前だけで機械的に判別でき、X-7「再帰は `parent` に限る」と揃う。型付きの親で「プロジェクトの下に会社を置く」誤りを書込時に拒否できる [D][^37] | lint（containment 宣言の relation 名と単一値） |
+| X-12 containment でない参照（同上） | 担当部署・所管ユニットのような containment でない参照は役割の名詞（`owning_unit`, `care_team` など）にし、`parent` の名前を使わない。推移の有無（親へ推移するか、子へ継承するか）は permission の式で明示し、relation 名に頼らない | 継承経路と単なる関連を混同しない。ネストの効果を一様に決め打ちしない [D][^37] | lint（`parent` 以外の relation を containment 宣言に使わない） |
+| X-13 祖先閉包（同上、K05-8） | `ancestor` は予約名とし、階層サービスだけが正本の closure table から書く複数値 relation とする。ドメインは定義・書込みできず、permission の式で参照だけできる | 生成物と手書きの tuple を区別する。X-8 の書込宣言で階層サービス以外の書込を拒否する [D][^37] | lint（予約語）、façade の書込受付制御 |
 
 ### 3.4 深さ・fanout・規模の上限
 
 | 上限 | 初期値・設計値 | 根拠 | 確定方法 |
 |---|---|---|---|
-| 解決深度の設計値 | 8（フォルダ入れ子 5＋グループ入れ子 3）。規制強化シナリオで 10 | [A-036] | TC-ARC05-08 で深度 8・10・25 の tail latency を測る。所有者 CTO（ARB）、期限 G4 |
+| 解決深度の設計値 | 8（フォルダ入れ子 5＋グループ入れ子 3）。規制強化シナリオで 10。RS-18反映（2026-10-15）: この 8 は組織の木（unit の深さ）を含まない。組織の木を `parent->` で素朴に辿る継承を許すと最悪経路は 15 前後になり設計値を超えるので、§3.6.4 の祖先閉包で unit の部分を 1 hop に畳む案（K05-8）とする | [A-036]、§3.6.4 [D][^37] | TC-ARC05-08 で深度 8・10・25 の tail latency を測る。祖先閉包あり・なしの両方を測る。所有者 CTO（ARB）、期限 G4 |
 | エンジンの解決深度上限 | OpenFGA `resolveNodeLimit` 既定 25 [V][^4]（RS-07#19）、SpiceDB `--dispatch-max-depth` 既定 50 [V][^15]（RS-07#35）。エンジン差替えの条件は新エンジンの上限が設計値を下回らないこと（ADR-011 D10-1 C-8） | [V] | 設定値は DL-73 の構成台帳に記録 |
 | 再帰 relation ごとの最大深度宣言 | 宣言値の合計 ≤ 設計値。フォルダの入れ子はドメインサービスが移動・作成時に深度を検査し、超える操作を拒否する | エンジンの深度上限に当たると Check が失敗し、評価不能（deny）になる [D] | X-7 の lint と書込時検査 |
 | fanout（1 つの userset の直接要素数） | 最大テナントの全員グループで 10 万（成長 30 万）を想定する。relation ごとに `max_direct` を宣言し、超える付与は個人ではなくグループ・テナント単位の userset で書くよう lint で警告する | [A-036, A-009]。fanout は Check の tail latency と PDP の計算量増幅（T-031）に効く [D] | TC-ARC05-08 |
@@ -166,6 +173,70 @@ permission catalog は CAM の一部で、各 permission に次の印を付け�
 | `c.min_acr` | 認証強度が下限以上 | `acr`（G 段規則 4 と重複しない資源個別の要件に限る） | 医療記録の閲覧 |
 | `c.device_managed` | 管理端末である | 端末状態（属性辞書の出所付き） | 機微資料のダウンロード |
 | `c.purpose_in` | 利用目的が許可された集合に含まれる | 利用目的（要求 context）、tuple の許可目的 | 医療・研究目的の制御 |
+
+### 3.6 テナント配下の階層モデル（RS-18反映（2026-10-15））
+
+本節は research/RS-18 の結論を本書の型システムに写したものである[^37] [D]。RS-18 は独立検証（research/README.md の P3）を経ていないので、本節では RS-18 を設計の入力として扱い、事実の主張には本反映で原典を再取得して照合したもの（脚注 [^38]〜[^42]）だけを使う [D]。決裁が要る点は K05-6〜K05-8（§16）に置いた [D]。
+
+#### 3.6.1 三つの関係と 4 つの core 型
+
+「組織 id・プロジェクト id・グループ id」が乱立し上下関係が曖昧になる原因は、性質の異なる三つの関係を一つの「組織」概念や一本の木で表そうとすることにある [D][^37]。本書は三つを別の型で表す [D]。
+
+| 関係 | 形 | 用途 | 本基盤の型（案） | 前例（原典で確認した範囲） |
+|---|---|---|---|---|
+| containment（どこに属すか） | 単一親の木。深さ上限あり | ライフサイクルの束縛、permission の下方継承 | `core/tenant`（根）、`core/unit`（再帰コンテナ、`kind` 属性）、ドメインの型付き葉（`proj/project` など） | GCP の folder・資源の親はちょうど 1 つで、folder の入れ子は 10 段まで [V][^41]。AWS の OU は root の下 5 段まで [V][^39]。Azure の management group と subscription の親は 1 つだけで、木の深さは root と subscription の段を除いて 6 段まで [V][^40] |
+| membership（誰が属すか） | n:n。入れ子は深度予算の範囲で可（DAG） | 付与先の主体集合 | `core/group` | — |
+| 管理委任範囲（誰が管理するか） | フラット。多重所属可 | 管理操作の範囲だけを限る | `core/admin_scope` | Entra の administrative unit は入れ子にできず、利用者は複数の AU に属せる。AU は管理権限の範囲だけを限り、既定の利用者権限による閲覧は妨げない [V][^42] |
+
+- 4 型は `core/tenant`・`core/unit`・`core/group`・`core/admin_scope` である [D]。`core/unit` と `core/admin_scope` は core への追加なので基盤の変更審査（二者承認、M3）を通す（§3.1、K05-6）[D]。
+- 「事業部・部・課・子会社・支社」のように段数も呼び名もテナントごとに違う節点は、すべて `core/unit` で表し、違いは表示属性 `kind`（`division`、`department`、`subsidiary` など。テナントが定義する語彙）で持つ [D][^37]。`kind` は認可判定に使わない [D]。
+- 「プロジェクト」「ワークスペース」のように固有の permission と生存期間を持つ節点は、ドメインの型（`proj/project` など）として作り、`parent: [core/unit, core/tenant]` で木の葉にする [D][^37]。こうすると API とデータモデルでは「組織 id」「プロジェクト id」という列が消え、上下関係は `parent: {type, id}` の一つの形だけで表される [D]。
+- 型名に `organization` を使わない [D]。tenant の別名か unit の一種かが読み手で揺れるからである [D][^37]。顧客に見せる呼称は `kind` の表示名で決める [D]。
+- 汎用の `node` 型一つにすべてを寄せる案は採らない [D]。許す親の型を宣言できなくなり、誤った親子を書込時に拒否できず、ListObjects を型で絞れなくなる [D]。これは調べたエンジンの例示の書き方からの推論で、ベンダーが明言した記述ではない（RS-18 の注記どおり）[D][^37]。
+
+#### 3.6.2 木と DAG の区別
+
+- containment は木に限り、DAG を許すのは `core/group` の入れ子だけにする [D]。複数の親を許すと「移動」の意味（どの親から外すか）が決まらず、継承が菱形になって deny と継承の解決順が複雑になるためである [D][^37]。
+- マトリクス組織（一人が二つの部署に属する）は、木を増やさずに `core/group` と `core/admin_scope` の多重所属で表す [D]。
+- 推移の向きは permission の式で relation ごとに明示する（X-12）[D]。例: `member` は親へ推移させない、`admin`（管理）は子へ継承する [D][^37]。
+
+#### 3.6.3 循環・深さの検査は階層サービスが行う
+
+- 認可エンジンに循環の検出を任せない [D]。SpiceDB は権限グラフが木であることを前提にし、専用の循環検出器を持たず、循環は最大深さ（既定 50 hops）に達したエラーとしてだけ現れる [V][^38]。OpenFGA が tuple 上の循環をどう扱うかは公式文書で確認できていない（未確認、残課題 17）[D]。
+- 循環を防ぐ責任は、`core/unit` と葉ノードの containment の正本を持つ**階層サービス**（基盤所有。新設案）が負う [D]。`parent` の付け替え要求では、(1) 移動先がその節点自身の部分木に含まれないこと、(2) 移動後の深さが上限以内であること、(3) 移動先の型が直接型の宣言に合うことを、親の付け替えと同じ DB トランザクションの中で検査し、満たさなければ拒否する [D][^37]。
+- 正本は隣接リスト（`parent_id`）と closure table を併せて持つ [D][^37]。定期照合では再帰 CTE で循環と深さ超過を検出し、K-4（差分照合）の対象に含める [D]。
+- unit の深さ上限は 5 を初期案とする（NA-ARC05-1、前提台帳へ追加要）[D]。AWS（5 段）[V][^39] と Azure（6 段）[V][^40] の上限を参考にした値で、TC-ARC05-08 の実測で確定する（K05-8）[D]。
+
+#### 3.6.4 祖先閉包の事前計算と設計値 8（決裁案 K05-8）
+
+- 組織の木を `parent->` で素朴に辿ると、ファイル→フォルダ 5 段→プロジェクト→unit 5 段→テナント、にグループ 3 段が加わり、最悪経路は 15 前後になる [D][^37]。エンジンの既定上限（OpenFGA 25、SpiceDB 50）の内側だが、設計値 8 [A-036] を大きく超える [D]。
+- 選択肢は (a) unit の木からの継承を管理系 permission（`manage`）に限り、閲覧系は葉ノードの直接付与かグループで表す、(b) 祖先閉包を事前計算し、unit の部分を 1 hop に畳む、(c) 設計値を引き上げる、の 3 つである [D]。本書は (a)＋(b) の併用を決裁案 K05-8 の推奨とし、設計値 8 は変えない [D]。
+- (b) の形: 階層サービスが closure table から、各葉ノードに `ancestor: [core/unit, core/tenant]` の tuple（祖先 1 つにつき 1 tuple）を書く [D][^37]。permission は `ancestor->manage` の 1 hop で評価でき、木の深さに依存しない [D]。人から直接所属するグループへの対応はフラット化せず直接リンクのまま残す [D]。RS-18 はこれを Zanzibar の Leopard（group 間の推移閉包だけをフラット化する）と同じ向きの設計と説明しているが、Leopard の節は RS-07 の検証範囲外で照合していないため、本書はこの対応を根拠にしない [D][^37]。
+- 代償は移動時に現れる [D]。unit を一つ動かすと「部分木の葉の数×祖先数」の tuple を書き換え、100 tuple（§3.4）を超えれば bulk レーンで原子性がなくなる [D]。そのため旧祖先の削除を同期で先に確定させ、新祖先の追加を outbox で後から反映させる（K-1 の剥奪先行と同じ順序規則。中間状態は deny 側に倒れる）[D]。差分照合（K-4）に閉包と正本の照合を加える [D]。
+- 設計値 8 との関係（K05-8 の決裁で確定する）: (a)＋(b) を採れば、組織の木を含む最悪経路は「ファイル→フォルダ 5＋`ancestor` 1＋グループ 3」に近づくが、custom role の 1 hop を足すと 9〜10 になり得る（INT-03 §7.2 の数え方）[D]。設計値 8 を守るか、規制強化シナリオの 10 を通常値に繰り上げるかは TC-ARC05-08（祖先閉包あり・なし）の実測で決める [D][A-036]。
+
+#### 3.6.5 識別子・パス・token の扱い
+
+| 項目 | 形式 | 規則 | 根拠 |
+|---|---|---|---|
+| unit・葉ノードの参照 | `{"type":"core/unit","id":"<不透明 ID>"}` | ID は ADR-021 D21-09/D21-14 の不透明 ID。テナント・パス・時刻・業務上の意味を含めない。移動・改名・テナント統合を経ても変えず、墓石化して再利用しない | ADR-021 D21-09, D21-13, D21-14、ADR-010 D-12 [D] |
+| 主体の参照 | `{"type":"core/user"\|"core/workload"\|"core/client", "id":"<sub>"}` | id は人もシステムも同じ単一名前空間の sub。型は type で別に運び、ID 文字列に接頭辞を付けない。依存サービスのデータモデル・API でも `user_id` ではなく `subject_id`（値は sub）と `subject_type` の 2 欄で持つ | ADR-021 D21-10・D21-26（AuthZEN の Subject.type と型名を揃える）[D][^37] |
+| 親 | `parent: {type, id}`（単一値） | 移動は現在の親を明示させる楽観的並行制御で行う。移動元と移動先の両方の `manage` を要求する | §3.6.6 [D] |
+| 祖先列（派生） | ID の列 | closure table から生成し、一覧・検索の索引（ADR-025 の L3）にだけ使う。token と認可キーには使わない | [D][^37] |
+| 表示パス・`kind`・表示名 | 文字列 | 表示専用。名前は同じ親の下で一意にするだけで、認可に使わない | [D][^37] |
+| token | `sub`・`tid`・`client_id`・主体種別・`act` だけ | 階層（unit・プロジェクト・祖先列）、所属、選択中の unit は token に載せない。選択中の unit は UI の文脈として BFF のセッション状態か要求パラメータで運び、PDP は要求された資源の containment を正本から評価する | ADR-021 D21-38 規則 2、ADR-011 D9-1、ARC-15 §3.6 [D] |
+
+#### 3.6.6 移動・再編・M&A と `owner_unit`
+
+- `move`（`parent` の付け替え）は、移動元と移動先の両方の `manage` を要求し、現在の親を指定させ、§3.6.3 の検査を同じトランザクションで行う [D]。Azure も移動には子・現在の親・移動先の親の 3 つへの書込権限を要求する [V][^40]。
+- 契約上の約束として「直接付与は保持し、継承分は再評価する」ことを明記する [D][^37]。外部付与のある部分木への出入りは write＋XT として扱う（ADR-024 D24-13）[D]。旧親の削除と新親の追加は 1 回の書込要求にまとめる（I-6）[D]。
+- テナントの統合は、吸収される側の根の直下を存続テナントの unit の下に接ぎ木し、統合元の tid は墓石と alias にする（ADR-021 D21-29）[D]。分割は unit の部分木を新しい tid の根の下へ切り出す（ADR-021 D21-30）[D]。
+- 分割の前に分割元と分割先をまたぐ参照を全件列挙する必要がある（ADR-028 D28-40）[D]。木の外にある `core/group` と `core/admin_scope` の帰属が曖昧だと列挙が漏れるので、両者に継承には使わない帰属用 relation `owner_unit` を持たせ、境界をまたぐ参照を closure table の結合で洗い出せるようにする（K05-6）[D][^37]。テナント分割の公式手順はどのベンダーにも見つからなかったと RS-18 は記しており、`owner_unit` による列挙が機能するかは PoC の分割演習でしか確かめられない（残課題 18）[D][^37]。
+
+#### 3.6.7 RS-18 の未検証事項
+
+- RS-18 のモデル例（CAM 擬似表記、OpenFGA DSL、SpiceDB schema、Cedar schema）と本書 §8.3・§8.4 の書換え後の例は、どのエンジンの検証器（`fga model test`、`zed validate`）にも通していない [D]。E4 は未取得で、TC-ARC05-10 で検証する（残課題 16）[D]。
+- RS-18 は独立検証記録（research/verification/RS-18-verification.md）がない [D]。本節の [V] は本反映で再取得した 5 つの原典（[^38]〜[^42]）に限り、それ以外の RS-18 の事実記述（OpenFGA の循環エラーの版、Salesforce・ServiceNow・Auth0・Keycloak・WorkOS などの記述、テナント分割の前例の不在）は結論の根拠にしていない [D]。RS-18 には二次情報（ベンダーのブログ記事）も含まれる [D]。
 
 ---
 
@@ -292,10 +363,11 @@ flowchart LR
   XG["core/external_grant#grantee"] --> U
   FO["files/folder"] -->|parent| FO
   FI["files/file"] -->|parent| FO
-  OU["org/unit"] -->|parent| OU
-  SI["org/site"] -->|unit| OU
-  PR["proj/project"] -->|unit| OU
-  TI["proj/tool_instance"] -->|project| PR
+  OU["core/unit"] -->|parent| OU
+  OU -->|parent| T
+  SI["org/site"] -->|parent| OU
+  PR["proj/project"] -->|parent| OU
+  TI["proj/tool_instance"] -->|parent| PR
   MR["med/patient_record"] -->|care_team| CT["med/care_team"]
   MR -->|emergency| EX["core/exception#holder"]
 ```
@@ -344,22 +416,31 @@ type files/file
 
 ### 8.3 組織・拠点
 
+RS-18反映（2026-10-15）: v0.2 はドメイン型 `org/unit` と containment の別名 `unit` で書いていた。本版は K05-6・K05-7 の推奨案（`core/unit` への昇格、containment の `parent` 統一）の形に書き換えた [D][^37]。K05-6 が不採用なら `core/unit` を `org/unit` に読み替え、K05-7 が不採用なら v0.2 の relation 名に戻す [D]。INT-03 §9.2 の予備実行済みの例は v0.2 の形のまま残っている（INT-03 の写像表）[D]。
+
 ```text
-type org/unit
+type core/unit                                     # 基盤所有（K05-6 の決裁前の案）。kind は表示属性で判定に使わない
   relations
-    parent:   [org/unit]
-    member:   [core/user, core/group#member]
-    manager:  [core/user]
+    parent:       [core/unit, core/tenant]         # 単一値。循環・深さ・型は階層サービスが書込時に検査（§3.6.3）
+    admin:        [core/user, core/group#member]
+    member:       [core/user, core/group#member]   # 親へ推移しない（X-12）
+    admin_scope:  [core/admin_scope]
   permissions
-    view_directory = member | manager | parent->view_directory     # 上位部門の所属者は下位を閲覧（業務規程で選ぶ）
-    manage         = manager | parent->manage
+    manage            = admin | parent->manage     # 管理は子へ継承する
+    view_directory    = member | manage            # 上位部門の所属者にも見せるかは業務規程で選び、式で明示する
+    manage_membership = manage | admin_scope->delegate   # 委任範囲は管理操作にだけ効く（§3.6.1）
+
+type core/admin_scope                              # ネストしない（parent を持たない）
+  relations
+    delegate:     [core/user, core/group#member]
+    owner_unit:   [core/unit, core/tenant]         # 分割時の帰属の列挙用。継承に使わない（§3.6.6）
 
 type org/site
   relations
-    unit:     [org/unit]
+    parent:   [core/unit, core/tenant]             # v0.2 の unit を parent に改名（X-11）
     staff:    [core/user with c.network_zone]
   permissions
-    enter_system = staff | unit->manage
+    enter_system = staff | parent->manage
 ```
 
 - 上位部門から下位部門へ閲覧を継承するか、逆にするかは業務規程の選択であり、モデルはどちらも表せる [D]。継承の向きはドメイン責任者が決め、レジストリに記録する [D]。
@@ -370,24 +451,26 @@ type org/site
 ```text
 type proj/project
   relations
-    unit:     [org/unit]
+    parent:   [core/unit, core/tenant]             # RS-18反映: v0.2 の unit を parent に改名（X-11）
+    ancestor: [core/unit, core/tenant]             # 階層サービスだけが書く祖先閉包（X-13。K05-8 の決裁前の案）
     owner:    [core/user]
     member:   [core/user, core/group#member, core/role#assignee] | owner
     guest:    [core/external_grant#grantee with c.not_expired]
   permissions
-    view   = member | guest | unit->manage
+    view   = member | guest | ancestor->manage     # 1 hop。unit の深さに依存しない（§3.6.4）
     admin  = owner
 
 type proj/tool_instance
   relations
-    project:  [proj/project]
+    parent:   [proj/project]                       # RS-18反映: v0.2 の project を parent に改名（X-11）
     operator: [core/user, core/role#assignee]
   permissions
-    use    = project->member | operator
-    view   = project->view
-    config = project->admin                       # 操作階層はドメイン責任者が REQ-03 §2.2 の判定規則で決め catalog に登録
+    use    = parent->member | operator
+    view   = parent->view
+    config = parent->admin                        # 操作階層はドメイン責任者が REQ-03 §2.2 の判定規則で決め catalog に登録
 ```
 
+- K05-8 で祖先閉包を採らない場合は、`view` の `ancestor->manage` を `parent->manage` に戻し、unit の深さ分の hop を §3.4 の深度予算に数える [D]。`ancestor` に `core/tenant` を含めるのは、テナント直下のプロジェクトでもテナント管理者の継承を同じ式で書くためである [D]。
 - B2B の委託先（他社の担当者）は `guest` で表し、ゲストは `use`（ツールの実行）を持たない例にした [D]。ツールの実行を委託先に許す場合は、`use` に permission catalog の「外部付与可」の印を付け、かつ `use` の計算式に `guest` を加えるモデル変更を §12 の 6 段で出す [D]。
 
 ### 8.5 医療記録
@@ -440,7 +523,7 @@ G-108 の認可要件カタログの全件判定は DL-65 と PoC（TC-ARC05-11�
 | 要件の類型 | 表現 | 机上判定 | 表せない部分の代替手段 |
 |---|---|---|---|
 | 文書・フォルダの階層継承 | `parent` の tuple-to-userset | 表せる | — |
-| 組織階層・拠点 | `org/unit`・`org/site` | 表せる | — |
+| 組織階層・拠点 | `core/unit`（案）・`org/site`、管理委任は `core/admin_scope`（案）（§3.6。RS-18反映（2026-10-15）） | 表せる | マトリクス組織は木を増やさず group・admin_scope の多重所属で表す |
 | プロジェクト・ツール | `proj/*` | 表せる | — |
 | B2B の委託 | 外部付与（ADR-024） | 表せる | 相手テナント単位の付与は v1 で提供しない（K24-4） |
 | 属性条件（区分・等級） | 型付き relation へ写像 | 表せる（写像が要る） | 写像できない連続値は条件カタログに登録 |
@@ -725,6 +808,7 @@ flowchart LR
 | TC-ARC05-12 | 誤った変更の注入に対する CI・shadow の検出率 | ADR-011 D2-5、RS-17 §5.3 の 11 | E4・E5 | 注入全件を検出 |
 | TC-ARC05-13 | 段階展開の所要時間、既知良好版への復帰時間、復帰後の剥奪の非復活 | ADR-010 H-18、ADR-016 TC-016-07 | E5 | 剥奪の復活 0 件。時間は事前登録 |
 | TC-ARC05-14 | SpiceDB での model pin 方式（§16 K05-5 の候補）の実現性と費用 | ADR-010 D-22 | E5 | 候補ごとに記録し Gate 3 の判断材料にする |
+| TC-ARC05-15（RS-18反映（2026-10-15）） | 階層サービスの検査と祖先閉包: (1) 自分の部分木への移動・深さ超過・型違いの親の書込が全件拒否される、(2) unit の移動中に旧祖先経由の stale allow が起きない（剥奪先行）、(3) 閉包と正本の差分照合で注入した不一致を全件検出する、(4) `owner_unit` を使った分割演習で境界をまたぐ参照の列挙漏れが 0 件 | K05-6・K05-8、ADR-028 D28-40 | E4・E5 | (1)(2)(4) は 0 件、(3) は検出率 100%。移動の所要時間と一時 deny の件数は記録 |
 
 - 合否の数値は A-ID・BIA・DL-20 に結び付け、決まっていないものは TBD とする [D]。独立立会人が TC-ARC05-01・04・05・13 の実施と生データを確認する（ADR-010 §7.2 と同じ）[D]。
 
@@ -741,6 +825,9 @@ ADR で既に決裁案になっている点（ADR-010 決裁案 2・4・5、reco
 | K05-3 | shadow の対象範囲 | (a) 全要求を新旧で評価、(b) privileged 以上は全件・他は標本、(c) 合成負荷だけ | (b)。標本率は TC-ARC05-12 の検出率から決める | (a) は shadow 期間中の評価量が倍になり、G1 前の設計容量（A-045 基準 42,009/秒 × 2.0 × 1.4 = 117,626/秒。前提台帳の容量導出）に shadow 分を足す必要がある [D][A-045]。(c) は本番データ固有の差分を見逃す | CTO＋CISO。G3 |
 | K05-4 | ReBAC で表せない要件（職務分離の同時保持禁止、件数上限、承認 workflow）の実装位置 | (a) 各ドメインのアプリ、(b) 基盤の書込検査（DL-73）と workflow 部品、(c) G 段の規則追加 | 職務分離の同時保持禁止は (b)、承認 workflow は (b)、件数上限は (a) | (a) は約 300 サービスで実装がばらつく。(c) は G 段の 6 規則固定（ADR-011 D1-2）を変える | CTO。G4（TC-ARC05-11 の結果を受けて） |
 | K05-5 | SpiceDB を選んだ場合のテナント別 model pin | (a) 生成器が revision ごとに permission 名を版付きで生成し、旧 revision の定義をテナントの固定が進むまで残す、(b) revision ごとに store を分ける、(c) テナント別 pin を諦め全テナント同時切替にする（cell 単位の wave だけ） | TC-ARC05-14 の後に判断。机上では (a) | (a) は schema が肥大し、生成器の複雑さが増す。(b) は store の数と書込の二重化が増える。(c) は ADR-016 D16-31 の段 6 と ADR-013 D13-36 のテナント ring 選択を満たせず、ADR の改訂が要る [D] | CTO。Gate 3 |
+| K05-6（RS-18反映（2026-10-15）） | テナント配下の階層の型（§3.6.1） | (a) `core/unit`（単一親の再帰コンテナ、`kind` 属性）と `core/admin_scope`（非ネストの委任範囲）を core に追加し、`core/group`・`core/admin_scope` に `owner_unit` を足す、(b) 組織の木を各ドメインの型（v0.2 の `org/unit`）に任せる、(c) 組織の木を持たず所属をグループだけで表す | (a) [D] | (a) は core の変更（M3）で基盤チームの保守対象と階層サービスが増えるが、組織の木の意味（継承の向き、委任範囲）がドメインごとにばらつかない [D][^37]。(b) は組織の木を参照する全ドメインが 1 ドメインの公開 relation に依存する [D]。(c) は「上位部署の管理者は配下を管理する」を表せない [D]。INT-03 INT03-K1 と同じ論点で、決裁は 1 回にまとめる [D] | CTO（CISO 同意）。Gate 3（DL-73 凍結前） |
+| K05-7（同上） | containment の relation 名（X-11・X-12） | (a) どの型でも `parent`（単一値）に統一し、containment でない参照は役割名にする、(b) 型ごとに `unit`・`project` などの名前を許す | (a) [D] | (a) は上下関係を名前で機械判別でき、循環・深さ検査と祖先閉包の生成を型に依らず書ける。既存の例（v0.2 の §8.3・§8.4、INT-03 §9）の改名が要る。データ投入前なので X-10 の多段手順は要らない [D]。(b) は lint で containment を判別できない [D] | 認可・PDP チーム（CTO 承認）。DL-73 凍結前 |
+| K05-8（同上） | 組織の木を辿る継承と解決深度の設計値 8（§3.6.4） | (a) unit からの継承を管理系 permission に限り、かつ祖先閉包 `ancestor` を階層サービスが事前計算して 1 hop に畳む、設計値 8 は維持、(b) 閉包を使わず `parent->` を辿り設計値を 15 前後に引き上げる、(c) (a) のうち閉包を使わず継承を管理系に限るだけ | (a)。unit の深さ上限は 5 を初期案（NA-ARC05-1）とし、custom role を含めて 8 を超える経路が残る場合に 10 へ繰り上げるかを TC-ARC05-08 で判断 [D] | (a) は移動のたびに「葉の数×祖先数」の tuple を非原子的に書き換えるので、剥奪先行（K-1）と差分照合（K-4）が前提になる [D]。(b) は Check の tail latency と計算量増幅（T-031）に効き、容量モデル（DL-58）と ADR-011 D10-1 C-8 の前提が変わる [D][A-036]。(c) は unit の深さ分の hop が残り、深さ上限を小さくせざるを得ない [D] | CTO（ARB）。G4（TC-ARC05-08・TC-ARC05-15 の後） |
 
 ---
 
@@ -762,6 +849,11 @@ ADR で既に決裁案になっている点（ADR-010 決裁案 2・4・5、reco
 | 12 | 命名規則 X-2 は SpiceDB の識別子規則（3〜64 文字）に合わせた案で、OpenFGA の識別子規則の確認が要る | C | 認可・PDP チーム。TC-ARC05-10、DL-73 凍結前 |
 | 14 | ADR への指摘 3 件（本書末尾）の ADR 所有者による判断 | A | ADR-006・ADR-010・ADR-011 の所有者。DEC-8 の前 |
 | 13 | 実在の CTO/CISO による決裁、第三者評価（トークン・フェンスの改ざん・再送、façade の迂回の pentest）は未実施（未達） | B・D | CTO・CISO。G4 |
+| 15 | RS-18反映（2026-10-15）: research/RS-18 の独立検証（research/README.md の P3、verification 記録の作成）が未実施。本書 §3.6 は再取得した 5 原典（[^38]〜[^42]）以外の RS-18 の事実記述を根拠にしていない | A | 作成者以外の照合者。G3 |
+| 16 | RS-18反映: RS-18 のモデル例（CAM 擬似表記・OpenFGA DSL・SpiceDB schema・Cedar schema）と §8.3・§8.4 の書換え後の例は、エンジンの検証器（`fga model test`・`zed validate`）を実行していない（E4 未取得）。OpenFGA で `/` を含む型名と `ancestor` の tupleset が使えるかも未確認 | C | 認可・PDP チーム。TC-ARC05-10、G3 |
+| 17 | RS-18反映: OpenFGA が tuple 上の循環をどう扱うか（モデル上の循環とは別）は公式文書で未確認 | C | 認可・PDP チーム。TC-ARC05-15 |
+| 18 | RS-18反映: テナント分割の公式手順の前例がなく、`owner_unit` による境界の列挙が機能するかは分割演習でしか確かめられない。階層サービス（正本・closure table・循環/深さ検査）の所有チームと SLO が未定 | C・B | CTO（所有）、認可・PDP チーム（演習）。TC-ARC05-15、G4 |
+| 19 | RS-18反映: 新規仮定 NA-ARC05-1（unit の深さ上限 5、テナントあたりの unit 数は TBD）を前提台帳へ追加要。K05-6〜K05-8 の決裁 | A・B | 前提台帳の所有者、CTO。G3〜G4 |
 
 ---
 
@@ -794,7 +886,7 @@ ADR で既に決裁案になっている点（ADR-010 決裁案 2・4・5、reco
 | R-191.3 | 剥奪: cache invalidation 成功率 | §10.3 | C | 指標定義・測定設計済み。目標値 TBD（DL-20） |
 | R-205 | typed ReBAC＋限定 ABAC＋resource-local PEP の方向性を実証 | §3, §4, §8, §15 | C | モデルと試験を定義。実証待ち（TC-ARC05-10・11） |
 | R-250 | テナント境界の多層化の維持 | §2, §4.1, §6 | A | 設計済み（L0・edge・G 段の三点照合、資源 ID にテナントを埋め込まない）。検証は R-172 |
-| R-252 | typed ReBAC を中核に固定 RBAC と限定 ABAC を合成し巨大ロール表を避ける | §3, §4.2, §5, §8 | A | 設計済み |
+| R-252 | typed ReBAC を中核に固定 RBAC と限定 ABAC を合成し巨大ロール表を避ける | §3, §3.6（RS-18反映）, §4.2, §5, §8 | A | 設計済み（階層モデルは K05-6〜K05-8 の決裁待ち） |
 | R-253 | 一貫性認識（剥奪、新旧 ACL、outbox、revision-aware cache）の維持 | §9, §10, §11, §12 | A | 設計済み（値は実測待ち） |
 | R-271 | 承認条件 6: engine/store の整合性・分割・障害モデルを実測し剥奪 SLO を満たす | §9, §10, §15 | C | 未達。実測と DL-20 の決裁待ち |
 | G-107 | 柔軟性を 4 指標で定義 | §13 | A | 定義と測定方法を記載。目標値は TBD |
@@ -858,6 +950,12 @@ R 14 件、G 6 件、計 20 件 [D]。
 [^34]: OpenFGA『Update Relationship Tuples』web 文書（版表記なし）. https://openfga.dev/docs/getting-started/update-tuples （参照箇所: 04 Writing and deleting relationship tuples in the same request（"All operations in the request will either succeed together or fail together."）、確認日: 2026-10-15。本書の起草時に取得した原典で、research ノートに未収録。本書のレビュー（2026-10-15）で同ページを照合し支持を確認）
 [^35]: AuthZed『authzed/api: authzed/api/v1/permission_service.proto』GitHub（main）. https://github.com/authzed/api/blob/main/authzed/api/v1/permission_service.proto （参照箇所: rpc WriteRelationships（"atomically writes and/or deletes a set of specified relationships"）, message WriteRelationshipsRequest（"All updates will be applied transactionally"）、確認日: 2026-10-15。同ファイルの Export/ImportBulkRelationships は RS-07#36 で検証済み。WriteRelationships の原子性の記述は本書の起草時に取得し、本書のレビュー（2026-10-15）で前提条件不成立時の全体取消し（"if any preconditions fail, the entire transaction will be reverted"）を含めて照合し支持を確認）
 [^36]: AuthZed『Schema Language』SpiceDB 文書（版表記なし）. https://authzed.com/docs/spicedb/concepts/schema （参照箇所: Identifiers（"Identifiers must be 3-64 characters long and end with an alphanumeric character"）, Prefixes、確認日: 2026-10-15。本書のレビュー時に取得した原典で、research ノートに未収録。作成者以外の照合は未実施）
+[^37]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 冒頭要旨, 「主要基盤は三つの関係を別々の実体に分けている」, 「汎用コンテナ一つと型付きの葉で、命名の揺れを止める」（型の一覧、relation 名の規約 R-1〜R-6）, 「木を保ち、循環を断ち、深さを予算に収める」, 「ID は不透明な値と型の組にし、パスは属性に追い出す」, 「token には tid だけを載せ、階層は PDP で評価する」, 「再編は親の付け替え、M&A は alias と部分木の移植で吸収する」, 「補足: user_id ではなく sub、client_id、act を分ける」, Conclusion、確認日: 2026-10-15。項目番号（RS-xx#n）と独立検証記録がないため、節名で参照する。設計の入力としてだけ使い、事実の根拠には使わない）
+[^38]: AuthZed『Recursion and Max Depth』SpiceDB 文書（版表記なし）. https://authzed.com/docs/spicedb/modeling/recursion-and-max-depth （参照箇所: "SpiceDB does not support cyclical relationships because the permissions graph must be a tree", "SpiceDB does not have a dedicated cycle detector", 既定 50 hops と `--dispatch-max-depth`、確認日: 2026-10-15。RS-18 収録の原典を本反映（RS-18 の作成者とは別の AI エージェント）で再取得して照合。research の verification 記録には未登録）
+[^39]: Amazon Web Services『Quotas and service limits for AWS Organizations』AWS Organizations User Guide. https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html （参照箇所: Maximum and minimum values の "OU maximum nesting in a root: Five levels of OUs deep under a root."、確認日: 2026-10-15。同上の再取得・照合）
+[^40]: Microsoft『Organize your resources with management groups』Azure Governance, ms.date 2024-07-18. https://learn.microsoft.com/en-us/azure/governance/management-groups/overview （参照箇所: Important facts about management groups（"up to six levels of depth. This limit doesn't include the root level or the subscription level.", "Each management group and subscription can support only one parent."）, Moving management groups and subscriptions（子・移動先の親・現在の親への書込権限、最大 30 分のキャッシュ）、確認日: 2026-10-15。同上の再取得・照合）
+[^41]: Google Cloud『Create and manage folders』Resource Manager 文書. https://docs.cloud.google.com/resource-manager/docs/creating-managing-folders （参照箇所: "You can nest folders up to 10 (ten) levels deep.", "a given folder or resource can have exactly one parent."、確認日: 2026-10-15。同上の再取得・照合）
+[^42]: Microsoft『Administrative units in Microsoft Entra ID』Microsoft Entra 文書, ms.date 2024-10-29. https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/administrative-units （参照箇所: 冒頭（"Users can be members of multiple administrative units."）, Constraints（"Administrative units can't be nested."）, Currently supported scenarios（"Administrative units apply scope only to management permissions."）、確認日: 2026-10-15。同上の再取得・照合）
 
 ---
 

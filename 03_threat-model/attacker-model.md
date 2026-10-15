@@ -1,8 +1,8 @@
 # 攻撃者モデル
 
-> 文書ID: THR-02 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-03
+> 文書ID: THR-02 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-002, R-166, R-240, G-077, G-097（DL-51）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0196, CL-0211）, traceability/dissent-log.md（DS-19）, 03_threat-model/incident-casebook.md, 03_threat-model/fraud-abuse-controls.md, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/raci-governance.md, 02_requirements/principal-catalog.md, 02_requirements/data-classification.md, research/RS-04-oauth-oidc-profile.md, research/RS-05-root-of-trust-keys-supply-chain.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-12-incident-casebook.md, research/RS-13-fraud-abuse.md, research/RS-08-pep-completeness-tenant-isolation.md, research/RS-09-resilience-cell-failmode.md, research/standards-status.md
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0196, CL-0211）, traceability/dissent-log.md（DS-19）, 03_threat-model/incident-casebook.md, 03_threat-model/fraud-abuse-controls.md, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/raci-governance.md, 02_requirements/principal-catalog.md, 02_requirements/data-classification.md, research/RS-04-oauth-oidc-profile.md, research/RS-05-root-of-trust-keys-supply-chain.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-12-incident-casebook.md, research/RS-13-fraud-abuse.md, research/RS-08-pep-completeness-tenant-isolation.md, research/RS-09-resilience-cell-failmode.md, research/RS-10-audit-privacy-residency.md, research/standards-status.md, 05_adr/ADR-028（V-9）, 08_operations/compromise-runbooks.md, 00_decision/05-residual-risk-register.md, 03_threat-model/threat-catalog.md
 
 本書は、共通認証・認可基盤に対する攻撃者類型 ATK-xx の唯一の定義場所（DL-51）である。調査・起草には AI エージェント（Claude）を用いた。本書の判定は自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
 
@@ -11,13 +11,14 @@
 ## 0. 結論
 
 1. 本プログラムは、基盤の性質を「完全無欠」という語で表さない [D]。旧提案が性質の主張に使った「完全無欠」は、**(1) 本書の攻撃者モデル（ATK-xx）、(2) それに当てる統制（C-xxx、DL-28）、(3) 統制が効いていることを示す証拠（E1〜E11、TC-xxx、第三者評価）、(4) 統制の後に残る残余リスクとその受容者（DL-05、DL-41）** の 4 点の組で置き換える [D]（CONVENTIONS §5、CL-0211 の処置から導出）。本書は (1) を定義し、(2)〜(4) への接続先を §6 に示す [D]。
-2. 攻撃者類型は 19 類型とした [D]（§3）。レビューが挙げた 12 類型を ATK-01〜ATK-12 とし、番号は DL-51 の対象欄の並び順に合わせた [D]。この順序は先行文書（DL-03、DL-52、DL-53）が仮に使った番号と同じなので、読み替えは生じない [D]。追加 7 類型（ATK-13 AiTM フィッシング業者、ATK-14 infostealer 由来資格情報の利用者、ATK-15 悪意ある・侵害された第三者連携アプリ、ATK-16 prompt injection 経由で濫用される AI エージェント、ATK-17 内部不正の開発者、ATK-18 供給網の侵害、ATK-19 変更と自動化の誤り）は、能力または到達経路が 12 類型のどれとも異なるので独立させた [D]（§4.1）。独立させなかった 9 候補には理由を付けた [D]（§4.3）。
+2. 攻撃者類型は 19 類型とした [D]（§3）。レビューが挙げた 12 類型を ATK-01〜ATK-12 とし、番号は DL-51 の対象欄の並び順に合わせた [D]。この順序は先行文書（DL-03、DL-52、DL-53）が仮に使った番号と同じなので、読み替えは生じない [D]。追加 7 類型（ATK-13 AiTM フィッシング業者、ATK-14 infostealer 由来資格情報の利用者、ATK-15 悪意ある・侵害された第三者連携アプリ、ATK-16 prompt injection 経由で濫用される AI エージェント、ATK-17 内部不正の開発者、ATK-18 供給網の侵害、ATK-19 変更と自動化の誤り）は、能力または到達経路が 12 類型のどれとも異なるので独立させた [D]（§4.1）。独立させなかった 10 候補（版 0.2 で敵対的な破壊・恐喝を追加）には理由を付けた [D]（§4.3）。
 3. FAPI 2.0 Attacker Model（OIDF Final、2025-02-22）は、プロトコル層の攻撃者を A1、A1a、A2、A3a、A4、A5 の 6 記号で定義する [N][^1]（RS-04#50）。Final に A3b、A6、A7 の記号はない [N][^1]。同文書は、TLS が破られないこと、鍵配布が意図どおり働くこと、利用者の端末とブラウザが侵害されていないことを前提とし、本人確認・利用者認証・ID 管理を範囲外としている [N][^1]。設定を誤った DB からの資格情報漏えいと、認可サーバ上の RCE も対象外と明記している [N][^1]（RS-04#50）。19 類型のうち 7 類型は FAPI の記号で表せる能力を持たない [D]。残る 12 類型も、侵害の起点、端末、管理機能など能力の一部が FAPI の範囲外にある [D]（§5.3）。したがって FAPI 2.0 の適合性試験・認定は、本書の攻撃者の一部に対する証拠にしかならない [D]（§5.6）。
 4. 実事故の一次報告では、侵害の多くがプロトコルの外から入っている [D]。MFA 通過後の session 窃取、support・ヘルプデスク、第三者連携の grant、署名鍵による偽造、内部 token とレガシー API がその経路である [D]（DL-53 §0 の 6 類型から導出）。ATK-09・ATK-13・ATK-14・ATK-15 を独立に定義したのはこのためである [D]。
 5. 非敵対の類型（ATK-12 リージョン障害、ATK-19 変更と自動化の誤り）も攻撃者モデルに含める [D]。DL-53 が写像した可用性事故 4 件は、いずれも事業者自身の自動化・スクリプト・配信が起点だった [D]（DL-53 §0 第 3 項）。
 6. 経営・事業の判断が要る 3 点を決裁案として §7 に置いた [D]。AM-1 は署名鍵を窃取して token を偽造できる攻撃者（ATK-01 の能力段 L4）を設計対象にする範囲、AM-2 はクラウド事業者側の運用者・基盤の侵害の扱い、AM-3 は内部不正の開発者に対する二者統制の適用範囲である [D]。いずれも決定していない [D]。
 7. 再評価のトリガー（8 種）、定期見直しの周期（年次と四半期）、所有者（CISO）を §8 に定めた [D]（G-097）。
-8. 対応表（§9）の 5 件（R-002、R-166、R-240、G-077、G-097）は、いずれも区分 A（机上）であり、本書の分担を本書で閉じた [D]。合否の判定は作成者以外のレビュアーと CISO が行う [D]。
+8. 敵対的な破壊・恐喝（管理権限・break-glass を奪った者による ID ストア・テナント・利用者の大量削除や暗号化、バックアップの破壊、KMS 鍵の削除予約や key policy による締出し、身代金要求を伴う停止）は、独立の類型にせず、ATK-01（L3 以上）と ATK-08 の目的 SG-6 の型「DX（破壊・恐喝）」として §3.21 で定義した [D]（ラウンド 2 の指摘 R2-1 への対応）。Scattered Spider は、データを恐喝のために持ち出したうえで暗号化して身代金を要求し、VMware ESXi サーバを暗号化したと CISA/FBI が勧告している [I][^18]。AWS KMS では、削除予約中の鍵はどの暗号操作にも使えず、待機期間の経過後の削除は不可逆である [V][^51]（RS-10#58、ADR-028 V-9）。この型を受ける損失シナリオ（S-20 案）、脅威（T-087〜T-090 案）、runbook（RB-13 案）、試験（TC 案）、残余リスク行（RRG-069 案）は他文書の所有者に申し送った [D]（§11）。版 0.1 では、この型を受ける損失シナリオが非敵対の S-06・S-19 だけだった [D]。
+9. 対応表（§9）の 5 件（R-002、R-166、R-240、G-077、G-097）は、いずれも区分 A（机上）であり、本書の分担を本書で閉じた [D]。合否の判定は作成者以外のレビュアーと CISO が行う [D]。
 
 ---
 
@@ -54,11 +55,12 @@
 - TLS と、採用する暗号方式は破られないものとする [D]。FAPI 2.0 Attacker Model も同じ前提を置く [N][^1]。ただし計画期間は 20 年 [A-100] であり、暗号移行が少なくとも 1 回起きる [A-103]。この前提は §8 のトリガー T6 で見直す [D]。
 - 攻撃者は組み合わさる。FAPI 2.0 Attacker Model は、攻撃者が任意に組み合わさり、共通の目的のために協力し得ることを前提にしている [N][^1]。RFC 9700 も同じ前提を置く [N][^3]。本書の類型は単独で使わず、連鎖（§3.20）で評価する [D]。
 - 規模は前提台帳の基準シナリオに従う [D]。主な値は、登録利用者 100万 [A-001]、B2B テナント 1万 [A-007]、依存サービス 300 [A-050]、開発組織 25・開発者 1,500 [A-052][A-053]、外部連携 client 800・grant 3万 [A-013]、AI エージェント ID 1万 [A-014]、リージョン 4 [A-063] である。
-- 次の 4 件は前提台帳にない仮定であり、本書の類型定義が依存する [D]。
+- 次の 5 件は前提台帳にない仮定であり、本書の類型定義が依存する [D]（AM-N5 は版 0.2 で追加）。
   - **新規仮定（前提台帳へ追加要）AM-N1**: 本基盤はパブリッククラウド上で運用し、計算・ストレージ・ネットワーク・KMS/HSM の管理 API はクラウド事業者が提供する。ATK-08 と AM-2 が依存する [D]。
   - **新規仮定（前提台帳へ追加要）AM-N2**: B2C 利用者の自己登録と、B2B の試用テナント作成をセルフサービスで受け付ける。ATK-01 と ATK-02 の「誰でも正規の利用者・テナント管理者として参加できる」が依存する。受け付けない場合、ATK-02 の到達には正規契約か乗っ取りが必要になる [D]。
   - **新規仮定（前提台帳へ追加要）AM-N3**: AI エージェントは、利用者の委任を受けて、外部由来の信頼できない内容（メール本文、文書、web ページ、tool の応答）を読む tool を持つ。ATK-16 が依存する [D]。
   - **新規仮定（前提台帳へ追加要）AM-N4**: 基盤の構成要素（AS/IdP 製品、PDP、PEP SDK、検証ライブラリ）は OSS の依存ライブラリと第三者製品を含み、その更新を定常的に取り込む。ATK-18 が依存する [D]。
+  - **新規仮定（前提台帳へ追加要）AM-N5**: 敵対者が本番の管理権限を得た状態からの復旧は、リージョン喪失を想定した A-093（RTO 1 時間、ID・tuple store の RPO 5 分）[A-093] の範囲外であり、隔離バックアップからの ID ストア・tuple store・鍵の復元時間は別に定める。値は TBD（所有者: SRE 責任者、期限: G4、決め方: §3.21 の TC 案による復元時間の実測と、DL-01 の許容度・MTPD との照合）。§3.21 の DX 型が依存する [D]。
 - DL-53 が置いた新規仮定 ①（テナント管理者が外部 IdP の追加と自動連結をセルフサービスで設定できる）と ②（運用者・support が要素リセット・回復の依頼を受け付ける）を、ATK-02・ATK-04・ATK-09 も前提にする [D]。前提台帳への追加は DL-53 の残課題 R-10 と同じ手続で行う [D]。
 
 ### 1.4 方法と原典の確認状況
@@ -97,14 +99,14 @@ FAPI 2.0 Attacker Model の保護目標は、認可、認証、セッション�
 
 | ATK | 名称 | 性質 | 主な目的（SG） | 主な損失シナリオ（DL-02） | 主な根拠（一次報告・規範） |
 |---|---|---|---|---|---|
-| ATK-01 | 外部攻撃者 | 敵対 | SG-1, 2, 4, 6 | S-01, S-02, S-18 | Storm-0558、Midnight Blizzard、Scattered Spider |
+| ATK-01 | 外部攻撃者 | 敵対 | SG-1, 2, 4, 6 | S-01, S-02, S-18, S-20 案（§3.21） | Storm-0558、Midnight Blizzard、Scattered Spider |
 | ATK-02 | 悪意あるテナント管理者 | 敵対 | SG-1, 2, 6, 7 | S-01, S-03 | CVE-2025-55241、nOAuth |
 | ATK-03 | 侵害された一般ユーザー | 敵対 | SG-1, 2, 3 | S-01, S-18 | Snowflake 顧客環境、Midnight Blizzard |
 | ATK-04 | 侵害された顧客 IdP | 敵対 | SG-1, 2 | S-03 | Scattered Spider の IdP 追加、nOAuth |
 | ATK-05 | 盗まれた token | 敵対 | SG-1, 3, 9 | S-15, S-18 | Okta HAR、Cloudflare、Salesloft Drift |
 | ATK-06 | 侵害された microservice | 敵対 | SG-1, 4, 7, 8 | S-01, S-09 | CVE-2025-55241、Storm-0558 の内部 API |
 | ATK-07 | CI/CD 侵害 | 敵対 | SG-4, 5, 7 | S-08, S-02, S-05 | CircleCI、Salesloft Drift、Heroku |
-| ATK-08 | クラウド管理者 | 敵対 | SG-4, 6, 7, 8 | S-09, S-02, S-11 | CircleCI、LastPass |
+| ATK-08 | クラウド管理者 | 敵対 | SG-4, 6, 7, 8 | S-09, S-02, S-11, S-20 案（§3.21） | CircleCI、LastPass、Scattered Spider（ESXi の暗号化） |
 | ATK-09 | 内部 support | 敵対（欺かれる・侵害される・不正） | SG-1, 2, 3 | S-04 | Okta サポート、Scattered Spider |
 | ATK-10 | policy author | 敵対／非敵対 | SG-5, 6 | S-05 | OPA bundle の仕様、Google 2025-06 |
 | ATK-11 | DB read 権限者 | 敵対 | SG-8 | S-09 | Heroku、FAPI §8.2 |
@@ -127,10 +129,10 @@ FAPI 2.0 Attacker Model の保護目標は、認可、認証、セッション�
 | 能力 | FAPI の A1 と同じく、任意の endpoint を運用してメッセージを送受信し、通常の利用者としてプロトコルに参加し、自分の endpoint 上で任意のツールでメッセージを改変・生成し、利用者にリンクを送って開かせられる [N][^1]（RS-04#50）。RFC 9700 の A1 はさらに、OAuth client・認可サーバ・resource server を任意の数だけ運用できるとする [N][^3]。ネットワーク経路の位置（公衆 Wi-Fi など）を取れば A2 の能力も持つ [N][^1]。ログイン試行の量は攻撃者次第で上限がなく、設計目安は正規ピークの 100 倍とする [A-034]。 |
 | 能力段 | L1 自動化・機会的（credential stuffing、spray、bot 登録）／L2 組織犯罪（PhaaS の利用。手口の詳細は ATK-13）／L3 標的型（国家支援型を含む。ヘルプデスクへのなりすまし電話、低量の spray、OAuth アプリの悪用）／L4 root of trust への到達（署名鍵の窃取と token の偽造）[D]。L3 の例として、Midnight Blizzard は対象を少数のアカウントに絞った低回数の spray を住宅用プロキシ網経由で行い、Microsoft は IOC ベースの検知が実行困難になったと記している [I][^9]（RS-12#17）。L4 の例として、Storm-0558 は 2016 年作成の鍵で署名した token で 22 組織・500 人超のメールボックスにアクセスした [I][^7]（RS-12#1）。L4 をどこまで設計対象にするかは決裁案 AM-1 で決める [D]。 |
 | 前提 | 公開 endpoint（ログイン、回復、認可、token、JWKS、API gateway、管理コンソールの公開部分）と、公開文書・SDK を読める [D]。新規仮定 AM-N2 の下では、自分の B2C アカウントや試用テナントを正規に作れる [D]。 |
-| 目的 | SG-1（他人・他テナントの資源）、SG-2（アカウント乗っ取り）、SG-4（L4 の偽造）、SG-6（認証・回復 endpoint への過負荷、悪意あるロックアウト）[D] |
+| 目的 | SG-1（他人・他テナントの資源）、SG-2（アカウント乗っ取り）、SG-4（L4 の偽造）、SG-6（認証・回復 endpoint への過負荷、悪意あるロックアウト。L3 以上で管理権限・break-glass を奪った後の破壊・恐喝は §3.21 の DX 型）[D] |
 | アクセス経路 | 公開 API・ログイン・回復 endpoint、他テナント ID を URL・body・header・token に混ぜた要求、redirect URI と issuer の取り違えの誘発、support 窓口への電話（ATK-09 を欺く）、第三者アプリの登録（ATK-15）[D] |
 | 想定しない能力 | TLS と暗号方式の破綻（§1.3）。内部資格情報の保持（保持した時点で ATK-03・ATK-05・ATK-14 などへ移る）。データセンターへの物理アクセス [D]。L4 については鍵の入手経路を特定しない。Storm-0558 でも入手経路は確定していない [I][^7]（RS-12#7）。このため「鍵を持った後」の状態から評価する [D]。 |
-| 主体・損失 | 主体としては登録されない（PC-11 または自作の PC-01・PC-03 として現れる）。S-01、S-02、S-18 [D] |
+| 主体・損失 | 主体としては登録されない（PC-11 または自作の PC-01・PC-03 として現れる）。S-01、S-02、S-18、S-20 案（DX 型、§3.21・§11）[D] |
 | FAPI 対応 | A1（全段）、A2（ネットワーク位置を取る場合）、A3a（認可サーバ上の XSS を突く場合）。L4 の鍵窃取は §6 の鍵配布の前提の外にある [D]（§5.3） |
 
 ### 3.2 ATK-02 悪意あるテナント管理者
@@ -222,13 +224,13 @@ FAPI 2.0 Attacker Model の保護目標は、認可、認証、セッション�
 | 項目 | 内容 |
 |---|---|
 | 定義 | (a) 自社のクラウドアカウント・基盤（計算、ネットワーク、ストレージ、KMS/HSM、ログ）に管理権限を持つ運用者。正規の者の不正と、その者の端末・個人アカウント・session の侵害を含む。(b) クラウド事業者側の運用者・基盤の侵害（AM-N1 の下で存在する）[D] |
-| 能力 | 管理 API でスナップショット・バックアップの取得、ディスクの複製、ネットワーク設定の変更、ログ設定の停止、KMS の key policy と IAM ロールの変更ができる [D]。本番 token を生成できる立場を持ち得る [I][^17]（RS-12#46）。 |
+| 能力 | 管理 API でスナップショット・バックアップの取得、ディスクの複製、ネットワーク設定の変更、ログ設定の停止、KMS の key policy と IAM ロールの変更ができる [D]。本番 token を生成できる立場を持ち得る [I][^17]（RS-12#46）。破壊の能力として、ID ストア・tuple store・バックアップ・スナップショットの削除や暗号化、KMS 鍵の削除予約、key policy の書換えによる正規管理者の締出しを持つ [D]。AWS KMS では、削除予約中の鍵はどの暗号操作にも使えず、待機期間（7〜30 日）の経過後の削除は不可逆で、その鍵で暗号化したデータは復号できなくなる [V][^51]（RS-10#58）。key policy は既定ではアカウントやその主体に権限を自動では与えず、唯一の管理者を削除すると鍵が管理不能になり、AWS Support への連絡が要る [V][^52]。コンソールの既定の key administrators 文は kms:ScheduleKeyDeletion と kms:PutKeyPolicy を含む [V][^52]。 |
 | 前提 | 管理権限は JIT と二者承認で与える設計だが（RACI-28、ADR-029）、攻撃者はその権限を保持している、または承認を得られるものとする [D]。本基盤の SRE は 6 FTE と仮置きしている [A-054]。 |
-| 目的 | SG-8（PEP を経由しない大量読取）、SG-4（鍵の使用、JWKS の差替え）、SG-7（ログの停止・改ざん）、SG-6（破壊）[D] |
+| 目的 | SG-8（PEP を経由しない大量読取）、SG-4（鍵の使用、JWKS の差替え）、SG-7（ログの停止・改ざん）、SG-6（破壊と恐喝。型の定義・統制・申し送りは §3.21 の DX 型）[D] |
 | アクセス経路 | クラウドの管理コンソール・API、break-glass（PC-08(a)）、KMS/HSM の管理 API [D] |
 | 想定しない能力 | (a) について: HSM 内の非エクスポート鍵素材の取出し、HSM の local RBAC の上書き。Azure Managed HSM は、管理グループ・サブスクリプション・リソースグループの管理者でも上書きできない local RBAC を持つ [V][^45]（RS-05#52）。(b) をどこまで設計対象にするかは決裁案 AM-2 で決める [D]。 |
-| 根拠 | CircleCI（上記）。LastPass では、攻撃者が DevOps エンジニアの自宅 PC の第三者製ソフトの脆弱性を突いて keylogger を仕込み、MFA 認証後に入力されたマスターパスワードを取得した。社内 vault には本番バックアップの復号鍵があり、当該エンジニアはその鍵にアクセスできる 4 人の 1 人だった [I][^23]（RS-12#64）。CSRB は、規模によっては従来型 HSM が成立しない場合を認めつつ「isolated key storage with minimal key release」を適切とした [I][^7]（RS-05#27）。 |
-| 主体・損失 | PC-07、PC-08(a)。S-09、S-02、S-11 [D] |
+| 根拠 | CircleCI（上記）。LastPass では、攻撃者が DevOps エンジニアの自宅 PC の第三者製ソフトの脆弱性を突いて keylogger を仕込み、MFA 認証後に入力されたマスターパスワードを取得した。社内 vault には本番バックアップの復号鍵があり、当該エンジニアはその鍵にアクセスできる 4 人の 1 人だった [I][^23]（RS-12#64）。CSRB は、規模によっては従来型 HSM が成立しない場合を認めつつ「isolated key storage with minimal key release」を適切とした [I][^7]（RS-05#27）。破壊・恐喝について、CISA/FBI は Scattered Spider が恐喝のためにデータを持ち出したうえで暗号化して身代金を要求し、VMware ESXi サーバを暗号化したと記している [I][^18]。 |
+| 主体・損失 | PC-07、PC-08(a)。S-09、S-02、S-11、S-20 案（DX 型、§3.21・§11）[D] |
 | FAPI 対応 | なし。FAPI の A2 は暗号を破れないが、ATK-08 は鍵を使える立場にある。TLS・鍵配布は §6 の前提、内部アーキテクチャは §8.4 の範囲外 [N][^1] |
 
 DL-53 の提案 3（運用者の端末・個人アカウントの侵害を初期侵入の能力として明記）を、ATK-08 と ATK-09 の定義に取り込んだ [D]（§4.2）。
@@ -404,6 +406,28 @@ FAPI 2.0 Attacker Model は、攻撃者の任意の組合せと協力を前提�
 | ATK-09(b)（サポートシステム）→ ATK-05（HAR 内の session token）。下流の Cloudflare から見ると、上流事業者の侵害で流出した未回転の資格情報（ATK-18 の後段）による侵入 | Okta → Cloudflare | [I][^10][^11]（RS-12#22、#28） |
 | ATK-01（L3、ヘルプデスクへのなりすまし）→ ATK-09(a) → ATK-03 → ATK-04（IdP の追加） | Scattered Spider の手口 | [I][^18]（RS-12#48、#49） |
 | ATK-02（自テナントの token）→ ATK-06(b) に相当する内部 token とレガシー API → テナント越境 | CVE-2025-55241 | [I][^8]（RS-12#53） |
+| ATK-01（L3、ヘルプデスクへのなりすまし）→ ATK-09(a) → ATK-08(a) に相当する基盤の管理権限 → 恐喝のための持出しと、暗号化（VMware ESXi を含む）による身代金要求（DX 型、§3.21） | Scattered Spider の手口 | [I][^18] |
+| ATK-14（infostealer で盗まれた顧客資格情報）→ ATK-03 → 持出しと恐喝（データ販売の試み） | Snowflake 顧客環境（UNC5537） | [I][^12] |
+
+### 3.21 敵対的な破壊・恐喝（DX 型）
+
+ATK-01（L3 以上）と ATK-08 は目的に SG-6 を持つ [D]。この節は、そのうち敵対者が意図して破壊・停止し、復旧や不開示と引換えに金銭を要求する型を「DX 型」として定義する [D]。版 0.1 は SG-6（破壊）を目的に挙げながら、それを受ける損失シナリオを非敵対の S-06・S-19 に限っていた [D]。DX 型は類型を増やさず、既存類型の目的として扱う（§4.3 に採否を記録）[D]。
+
+| 項目 | 内容 |
+|---|---|
+| 主体 | ATK-08(a)（正規の管理者の不正、またはその端末・session の侵害）、管理権限・break-glass（PC-08(a)）を奪った ATK-01（L3 以上）。ATK-07・ATK-17 は、IaC・パイプラインを通じて ATK-08 の権限に到達した後にこの型を取り得る [D] |
+| 能力 DX-1 | 管理 API による ID ストア・テナント・利用者・関係 tuple の大量削除または暗号化 [D]。Scattered Spider は暗号化して身代金を要求し、VMware ESXi サーバを暗号化した [I][^18] |
+| 能力 DX-2 | バックアップ・スナップショット・レプリカの削除、保持設定の短縮、暗号化による復旧手段の破壊 [D]。CISA/FBI は同勧告の緩和策で、元のシステムから分離して保管し定期的に復元を試験するオフラインのバックアップと、暗号化され immutable なバックアップを求めている [I][^18] |
+| 能力 DX-3 | KMS 鍵の削除予約による全署名・全復号の即時停止と、待機期間経過後の不可逆な喪失 [D]。AWS KMS では削除予約中の鍵はどの暗号操作にも使えず、待機期間中は削除を取り消せるが、経過後は取り消せない [V][^51]（RS-10#58、ADR-028 V-9） |
+| 能力 DX-4 | key policy・IAM の書換えによる正規管理者の締出し [D]。AWS KMS は、唯一の権限者を削除すると鍵が管理不能になり、回復に AWS Support への連絡が要るとしている [V][^52] |
+| 能力 DX-5 | 監査ログの停止・削除による痕跡の消去（SG-7）と、上記の組合せによる身代金要求 [D]。恐喝は暗号化を伴わない場合もある。CISA/FBI は、Scattered Spider が ransomware を配備せずに持ち出したデータの公開を脅したことを記す [I][^18]。Mandiant は、UNC5537 が被害者の多くを直接恐喝し、盗んだデータを犯罪フォーラムで売ろうとしていると報告している [I][^12] |
+| 前提 | 本番の管理権限（JIT 承認の取得、または承認者の欺罔・共謀を含む）を保持している [D]。WORM の compliance mode で保持が固定されたオブジェクトは、root user を含めて保持期間中は削除できない [V][^53]（RS-10#44）。ただし同モードでも、保持期間前の削除の唯一の方法として関連する AWS アカウントの削除が挙げられている [V][^53]（RS-10#44）。このため、バックアップを置くアカウントの管理権限を本番と分けることが前提の外側の防御になる [D] |
+| 目的 | SG-6（全依存サービスの停止と復旧不能）、SG-7、恐喝による金銭 [D] |
+| 想定しない能力 | HSM 内の非エクスポート鍵素材の取出し（§3.8）、オフライン L0（ceremony 管理）の破壊 [D]。L0 から L1・L2 を再生成できれば署名系は再建できるが、KMS で暗号化した保存データの復号鍵は再生成できない [V][^51]（対称鍵の場合）[D] |
+| 損失 | S-20 案「敵対的な破壊・恐喝による ID 基盤の停止・復旧不能」（§11 で DL-02 に申し送り）。全 300 依存サービス [A-050] の認証・判定が同時に止まり、100 万利用者 [A-001]・1 万テナント [A-007] に及ぶ [D][A-050][A-001][A-007]。復旧時間は A-093 の範囲外であり、新規仮定 AM-N5 に置く [D] |
+| FAPI 対応 | なし。FAPI の保護目標は認可・認証・セッション完全性の 3 つで、可用性を含まない [N][^1] |
+
+DX 型に当てる統制・証拠・残余リスクの案は §6.1 に置いた [D]。
 
 ---
 
@@ -444,6 +468,7 @@ FAPI 2.0 Attacker Model は、攻撃者の任意の組合せと協力を前提�
 | 侵害された IoT・自律デバイス（PC-17） | ATK-03（資格情報の保持）、ATK-05 | 機器の資格情報を持つ攻撃者として表せる。登録デバイス数が TBD（DL-48 新規仮定 N9）のため、件数が判明した時点で §8 T5 により再評価する [D] |
 | 将来の量子計算機を持つ攻撃者 | §1.3 の前提と §8 の T6 | 現時点では暗号が破られない前提を置く。NIST IR 8547 ipd は、112 ビット強度の ECDSA・RSA 署名を 2030 年より後に deprecated、128 ビット以上を含めて 2035 年より後に disallowed とする案である [N][^49]（RS-05#64）。移行は DL-23・ADR-015 で扱う [D] |
 | 規制当局・外国政府によるデータアクセス要求 | 攻撃者モデルの外。S-17、DL-34 | 法的手続による要求であり、統制は所在地と契約で受ける [D] |
+| 敵対的な破壊・恐喝を行う攻撃者（ransomware 運用者、恐喝グループ、内部の破壊者）（版 0.2 で追加） | ATK-01（L3 以上）・ATK-08 の目的 SG-6 の DX 型（§3.21）。類型は独立させないが、損失シナリオ・脅威・runbook・試験・残余リスク行は独立に起こす（§11） | 入口は ATK-01（ヘルプデスクの欺罔など）、能力の到達点は ATK-08 の管理権限と同じであり、類型を分けても統制の主軸（管理権限の多者承認、隔離バックアップ、鍵削除の遅延）は変わらない [D]。一方、目的（破壊と金銭要求）と復旧の型が S-06・S-19 の非敵対の障害と異なり、非敵対の統制（段階展開、入力検証）では防げないため、損失・脅威・runbook は分けて起こす [D]。実在の能力は CISA/FBI の勧告で確認した [I][^18] |
 | 物理的な攻撃者 | 範囲外 | パブリッククラウド上の運用（AM-N1）では、物理統制はクラウド事業者の範囲になる。扱いは AM-2 に含める [D] |
 
 ### 4.4 先行文書の仮割当との照合
@@ -570,7 +595,7 @@ FAPI 2.0 Attacker Model の Final には、RFC 9700 の A3 に当たる「認可
 | ATK-05 | ADR-005、ADR-006、DL-16、DL-56 | E4 token replay・audience 誤用の負例試験、E5 失効反映時間の実測 | bearer のまま残る token（移行期間の client）と、失効が反映されるまでの時間 [D] |
 | ATK-06 | ADR-009、ADR-012、ADR-026、DL-15、DL-55、DL-57 | E4 PEP coverage・bypass test、E6 内部からの pentest | DB 権限が全テナントに及ぶ依存サービス [A-112] は、PEP 外の統制（DL-57）が整うまで残る [D] |
 | ATK-07 | ADR-008、DL-14、DL-61 | E10 IaC・policy の署名付きスナップショット、E6 供給網レビュー（DL-30） | build 基盤の侵害の間に配備された成果物 [D] |
-| ATK-08 | ADR-007、ADR-008、ADR-029、DL-14、DL-57 | E8 break-glass 演習、E10 設定スナップショット、E6 クラウド設定レビュー | 平文を扱える特権者による読取（DL-03 §5 と同じ）。(b) の範囲は AM-2 で決まる [D] |
+| ATK-08 | ADR-007、ADR-008、ADR-029、DL-14、DL-57 | E8 break-glass 演習、E10 設定スナップショット、E6 クラウド設定レビュー | 平文を扱える特権者による読取（DL-03 §5 と同じ）。(b) の範囲は AM-2 で決まる [D]。DX 型（破壊・恐喝）の残余リスクは §6.1 [D] |
 | ATK-09 | ADR-003、ADR-029、DL-52 | E8 ソーシャルエンジニアリング演習（DL-59）、E4 添付のサニタイズ試験 | 演習で検証しきれない新しい口実 [D] |
 | ATK-10 | ADR-011、ADR-016、DL-17、DL-46 | E4 旧版・新版の differential test と rollback 拒否の試験、E10 署名付き bundle | 二者レビューを通った誤りや悪意の変更 [D] |
 | ATK-11 | ADR-014、DL-25、DL-57 | E4 保存 token の形式検査、E6 DB・バックアップのアクセスレビュー | 正規の業務で必要な読取権限の濫用 [D] |
@@ -584,6 +609,24 @@ FAPI 2.0 Attacker Model の Final には、RFC 9700 の A3 に当たる「認可
 | ATK-19 | ADR-013、ADR-016、ADR-027、DL-46 | E8 鍵回転・鍵削除の演習、E5 段階展開の実測 | canary の範囲内で起きる障害 [D] |
 
 受容者は DL-05 の段（RACI-07〜RACI-09）に従って決める。段の割当は TBD（所有者: CISO が起案、期限: G2、決め方: DL-02 の封じ込め単位と DL-01 の許容度から段を決める）[D]。
+
+### 6.1 DX 型（敵対的な破壊・恐喝）の統制・証拠・残余リスク（案）
+
+本節は §3.21 の DX 型に当てる案である [D]。T・C・RB・TC・RRG の各 ID は、各文書の所有者が採番するまでの仮番であり、本書は他文書を編集しない（§11 で申し送り）[D]。
+
+| 能力 | 脅威（仮番） | 予防 | 検知 | 封じ込め・復旧 | 証拠（TC 案） |
+|---|---|---|---|---|---|
+| DX-3、DX-4 | T-087 案: KMS 鍵の削除予約・無効化・key policy 変更の悪用による全署名・全復号の停止と締出し | 鍵の削除予約・無効化・key policy 変更を、通常の管理者ロールから外し（コンソール既定の key administrators 文は kms:ScheduleKeyDeletion と kms:PutKeyPolicy を含むため、既定を使わない [V][^52]）、多者承認（二者以上、実行者と承認者を分離。ADR-029・D28-07 と同じ型）と最大の待機期間（AWS KMS では 30 日 [V][^51]）を必須にする [D]。key policy に、削除できない管理主体（アカウント主体）を残す [V][^52][D] | ScheduleKeyDeletion・DisableKey・PutKeyPolicy の全件を CloudTrail で記録し（AWS KMS は削除予約と実削除を CloudTrail に記録する [V][^51]）、ページング警報にする [D] | 待機期間中に削除を取り消す（取消しは待機期間内に限る [V][^51]）[D]。締出し時はアカウント主体経由または事業者サポート経由で回復する [V][^52]。署名系は L0 からの再生成（RB-01 の手順）を代替経路とする [D] | TC 案 TC-DX-01: 削除予約の多者承認の強制（単独では拒否されること）。TC-DX-02: 削除予約の検知から取消しまでの時間 |
+| DX-2 | T-088 案: バックアップ・スナップショット・レプリカの削除・保持短縮・暗号化 | ID ストア・tuple store・鍵のバックアップを、本番と管理権限を分けたアカウント（論理的な隔離）に、保持を固定した WORM（S3 Object Lock の compliance mode など。保持期間中は root user を含めて削除・短縮できない [V][^53]、RS-10#44）で置く [D]。CISA/FBI が求める「分離保管・定期的な復元試験・暗号化かつ immutable」のバックアップに合わせる [I][^18] | バックアップの削除・保持設定変更の要求の全件記録と警報、バックアップ件数・最新時刻の連続監視 [D] | 隔離アカウントのバックアップからの復元 [D] | TC 案 TC-DX-03: 本番の最上位管理権限からバックアップを削除・短縮できないこと（負例）。TC-DX-04: 隔離バックアップからの ID ストア・tuple store の全量復元時間（AM-N5 の値の根拠） |
+| DX-1 | T-089 案: 管理 API による ID・テナント・関係 tuple の大量削除・暗号化 | 削除を soft delete（猶予期間付きの論理削除）にし、論理削除と物理削除（purge）の権限を別ロールに分ける [D]。一定件数を超える一括削除と purge は多者承認と遅延を必須にする（S-19 の統制と共用）[D] | 削除件数の速度制限超過の警報 [D] | soft delete からの復元、purge 前の停止 [D] | TC 案 TC-DX-05: 閾値を超える一括削除が承認なしで拒否されること。TC-DX-06: 猶予期間内の一括復元の時間 |
+| DX-5 | T-090 案: 恐喝（持出しの公開の脅し、身代金要求）を伴う停止 | DX-1〜DX-4 の予防と SG-8 の統制（DL-57）[D] | 監査ログの停止・削除の検知（ATK-08 の SG-7。RB-07 の検知と共用）[D] | RB-13 案（破壊・恐喝）による封じ込め・復元・報告。報告期限と身代金の支払いに関する報告義務は DL-34 の法域別の判定に従う [D] | E8 演習: 破壊・恐喝の机上演習と復元演習（承認条件 10） |
+
+| 項目 | 内容 |
+|---|---|
+| 主な統制の所在（案） | ADR-007（鍵階層・KMS 権限の分離）、ADR-029（JIT・二者承認）、ADR-028（鍵削除、V-9）、DL-14（鍵管理・ceremony、鍵のバックアップ）、DL-19（失敗モード表）、DL-24（runbook・演習計画）[D] |
+| 見込まれる残余リスク | (1) 多者承認の共謀または承認者の欺罔の下での破壊。(2) バックアップの最終時点から破壊時点までの更新の喪失（RPO）。(3) 隔離バックアップからの全量復元に要する時間（AM-N5、未実測）の間の全域停止。(4) 恐喝に伴う持出しデータの公開。(5) ATK-08(b)（クラウド事業者側）による破壊は AM-2 の範囲に従う [D] |
+| 受容者（案） | 全テナント・全依存サービスに波及するため、AM-2 と同じく RACI-08 以上の段 [D]。RRG-069 案として残余リスク台帳に申し送る（§11）[D] |
+| 承認条件との対応 | 承認条件 3（root of trust と侵害 runbook）は RB-13 案と T-087 案で、承認条件 10（演習）は E8 の破壊・恐喝演習で受ける [D]。いずれも未達 [D] |
 
 ---
 
@@ -703,8 +746,43 @@ R-requirements.md と G-goal-criteria.md のうち、対応成果物の欄に本
 | 8 | §6 の各証拠の取得（負例試験・実測は DL-22・DL-81、第三者評価は DL-30・DL-59、適合性試験は DL-60）。いずれも未達 | 各 DL の所有者 | G4（実測）、G5（第三者） |
 | 9 | 本書で追加取得した原典箇所（FAPI 2.0 Attacker Model の §7.1・§8.1・§8.3・§8.5・§8.6・§9、RFC 9700 §3 の定義文、NIST AI 100-2 E2025 §3.3〜§3.5、CISA の XZ Utils の告知）の作成者以外による照合 | DL-29（引用監査）の担当 | Phase 4 |
 | 10 | 本書全体の作成者以外による照合と、G-077 の CISO による判定 | DL-108 の担当、CISO | G2 |
+| 11 | DX 型（§3.21）の損失シナリオ・脅威・runbook・試験・残余リスク行の起票（§11 の申し送り 1〜6） | 各文書の所有者 | G2（S・T・RB・RRG）、G4（TC の実測） |
+| 12 | 新規仮定 AM-N5（敵対的破壊からの復元時間）の前提台帳への追加と値の決定 | DL-45 の所有者（追加）、SRE 責任者（値） | G1（追加）、G4（値） |
+| 13 | 版 0.2 で追加取得した原典箇所（[^51]〜[^52] の AWS KMS 文書、[^18] の AA23-320A の破壊・恐喝・バックアップの記述、[^12] の UNC5537 の恐喝の記述）の作成者以外による照合と、research/ への検証済み項目としての登録 | DL-29（引用監査）の担当、RS-05・RS-12 の担当 | Phase 4 |
 
 本書の判定は AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁や第三者評価ではない [D]。
+
+---
+
+## 11. 他文書への申し送り
+
+本書は指定ファイル以外を編集しない方針で改訂したため、DX 型（§3.21）に関わる他文書の変更は次のとおり申し送る [D]。ID はいずれも仮番であり、各文書の所有者が採番・確定する [D]。
+
+| # | 申し送り先 | 内容 |
+|---|---|---|
+| 1 | 01_governance/loss-scenarios.md（DL-02） | S-20 案「敵対的な破壊・恐喝による ID 基盤の停止・復旧不能」を追加する。脅威主体は ATK-01（L3 以上）・ATK-08、手口は §3.21 の DX-1〜DX-5、資産は ID ストア・tuple store・鍵・バックアップ、影響は可用性・完全性（恐喝を伴えば機密性）、封じ込め単位は管理権限の及ぶ範囲（全域になり得る）。許容度（DL-01）・RTO/RPO（A-093 は範囲外のため AM-N5）との連鎖を記入する。S-19 の脅威主体の欄に「敵対者は S-20」と相互参照を置く [D] |
+| 2 | 03_threat-model/threat-catalog.md（DL-11） | T-087 案（KMS 鍵の削除予約・無効化・key policy 変更の悪用）、T-088 案（バックアップ破壊）、T-089 案（管理 API による大量削除・暗号化）、T-090 案（恐喝を伴う停止）を起こし、§6.1 の予防・検知・封じ込め・復旧・証拠を記入する。T-045（KMS 権限の自己付与）と相互参照する [D] |
+| 3 | 06_controls/（DL-28） | 統制案: 鍵の削除予約・無効化・key policy 変更の多者承認と最大待機期間、key policy に削除できない管理主体を残すこと、本番と管理権限を分けたアカウントへの WORM（compliance mode）バックアップ、soft delete と purge の権限分離、一括削除の閾値と多者承認 [D] |
+| 4 | 08_operations/compromise-runbooks.md（DL-24） | RB-13 案「破壊・恐喝」: 削除予約の取消し、締出しからの回復（アカウント主体・事業者サポート）、隔離バックアップからの復元順序（鍵→ID ストア→tuple store→session 失効）、恐喝への対応と法域別報告（DL-34）、演習（E8）を定める。RB-01（署名鍵）・RB-07（監査基盤）と接続する [D] |
+| 5 | 12_poc/（DL-22） | TC 案 TC-DX-01〜06（§6.1）: 削除予約の多者承認の強制、削除予約の検知から取消しまでの時間、本番最上位権限からのバックアップ削除の拒否、隔離バックアップからの全量復元時間、一括削除の拒否、soft delete からの一括復元時間 [D] |
+| 6 | 00_decision/05-residual-risk-register.md（DL-05/DL-41） | RRG-069 案: §6.1 の残余リスク (1)〜(5)。受容段は RACI-08 以上の案 [D] |
+| 7 | 01_governance/assumptions-register.md（DL-45） | 新規仮定 AM-N5 の追加（§1.3）[D] |
+| 8 | 04_architecture/fail-mode-matrix.md（DL-19）、ADR-028 | 鍵の削除予約中は暗号操作が使えない [V][^51] ことを、KMS 依存の失敗モードとして記入する。ADR-028 V-9 の不可逆性の記述に「削除予約の時点で暗号操作が止まる」ことを補う [D] |
+| 9 | research/RS-05、RS-12 | [^51] の削除予約中の挙動、[^52] の key policy による締出し、[^18] の破壊・恐喝・バックアップの記述、[^12] の恐喝の記述を検証済み項目として登録する（§10 残課題 13）[D] |
+
+---
+
+## 12. レビュー記録
+
+模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+### ラウンド 2（2026-10-15）
+
+| # | 指摘者 | 重大度 | 指摘の要旨 | 対応 | 修正箇所 |
+|---|---|---|---|---|---|
+| R2-1 | 模擬 CISO | High | ATK-01・ATK-08 は目的に SG-6（破壊）を持つが、受ける損失シナリオが非敵対の S-06・S-19 だけで、敵対的な破壊・恐喝（大量削除・暗号化、バックアップ破壊、KMS 鍵の削除予約・key policy による締出し、身代金要求）が損失シナリオ・脅威・runbook・RRG のいずれにもなく、§4.3 にも採否の記録がない | 対応した。§3.21 に DX 型（DX-1〜DX-5）を定義し、CISA/FBI AA23-320A [^18]、Mandiant UNC5537 [^12]、AWS KMS の公式文書 [^51][^52]（RS-10#58、ADR-028 V-9）、S3 Object Lock [^53]（RS-10#44）を原典として付けた。§4.3 に採否（類型は独立させず、損失・脅威・runbook・試験・RRG は独立に起こす）を記録した。§6.1 に統制・証拠（TC 案）・残余リスクの案を置き、S-20・T-087〜T-090・RB-13・TC-DX-01〜06・RRG-069 の各案を §11 で各文書に申し送った。復元時間は A-093 の範囲外として新規仮定 AM-N5 を置いた | §0 第 8 項、§1.3（AM-N5）、§3.0、§3.1、§3.8、§3.20、§3.21、§4.3、§6、§6.1、§10（11〜13）、§11、[^12]・[^18] の参照箇所、[^51]〜[^53] |
+
+残る課題: 申し送り先での起票（§10 残課題 11）、AM-N5 の値（同 12）、追加原典の作成者以外による照合（同 13）は未達である [D]。
 
 ---
 
@@ -721,13 +799,13 @@ R-requirements.md と G-goal-criteria.md のうち、対応成果物の欄に本
 [^9]: Microsoft Threat Intelligence『Midnight Blizzard: Guidance for responders on nation-state attack』2024-01-25（2024-02-13 微修正）. https://www.microsoft.com/en-us/security/blog/2024/01/25/midnight-blizzard-guidance-for-responders-on-nation-state-attack/ （参照箇所: 冒頭段落、「Initial access through password spray」「Malicious use of OAuth applications」「Use of residential proxy infrastructure」。RS-12#15〜#17、確認日: 2026-10-03）
 [^10]: Okta Security (D. Bradbury)『Unauthorized Access to Okta's Support Case Management System: Root Cause and Remediation』2023-11-03. https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ （参照箇所: 冒頭 3 段落。RS-12#22・#23、確認日: 2026-10-03）
 [^11]: Cloudflare (M. Prince, J. Graham-Cumming, G. Bourzikas)『Thanksgiving 2023 security incident』2024-02-01. https://blog.cloudflare.com/thanksgiving-2023-security-incident/ （参照箇所: 冒頭 5 段落。RS-12#28、確認日: 2026-10-03）
-[^12]: Mandiant (Google Cloud)『UNC5537 Targets Snowflake Customer Instances for Data Theft and Extortion』2024-06-10（2024-06-17 更新）. https://cloud.google.com/blog/topics/threat-intelligence/unc5537-snowflake-data-theft-extortion （参照箇所: Introduction、Campaign Overview（three primary factors、79.7%、2020 年 11 月）、contractor systems の段落。RS-12#33〜#35、確認日: 2026-10-03）
+[^12]: Mandiant (Google Cloud)『UNC5537 Targets Snowflake Customer Instances for Data Theft and Extortion』2024-06-10（2024-06-17 更新）. https://cloud.google.com/blog/topics/threat-intelligence/unc5537-snowflake-data-theft-extortion （参照箇所: Introduction、Campaign Overview（three primary factors、79.7%、2020 年 11 月）、contractor systems の段落。RS-12#33〜#35、確認日: 2026-10-03。版 0.2 で Introduction・Campaign Overview・UNC5537 Attribution の恐喝とデータ販売の記述を追加取得して確認、確認日: 2026-10-15）
 [^13]: Google Threat Intelligence Group (A. Larsen ほか)『Widespread Data Theft Targets Salesforce Instances via Salesloft Drift』2025-08-26（2025-08-28 追記）. https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift （参照箇所: 冒頭の Update 段落、Overview。RS-12#37・#38、確認日: 2026-10-03）
 [^14]: Salesloft『Trust Center: Update on Mandiant Drift and Salesloft Application Investigations（2025-09-06 時点）／Summary of the Mandiant Investigation of Drift Applications』. https://trust.salesloft.com/ （参照箇所: 「What Happened」の箇条、Mandiant 調査の要約。RS-12#39、確認日: 2026-10-03）
 [^15]: Cloudflare『The impact of the Salesloft Drift breach on Cloudflare and our customers』2025-09-02. https://blog.cloudflare.com/response-to-salesloft-drift-incident/ （参照箇所: Exposure analysis（104 API tokens）。RS-12#41、確認日: 2026-10-03）
 [^16]: Descope (O. Cohen)『nOAuth: How Microsoft OAuth Misconfiguration Can Lead to Full Account Takeover』2023-06-20. https://www.descope.com/blog/post/noauth （参照箇所: Executive summary、nOAuth in action。RS-12#42、確認日: 2026-10-03）
 [^17]: CircleCI『CircleCI Jan 4, 2023 security incident report』2023-01-13（UTC）. https://circleci.com/blog/jan-4-2023-incident-report/ （参照箇所: What happened?。RS-12#46、確認日: 2026-10-03）
-[^18]: CISA / FBI ほか『Scattered Spider』Cybersecurity Advisory AA23-320A、2023-11-16（2025-07-29 改訂）. https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a （参照箇所: Overview、Technical Details（Initial Access の 2025-07-29 追記、Execution, Persistence, and Privilege Escalation）。RS-12#48・#49、RS-13#26、確認日: 2026-10-03）
+[^18]: CISA / FBI ほか『Scattered Spider』Cybersecurity Advisory AA23-320A、2023-11-16（2025-07-29 改訂）. https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a （参照箇所: Overview、Technical Details（Initial Access の 2025-07-29 追記、Execution, Persistence, and Privilege Escalation）。RS-12#48・#49、RS-13#26、確認日: 2026-10-03。版 0.2 で Technical Details（Data Exfiltration）、Recent Scattered Spider TTPs（File Encryption、Discovery, Lateral Movement, and Exfiltration の VMware ESXi の暗号化）、ATT&CK 表 Exfiltration・Impact、Actions for Organizations to Take Today と Mitigations（オフライン・分離・immutable なバックアップと復元試験）を追加取得して確認、確認日: 2026-10-15）
 [^19]: Microsoft Azure『Azure status history: RCA - Authentication errors across multiple Microsoft services (Tracking ID LN01-P8Z)』2021-03. Wayback Machine 2021-04-02 取得版 https://web.archive.org/web/20210402023547/https://status.azure.com/en-us/status/history/ （参照箇所: Summary of Impact、Root Cause and Mitigation。RS-12#57、確認日: 2026-10-03）
 [^20]: Google Cloud『Google Cloud Infrastructure Components Incident #20013（2020-12-14 User ID Service）』. https://status.cloud.google.com/incident/zall/20013 （参照箇所: ISSUE SUMMARY、ROOT CAUSE。RS-12#58、確認日: 2026-10-03）
 [^21]: GitHub (M. Hanley)『Security alert: Attack campaign involving stolen OAuth user tokens issued to two third-party integrators』2022-04-15（2022-04-27 更新）. https://github.blog/news-insights/company-news/security-alert-stolen-oauth-user-tokens/ （参照箇所: 冒頭。RS-12#59、確認日: 2026-10-03）
@@ -760,3 +838,6 @@ R-requirements.md と G-goal-criteria.md のうち、対応成果物の欄に本
 [^48]: OpenID Foundation『FAPI 2.0 Security Profile and FAPI 2.0 Message Signing: Final Conformance Tests and Certifications Now Available』2025-07-09. https://openid.net/fapi2-0-final-conformance-tests-available/ （参照箇所: 本文（AS とクライアント向けの適合試験・認定の提供）。RS-04#52、確認日: 2026-10-03）
 [^49]: NIST (D. Moody ほか)『NIST IR 8547 ipd: Transition to Post-Quantum Cryptography Standards』ipd, 2024-11-12. https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf （参照箇所: §4.1.1 Table 2 p.13。状態は https://csrc.nist.gov/pubs/ir/8547/ipd で確認。RS-05#64、確認日: 2026-10-03）
 [^50]: Microsoft Security Response Center『Results of Major Technical Investigations for Storm-0558 Key Acquisition』2023-09-06（2024-03-12 追記）. https://www.microsoft.com/en-us/msrc/blog/2023/09/results-of-major-technical-investigations-for-storm-0558-key-acquisition （参照箇所: 「Why a consumer key was able to access enterprise mail」。RS-12#5、確認日: 2026-10-03）
+[^51]: Amazon Web Services『Delete an AWS KMS key（AWS KMS Developer Guide）』（版表記なし）. https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html （参照箇所: 冒頭（destructive・irreversible、CloudTrail への記録）、About the waiting period（7〜30 日、Pending deletion の鍵は暗号操作に使えない、待機期間内の取消し）、Special considerations（対称鍵の削除後は同じ鍵素材でも復号できない）。RS-10#58 で既検証の範囲に加え、版 0.2 で取得して確認、確認日: 2026-10-15）
+[^52]: Amazon Web Services『Default key policy（AWS KMS Developer Guide）』（版表記なし）. https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html （参照箇所: Allows access to the AWS account and enables IAM policies（Reduces the risk of the KMS key becoming unmanageable、AWS Support への連絡）、Allows key administrators to administer the KMS key（kms:Put*、kms:ScheduleKeyDeletion）。版 0.2 で取得して確認、確認日: 2026-10-15）
+[^53]: Amazon Web Services『Locking objects with Object Lock（Amazon S3 User Guide）』. https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html （参照箇所: Retention modes（compliance mode）。RS-10#44（RS-10 の [^26]）、確認日: 2026-10-03）

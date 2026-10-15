@@ -1,0 +1,658 @@
+asyncapi: 3.1.0
+info:
+  title: Lifecycle events for dependent services
+  version: 0.2.0
+  description: |
+    文書ID: CON-12（案）/ 成果物: DL-117（案）/ 版: 0.2.0 / 状態: draft / 最終更新: 2026-10-15
+
+    本契約は、基盤が組織内の依存サービス（約 300 [A-050]）へ配るライフサイクル事象（テナント・利用者・所属・大規模な権限剥奪）と、
+    受信側が返す完了報告を定める（G-137）[D]。ADR-022 D-2 の「イベント配送」行（CloudEvents 1.0.2・AsyncAPI 3.x）を具体化したものである [D]。
+    事象の意味と受信側の義務の正本は DL-49 §7（テナント）と DL-08 §16.3（利用者・所属）で、本書はそれを機械可読の契約に写し、
+    両書が「11_contracts で決める」とした封筒・順序・冪等・replay・配送失敗・完了報告の形を決める [D]。
+    封筒と data の形は 11_contracts/schemas/lifecycle-event.schema.json（CON-13 案）が正本である [D]。
+
+    ## 1. 位置付け
+    - 送信者は基盤のライフサイクル publisher（テナント状態・主体台帳の変更を outbox から送る部品）で、本書の `operations` の action は publisher から見た向きで書く。AsyncAPI 3.1.0 は、application が channel へ送る場合を `send`、受け取る場合を `receive` とする [N][^aa]。
+    - 受信者は組織内の依存サービスである。組織外（顧客 IdP、外部 RP、外部連携アプリ）へは本契約を使わず、SSF/CAEP/RISC（CON-09・CON-10）を使う（§5）[D]。
+    - 停止の効力は事象の受信に依存させない。停止は token 検証・introspection・PDP のテナント状態ガードで中央強制し、事象は非同期処理の停止、キャッシュと独自 session の破棄、データの削除に使う（DL-49 §7.1、DL-08 §16.3、ADR-006 D6-03）[D]。
+    - broker 製品・配送経路・protocol binding は凍結しない（ADR-022 D-2）。このため `servers` を置かない。binding は publisher の配備で決め、本書の配送の保証を満たすことを DL-80 で試験する [D]。
+    - 事象の真正性は broker と配送経路に依存させない。broker を経由すると、受信側の相互 TLS が認証するのは broker であって publisher ではないためである [D]。RFC 9967 は、SET の publisher が受信者と直接通信しない経路では第三者が事象を差し込み得るとし、受信者に JWS 署名で発信者を検証することを MUST とする [N][^9967]（RS-14#35）。本契約はこれをライフサイクル事象に準用し、メッセージ単位の署名（PO-13）と受信側の検証（RO-11）を GA の義務にする [D]。
+    - 破壊的・不可逆な処理（削除、保全の解除による削除の再開、テナント参照の付け替え、所属除去に伴うデータ処理）は、署名を検証した事象であっても事象だけを根拠に実行しない。受信側は実行の直前に正本状態を照会 API（LC-OI-3）で確かめる（RO-12）[D]。
+
+    ## 2. 事象の一覧と受信側の義務（G-137 の列挙を全件）
+    type はすべて `example.id-domain.lifecycle.` を前置する（<id-domain> の reverse-DNS。値は未決、LC-OI-1）。表では前置を省く [D]。
+    期限欄の値はすべて TBD であり、DL-20（07_slo）で SLI を採番して決める（§7）[D]。
+
+    | type | 順序キー | 区分 | 受信側の義務 | 期限（SLI） | 完了報告 | 受信できない場合 |
+    |---|---|---|---|---|---|---|
+    | tenant.created | tenant:<tid> | GA | 必要なサービスだけ区画を準備する | 義務なし | 不要 | replay で後追いする |
+    | tenant.suspended（mode） | tenant:<tid> | GA | 当該テナントの非同期ジョブ、外部送信、キャッシュ済みデータの提供を止め、独自 session を無効にする | T_susp（TBD） | 不要 | 対話的アクセスは中央強制で止まる。非同期処理の停止漏れは KRI 候補 |
+    | tenant.resumed | tenant:<tid> | GA | 止めた処理を再開する | 義務なし | 不要 | replay |
+    | tenant.termination.effective | tenant:<tid> | GA | 新規処理を止め、エクスポートを支援する | 契約終了時刻 | 不要 | 中央強制で止まる |
+    | tenant.deletion.requested | tenant:<tid> | GA | 当該テナントのデータを削除し、報告する。不可逆な削除は、猶予 G_del の経過後に正本照会で要求が有効であることを確かめてから行う（RO-12、RO-13） | T_del（法域別、TBD。G_del を含む） | 要 | 削除証明に「未報告」と記載し、サービス所有者へエスカレーション |
+    | tenant.deletion.withdrawn | tenant:<tid> | GA | 猶予中の削除要求（request_id）を取り消し、準備した削除を実行しない | 猶予の満了前 | 要（outcome=withdrawn。CON-13 への追加を申し送り） | 猶予満了時の正本照会（RO-12）で撤回を検知する |
+    | tenant.deleted | tenant:<tid> | GA | tid を再利用しない。残った参照を墓石として扱う | — | 不要 | — |
+    | tenant.merge.cutover（role） | 統合元・統合先の両方 | GA | 保存しているテナント参照と所有属性を付け替える。付け替えの前に mapping_ref と request_id を正本照会で確かめる（RO-12） | 移行期間（TBD） | 要（件数） | 付け替えの完了まで統合元の墓石化を保留する |
+    | tenant.split.cutover（role） | 分割元・分割先の両方 | GA | 同上 | 同上 | 要（件数） | 同上 |
+    | tenant.cell_move.scheduled / cutover | tenant:<tid> | preview | cell を意識するサービス（routing、キャッシュ）だけ対応する | 切替前（予告で通知） | 不要 | 旧側からの転送で吸収する |
+    | tenant.legal_hold.set / released | tenant:<tid> | GA | 削除を止める・再開する。set は受信後すぐ反映する（安全側）。released による削除の再開は、正本照会で保全の解除（hold_ref）を確かめてから行う（RO-12） | 受信後すぐ（TBD） | 要 | 未反映を法務へ報告する |
+    | membership.added | tenant:<tid> | GA | 必要なサービスだけ区画を準備する | 義務なし | 不要 | replay |
+    | membership.changed | tenant:<tid> | GA | キャッシュした権限・属性を破棄する | T_user_chg（TBD） | 不要 | 判定は中央。破棄漏れは KRI 候補 |
+    | membership.suspended | tenant:<tid> | GA | 当該主体の当該テナント文脈の非同期ジョブ・外部送信・キャッシュ済みデータの提供を止め、独自 session を無効にする | T_user_susp（TBD） | 不要 | 中央強制で止まる。停止漏れは KRI 候補 |
+    | membership.resumed | tenant:<tid> | GA | 止めた処理を再開する | 義務なし | 不要 | replay |
+    | membership.removed | tenant:<tid> | GA | 当該テナント文脈の処理を止め、独自 session を無効にし、テナントの方針に従ってデータを扱う。処理の停止と session の無効化は受信後すぐ行い（安全側）、データの削除・移管は正本照会で除去を確かめてから行う（RO-12） | T_user_rm（TBD） | 要（件数） | 未報告を所有者へエスカレーション |
+    | user.created | principal:<sub> | GA | 必要なサービスだけ準備する | 義務なし | 不要 | replay |
+    | user.suspended | principal:<sub> | GA | 全テナント文脈で membership.suspended と同じ（テナント単位で購読するサービスは membership.suspended だけを受ければよい） | T_user_susp（TBD） | 不要 | 同上 |
+    | user.resumed | principal:<sub> | GA | 止めた処理を再開する | 義務なし | 不要 | replay |
+    | user.deletion.requested | principal:<sub> | GA | 主体の個人データを削除し、報告する。不可逆な削除は、猶予 G_del の経過後に正本照会で要求が有効であることを確かめてから行う（RO-12、RO-13） | T_user_del（法域別、TBD。G_del を含む） | 要 | 削除証明に「未報告」と記載し、エスカレーション |
+    | user.deletion.withdrawn | principal:<sub> | GA | 猶予中の削除要求（request_id）を取り消す | 猶予の満了前 | 要（outcome=withdrawn） | 猶予満了時の正本照会で撤回を検知する |
+    | user.deleted | principal:<sub> | GA | 主体の識別子を再利用しない | — | 不要 | — |
+    | user.legal_hold.set / released | principal:<sub> | GA | 削除を止める・再開する（released は tenant の行と同じく正本照会の後） | 受信後すぐ（TBD） | 要 | 未反映を法務へ報告する |
+    | revocation.bulk | 範囲の順序キー（platform を含む） | preview | not_before より前に確立した独自 session とキャッシュを無効にする | ARC-09 の R(t)（SLI-050〜SLI-052）の内数（TBD） | 不要 | 効力は基盤の強制点で生じる（ARC-09） |
+
+    - tenant.deletion.withdrawn と user.deletion.withdrawn は G-137 の列挙にない。ラウンド2の指摘への是正として本書で追加した（猶予中の撤回、RO-13）。DL-49 §7・DL-08 §16.3 への追記は申し送る（§10）[D]。
+    - user.suspended のとき、publisher は主体の有効な所属ごとに membership.suspended（reason_class=principal_suspended）を各テナントのパーティションへ出す。これにより「順序キーは tid」の購読だけで所属単位の停止を受け取れる [D]。
+    - 停止の理由は区分（reason_class）だけを載せ、SEC の詳細は載せない（DL-08 §16.3）[D]。
+    - 事象には主体 ID・テナント ID・種別だけを載せ、email などの属性を載せない [D]。SP 800-63C-4 は shared signal に対象アカウントの特定に必要な範囲を超える個人情報を含めないこと（SHALL NOT）を求めている [N][^63c]（RS-14#61）。本契約は組織内の事象だが、同じ最小化を準用する（DL-08 §16.3）[D]。
+
+    ## 3. 配送の保証（publisher の義務 PO）
+    | ID | 項目 | 規定 | 根拠 |
+    |---|---|---|---|
+    | PO-1 | 封筒 | CloudEvents 1.0.2 の JSON 形式（structured mode）。media type は `application/cloudevents+json`（JSON 形式の封筒はこの media type を使わなければならない（MUST））[N][^cejson]。REQUIRED 属性は id・source・specversion・type [N][^ce]（RS-16#9） | ADR-022 D-2 |
+    | PO-2 | 配送 | at-least-once。状態の書込みと同じ取引で outbox に記録し、確定後に送る [D] | DL-49 §7.2 |
+    | PO-3 | 冪等キー | (source, id)。producer は source＋id を事象ごとに一意にしなければならない（MUST）。再送時は同じ id でよく（MAY）、consumer は source と id が同じ事象を重複とみなしてよい（MAY）[N][^ce]。本契約は再送・replay で id を変えないことを MUST にする [D] | RS-16#9 |
+    | PO-4 | 順序キー | source をパーティション（https://lifecycle.<id-domain>/tenants/<tid>、/principals/<sub>、/platform）にし、partitionkey に同じ値（tenant:<tid> など）を入れる。順序はパーティション内だけで保証し、パーティションをまたぐ順序は保証しない [D] | Sequence 拡張の順序は単一の event source の中の位置である [N][^ceseq]。Partitioning 拡張の partitionkey は REQUIRED で、中継で変わり得る [N][^cepart] |
+    | PO-5 | 順序番号 | sequence 拡張属性。20 桁 0 埋めの 10 進数で、パーティションごとに 1 から 1 ずつ増やす（連続）。sequencetype は付けない [D] | 拡張は sequence を辞書順に並べられる空でない文字列（MUST）とし、単調増加・連続を RECOMMENDED とする。sequencetype がない場合の解釈は producer との帯域外の取決めに委ねる [N][^ceseq]。Integer 型は 2^31−1 で折り返すため使わない [N][^ceseq][D] |
+    | PO-6 | 版 | dataschema に CON-13 の `$id`（major を含む）を入れる。data の非互換な変更は dataschema の major を上げ、type は変えない [D] | dataschema の非互換な変更は別の URI で表すべき（SHOULD）[N][^ce]（RS-16#10）、README I-1 |
+    | PO-7 | 再送 | 確認応答がなければ、ランダム化した指数 backoff で再送し、回数に上限 N_retry（TBD）を置く [D] | SRE 本は再試行にランダム化した指数 backoff を必ず使い、request ごとの再試行回数を制限することを求める [V][^sre]（RS-09#38） |
+    | PO-8 | 配送失敗 | N_retry を超えた事象は publisher 側の dead letter に移し、受信サービスの所有者と基盤チームへ警報する。dead letter の件数と最古の齢を KRI 候補にする（DL-49 §7.2）。dead letter に移しても、後続の事象の配送はそのパーティションで止める（順序を壊さないため）[D] | DL-49 §7.2 |
+    | PO-9 | replay | 送った事象を W_replay（TBD）保持し、replayRequests channel の要求で同じ id・sequence のまま再配送する [D] | DL-49 §7.2・§13 |
+    | PO-10 | 認証・broker の権限 | publisher と受信者は workload ID で相互に認証する（DL-55）。購読できるサービスは登録制にする [D]。broker の権限は次に限る [D]。(a) 事象の channel（tenantLifecycle・principalLifecycle・platformLifecycle）へ書き込めるのは環境・cell ごとのライフサイクル publisher の workload ID だけ。(b) 受信サービスは読取りだけ。(c) deletionReports・replayRequests は登録済みの受信サービスが書き、publisher だけが読む。broker の ACL の実構成と (a)〜(c) の差分を本番の日次走査（dfd-entry-points H6・AC-09 の対象に追加）で検出し、差分を警報にする [D]。broker を経由する経路では相互 TLS が認証するのは broker なので、本項は事象の真正性の根拠にならず、真正性は PO-13・RO-11 で担保する [D] | DL-49 §7.2、RFC 9967 §5 [N][^9967]（RS-14#35） |
+    | PO-11 | 秘匿 | context attributes に機微情報を載せない。CloudEvents は context attributes に機微情報を載せるべきでない（SHOULD NOT）とし、producer・consumer・中継者がそれを検査・記録してよい（MAY）とする [N][^ce]（RS-17#32）。source と partitionkey には不透明 ID（tid・sub）だけを入れる [D] | ADR-022 D-8-7 |
+    | PO-12 | 完了報告の追跡 | 完了報告が要る事象は、受信サービスの登録簿（データ保有の申告。DL-57 の経路台帳と照合）に載る全サービスから報告を集め、期限に未報告のサービスを削除証明に「未報告」と記載し、所有者へエスカレーションする [D] | DL-49 §7.1・§10.4 |
+    | PO-13 | メッセージ単位の署名 | すべての事象（§2）に拡張属性 `lcsig` を付け、JWS Compact Serialization を入れる [D]。JWS の payload は、封筒の id・source・type・specversion・sequence・partitionkey・time・dataschema・data と、発行者 `iss`（環境・cell ごとの publisher を表す不透明 URI）・環境 `env` を持つ JSON object とする [D]。protected header には alg・kid・typ（`lifecycle-event+jws`）を置く [D]。署名鍵は ADR-007 の鍵階層の専用鍵（L2 の用途族「ライフサイクル事象の署名」、環境別・cell 別、1 鍵 1 alg）とし、他の用途族と共有しない [D]。受信側が処理に使う値は検証した JWS の payload の値であり、封筒の値は routing 用に限る。これにより中継で JSON の表現が変わっても正規化に依存せずに検証できる [D]。用途族と platform パーティションの鍵スコープは ADR-007 への申し送りで決める（§10、LC-OI-8）[D] | 属性名は小文字の英数字に限り（MUST）、20 文字以下が SHOULD [N][^ce]。CloudEvents は data の保護の方式を producer と consumer の取決めに委ねる [N][^ce]。JWS の alg は署名アルゴリズムを示し、kid は鍵の選択に使う [N][^7515]（RS-11#52）。種別の異なる JWT の検証規則は相互排他にする（MUST）、その手段に種別ごとの鍵の分離と明示的な typ がある [N][^8725]（RS-05#37）。本書はこれを JWS に準用する [D]。RFC 9967 §5 [N][^9967]（RS-14#35） |
+
+    ## 4. 受信側の義務（RO）
+    | ID | 義務 |
+    |---|---|
+    | RO-1 | 購読は workload ID で認証する（PO-10）。publisher 以外から届いた事象を処理しない。publisher が発行したかは broker との相互 TLS ではなく RO-11 の署名検証で判定する [D] |
+    | RO-2 | 確認応答（ack）の前に事象を永続化する。RFC 9967 は SCIM の SET の受信側に、確認応答の前に自身の復旧要件を満たすよう event を永続化することを MUST とする [N][^9967]（RS-14#35）。本契約はこれを準用する [D] |
+    | RO-3 | (source, id) で重複を除き、同じ事象を 2 回処理しない。重複判定の記録は W_replay 以上保持する [D] |
+    | RO-4 | パーティションごとに sequence の順に処理する。処理済みの番号以下の事象は重複として ack だけ返す。欠番を検知したら後続を保留し、G_gap（TBD）以内に埋まらなければ replay を要求する [D] |
+    | RO-5 | 未知の type、未知の data 欄、開いた列挙の未知の値は、受理して無視する（未知の type を dead letter に送らない）。type の追加を互換な追加（minor）にするためである [D]。RFC 9457 は client に認識できない拡張メンバを無視することを MUST とし [N][^9457]（RS-16#12）、JWT は理解できない claim を無視することを MUST とする [N][^7519]（RS-16#14）。同じ考え方を事象に写した [D] |
+    | RO-6 | §2 の義務を期限内に果たす。独自 session を持つサービスは、tenant.suspended・membership.suspended・membership.removed・user.suspended・revocation.bulk で無効にする（ONB-R9）[D] |
+    | RO-7 | 完了報告が要る事象（§2）は、deletionReports channel へ deletion.report を期限内に送る。データを持たない場合も outcome=not_applicable で報告する（未報告と区別するため）[D]。削除しなかったデータは exceptions に根拠と保持期限を書く（DL-49 §10.4 の削除証明に写す）[D] |
+    | RO-8 | 処理に失敗した事象は自サービスの dead letter に移し、黙って ack しない。dead letter にある削除要求も期限は変わらず、期限までに outcome=failed で報告する [D] |
+    | RO-9 | 受信できない期間が W_replay 以内なら、最後に処理した sequence から replay で復旧する。W_replay を超えたら、例外台帳（DL-05）に登録し、現在状態の照会（LC-OI-3）で全件を突き合わせてから処理を再開する。その間も停止は中央強制で効く [D] |
+    | RO-10 | 事象を認可の根拠にしない。事象に基づく処理は、実行時に基盤の判定で再認可する（ADR-022 D-8-7）[D]。破壊的・不可逆な処理は再認可に加えて RO-12 の正本照会を要し、事象だけでは実行しない [D] |
+    | RO-11 | 署名の検証。すべての事象について、処理の前に `lcsig` の JWS を検証する [D]。(a) 鍵は L1 署名付き鍵マニフェストから得て、(iss, typ, kid) → 許可鍵集合の表にない組合せを拒否する（ADR-007 D7-21）。(b) alg は鍵に固定した値だけを受け入れ、alg none を拒否する（ADR-007 D7-22）。(c) iss と env が自環境の publisher と一致し、source・type・id・sequence・partitionkey が JWS の payload と一致する [D]。署名がない、検証できない、または不一致の事象は処理せず、隔離領域に移し、所有者と SOC へ警報する [D]。この事象は sequence の処理済みに数えない。同じ番号の真正な事象は RO-4 の replay で取り直す [D]。RFC 9967 は publisher と直接通信しない受信者に JWS による発信者の検証を MUST とする [N][^9967]（RS-14#35）。RFC 8725 は鍵が issuer に属することの検証を MUST とする [N][^8725]（RS-05#36） |
+    | RO-12 | 破壊的・不可逆な処理の前の正本照会。tenant.deletion.requested・user.deletion.requested（削除の実行）、tenant/user.legal_hold.released（削除の再開）、tenant.merge.cutover・tenant.split.cutover（付け替え）、membership.removed（データの削除・移管）は、実行の直前に照会 API（LC-OI-3）で、対象の状態と request_id（保全は hold_ref、付け替えは mapping_ref）が事象と一致し、要求が撤回されていないことを確かめる [D]。一致しなければ実行せず、outcome=failed（理由: 正本不一致）で報告し、SOC へ警報する [D]。照会 API は publisher と直接の相互 TLS で呼ぶので broker を経ない [D]。照会 API に届かない場合は実行を保留し、期限内に届かなければ outcome=failed で報告する（削除の遅延を偽造の受理より優先する）[D] |
+    | RO-13 | 削除の猶予。deletion.requested を受けたら、猶予 G_del（TBD）が満了するまで不可逆な削除を実行しない。猶予中は可逆な準備（処理の停止、削除予定の印）だけを行い、deletion.withdrawn を受けたら準備を戻して outcome=withdrawn で報告する [D]。猶予満了時は撤回事象の受信の有無にかかわらず RO-12 の照会を行い、その結果で実行の可否を決める（撤回事象の偽造で削除を止められても、正本照会で検知できる）[D] |
+
+    ## 5. SSF/CAEP（セキュリティ事象）との役割分担
+    | 観点 | SSF/CAEP/RISC（CON-09・CON-10） | 本契約（ライフサイクル事象） |
+    |---|---|---|
+    | 目的 | セキュリティ事象（session 失効、資格情報の変更、アカウント無効化など）の伝達 | 業務・データの所有と存続（作成、停止、統合、分割、移動、削除、所属変更）の伝達と、受信側の後始末の義務 |
+    | 受信者 | 組織外（trust agreement を結んだ顧客の受信者、外部連携アプリ）。内部の約 300 サービスを SSF の受信者にしない（ADR-006 D6-25） | 組織内の依存サービス |
+    | 形式 | SET（RFC 8417、secevent+jwt）、push/poll（RFC 8935・RFC 8936） | CloudEvents 1.0.2（JSON 形式） |
+    | 完了報告 | なし | 削除・付け替え・保全の反映は deletion.report で報告する |
+    | 同時に出す場合 | テナント強制停止（T06）では、SSF/CAEP でテナントを主体とする session 失効を、本契約で tenant.suspended（mode=forced）を出す（DL-49 §7.3）。SEC による主体の停止も両方に出す（DL-08 §16.3） | 同左 |
+    | 効力 | どちらも配送の成否は強制に影響しない（ADR-006 D6-03） | 同左 |
+
+    ## 6. 凍結区分（README §4.6）
+    - irreversible: type の名前（deletion.withdrawn の 2 つを含む）、source の形、拡張属性名（sequence・partitionkey・lcsig）、順序キーの意味 [D]。
+    - GA: 封筒、§3 の配送の保証（PO-13 の署名を含む）、§4 の受信側の義務の枠（RO-11〜RO-13 を含む）、GA の type の data、deletion.report [D]。
+    - GA の前提: 照会 API（LC-OI-3）と署名鍵の用途族（LC-OI-8）が揃うまで、本契約の GA の凍結（DEC-8 第 1 段）を付議しない。RO-11・RO-12 が実装できないためである [D]。
+    - preview（x-preview-expires: 2027-10-15）: tenant.cell_move.*、revocation.bulk（意味の正本は DL-56）、replay.request [D]。
+    - 期限・保持期間などの数値はすべて TBD で、値を決めることは制約を強める変更として扱う（README §6.1）[D]。
+
+    ## 7. 未決の数値（TBD）
+    | 記号 | 意味 | 決める人 | 期限 | 決め方 |
+    |---|---|---|---|---|
+    | T_susp | tenant.suspended の反映期限 | CTO＋CISO（SLI は DL-20 で未採番） | G4 | DL-49 TL-5 の実測 |
+    | T_user_chg・T_user_susp・T_user_rm・T_user_del | 利用者・所属事象の期限 | CISO＋個人情報保護責任者（DL-08 §16.3） | G3（T_user_del は DL-34 の法域判定の後） | IL-TC19・IL-TC20、BIA、法域ごとの要件 |
+    | T_del | テナント削除の期限 | DL-49 K-3（法務） | K-3 の決裁 | G-054 と整合させる |
+    | G_del | 削除要求の最短の実行猶予（RO-13） | T_del・T_user_del と同じ決める人（DL-49 K-3、CISO＋個人情報保護責任者） | T_del・T_user_del と同時 | G_del は T_del・T_user_del の内数とし、誤要求・偽造の検知に要する時間と、基盤の論理削除の復元期間（tenant-lifecycle の T13→T14）を上限側の参考にする |
+    | W_replay | replay の保持期間 | プラットフォームチーム長（DL-49 §13） | G3 | 依存サービスの最長停止時間の調査 |
+    | N_retry・G_gap | 再送の上限、欠番の待ち時間 | プラットフォームチーム長（本書の提案） | G3 | MK-08 での試験と PoC |
+
+    ## 8. 契約試験（CON-11 への写し）
+    - モック MK-08（事象 publisher）: 正例の事象を出し、制御 API で重複・順序の逆転・欠番・未知 type・dead letter・replay を注入する。deletion.report を受けて CON-13 で検証する [D]。
+    - MK-08 は環境別・cell 別の試験用署名鍵と、他の鍵・署名なし・封筒の改変・正本と食い違う事象を出す注入と、照会 API（LC-OI-3）のモックを持つ（CON-11 への申し送り）[D]。
+    - 試験ベクタ LC-CV-01〜LC-CV-14（`x-conformance-vectors`）。CON-11 §6 の CV 番号への採番は CON-11 の所有者が行う [D]。
+
+    ## 9. 作成方法と誠実性
+    AI エージェント（Claude）が DL-49 §7・DL-08 §16.3・ADR-022・ADR-021・ARC-09 を正本として起草した。模擬パネル（自己レビュー。実在の CTO/CISO の決裁ではない）のラウンド1の指摘（Critical、G-137・I-11）への対応である [D]。
+    CloudEvents 1.0.2 本体（spec.md）、JSON 形式（formats/json-format.md）、Sequence 拡張、Partitioning 拡張は ce@v1.0.2 タグの原文を 2026-10-15 に取得して照合した。本体の id・dataschema・Privacy and Security は research の検証済み主張（RS-16#9, #10、RS-17#32）にもある。JSON 形式の media type と 2 つの拡張は research に収録がなく、本書の作成時に原典を確認した（人による照合は未実施）。
+    AsyncAPI 3.1.0 の Operation Object の action の定義も同日に原文（asyncapi/spec の v3.1.0 タグ）を取得して確認した。作成者以外による独立レビューは未実施である [D]。
+    ラウンド2（版 0.2.0）では、RFC 9967 §5（RS-14#35）、RFC 8725 §3.12（RS-05#37）、CloudEvents 1.0.2 の Attribute Naming Convention と Privacy and Security の原文を 2026-10-15 に再取得して照合した。RFC 7515 は research の検証済み主張（RS-11#52）だけに依拠した [D]。
+
+    ## 10. 他文書への申し送り（本ファイル以外は担当外のため未編集）
+    | # | 宛先 | 内容 | 理由 |
+    |---|---|---|---|
+    | H2-1 | 03_threat-model/threat-catalog.md | 事象の注入・偽造の T を起票する（STRIDE の S/T。CE はライフサイクル publisher・broker・broker に書き込める workload）。統制は PO-10・PO-13・RO-11〜RO-13、試験は LC-CV-09〜LC-CV-14。採番は threat-catalog の所有者 | ラウンド2の指摘 6。現行の catalog に該当する T がない |
+    | H2-2 | 05_adr/ADR-007-key-hierarchy-kms-hsm.md | D7-10 に L2 の用途族「ライフサイクル事象の署名」（環境別・cell 別、1 鍵 1 alg）を加え、platform パーティションの鍵スコープと鍵マニフェストへの (iss, typ, kid) の登録を決める（LC-OI-8） | PO-13 の鍵の所在。現行の 8 族に該当がない |
+    | H2-3 | 11_contracts/schemas/lifecycle-event.schema.json（CON-13） | Envelope に `lcsig`（JWS Compact、必須）を加える。Event_tenant_deletion_withdrawn・Event_user_deletion_withdrawn と KnownTypes を加える。DeletionReport の outcome に withdrawn を加え、failed の理由に正本不一致を加える | PO-13、RO-12、RO-13。本書の x-dataschema は追加前の $defs を指す |
+    | H2-4 | 02_requirements/tenant-lifecycle.md（DL-49）§7・K-3、02_requirements/identity-lifecycle.md（DL-08）§16.3 | 削除要求の猶予 G_del と撤回事象、受信側の正本照会（RO-12）を事象の意味の正本に追記し、G_del を T_del・T_user_del と同時に決める | 事象の意味の正本は両書（§1） |
+    | H2-5 | 照会 API の契約（新規。所有者は LC-OI-3） | 対象の状態、request_id・hold_ref・mapping_ref の有効性、撤回の有無を返す読取り専用 API を、DEC-8 第 1 段の前に契約として作る | RO-9・RO-12 の前提 |
+    | H2-6 | 03_threat-model/dfd-entry-points.md（H6・AC-09） | broker の ACL（PO-10 (a)〜(c)）を本番の日次走査の対象に加える | PO-10 |
+    | H2-7 | 11_contracts/mock-contract-test-kit.md（CON-11） | MK-08 に署名・注入・照会 API のモック（§8）を加え、LC-CV-10〜LC-CV-14 を CV 番号へ採番する | §8 |
+
+    ## 11. レビュー記録
+
+    > 模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+    | ラウンド | # | 重大度 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|---|
+    | 1 | 1 | Critical | G-137・I-11: 依存サービスへのライフサイクル事象の契約がない | 本契約を新規に作成した（版 0.1.0） | 本ファイル全体 |
+    | 2 | 1 | High | 事象の真正性が workload ID の相互認証（PO-10）と RO-1 だけに依る。broker 経由では受信側の mTLS は broker を認証するので、broker の ACL の誤り・侵害、broker に書き込める workload の侵害で偽造を見分けられない。偽造した deletion.requested 1 件で全サービスに不可逆な削除を起動でき、legal_hold.released・merge/split.cutover も同様。RO-10 は削除を止めない。照会 API（LC-OI-3）は未作成で RO-9 にしか使われない。threat-catalog に該当 T がない（指摘者: redteam） | (1) PO-13（`lcsig` の JWS 署名。ADR-007 の専用鍵、環境別・cell 別）と RO-11（検証、不一致は処理せず隔離・警報）を加えた。根拠は RFC 9967 §5 の MUST の準用 [N][^9967]。(2) RO-12 として破壊的事象の実行前の正本照会を義務付け、LC-OI-3 を GA の前提（DEC-8 第 1 段の前）に格上げした。(3) RO-13 と G_del（§7）で削除の最短猶予を置き、deletion.withdrawn の 2 type を加えた。(4) PO-10 に broker の書込権限の限定と本番日次走査を明記した。(5) LC-CV-10〜LC-CV-14 を加え、LC-CV-09 を改めた。(6) threat-catalog への T の起票ほかを §10 で申し送った。RO-1・RO-10 を改め、§1・§2・§6 を更新した | §1、§2、§3 PO-10・PO-13、§4 RO-1・RO-10〜RO-13、§6、§7、§8、§10、x-open-issues、x-conformance-vectors、CloudEventEnvelope |
+
+    - 本ラウンドで閉じられなかったもの [D]: 用途族の追加（ADR-007、H2-2）と CON-13 の改訂（H2-3）が終わるまで、PO-13 は本書だけの規定で schema の検証に現れない。照会 API の契約（H2-5）は未作成。受信側から publisher への deletion.report・replay.request も broker を経由し得るので、報告の偽造（削除証明の改ざん）に対するメッセージ単位の署名は未規定であり、LC-OI-9 として残す。作成者以外による原典の照合とモックでの負例の実行（TC-026）は未実施。
+  license:
+    name: 社内限定（Proprietary, internal use only）
+  x-document-id: CON-12（案）
+  x-deliverable: DL-117（案。traceability/deliverables.md §8 への行の追加は申し送り）
+  x-status: draft
+  x-last-updated: '2026-10-15'
+  x-requirements: [G-137, G-118, G-138, R-044, R-109]
+  x-depends-on:
+    - 11_contracts/schemas/lifecycle-event.schema.json
+    - 11_contracts/schemas/common.schema.json
+    - 11_contracts/README.md
+    - 02_requirements/tenant-lifecycle.md
+    - 02_requirements/identity-lifecycle.md
+    - 04_architecture/revocation-continuous-evaluation.md
+    - 05_adr/ADR-021-irreversible-identifiers.md
+    - 05_adr/ADR-022-integration-contract-standards.md
+    - 05_adr/ADR-006-revocation-continuous-evaluation.md
+    - 11_contracts/ssf-caep.openapi.yaml
+    - 11_contracts/mock-contract-test-kit.md
+  x-standards:
+    - {id: SS-I20, name: CloudEvents, status: 'final（1.0.2、CNCF Graduated）', checked: '2026-10-15', conformance: 'JSON 形式の封筒（structured mode）、REQUIRED 属性、dataschema、属性名の規則'}
+    - {id: '未登録（standards-status へ追加を申し送り）', name: 'CloudEvents Sequence・Partitioning 拡張（ce@v1.0.2 タグ）', status: '拡張仕様', checked: '2026-10-15', conformance: 'sequence（sequencetype なし）、partitionkey'}
+    - {id: '未登録（RS-16#6, #7）', name: 'AsyncAPI Specification', status: 'final 3.1.0（minor、破壊的変更なし）', checked: '2026-10-15', conformance: '記述言語（ADR-022 D-2 の AsyncAPI 3.x）'}
+  x-open-issues:
+    - {id: 'LC-OI-1', item: 'type 名の前置（<id-domain> の値）', state: '未決（ADR-021 K21-6）', owner: 'ADR-021 の所有者', due: 'DEC-8 前'}
+    - {id: 'LC-OI-2', item: '非人間主体（PC-12〜PC-17）の事象を user.* に含めるか別の type にするか。type 名は不可逆', state: '未決', owner: '認証・IdP チーム（DL-08・DL-48 の所有者と協議）', due: 'DEC-8 前'}
+    - {id: 'LC-OI-3', item: 'mapping_ref・scope_ref・request_id・hold_ref と「現在状態」・撤回の有無を引く照会 API（RO-9 の全件突合と RO-12 の実行前照会に使う）。GA の前提（ラウンド2で格上げ）', state: '未作成（契約の作成を申し送り、§10 H2-5）', owner: 'DL-49 の所有者＋プラットフォームチーム長', due: 'DEC-8 第 1 段の前'}
+    - {id: 'LC-OI-4', item: '受信サービスの登録簿（データ保有の申告。PO-12 の報告対象の母集団）の所在', state: '未決（DL-57 の経路台帳か entry point 台帳か）', owner: 'プラットフォームチーム長', due: 'G3'}
+    - {id: 'LC-OI-5', item: 'revocation.bulk の意味（範囲の種別、not_before）の正本', state: '未決（DL-56 に委ねる。本書は preview の形だけ）', owner: '認証・IdP チーム（失効・継続評価）', due: 'DEC-8 前'}
+    - {id: 'LC-OI-6', item: '§7 の数値（T_susp ほか）と SLI の採番', state: 'TBD', owner: '§7 の決める人', due: '§7 の期限'}
+    - {id: 'LC-OI-7', item: '削除要求の最短の実行猶予 G_del（RO-13）', state: 'TBD', owner: 'DL-49 K-3（法務）＋CISO＋個人情報保護責任者', due: 'T_del・T_user_del と同時'}
+    - {id: 'LC-OI-8', item: 'PO-13 の署名鍵の用途族（ADR-007 D7-10 への追加）と platform パーティションの鍵スコープ。GA の前提', state: '未決（ADR-007 へ申し送り、§10 H2-2）', owner: 'ADR-007 の所有者', due: 'DEC-8 第 1 段の前'}
+    - {id: 'LC-OI-9', item: 'deletion.report・replay.request のメッセージ単位の署名（報告の偽造への対策）', state: '未決（ラウンド2で残した）', owner: '本書の所有者＋DL-49 の所有者', due: 'DEC-8 第 1 段の前'}
+  x-references:
+    - '[^ce] CloudEvents『CloudEvents - Version 1.0.2』（タグ ce@v1.0.2, 2022-02-06）. https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md （参照箇所: Attribute Naming Convention, REQUIRED Attributes の id・type, OPTIONAL Attributes の dataschema・time, Extension Context Attributes, Privacy and Security（Data の保護の方式は producer と consumer の取決め）、確認日: 2026-10-15。RS-16#9, #10、RS-17#32。属性名の規則と Data の保護の方式は research 未収録で、本書の作成時に原典を取得）'
+    - '[^cejson] CloudEvents『JSON Event Format for CloudEvents - Version 1.0.2』（タグ ce@v1.0.2）. https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md （参照箇所: §3 Envelope、確認日: 2026-10-15。research 未収録、本書の作成時に原典を取得）'
+    - '[^ceseq] CloudEvents『Sequence』拡張（タグ ce@v1.0.2）. https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/extensions/sequence.md （参照箇所: 冒頭, Attributes の sequence・sequencetype, SequenceType Values の Integer、確認日: 2026-10-15。research 未収録、本書の作成時に原典を取得）'
+    - '[^cepart] CloudEvents『Partitioning extension』（タグ ce@v1.0.2）. https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/extensions/partitioning.md （参照箇所: Attributes の partitionkey、確認日: 2026-10-15。research 未収録、本書の作成時に原典を取得）'
+    - '[^aa] AsyncAPI Initiative『AsyncAPI Specification 3.1.0』. https://www.asyncapi.com/docs/reference/specification/v3.1.0 （参照箇所: Versions（RS-16#6）、Operation Object の action（本書の作成時に asyncapi/spec の v3.1.0 タグの原文を取得して確認）、確認日: 2026-10-15）'
+    - '[^9967] P. Hunt ほか『RFC 9967 System for Cross-Domain Identity Management (SCIM) Profile for Security Event Tokens (SETs)』Proposed Standard, 2026-05. https://www.rfc-editor.org/rfc/rfc9967 （参照箇所: §5 Security Considerations（ack 前の永続化、publisher と直接通信しない場合の JWS による発信者の検証）、確認日: 2026-10-03、ラウンド2で 2026-10-15 に原文を再確認。RS-14#35）'
+    - '[^7515] M. Jones, J. Bradley, N. Sakimura『JSON Web Signature (JWS)』RFC 7515, 2015-05. https://www.rfc-editor.org/rfc/rfc7515 （参照箇所: §1, §4.1.1, §7.2.1、確認日: 2026-10-03。RS-11#52）'
+    - '[^8725] Y. Sheffer, D. Hardt, M. Jones『RFC 8725 (BCP 225): JSON Web Token Best Current Practices』2020-02. https://www.rfc-editor.org/rfc/rfc8725 （参照箇所: §3.8, §3.12、確認日: 2026-10-03、ラウンド2で 2026-10-15 に §3.12 の原文を再確認。RS-05#36, #37）'
+    - '[^63c] NIST『SP 800-63C-4 Digital Identity Guidelines: Federation and Assertions』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63c.html （参照箇所: §4.8、確認日: 2026-10-03。RS-14#61）'
+    - '[^sre] Mike Ulrich（Google）『Site Reliability Engineering』Chapter 22 "Addressing Cascading Failures", 2016. https://sre.google/sre-book/addressing-cascading-failures/ （参照箇所: Retries、確認日: 2026-10-03。RS-09#38）'
+    - '[^9457] M. Nottingham, E. Wilde, S. Dalal『Problem Details for HTTP APIs』RFC 9457, 2023-07. https://www.rfc-editor.org/rfc/rfc9457 （参照箇所: §3.2、確認日: 2026-10-03。RS-16#12）'
+    - '[^7519] M. Jones, J. Bradley, N. Sakimura『JSON Web Token (JWT)』RFC 7519, 2015-05. https://www.rfc-editor.org/rfc/rfc7519 （参照箇所: §4、確認日: 2026-10-03。RS-16#14）'
+  x-conformance-vectors:
+    - {id: 'LC-CV-01', name: '重複', input: '同じ (source, id) を 2 回配送する（sequence も同じ）', expected: '2 回目は ack だけ返し、副作用は 1 回（RO-3）'}
+    - {id: 'LC-CV-02', name: '順序の逆転', input: '同じパーティションの sequence n+1 を n より先に配送する', expected: 'n+1 を保留し、n の処理後に n+1 を処理する（RO-4）'}
+    - {id: 'LC-CV-03', name: '欠番', input: 'sequence n を落として n+1 以降を配送する', expected: 'G_gap 後に replay.request（from_sequence=n）を送る（RO-4）'}
+    - {id: 'LC-CV-04', name: '未知の type', input: '既知の前置で未定義の type（例 tenant.future_event）を配送する', expected: '受理して ack し、dead letter に送らない（RO-5）'}
+    - {id: 'LC-CV-05', name: '未知の data 欄・未知の列挙値', input: '既知の type に未知の欄と reason_class の未知の値を加える', expected: '受理し、未知の値を other と同じに扱う（RO-5）'}
+    - {id: 'LC-CV-06', name: '削除要求と報告', input: 'tenant.deletion.requested と user.deletion.requested を配送する', expected: '期限内に CON-13 DeletionReport に適合する報告を送る。データがなければ not_applicable（RO-7）'}
+    - {id: 'LC-CV-07', name: '処理失敗', input: '受信側の処理を失敗させる（注入）', expected: '自サービスの dead letter に移し、削除要求なら期限内に outcome=failed を報告する（RO-8）'}
+    - {id: 'LC-CV-08', name: '停止と独自 session', input: 'membership.suspended を配送した後に独自 session で要求する', expected: '独自 session が無効になっている。T_user_susp 以内（値は TBD）（RO-6、ONB-R9）'}
+    - {id: 'LC-CV-09', name: '送信者の偽装', input: 'publisher 以外の workload から事象を送る。broker 経由（broker に書き込める別 workload が署名なしで書く）と直接の両方', expected: '処理しない（RO-1、RO-11）。broker 経由でも mTLS の成功を真正性の根拠にしない'}
+    - {id: 'LC-CV-10', name: '他の鍵による署名', input: '非本番の鍵、別 cell の鍵、別の用途族の鍵（例 内部 token）で署名した tenant.deletion.requested を配送する', expected: '処理せず隔離し警報する。sequence の処理済みに数えず、replay で真正な事象を取り直す（RO-11）'}
+    - {id: 'LC-CV-11', name: '署名なし・封筒の改変', input: '(a) lcsig のない事象、(b) alg none の JWS、(c) 署名は正しいが封筒の source または type を書き換えた事象を配送する', expected: 'いずれも処理せず隔離し警報する（RO-11）'}
+    - {id: 'LC-CV-12', name: '正本と食い違う削除要求', input: '正しく署名されているが、照会 API（モック）では request_id が存在しない、または対象テナントが削除要求の状態にない tenant.deletion.requested を配送する', expected: '削除を実行せず、outcome=failed（正本不一致）で報告し警報する（RO-12）'}
+    - {id: 'LC-CV-13', name: '猶予中の撤回', input: 'tenant.deletion.requested の後、G_del の満了前に tenant.deletion.withdrawn を配送する。別の試行では撤回事象を落とし、照会 API だけが撤回を返す', expected: 'どちらも不可逆な削除を実行せず、outcome=withdrawn で報告する（RO-13、RO-12）'}
+    - {id: 'LC-CV-14', name: '保全中の解除事象', input: '照会 API では保全が継続している hold_ref について、署名済みの tenant.legal_hold.released を配送する', expected: '削除を再開せず、正本不一致として報告し警報する（RO-12）'}
+  x-lint-notes: '版 0.2.0 は YAML としての構文解析（PyYAML）だけを確認し、Redocly lint と @asyncapi/parser は再実行していない。以下は版 0.1.0 の結果。Redocly lint 2.63.0（recommended）の警告 info-license-strict 1 件: License Object に url を置いていない。社内限定で公開 URL がないため（README §4.7 P-1）。AsyncAPI の構文は @asyncapi/parser で検証する（README §2.3 への記録は申し送り）。payload は封筒の要約スキーマを置き、正本の JSON Schema 2020-12（CON-13）は x-dataschema で参照する。CON-13 は CON-02 を絶対 URI の $ref で参照しており、parser の解決対象にすると未決の <id-domain> を取得しにいくためである。'
+channels:
+  tenantLifecycle:
+    address: lifecycle.v1.tenants
+    description: 'テナント・所属の事象。source=https://lifecycle.<id-domain>/tenants/<tid>、partitionkey=tenant:<tid>。順序キーは tid [D]。 address は論理名で、broker 上の名前は配備で決める（凍結しない）[D]。'
+    messages:
+      TenantCreated:
+        $ref: '#/components/messages/TenantCreated'
+      TenantSuspended:
+        $ref: '#/components/messages/TenantSuspended'
+      TenantResumed:
+        $ref: '#/components/messages/TenantResumed'
+      TenantTerminationEffective:
+        $ref: '#/components/messages/TenantTerminationEffective'
+      TenantDeletionRequested:
+        $ref: '#/components/messages/TenantDeletionRequested'
+      TenantDeletionWithdrawn:
+        $ref: '#/components/messages/TenantDeletionWithdrawn'
+      TenantDeleted:
+        $ref: '#/components/messages/TenantDeleted'
+      TenantMergeCutover:
+        $ref: '#/components/messages/TenantMergeCutover'
+      TenantSplitCutover:
+        $ref: '#/components/messages/TenantSplitCutover'
+      TenantCellMoveScheduled:
+        $ref: '#/components/messages/TenantCellMoveScheduled'
+      TenantCellMoveCutover:
+        $ref: '#/components/messages/TenantCellMoveCutover'
+      TenantLegalHoldSet:
+        $ref: '#/components/messages/TenantLegalHoldSet'
+      TenantLegalHoldReleased:
+        $ref: '#/components/messages/TenantLegalHoldReleased'
+      MembershipAdded:
+        $ref: '#/components/messages/MembershipAdded'
+      MembershipChanged:
+        $ref: '#/components/messages/MembershipChanged'
+      MembershipSuspended:
+        $ref: '#/components/messages/MembershipSuspended'
+      MembershipResumed:
+        $ref: '#/components/messages/MembershipResumed'
+      MembershipRemoved:
+        $ref: '#/components/messages/MembershipRemoved'
+      RevocationBulk:
+        $ref: '#/components/messages/RevocationBulk'
+  principalLifecycle:
+    address: lifecycle.v1.principals
+    description: '主体の事象。source=…/principals/<sub>、partitionkey=principal:<sub>。テナント単位で購読するサービスは購読しなくてよい（membership.* で受ける）[D]。 address は論理名で、broker 上の名前は配備で決める（凍結しない）[D]。'
+    messages:
+      UserCreated:
+        $ref: '#/components/messages/UserCreated'
+      UserSuspended:
+        $ref: '#/components/messages/UserSuspended'
+      UserResumed:
+        $ref: '#/components/messages/UserResumed'
+      UserDeletionRequested:
+        $ref: '#/components/messages/UserDeletionRequested'
+      UserDeletionWithdrawn:
+        $ref: '#/components/messages/UserDeletionWithdrawn'
+      UserDeleted:
+        $ref: '#/components/messages/UserDeleted'
+      UserLegalHoldSet:
+        $ref: '#/components/messages/UserLegalHoldSet'
+      UserLegalHoldReleased:
+        $ref: '#/components/messages/UserLegalHoldReleased'
+      RevocationBulk:
+        $ref: '#/components/messages/RevocationBulk'
+  platformLifecycle:
+    address: lifecycle.v1.platform
+    description: '範囲がテナントや主体に収まらない revocation.bulk（preview）。source=…/platform [D]。 address は論理名で、broker 上の名前は配備で決める（凍結しない）[D]。'
+    messages:
+      RevocationBulk:
+        $ref: '#/components/messages/RevocationBulk'
+  deletionReports:
+    address: lifecycle.v1.deletion-reports
+    description: '受信側が削除・付け替え・保全の反映を報告する（RO-7）。送信者は DL-55 の workload ID で認証し、source と一致しなければ棄却する [D]。'
+    messages:
+      DeletionReport:
+        $ref: '#/components/messages/DeletionReport'
+  replayRequests:
+    address: lifecycle.v1.replay-requests
+    description: '受信側が欠番・復旧時に再配送を求める（RO-4、RO-9）。再配送は元の channel に同じ id・sequence で行う（PO-9）[D]。preview。'
+    x-freeze-class: preview
+    x-preview-expires: '2027-10-15'
+    messages:
+      ReplayRequest:
+        $ref: '#/components/messages/ReplayRequest'
+operations:
+  publishTenantLifecycle:
+    action: send
+    channel:
+      $ref: '#/channels/tenantLifecycle'
+    description: 'publisher がテナント・所属の事象を送る（PO-1〜PO-13）。'
+    security:
+      - $ref: '#/components/securitySchemes/workloadMtls'
+  publishPrincipalLifecycle:
+    action: send
+    channel:
+      $ref: '#/channels/principalLifecycle'
+    description: 'publisher が主体の事象を送る。'
+    security:
+      - $ref: '#/components/securitySchemes/workloadMtls'
+  publishPlatformLifecycle:
+    action: send
+    channel:
+      $ref: '#/channels/platformLifecycle'
+    description: 'publisher が platform 範囲の revocation.bulk を送る（preview）。'
+    security:
+      - $ref: '#/components/securitySchemes/workloadMtls'
+  receiveDeletionReports:
+    action: receive
+    channel:
+      $ref: '#/channels/deletionReports'
+    description: 'publisher が受信側の完了報告を受ける（PO-12）。'
+    security:
+      - $ref: '#/components/securitySchemes/workloadMtls'
+  receiveReplayRequests:
+    action: receive
+    channel:
+      $ref: '#/channels/replayRequests'
+    description: 'publisher が replay の要求を受ける（PO-9、preview）。'
+    security:
+      - $ref: '#/components/securitySchemes/workloadMtls'
+components:
+  securitySchemes:
+    workloadMtls:
+      type: X509
+      description: 'publisher と受信者は workload ID（X.509 の SVID など）で相互に TLS 認証する（PO-10、RO-1、DL-55）。方式の詳細は ADR-009 の決定に従い、本契約では凍結しない [D]。broker を経由する場合、この認証の相手は broker なので事象の真正性の根拠にしない。真正性は PO-13 の lcsig と RO-11 の検証で担保する [D]。'
+  schemas:
+    CloudEventEnvelope:
+      description: '封筒の要約（構文検証とモック生成用）。正本は CON-13 の $defs/Envelope と type ごとの $defs/Event_*。'
+      type: object
+      required: [specversion, id, source, type, time, datacontenttype, dataschema, partitionkey, sequence, lcsig, data]
+      properties:
+        specversion: {type: string, const: '1.0'}
+        id: {type: string, minLength: 1, maxLength: 64}
+        source: {type: string, format: uri-reference}
+        type: {type: string, minLength: 1}
+        time: {type: string, format: date-time}
+        datacontenttype: {type: string, const: application/json}
+        dataschema: {type: string, const: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json'}
+        partitionkey: {type: string, minLength: 1}
+        sequence: {type: string, pattern: '^[0-9]{20}$'}
+        lcsig: {type: string, pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$', description: 'PO-13 の JWS Compact Serialization（protected header に alg・kid・typ=lifecycle-event+jws）。CON-13 の Envelope への追加は申し送り（§10 H2-3）[D]。'}
+        data: {type: object}
+    ReportEnvelope:
+      description: '完了報告・replay 要求の封筒の要約。正本は CON-13 の $defs/DeletionReport・$defs/ReplayRequest。'
+      type: object
+      required: [specversion, id, source, type, time, data]
+      properties:
+        specversion: {type: string, const: '1.0'}
+        id: {type: string, minLength: 1, maxLength: 64}
+        source: {type: string, format: uri-reference}
+        type: {type: string, minLength: 1}
+        time: {type: string, format: date-time}
+        data: {type: object}
+  messages:
+    TenantCreated:
+      name: 'example.id-domain.lifecycle.tenant.created'
+      title: 'テナントの作成'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.created'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_created'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantSuspended:
+      name: 'example.id-domain.lifecycle.tenant.suspended'
+      title: 'テナントの一時停止・強制停止'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.suspended'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_suspended'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantResumed:
+      name: 'example.id-domain.lifecycle.tenant.resumed'
+      title: 'テナントの再開'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.resumed'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_resumed'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantTerminationEffective:
+      name: 'example.id-domain.lifecycle.tenant.termination.effective'
+      title: '契約終了の発効'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.termination.effective'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_termination_effective'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantDeletionRequested:
+      name: 'example.id-domain.lifecycle.tenant.deletion.requested'
+      title: 'テナントのデータ削除の要求（完了報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.deletion.requested'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_deletion_requested'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantDeletionWithdrawn:
+      name: 'example.id-domain.lifecycle.tenant.deletion.withdrawn'
+      title: 'テナントのデータ削除の要求の撤回（猶予中、報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.deletion.withdrawn'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_deletion_withdrawn'
+      x-dataschema-note: 'CON-13 に未定義（追加を申し送り、§10 H2-3）。data は tid・request_id・effective_at・report_to を想定する [D]。'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantDeleted:
+      name: 'example.id-domain.lifecycle.tenant.deleted'
+      title: 'テナントの墓石化の完了'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.deleted'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_deleted'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantMergeCutover:
+      name: 'example.id-domain.lifecycle.tenant.merge.cutover'
+      title: '統合の切替（完了報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.merge.cutover'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_merge_cutover'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantSplitCutover:
+      name: 'example.id-domain.lifecycle.tenant.split.cutover'
+      title: '分割の切替（完了報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.split.cutover'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_split_cutover'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantCellMoveScheduled:
+      name: 'example.id-domain.lifecycle.tenant.cell_move.scheduled'
+      title: 'cell 間移動の予告'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.cell_move.scheduled'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_cell_move_scheduled'
+      x-freeze-class: preview
+      x-preview-expires: '2027-10-15'
+      x-partition: tenant:<tid>
+    TenantCellMoveCutover:
+      name: 'example.id-domain.lifecycle.tenant.cell_move.cutover'
+      title: 'cell 間移動の切替'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.cell_move.cutover'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_cell_move_cutover'
+      x-freeze-class: preview
+      x-preview-expires: '2027-10-15'
+      x-partition: tenant:<tid>
+    TenantLegalHoldSet:
+      name: 'example.id-domain.lifecycle.tenant.legal_hold.set'
+      title: 'テナントの法的保全の設定（反映の報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.legal_hold.set'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_legal_hold_set'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    TenantLegalHoldReleased:
+      name: 'example.id-domain.lifecycle.tenant.legal_hold.released'
+      title: 'テナントの法的保全の解除（反映の報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.tenant.legal_hold.released'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_legal_hold_released'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    MembershipAdded:
+      name: 'example.id-domain.lifecycle.membership.added'
+      title: '所属の追加'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.membership.added'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_membership_added'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    MembershipChanged:
+      name: 'example.id-domain.lifecycle.membership.changed'
+      title: '所属の属性・ロールの変更'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.membership.changed'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_membership_changed'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    MembershipSuspended:
+      name: 'example.id-domain.lifecycle.membership.suspended'
+      title: 'テナント文脈での停止'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.membership.suspended'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_membership_suspended'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    MembershipResumed:
+      name: 'example.id-domain.lifecycle.membership.resumed'
+      title: 'テナント文脈での再開'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.membership.resumed'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_membership_resumed'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    MembershipRemoved:
+      name: 'example.id-domain.lifecycle.membership.removed'
+      title: '所属の除去（完了報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.membership.removed'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_membership_removed'
+      x-freeze-class: GA
+      x-partition: tenant:<tid>
+    UserCreated:
+      name: 'example.id-domain.lifecycle.user.created'
+      title: '主体の作成'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.created'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_created'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserSuspended:
+      name: 'example.id-domain.lifecycle.user.suspended'
+      title: '主体の停止'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.suspended'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_suspended'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserResumed:
+      name: 'example.id-domain.lifecycle.user.resumed'
+      title: '主体の再開'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.resumed'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_resumed'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserDeletionRequested:
+      name: 'example.id-domain.lifecycle.user.deletion.requested'
+      title: '主体の個人データ削除の要求（完了報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.deletion.requested'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_deletion_requested'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserDeletionWithdrawn:
+      name: 'example.id-domain.lifecycle.user.deletion.withdrawn'
+      title: '主体の個人データ削除の要求の撤回（猶予中、報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.deletion.withdrawn'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_deletion_withdrawn'
+      x-dataschema-note: 'CON-13 に未定義（追加を申し送り、§10 H2-3）。data は sub・request_id・effective_at・report_to を想定する [D]。'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserDeleted:
+      name: 'example.id-domain.lifecycle.user.deleted'
+      title: '主体の墓石化の完了'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.deleted'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_deleted'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserLegalHoldSet:
+      name: 'example.id-domain.lifecycle.user.legal_hold.set'
+      title: '主体の法的保全の設定（反映の報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.legal_hold.set'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_legal_hold_set'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    UserLegalHoldReleased:
+      name: 'example.id-domain.lifecycle.user.legal_hold.released'
+      title: '主体の法的保全の解除（反映の報告が要る）'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.user.legal_hold.released'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_legal_hold_released'
+      x-freeze-class: GA
+      x-partition: principal:<sub>
+    RevocationBulk:
+      name: 'example.id-domain.lifecycle.revocation.bulk'
+      title: '大規模な権限剥奪の後始末の依頼'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CloudEventEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.revocation.bulk'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_revocation_bulk'
+      x-freeze-class: preview
+      x-preview-expires: '2027-10-15'
+      x-partition: 範囲に応じて tenant:<tid>・principal:<sub>・platform
+    DeletionReport:
+      name: 'example.id-domain.lifecycle.deletion.report'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ReportEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.deletion.report'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/DeletionReport'
+      x-freeze-class: GA
+    ReplayRequest:
+      name: 'example.id-domain.lifecycle.replay.request'
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ReportEnvelope'
+      x-cloudevents-type: 'example.id-domain.lifecycle.replay.request'
+      x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/ReplayRequest'
+      x-freeze-class: preview

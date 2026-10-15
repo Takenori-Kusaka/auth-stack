@@ -310,6 +310,7 @@ RS-03#29, #30, #57〜#59, #61〜#64, #66, #75／RS-04#4, #22, #60, #61, #71／RS
   - AuthZEN の Subject.type・Resource.type（N-18）、認可モデルの型名、監査の resource 型は、この値で揃える [N][^47][D]。
   - 認可エンジン固有の構文への写像は、生成ツールで持つ（ADR-011）[D]。
   - 横断型（user、tenant、group、client、workload、共有・ゲスト）は、基盤が所有する予約名前空間 `core` に置く [D]。各ドメインは type extension で拡張してよいが、既存の relation と重なる追加は拒否する [V][^29][D]（RS-17#85）。
+  - RS-18反映（2026-10-15、追記のみ。本 ADR の決定は変えない）: ARC-05 §3.6 は、テナント配下の組織の木を表す `core/unit` と管理委任範囲の `core/admin_scope` を上の横断型に加える案を決裁案 K05-6 として置いた [D][^48]。採用された場合、この 2 つの型名と relation 名（containment の `parent`、予約語 `ancestor`）は本条の不可逆な名前に加わる [D]。unit・葉ノードの ID は D21-09・D21-14 の不透明 ID とし、パス・テナント・業務上の意味を含めない。主体は D21-10 の sub と型の組 `(type, id)` で運び、依存サービスのデータモデルでも `user_id` ではなく `subject_id`＋`subject_type` で持つ（ARC-15 §3.9）[D]。
 - **D21-27** 名前の変更と廃止は次の規則に従う [D]。
   - データがある type・relation の削除と改名は、CI で拒否する [D]。
   - 改名は、追加 → 二重書込み → backfill → 旧参照の削除 → 旧定義の削除と墓石化、という多段の手順でだけ行う [V][^30][D]（RS-17#88）。
@@ -930,3 +931,4 @@ TC-ID は 12_poc（DL-22）で採番する（本書では仮番）[D]。時間�
 [^45]: IETF (K. Davis, B. Peabody, P. Leach)『RFC 9562: Universally Unique IDentifiers (UUIDs)』Proposed Standard, 2024-05. https://www.rfc-editor.org/rfc/rfc9562 （参照箇所: §5.4, §5.7, §8、確認日: 2026-10-15。統合時に取得。research 未収録）
 [^46]: IETF (W. Denniss, J. Bradley)『RFC 8252: OAuth 2.0 for Native Apps』BCP 212, 2017-10. https://www.rfc-editor.org/rfc/rfc8252 （参照箇所: §7.1、確認日: 2026-10-03。RS-17#8）
 [^47]: O. Gazitt, D. Brossard, A. Tulshibagwale (Eds.), OpenID AuthZEN WG『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §5 Information Model、確認日: 2026-10-03。RS-07#63）
+[^48]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 「ID は不透明な値と型の組にし、パスは属性に追い出す」, 「補足: user_id ではなく sub、client_id、act を分ける」、確認日: 2026-10-15。独立検証記録がなく、設計の入力としてだけ参照する。RS-18 のモデル例はエンジンの検証器を実行していない（ARC-05 残課題 16））

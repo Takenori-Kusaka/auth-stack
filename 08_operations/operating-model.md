@@ -1,6 +1,6 @@
 # 運用・要員モデル
 
-> 文書ID: OPS-02 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: OPS-02 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15（0.2: 模擬パネル ラウンド 3 の指摘により、§3.7 と DP-OM-5 に CTL-02 L-04 選択肢 B・ADR-013 D13-02／D13-46・日本からの運用参照の移転根拠との関係を加え、「他文書への申し送り」を新設した。末尾「レビュー記録」。模擬パネルは AI による自己レビューであり、実在の CTO・CISO・法務責任者の決裁ではない）
 > 対応要求: R-092, R-136, R-137, R-138, R-139, R-140, R-141, R-222, R-274, G-047, G-145（R-requirements.md・G-goal-criteria.md の対応成果物欄に本書のパスまたは DL-27 を含む全行。末尾の対応表）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-27、DL-43、DEC-4）, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0178）, 01_governance/assumptions-register.md（A-050〜A-054、A-090、A-101）, 01_governance/raci-governance.md（GOV-05）, 01_governance/stop-authority.md（GOV-06）, 01_governance/exception-risk-acceptance.md（GOV-07）, 01_governance/kri.md（K-30、K-31、KA-2、SRC-17）, 01_governance/business-impact-analysis.md（GOV-04）, 01_governance/durability-charter-20y.md（設計原則 7）, 03_threat-model/attacker-model.md（ATK-09、ATK-10、ATK-17）, 03_threat-model/fraud-abuse-controls.md（新規仮定 5）, 06_controls/applicability.md（NA-3）, 05_adr/README.md, ADR-001, ADR-005〜ADR-029（要員・on-call・変更・例外に関わる決定）, research/RS-15-build-buy-tco.md, research/RS-16-parallel-development-governance.md, research/RS-01-governance-risk.md（RS-01#5, #42）, research/RS-03-identity-lifecycle.md（RS-03#13）
 
@@ -87,6 +87,7 @@
 | durability-charter 設計原則 7 | on-call 人数の確定 | §3.2 |
 | CL-0178 | domain owner が型と継承規則を所有し、中央 schema 審査をボトルネックにしない | §2.1、§7.3 |
 | applicability NA-3 | 運用・support 要員と SOC の所在国 | §3.7、DP-OM-5 |
+| applicability L-04（選択肢 B を所在地指定テナントの契約オプションに推奨）、ADR-013 D13-02 | 運用アクセス元を所在国に限る選択肢と、法域パーティション間で運用アクセスを共有しない不可逆原則 | §3.7.1〜§3.7.3、DP-OM-5、他文書への申し送り |
 
 ---
 
@@ -244,6 +245,30 @@ flowchart LR
 
 - 運用・support 要員と外部委託 SOC の所在国は未定であり（applicability NA-3）、時差運用で他法域の要員が本番の個人データを遠隔参照すると、移転や米国 28 CFR Part 202 の懸念国アクセス規制の判定に効く [D]（06_controls/applicability.md）。
 - 本書は、本番の特権操作に関わる R1・R3・R4 を当面日本の単一拠点に置く案を推奨する（DP-OM-1、DP-OM-5）[D]。2 拠点化は、法務の判定（DL-34）が済み、cell の所在地と要員の参照範囲を一致させられる場合に限る [D]。
+- ただし、この推奨は CTL-02 L-04 の選択肢 B、ADR-013 D13-02 の不可逆原則、日本からの運用参照の移転根拠の 3 点と関係し、版 0.1 ではその関係を開示していなかった [D]。§3.7.1〜§3.7.3 に記す [D]。
+
+#### 3.7.1 CTL-02 L-04 選択肢 B との関係（版 0.2 で追加）
+
+- CTL-02 L-04 は、所在地指定テナント（基準 500）に「運用アクセス元も同じ国に限る」選択肢 B を契約オプションとして提供する案を推奨している [D][^24][A-062]。本書の推奨（R1・R3・R4 を当面日本だけに置く）では日本の要員しかいないため、EU・英国・米国の所在地指定テナントに B を提供できない [D]。
+- OPS-03 と DCS-07 の要員費・TCO には、日本以外の法域に置く運用要員の費用が入っていない [D]。両書が扱う拠点構成は、R1 の on-call 下限（単一拠点 8 名、または 2 拠点各 6 名）だけである [D]（08_operations/tco-vendor-lts.md §4、00_decision/07-organization-and-tco.md §3）。
+- したがって、L-04 の方針（期限 G0）と本書の所在国（DP-OM-5）は同時に決める必要がある [D]。選択肢は次の 2 つである [D]。
+  - **(a-1) 日本のみ。B は日本以外に提供しない**: 本書の推奨 (a) を維持し、L-04 B は日本の所在地指定テナントだけに提供する。EU・英国・米国の所在地指定テナントには A（他国からの運用アクセスを移転として根拠を整える）だけを提供する。運用アクセス元の限定を契約条件にする顧客を失う可能性がある。失注の量は推計していない（A-062 の 500 のうち日本以外の比率は前提台帳にない）[D][A-062]。
+  - **(a-2) 日本の R1・R3・R4 に加え、B を提供する法域ごとに法域内の運用要員を置く**: その法域の cell に限った参照権を持つ要員を置く。法域内で 24/365 を回すなら、単一拠点 8 名が 1 法域あたりの目安になり [V][^10]（RS-15#70）、EU・英国と米国の 2 法域で最大 ＋16 名の桁になる [D]。営業時間内の対応だけを法域内に置く構成なら人数は下がるが、B の約束の範囲（夜間の障害対応を含むか）を契約で定める必要がある [D]。人数と費用は OPS-03 に追加する（他文書への申し送り 4）[D]。
+- 決める人は CTO＋CISO＋法務責任者＋CFO、期限は G0（L-04 の方針と同時）とする（DP-OM-5）[D]。G0 では方針を決め、(a-2) を採る場合の人数は G3 の DEC-4 で確約する [D]。
+
+#### 3.7.2 ADR-013 D13-02 の「運用アクセスを共有しない」の意味（版 0.2 で追加）
+
+- ADR-013 D13-02（不可逆）は、法域パーティション（日本／EU・英国／米国）を「データ・鍵・運用アクセスを共有しない硬い境界」とする [D][^25]。一方、D13-46 は全 cell を on-call 1 系統の fleet で運用し、cell ごと・地域ごとの on-call を置かないとする [D][^25]。
+- 2 つが両立するのは、「運用アクセスを共有しない」を**資格情報と参照範囲の分離**（パーティションごとに別の資格情報・権限・記録とし、同じ要員が切り替えて入る）と読む場合に限られる [D]。**要員の分離**（パーティションごとに別の要員）と読めば、D13-46 の fleet 1 系統と、本書の日本単一拠点の推奨はどちらも成り立たない [D]。ADR-013 はどちらの読みかを確定していない [D]。
+- 本書の FTE（§4）と DP-OM-1・DP-OM-5 の推奨は、資格情報と参照範囲の分離の読みを前提にしている [D]。D13-02 は不可逆決定なので、この定義を DEC-3 §4.3 の議題に加えることを申し送る（他文書への申し送り 1）[D]。要員の分離に決まった場合は、§3.2 の人数下限がパーティションごとにかかり、DP-OM-1・DP-OM-2 を再決裁する [D]。
+
+#### 3.7.3 日本からの運用参照の移転根拠（版 0.2 で追加）
+
+- EDPB の Guidelines 05/2021 は、第三国からの遠隔アクセスは画面表示だけでも、3 要件を満たせば移転に当たるとしている [N][^26]（RS-10#72）。ARC-10 §9.2 は他法域からの参照を移転として扱う [D][^27]。このため、日本の R1・R3・R4 が EU・英国パーティションを参照する運用には、EU・英国から日本への移転の根拠が要る [D]。
+- 根拠の候補は、欧州委員会の日本に対する十分性認定（RS-10#74）[N][^28]と、SCC 等の適切な保護措置（GDPR 46 条、RS-02#47）である [D]。英国から日本への移転の扱い（英国側の十分性の判断）は research で確認していない（RS-02 §6 の 11）[D]。
+- 十分性認定に依拠する場合、個人情報保護委員会の『EU 及び英国域内から十分性認定により移転を受けた個人データの取扱いに関する補完的ルール』が、移転される個人データを受領する個人情報取扱事業者を拘束する [N][^29]。同ルールは英国域内から十分性認定により移転を受けた個人データも対象とする [N][^29]。同ルールの (3) は、EU 又は英国域内から十分性認定に基づき提供を受けた個人データを外国にある第三者へ提供する場合、所定の 3 つの場合を除き、あらかじめ本人の同意を得ることとしている [N][^29]。(1) は、GDPR 等で特別な種類の個人データとされる性生活、性的指向又は労働組合に関する情報を、要配慮個人情報と同様に扱うことを求める [N][^29]。
+- 本書の運用に関係しうるのは、日本で参照した EU・英国由来のデータを米国の vendor support や外部 SOC に再提供する経路が (3) の対象になりうる点である [D]。該当するか、十分性認定と SCC のどちらに依拠するかは**判定保留**とする（所有者: 法務責任者、期限: G3）[D]。判定は CTL-02 §3.5・§6.1 と ARC-10 §9.2 に行を加えて記録する（他文書への申し送り 2・3）[D]。
+- 補完的ルールは research に未登録である。本書は原典 PDF を直接確認して引いたが、作成者以外の照合は済んでいない [D]。確認した版は表紙に「令和４年４月」とあるもので、それ以降の改正の有無は確認していない [D]。research への登録を申し送る（他文書への申し送り 3）[D]。
 
 ---
 
@@ -656,7 +681,7 @@ flowchart TB
 | DP-OM-2 | 定常要員の確約幅（RACI-34） | (a) A-054 の 24 FTE のまま、(b) 約 48 FTE（本書の推奨の読みの下限）を G3 で確約し、上限 66 までを Gate ごとの実測で追加、(c) 約 66 FTE を一括で確約 | (b) | (a) は §4.3 のとおり ADR 群の運用が成り立たず、PB-1〜PB-3 に移る。(b) は要員費が年約 4.8 億円以上になる。(c) は重複分を先払いする | CEO（経営会議）＋CFO。G3、DEC-4 |
 | DP-OM-3 | ADR の増分を A-054 の内数とするか外数とするか（ADR-009、011、014、016、026） | (a) すべて内数（内訳の再配分）、(b) 本書 §4.2 のとおり外数、(c) ADR ごとに判断 | (b) | (a) は SRE の不足を解消できず、SDK・認可の中核業務と競合する（ADR-012 §6.5）。(b) は DP-OM-2 の幅に反映済み | CTO。G3 |
 | DP-OM-4 | セキュリティ当番・ITDR・鍵の二者の 24/365（GOV-06 新規仮定①④、THR-04 新規仮定 5） | (a) CISO 組織が自前で当番を回す（類推の下限 8 名）、(b) 外部 SOC が監視し、K1・K2・S5 の判断と二者の片側は社内の有資格者が呼出しで担う、(c) 置かない | (b)＋鍵の二者は §3.5 (a)（R1・R3 の全員を有資格に育成） | (b) は SOC の契約に所在国（NA-3）と通知時間の条項が要る。(c) は PB-4 により Gate 6 に入れない | CISO＋CFO。G3 |
-| DP-OM-5 | 本番の特権操作に関わる要員の所在国（applicability NA-3） | (a) 当面は日本のみ、(b) 時差運用で EU・米国を含む | (a) | (b) は DL-34 の判定と cell 単位の参照範囲の制限が前提になる | CISO＋CTO＋法務責任者。G3 |
+| DP-OM-5 | 本番の特権操作に関わる要員の所在国（applicability NA-3）と CTL-02 L-04 選択肢 B の提供範囲（§3.7.1） | (a-1) 当面は日本のみとし、L-04 B は日本以外の所在地指定テナントに提供しない、(a-2) 日本の R1・R3・R4 に加え、B を提供する法域ごとに法域内の運用要員を置く（人数・費用は OPS-03 に追加）、(b) 時差運用で EU・米国を含む | (a-1)。G0 までに B の需要が示された法域があれば、その法域に限り (a-2) | (a-1) は運用アクセス元の限定を求める顧客を失う可能性がある。(a-2) は 1 法域で 24/365 を回すなら単一拠点 8 名が目安で、費用は OPS-03・DCS-07 の幅の外になる。(b) は DL-34 の判定と cell 単位の参照範囲の制限が前提になる。いずれも ADR-013 D13-02 の定義（§3.7.2）と日本からの EU・英国参照の移転根拠（§3.7.3、判定保留）に依存する | CTO＋CISO＋法務責任者＋CFO。G0（L-04 の方針と同時）。(a-2) の人数は G3（DEC-4） |
 | DP-OM-6 | 移行専任チーム（ADR-027 K27-3） | (a) 専任チームを置く（10^1 FTE の桁）、(b) 各ドメインの兼務 | (a) | (b) は差分調査が滞留し K-31 の待ちになる（ADR-027 K27-3） | CTO＋CFO。G3（DL-43） |
 | DP-OM-7 | 単一ベンダー依存の重要手順（K-30 (d)） | (a) 0 件を目標にする、(b) 許容件数を置く | (a) | 委託比率（OM-N6）が高い場合、社内有資格者の育成が先行条件になる | CTO＋調達責任者。G3 |
 | DP-OM-8 | 連携開発者向け文書と窓口の言語 | (a) 日本語のみ、(b) 文書は日英、窓口は日本語、(c) 文書・窓口とも日英 | (b) を暫定とし、A-052 の委託先の構成を確認して確定 | (c) は窓口要員の要件が増える | プラットフォームチーム長＋調達責任者。G4 前 |
@@ -724,9 +749,37 @@ R・G の定義と区分は R-requirements.md[^3]と G-goal-criteria.md[^4]に�
 | 12 | 第2線・内部監査・CISO 組織の人員（GOV-05 新規仮定②） | CFO＋人事責任者 | Gate 0／DEC-4 |
 | 13 | 本書の重要手順一覧と DL-24 の runbook の照合 | SRE 責任者 | DL-24 確定時 |
 | 14 | 本書の作成者以外による原典照合と、FTE 集計の検算 | traceability/ の照合担当 | Phase 4 |
+| 15 | DP-OM-5 と CTL-02 L-04 の同時決定（§3.7.1） | CTO＋CISO＋法務責任者＋CFO | G0 |
+| 16 | ADR-013 D13-02「運用アクセスを共有しない」の定義の確定（§3.7.2） | CTO＋CISO（DEC-3） | DEC-3 |
+| 17 | 日本からの EU・英国パーティション参照の移転根拠と補完的ルールの適用の判定、補完的ルールの research 登録と照合（§3.7.3） | 法務責任者、traceability/ の照合担当 | G3 |
 
 - 上表の未達項目は DL-110（traceability/open-items.md）で追跡する [D]。
 - 本書の判断はすべて AI エージェントの起草であり、模擬パネルを含め実在の CTO/CISO の決裁ではない [D][^1]。
+
+---
+
+## 他文書への申し送り
+
+本書以外は編集していない（並行作業中のため）[D]。次の修正を各文書の所有者に申し送る [D]。
+
+| # | 申し送り先 | 内容 | 根拠（本書の節） | 期限 |
+|---|---|---|---|---|
+| 1 | 00_decision/03-decision-items.md（DCS-03）§4.3.2、05_adr/reconciliation-notes.md | ADR-013 D13-02 の「運用アクセスを共有しない」が資格情報・参照範囲の分離か、要員の分離かを DEC-3 の議題に加える。D13-46（fleet 1 系統）との整合を reconciliation-notes に記録する | §3.7.2 | DEC-3 |
+| 2 | 06_controls/applicability.md（CTL-02）§3.5・§6.1・L-04 | 日本からの運用参照の移転根拠の行（十分性認定か SCC か、補完的ルールの適用。判定保留、所有者: 法務責任者、期限: G3）を加える。L-04 の帰結に「B の提供には法域内の運用要員が要り、OPS-02 DP-OM-5 と同時に決める」を加える | §3.7.1、§3.7.3 | G0（L-04）、G3（移転根拠） |
+| 3 | 04_architecture/audit-privacy.md（ARC-10）§9.2、research（RS-02 または RS-10）、research/standards-status.md | §9.2 に日本からの参照の移転根拠の行を加える。補完的ルール（脚注 29）を research に取得・登録し、作成者以外が照合する | §3.7.3 | G3 |
+| 4 | 08_operations/tco-vendor-lts.md（OPS-03）、00_decision/07-organization-and-tco.md（DCS-07）§3 | DP-OM-5 で (a-2) を採る場合の法域内運用要員の人数と費用を幅に加える。DCS-07 の「当面は日本の単一拠点」の記載に、L-04 B を日本以外に提供しない帰結を併記する | §3.7.1 | G3（DEC-4） |
+| 5 | 00_decision/05-residual-risk-register.md（DCS-05）RRG-054 | 出典欄に、日本からの運用参照の移転根拠の喪失（十分性認定の変更、補完的ルールの不遵守を含む）と OPS-02 §3.7.3 を加える | §3.7.3 | G3（AC-G3） |
+| 6 | 05_adr/ADR-013-cell-partitioning-fail-mode.md D13-02 | 申し送り 1 の決定後、D13-02 本文に定義を注記する | §3.7.2 | DEC-3 |
+
+---
+
+## レビュー記録
+
+模擬パネルは AI エージェントによる自己レビューであり、実在の CTO・CISO・法務責任者の決裁ではない [D][^1]。本節には、本書が是正の対象になったラウンド 3 の記録を置く [D]。
+
+| ラウンド | # | 重大度 | 指摘（要旨） | 対応 |
+|---|---|---|---|---|
+| 3 | 1 | High | CTL-02 L-04 の選択肢 B（運用アクセス元を同じ国に限る）の推奨と、本書 DP-OM-5 (a)（R1・R3・R4 を日本だけに置く）が両立せず、OPS-03・DCS-07 に法域内運用要員の費用もない。ADR-013 D13-02 の「運用アクセスを共有しない」と D13-46 の fleet 1 系統の関係が未確定。日本から EU・英国を参照する場合の移転根拠と、個人情報保護委員会の補完的ルールへの言及がない（指摘者: legal） | 対応済み（本書の範囲）。(a) §3.7.1 を新設し、L-04 B との関係と選択肢 (a-1)・(a-2) を記載した。DP-OM-5 を (a-1)・(a-2)・(b) に改め、決める人を CTO＋CISO＋法務責任者＋CFO、期限を G0（L-04 の方針と同時）とした [D][^24]。(b) §3.7.2 に D13-02 と D13-46 の両立条件を記載し、DEC-3 §4.3 の議題化と reconciliation-notes への記録を申し送った [D][^25]。(c) §3.7.3 に移転根拠の論点を記載した。EDPB Guidelines 05/2021（RS-10#72）[^26]、欧州委員会の十分性認定ページ（RS-10#74）[^28]、補完的ルールの原典[^29]を確認して引いた。判定は保留（法務責任者、G3）とし、CTL-02・ARC-10 への行の追加と research への登録を申し送った。(d) RRG-054 の出典欄への追加を申し送った。残課題 15〜17 を追加した。他文書は編集していない |
 
 ---
 
@@ -755,3 +808,9 @@ R・G の定義と区分は R-requirements.md[^3]と G-goal-criteria.md[^4]に�
 [^21]: NACD / Internet Security Alliance『Director's Handbook on Cyber-Risk Oversight』Fifth Edition, 2026. https://www.nacdonline.org/globalassets/public-pdfs/2026_directors-handbook-cyber-risk_accessible.pdf （参照箇所: Principle Five pp.24–27、確認日: 2026-10-03。RS-01#42。正式公表日は未確認）
 [^22]: デジタル庁『令和6年度 共同利用方式の推進及びマルチベンダーにおけるシステム間連携の検証事業 報告書（本紙）』2026-03-27. https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/92d70acb-8407-4f60-8b45-363d9a2d358d/c71cd4d5/20260327_policies_local_governments_government-cloud-vendor-verification_01.pdf （表紙の日付は令和8年3月。2026-03-27 はファイル名による）（参照箇所: p.2, p.7 総括（2/5）のオ・カ・キ、確認日: 2026-10-03。RS-16#79）
 [^23]: NIST『The NIST Cybersecurity Framework (CSF) 2.0』CSWP 29, 2024-02-26. https://doi.org/10.6028/NIST.CSWP.29 （参照箇所: Appendix A GV.RR-01〜03、確認日: 2026-10-03。RS-01#5）
+[^24]: 本リポジトリ『適用性判定』. 06_controls/applicability.md （参照箇所: L-04 データ所在地と越境アクセスの方針、NA-3、確認日: 2026-10-15）
+[^25]: 本リポジトリ『ADR-013 cell 分割と fail mode』. 05_adr/ADR-013-cell-partitioning-fail-mode.md （参照箇所: D13-02, D13-04, D13-46、確認日: 2026-10-15）
+[^26]: European Data Protection Board『Guidelines 05/2021 on the Interplay between the application of Article 3 and the provisions on international transfers as per Chapter V of the GDPR』Version 2.0, Adopted 2023-02-14. https://www.edpb.europa.eu/system/files/documents/2023-02/edpb_guidelines_05-2021_interplay_between_the_application_of_art3-chapter_v_of_the_gdpr_v2_en_0.pdf （参照箇所: §2.2、Example 11、確認日: 2026-10-03。RS-10#72）
+[^27]: 本リポジトリ『監査・プライバシー設計』. 04_architecture/audit-privacy.md （参照箇所: §9.2 越境参照（AP-40）、確認日: 2026-10-15）
+[^28]: European Commission『Adequacy decisions — How the EU determines if a non-EU country has an adequate level of data protection』. https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/adequacy-decisions_en （参照箇所: Japan の項、確認日: 2026-10-03。RS-10#74）
+[^29]: 個人情報保護委員会『個人情報の保護に関する法律に係るＥＵ及び英国域内から十分性認定により移転を受けた個人データの取扱いに関する補完的ルール』令和４年４月. https://www.ppc.go.jp/files/pdf/Supplementary_Rules.pdf （参照箇所: 前文（受領する個人情報取扱事業者を拘束すること、英国域内からの移転も対象とすること）、(1) 要配慮個人情報、(3) 外国にある第三者への提供の制限、確認日: 2026-10-15。research 未登録）

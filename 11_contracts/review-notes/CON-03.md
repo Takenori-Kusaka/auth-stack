@@ -1,6 +1,6 @@
 # CON-03 Authorization API 独立レビュー記録
 
-> 文書ID: CON-03（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-03-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-098, R-144, R-205（DL-72）、G-066, G-120, G-121
 > 依存文書: 11_contracts/authorization-api.openapi.yaml, CONVENTIONS.md, traceability/deliverables.md（DL-72）, 05_adr/ADR-010, ADR-011, ADR-013, ADR-016, ADR-021, ADR-022, ADR-025, 04_architecture/authorization-model.md（ARC-05）, 04_architecture/pep-contract.md（ARC-06）, 11_contracts/schemas/common.schema.json（CON-02）, research/RS-07-authz-engines-consistency.md, research/standards-status.md
 

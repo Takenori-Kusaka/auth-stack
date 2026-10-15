@@ -1,6 +1,7 @@
 # RS-09 独立検証記録（レジリエンス・cell・fail mode）
 
 > 文書ID: RS-09-VER / 版: 1.0 / 状態: review / 最終更新: 2026-10-03
+> 対応要求: RS-09 と同じ（R-077〜R-087（操作階層別の数値・整合性・PDP不達時挙動・監査不能時挙動・代替経路・限定grace・一律値撤回）, R-099（PDP topology・cell・fault domain）, R-111（kill switch）, R-116（PDP隔離）, R-149〜R-157（段階展開・tenant/domain封じ込め・per-tenant store・quota・cell・段階rollout・緊急freeze・既知良好版復帰・global集約時の実証）, R-174（障害注入）, R-179・R-180（導入順序・自動rollback条件）, R-192・R-194（可用性・変更の数値契約）, R-207（被害を1テナント/1サービス/1期間に封じ込める論証）, R-210（安全な縮退・復旧・rollback））
 > 対象: research/RS-09-resilience-cell-failmode.md（検証前 v0.1 → 検証後 v0.2）
 > 依存文書: CONVENTIONS.md, research/RS-09-resilience-cell-failmode.md
 > 検証者: AI エージェント（Claude）。RS-09 の作成者とは別のエージェントが実施した。人間による検証ではない。

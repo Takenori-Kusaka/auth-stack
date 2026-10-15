@@ -1,8 +1,9 @@
 # 認可モデリングガイド
 
-> 文書ID: INT-03 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-03 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-252, R-256, G-107, G-108, G-115, G-116, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-65 を含む全行）。成果物計画の DL-65 行が挙げる R-098, R-147, R-148, R-205 も対応表に含める
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-65）, 04_architecture/authorization-model.md（ARC-05。本書の上位仕様）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-021・ADR-024・ADR-025・ADR-029（設計判断の正本）, 05_adr/reconciliation-notes.md, 11_contracts/relationship-model-registry.openapi.yaml（CON-04、DL-73）, 11_contracts/authorization-api.openapi.yaml（CON-03、DL-72）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 02_requirements/customer-admin-responsibility.md（DL-26）, 01_governance/raci-governance.md（GOV-05 §6）, 01_governance/assumptions-register.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-026〜T-034, T-080）, 07_slo/numeric-contracts.md（SLI-040〜SLI-043）, 12_poc/preregistered-test-plan.md, research/RS-07, RS-17（各 verification 記録を含む）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-65）, 04_architecture/authorization-model.md（ARC-05。本書の上位仕様）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-021・ADR-024・ADR-025・ADR-029（設計判断の正本）, 05_adr/reconciliation-notes.md, 11_contracts/relationship-model-registry.openapi.yaml（CON-04、DL-73）, 11_contracts/authorization-api.openapi.yaml（CON-03、DL-72）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 02_requirements/customer-admin-responsibility.md（DL-26）, 01_governance/raci-governance.md（GOV-05 §6）, 01_governance/assumptions-register.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-026〜T-034, T-080）, 07_slo/numeric-contracts.md（SLI-040〜SLI-043）, 12_poc/preregistered-test-plan.md, research/RS-07, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md
+> 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・調査ノートから起草した。ADR に反する設計は置いていない。ADR で決まっていない点は「未決（ADR-0xx）」と書いた。§9 の例は作成者が手作業で OpenFGA DSL と SpiceDB schema に写し、公式 CLI で予備実行した（§9.0。証拠 E4 には数えない）。その後、起草者と別の AI エージェント（Claude）が独立レビューを行い修正した（末尾「レビュー記録」）。実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。
 
 ---
@@ -12,10 +13,10 @@
 1. **モデルは要件の平文から始め、役割名からは始めない。各要件は「G 段（基盤の deny）」「R 段の関係」「R 段の条件」「業務 workflow」「アプリ内の制御」の 5 か所のどれに置くかを §3 の判定図で先に決める** [D]。OpenFGA の公式手順も「利用者が対象に操作できるのはどの場合か」という平文から始め、「role」から始めると誤った方向に進み得ると述べている [V][^1]（RS-17#84）。テナント境界・主体停止・認証強度などは G 段の 6 規則で基盤が評価するので、ドメインのモデルに書かない（ADR-011 D1-2）[D]。
 2. **ドメインが所有するのは自分の名前空間の型・relation・permission と、その試験・宣言（深度、fanout、一覧方式、書込権限）だけである。横断型・deny・越境共有は基盤が所有し、中央の関与は自動ゲートと権限拡大の非同期レビューに限る** [D]（ADR-011 D2-6、ADR-021 D21-25・D21-26、GOV-05 §6.1・§6.4）。変更は M0〜M3 に自動判定され、登録 → CI 検査 → shadow → canary cell → wave → テナント固定の更新の 6 段を通る（ADR-016 D16-31）[D]。審査 SLA の値は未決で、PoC の実測を受けて CTO が決める（GOV-05 DP-6、期限 Gate 3）[D]。
 3. **巨大ロール表は「関係を資源に付ける」「custom role はデータで表し委譲可の permission だけを入れる」「属性は型付き relation に写す」の 3 つで避ける** [D]（ADR-011 D1-3・D4-1〜D4-3）。資源名・拠点名・金額帯を役割名に埋め込んだ時点で表は資源数と条件の積で増える [D]。Google Cloud は数千の権限を含む basic role を本番で付与しないよう述べ、custom role は自動で更新されず利用者が保守するとしている [V][^6]（RS-17#89）。
-4. **6 ドメイン（ファイル共有、組織・拠点・ツール、プロジェクト管理、医療記録、金融取引承認、管理コンソール）の、要件から試験までの通しの例を §9 に置いた。作成者の予備実行では、OpenFGA CLI v0.7.4 の `fga model test` で 73 件の Check と 1 件の ListObjects、zed v0.30.2 の `zed validate` で 72 件の assertion がすべて期待どおりだった** [M]（予備実行。TC 未採番、生データは作成者の一時作業領域にあり本リポジトリ未保存。CAM 生成器を通しておらず、試験した engine は RS-07 の確認版より古い。E4 には数えない）。正式な検証は TC-ARC05-10・TC-ARC05-11（DL-22 の TC-013）で行う [D]。
+4. **6 ドメイン（ファイル共有、組織・拠点・ツール、プロジェクト管理、医療記録、金融取引承認、管理コンソール）の、要件から試験までの通しの例を §9 に置いた。作成者の予備実行では、OpenFGA CLI v0.7.4 の `fga model test` で 73 件の Check と 1 件の ListObjects、zed v0.30.2 の `zed validate` で 72 件の assertion がすべて期待どおりだった** [M]（予備実行。TC 未採番、生データは作成者の一時作業領域にあり本リポジトリ未保存。CAM 生成器を通しておらず、試験した engine は RS-07 の確認版より古い。E4 には数えない）。v0.5 で全例を CAM での書き方（§4.4）に書き直し、CON-04 v0.2.0 の `CamModule` の JSON Schema で検証して誤り 0 件を確かめた [M]（自前の確認。§9.0。書き直し後の engine での再実行は未実施）。正式な検証は TC-ARC05-10・TC-ARC05-11（DL-22 の TC-013）で行う [D]。
 5. **表せない要件は 3 類型に限られる。承認の定足数と内容への束縛、職務分離（自己承認の禁止・相反役割の同時保持）、件数上限である** [D]。それぞれ workflow・書込検査・業務側の rate 制御に置き、ReBAC で近似しない（§10.2 の要件カタログ、ARC-05 §8.7）[D]。
-6. **基盤の完成を待たずに、連携開発者は本書・CON-03・CON-04・CON-11 のモックと engine 公式 CLI だけでモデル設計・モデル試験・アプリの契約試験を始められる（§15）。ただし CAM の式の文法、試験ケースの提出形式、変更区分（M0〜M3）の返却欄が契約に未定義で、正式登録（`validateModel`）はこれらの確定後になる** [D]（§15.3）。
-7. **新たな決裁は 4 件（§13）。最大の論点は、組織の木（unit）を core 型に昇格するかと、組織の木を辿る継承で解決深度の設計値 8 [A-036] を超える問題の扱いである** [D]。閉じ方は、机上（A）で閉じるのが R-252・R-256・R-098・G-107 の 4 件、組織決定（B）が G-116 の 1 件、実測（C）が残る 6 件である（末尾の対応表）[D]。
+6. **基盤の完成を待たずに、連携開発者は本書・CON-03・CON-04・CON-11 のモックと engine 公式 CLI だけでモデル設計・モデル試験・アプリの契約試験を始められる（§15）。CAM の式の文法（CAM 式 v0）、試験ケースの提出形式、変更区分（M0〜M3）の返却欄、意味の変更の申告欄、条件カタログの列挙、階層サービス API は CON-04 v0.2.0 に preview として定義した。残る待ちは、条件カタログの引数の確定、階層の決裁（ARC-05 K05-6〜K05-8）、CAM 生成器と `validateModel` の提供である** [D]（§15.3）。
+7. **新たな決裁は 4 件（§13）。最大の論点は、組織の木（unit）を core 型に昇格するかと、組織の木を辿る継承で解決深度の設計値 8 [A-036] を超える問題の扱いである** [D]。RS-18反映（2026-10-15）: ARC-05 v0.3 §3.6 が、`core/tenant`・`core/unit`（単一親の再帰コンテナ、`kind` 属性）・`core/group`（n:n）・`core/admin_scope`（非ネストの委任範囲）の 4 型、containment の `parent` 統一、祖先閉包 `ancestor` の事前計算を決裁案 K05-6〜K05-8 として置いた。INT03-K1・K2 は同じ論点なので ARC-05 の決裁と 1 回にまとめる [D][^28]。閉じ方は、机上（A）で閉じるのが R-252・R-256・R-098・G-107 の 4 件、組織決定（B）が G-116 の 1 件、実測（C）が残る 6 件である（末尾の対応表）[D]。
 
 ---
 
@@ -32,8 +33,9 @@
 
 ### 1.2 表記
 
-- モデルは ARC-05 §8.1 と同じ擬似表記で書く [D]。`a | b` は和、`a & b` は積、`a - b` は exclusion（core が生成するものに限る）、`x->r` は relation `x` が指す object の relation `r`、`[T]` は直接型、`with c` は条件である [D]。
-- CAM の正式な文法は CAM 仕様（ADR-011 D2-3）で公開する。CON-04 の `CamPermission.expression` は CAM 文書を JSON 文字列で運ぶだけで、構文は登録時の検証で判定する [D]。
+- permission の式は CON-04 v0.2.0 の CAM 式 v0（`info.description` §9 の EBNF）で書く [D]。`a | b` は和、`a & b` は積、`a - b` は exclusion（core モジュールに限る。E-6）、`x->r` は relation `x` が指す object の relation `r`（tuple-to-userset）である [D]。ARC-05 §8.1 の擬似表記と同じ記号で、本書・ARC-05・CON-04 の例の表記を 1 つにした [D]。
+- 異なる演算子を括弧なしで並べない（`(a | b) & c` と書く。E-2）[D]。SpiceDB は和 `+` を `&`・`-` より優先して評価する [V][^29] ため、CAM は優先順位を定義せず括弧を必須にした（CON-04 §9.2）[D]。`x->r` の `x` は直接型だけを持つ relation に限る（E-3）。OpenFGA は `from` の後の relation（tupleset）が他の relation を参照することを許さない [V][^30] [D]。
+- 本書のモデルの中の `[T]`（直接型）と `with c`（条件）は CAM の `CamRelation.directly_related`・`conditions` を読みやすく書いた形で、式の文法には含まれない（E-7）[D]。`relations` の行には直接型と条件だけを書き、和・積・arrow を含む式は `permissions` の行にだけ書く（§4.4 N-22）[D]。v0.4 までの例にあった `editor: [T] | owner | parent->editor` の形（relation に式を混ぜる形）は CON-04 の `CamRelation` で表せないので使わない [D]。
 - 条件 ID は CAM 上の名前（`c.not_expired`）で書く。各 engine の識別子（`c_not_expired`）への写像は生成器が持つ（ARC-05 §3.5）[D]。
 - 表の各行の根拠は「根拠」列に書き、列のない表は本文の注記で根拠を示す。セルごとのタグは省略し、本注記で代える [D]。
 
@@ -43,10 +45,10 @@
 |---|---|---|---|
 | D-1 | 要件を平文で書き、操作階層（REQ-03）を付ける | §3.1 | 未登録の操作は本番に出ない（REQ-03 J10） |
 | D-2 | 名前空間コードを申請する | §4.1 | `/v1/namespace-requests` の自動検査 3 種 |
-| D-3 | 型・relation・permission を X-1〜X-10 と §4 の命名規約で書く | §3, §4 | `validateModel` の lint 群 |
+| D-3 | 型・relation・permission を X-1〜X-10 と §4 の命名規約で書く。直接付与は relation、計算は permission に分ける（§4.4） | §3, §4 | `validateModel` の lint 群 |
 | D-4 | 深度・fanout・一覧方式・書込宣言を宣言する | §7 | `lint_recursion_depth`, `depth_fanout_budget`, `lint_write_declaration` |
-| D-5 | 全 relation の肯定・否定試験と越境の否定試験を書く | §8.2 | `positive_negative_tests`, `cross_tenant_negative_tests` |
-| D-6 | CI から `validateModel` を呼び、合格後に `registerModel` で登録する | §8.3 | M0〜M3 の自動判定 |
+| D-5 | 全 relation の肯定・否定試験と越境の否定試験を書く（CON-04 `ModelChangeRequest.tests`）。意味の変更があれば `semantic_change` で申告する | §8.2 | `positive_negative_tests`, `cross_tenant_negative_tests`（`test_summary.uncovered_relations`） |
+| D-6 | CI から `validateModel` を呼び、合格後に `registerModel` で登録する | §8.3 | M0〜M3 の自動判定（`ValidationReport.change_class`） |
 | D-7 | shadow・canary・wave の結果を確認し、テナント固定の更新まで追う | §8.4 | `getShadowRun` の `gate_result` |
 | D-8 | relation ごとに「その tuple の書込を認可する permission」を決め、書込前に判定する（書込対応表） | §3.1 段 7 | 契約試験の負例（DL-80） |
 | D-9 | tuple の書込順序（剥奪は同期で先に確定、付与は outbox 可）、移動の 1 要求化、整合性トークンの保存、差分照合を実装する | ARC-05 §1.3 I-4〜I-7 | 契約試験の順序族（CON-11 §6.3） |
@@ -176,13 +178,15 @@ flowchart TD
 | # | 規約 | 良い例 | 悪い例 | 根拠 |
 |---|---|---|---|---|
 | N-7 | 型は `<名前空間コード>/<型名>`。型名は業務上の物の名詞の単数形 | `files/folder`, `fin/payment` | `files/folders`, `files/folder_v2`, `dms_team_a/doc` | ADR-021 D21-26、ARC-05 X-1 |
-| N-8 | relation は名詞（主体の役割）、permission は動詞 | relation `approver`、permission `approve` | relation `can_approve`、permission `approver` | ARC-05 X-2 |
-| N-9 | 再帰する包含（同じ型の入れ子）は `parent` だけで表す。再帰しない参照は役割の名詞（`project`, `account`, `unit`, `site`）にする | `files/folder#parent` | 包含に `container`、`higher` などを使う再帰 | ARC-05 X-7。命名の揃えは §13 INT03-K1 で再検討 |
+| N-8 | relation は名詞（主体の役割）、permission は動詞。例外は保持者集合の permission（§4.4 N-23）で、relation 名の複数形にする | relation `approver`、permission `approve`、保持者集合 `editors` | relation `can_approve`、permission `approver` | ARC-05 X-2。例外は CON-04 `CamRelation` が式を持てないことによる本書の規則 [D] |
+| N-9 | 再帰する包含（同じ型の入れ子）は `parent` だけで表す。再帰しない参照は役割の名詞（`project`, `account`, `unit`, `site`）にする。RS-18反映（2026-10-15）: ARC-05 X-11・X-12（K05-7、決裁前）が採られた場合は、再帰しない包含（タスク→プロジェクト、プロジェクト→unit、拠点→unit）も `parent`（単一値、型付きの直接型）に揃え、包含でない参照（所管部署・担当チーム）だけを役割名（`owning_unit`, `care_team`）にする | `files/folder#parent`、（K05-7 採用後）`proj/task#parent: [proj/project]` | 包含に `container`、`higher` などを使う再帰。（K05-7 採用後）包含を `unit`・`project` と書く | ARC-05 X-7・X-11・X-12。§9 の例は予備実行済みの v0.2 の名前のまま（§9.2 の写像表） |
 | N-10 | 識別子は英小文字始まり、英小文字・数字・下線、末尾英数字（案）。長さは relation 3〜64 文字（CON-04 `RelationName`） | `restricted_external` 以外の予約語を避けた `share_external` | `Read`, `x`, `share-ext` | ARC-05 X-2。SpiceDB の識別子規則 [V][^25] に先頭英字を足した案で、OpenFGA の識別子規則は未確認（TC-ARC05-10） |
 | N-11 | 条件の有無・資源名・拠点名・金額を名前に入れない | permission `read` に `c.network_zone` を付ける | `read_from_office`, `tokyo_viewer`, `approve_under_1m` | §5 |
 | N-12 | 予約語（`restricted_external`, `restricted_external_inherited`, `external_member` など core が使う名前）をドメインで定義しない | — | ドメイン型に `restricted_external` を自作 | ARC-05 X-2・X-5 |
 | N-13 | 改名はしない。必要なら追加 → 二重書込 → backfill → 旧参照削除 → 旧定義削除の M2 手順で行い、旧名は再利用しない | — | relation のその場の改名 | ARC-05 X-10、ADR-021 D21-27。SpiceDB はデータがある relation の削除を拒否し、この多段手順を示す [V][^5]（RS-17#88） |
 | N-14 | 他ドメインから参照される relation は `public: true` を宣言し、その変更は破壊的変更の検査対象になる | `org/site#enter_system` を公開 | 非公開 relation を他ドメインが参照 | ARC-05 X-4、CON-04 `CamRelation.public` |
+| N-20（RS-18反映（2026-10-15）） | 組織の木はドメインで作らない。部署・子会社・支社は基盤の `core/unit`（呼び名は `kind` の表示名）、管理委任の範囲は `core/admin_scope` を参照する（K05-6 の決裁後）。型名に `organization`・`org` を使わない | ドメインの葉ノードを `parent: [core/unit, core/tenant]` でぶら下げる | ドメイン型 `hr/department`・`sales/branch` を並立させる | ARC-05 §3.6.1、K05-6 |
+| N-21（同上） | `ancestor` は予約語。ドメインは定義・書込みせず、permission の式で `ancestor->manage` のように参照だけする（K05-8 の決裁後） | `view = member \| ancestor->manage` | ドメインが祖先 tuple を自前で書く | ARC-05 X-13 |
 | N-15 | arrow（`x->r`）の右辺は permission を指すことを推奨する | `site->enter_system`（permission） | `tenant->admin`（core の relation を直接指す） | 予備実行で zed v0.30.2 が relation を指す arrow に `arrow-references-relation` の警告を 8 件出した [M]（予備、§9.0）。core 側に参照用の公開 permission を置く案は §13 INT03-K4 |
 
 ### 4.3 識別子（object ID）
@@ -192,7 +196,22 @@ flowchart TD
 | N-16 | object ID は不透明 ID。英数字・`_`・`-`、最大 128 文字。122 bit 以上の乱数（UUIDv4 相当）を最低線とし、ID を推測できないことを認可の根拠にしない（推測できても PEP の判定で拒否されること） | CON-04 `ObjectId`、ADR-021 D21-14 |
 | N-17 | 業務上の識別名（患者名、ファイル名、口座番号）、個人データ、テナント ID、時刻を ID に入れない | ARC-05 X-9、ADR-010 D-12、T-034。関係の存在そのものが機微になり得る [D][A-071] |
 | N-18 | 資源の所有テナントは資源の正本ストアに記録した不変の属性とし、要求のパラメータから取らない | ADR-024 D24-07・D24-10 |
-| N-19 | 主体・資源は `(type, id)` の組で運び、ID 文字列に型の接頭辞を付けない | ADR-021 D21-26（AuthZEN の Subject/Resource と同じ値の体系） |
+| N-19 | 主体・資源は `(type, id)` の組で運び、ID 文字列に型の接頭辞を付けない。RS-18反映（2026-10-15）: 主体の id は人もシステムも同じ値域の sub で、自サービスのデータモデルでも `user_id` ではなく `subject_id`＋`subject_type` の 2 欄で持つ。要求元ソフトウェア（`client_id`）と代理（`act`）は別の欄にし、主体の列に混ぜない（ARC-15 §3.9） | ADR-021 D21-10・D21-26（AuthZEN の Subject/Resource と同じ値の体系）、[^28] |
+| N-19b（RS-18反映（2026-10-15）） | 階層のパス（`/本社/開発本部`）や祖先列を ID・認可キーにしない。パスは表示専用、祖先列は一覧の索引だけに使う。選択中の unit・ワークスペースは token ではなく BFF のセッション状態か要求パラメータで運ぶ | ARC-05 §3.6.5、ADR-021 D21-38 規則 2 [D] |
+
+### 4.4 CAM での書き方（直接付与と計算の分離。v0.5、模擬パネル ラウンド3 の対応）
+
+CON-04 v0.2.0 の `CamRelation` は `required: [name, directly_related]`・`additionalProperties: false` で、式の欄を持たない。式（和・積・exclusion・arrow）を持てるのは `CamPermission.expression` だけである [D]（CON-04 `components.schemas.CamRelation`・`CamPermission`）。CON-03 の `Action.name` は「型の内側で一意な permission 名」である [D]（CON-03 `components.schemas` の Action の description。ADR-021 D21-26）。このため、ドメインのモデルは次の規則で書く [D]。PoC の CAM（12_poc/code/model/cam.json、POC 実装記録 12_poc/code/README.md §10.2 P-10）も同じ分け方をとっている [D]。
+
+| # | 規則 | 例 | 根拠 |
+|---|---|---|---|
+| N-22 | `relations`（`CamRelation`）には直接付与だけを書く。直接型（`directly_related`）、条件（`conditions`）、宣言（`max_depth`・`max_direct`・`public`）以外を書かない。包含・継承・和・積は全て `permissions`（`CamPermission.expression`）に書く | relation `editor: [core/user, core/group#member, core/role#assignee]` | CON-04 `CamRelation`・`CamPermission` [D] |
+| N-23 | 直接付与を包含・継承で広げた集合（v0.4 までの `editor: [T] \| owner \| parent->editor` に当たるもの）は、relation 名の複数形の permission（保持者集合）として書く。relation 名は単数の名詞のまま残す。保持者集合を作るのは、(a) arrow の右辺として他の型か `parent->` の再帰から参照される、(b) 2 つ以上の permission から参照される、のどちらかの場合に限り、それ以外は動詞の permission の式に直接展開する | `editors = editor \| owner \| parent->editors`、`viewers = viewer \| editors \| parent->viewers`（§9.1）。展開の例は `fin/account#view = viewer \| operator \| unit->manage`（§9.5） | PoC の P-10（`editor` と `editors`・`viewers`・`members`）と同じ命名 [D]。arrow の右辺が permission になり E-5・N-15 の推奨にも沿う [D] |
+| N-24 | PEP が CON-03 の `action.name` に渡すのは、permission catalog に操作階層と印を付けて載せた動詞の permission だけである。保持者集合と、式の部品として置いた補助の permission（§9.3 の `view_internal`、§9.4 の `clinician`）は catalog に載せず、`tier` は `read_sensitive`、`marks` は付けない（PoC と同じ）。呼出し元の判定宣言（CON-03 §4.2 `caller_scope`）にもこれらを入れない | アプリは `files/file` に `read`・`write` を問い合わせ、`editors`・`viewers` を問い合わせない | CON-03 §4.2（宣言外の permission の照会は `deny_guardrail:caller_scope`）[D]。保持者集合を問い合わせ先にすると、catalog の操作階層と監査の単位が permission とずれる [D] |
+| N-25 | core の生成器が付ける部分（予約 relation `restricted_external`、計算 `restricted_external_inherited`、動詞の permission への `- restricted_external_inherited` の付加）は、ドメインの `CamModule` に書かない。ドメインは exclusion を含まない式（例 `read = viewers`）を書く | §9.1 の「core 生成器が付ける部分」の注記 | ARC-05 §3.1（`restricted_external` は core が生成）・§8.2、CON-04 E-6（exclusion は core モジュールだけ）[D]。生成器がこの付加を行う規則は CON-04 に未記載（§16.2 HO-R3-2） |
+
+- 名前の対応（v0.4 → v0.5）: v0.4 の例の計算 relation `editor`・`viewer`（`files`）、`admin`・`member`（`proj/project`、§6.1）は、v0.5 では保持者集合の permission `editors`・`viewers`・`admins`・`members` になり、直接付与の部分が同名の relation になった [D]。v0.4 の §9.0 で SpiceDB に写した `editor_direct`（直接部分）は v0.5 の relation `editor`、計算 relation `editor` は permission `editors` に当たる [D]。動詞の permission（`read`・`write`・`view` など）の名前と意味は変えていない [D]。
+- 判定の意味は変わらない [D]。v0.4 の relation 式 `X: [T] | e` は「直接付与 `[T]` と式 `e` の和」であり、relation `X: [T]` と permission `Xs = X | e`（`e` の中の `parent->X` は `parent->Xs`）に分けても同じ主体の集合になる [D]。
 
 ---
 
@@ -240,11 +259,15 @@ type core/role
   relations
     assignee: [core/user, core/group#member]
 
-# ドメイン側: role で付与できる relation の直接型に core/role#assignee を許す
+# ドメイン側: role で付与できる relation の直接型に core/role#assignee を許す（§4.4 の書き方）
 type proj/project
   relations
-    admin:  [core/user, core/role#assignee] | owner
-    member: [core/user, core/group#member, core/role#assignee] | admin
+    owner:  [core/user]
+    admin:  [core/user, core/role#assignee]
+    member: [core/user, core/group#member, core/role#assignee]
+  permissions
+    admins  = admin | owner                    # 保持者集合（N-23）
+    members = member | admins                  # 保持者集合（N-23）
 ```
 
 | 項目 | 規則 | 根拠 |
@@ -309,6 +332,7 @@ G-115 の合格条件は「全負例が拒否される」ことである [D]。�
   2. 外部付与の経由（`core/external_grant#grantee` → 主体）: 1 hop。
   3. 組織の木（`org/unit#parent`）を辿る継承: unit の深さ分。
 - したがって、§9.1 のファイルを custom role 経由のグループで読む経路は、最悪でフォルダ 5＋role 1＋グループ 3＝9 になり、設計値 8 を超え得る [D][A-036]。組織の木を辿る継承（§9.3 の `unit->manage` が `parent->manage` を辿る形）を加えると、unit の深さ分がさらに増える [D]。
+- RS-18反映（2026-10-15）: ARC-05 K05-8 は「継承を管理系に限る＋祖先閉包 `ancestor` で unit の部分を 1 hop に畳む」を推奨し、設計値 8 を維持する案である [D][^28]。この場合、上の表の `unit×N` は 1 hop になり、タスク view は 3、ツール use は 3（`ancestor` を拠点に持たせた場合）になる [D]。閉包は階層サービスが書くので、移動時の一時 deny（剥奪先行）を前提にする [D]。
 - 設計値の引上げか、継承の範囲の制限か、事前計算かは §13 INT03-K2 の決裁案とし、TC-ARC05-08（深度 8・10・25 の tail latency）の結果で決める [D]。決まるまでの暫定規則として、新しいドメインは「組織の木からの継承を管理系の permission（`manage` 系）に限り、閲覧系は資源側の直接付与かグループで表す」ことを推奨する [D]。
 
 | 例（§9） | 最悪経路 | hop 数 | 設計値 8 との関係 |
@@ -362,7 +386,8 @@ flowchart TB
 ```
 
 - 段と合否は ADR-016 D16-31、区分と承認は GOV-05 §6.4、API は CON-04 による [D]。本番反映そのものは privileged/P（申請者≠承認者、canary）である（REQ-03 §6.5）[D]。
-- スキーマの差分で検出できない意味の変更（permission の式を変えて同じ名前の意味を変える、継承の向きを変えるなど）は、変更の起票時に申告欄へ書く（ADR-016 D16-08）[D]。CON-04 の `ModelChangeRequest` には申告欄がなく、当面は `change_request_ref` が指す PR・変更票に書く [D]（§15.3 の契約の不足）。
+- スキーマの差分で検出できない意味の変更（permission の式を変えて同じ名前の意味を変える、継承の向きを変えるなど）は、変更の起票時に申告欄へ書く（ADR-016 D16-08）[D]。CON-04 v0.2.0 の `ModelChangeRequest.semantic_change`（必須欄。`declared`・`description`・`affected`）に書き、`declared=true` は M2 に回る（CON-04 §9.4）[D]。
+- 自動判定の結果は `ValidationReport.change_class`（M0〜M3）と `change_class_reasons` で返る（CON-04 §9.4）。上図の承認経路は登録前にこの値で決まる [D]。
 - 主張台帳 CL-0178（domain owner が型と継承規則を所有し、schema review と migration を行う）は、上図の M0〜M2 の形で維持する [D]。中央スキーマ審査をボトルネックにしないため、全変更を通す中央審査会は置かない（GOV-05 §6.1・§6.2）[D]。
 
 ### 8.2 自動ゲート（`validateModel` の検査）
@@ -370,6 +395,8 @@ flowchart TB
 | 検査（`CheckResult.name`） | 内容 | 不合格になる典型 | 根拠 |
 |---|---|---|---|
 | `cam_schema` | JSON Schema による構造検証 | 必須欄の欠落 | ADR-011 D2-1 |
+| `lint_expression_syntax` | CAM 式 v0 の構文（E-1〜E-8） | `a \| b & c`（括弧なしの混在）、permission を tupleset に使う | CON-04 §9.2 |
+| `lint_reserved_relation` | 予約 relation（`ancestor` など）の定義・書込宣言 | ドメインが `ancestor` を書込宣言に含める | ARC-05 X-13 |
 | `lint_namespace` / `lint_naming` | X-1・X-2、§4 の規約 | 未登録の名前空間、大文字 | ARC-05 §3.3 |
 | `lint_extension_scope` | core の拡張範囲（X-3） | `core/tenant` への relation 追加 | CON-04 の負例 |
 | `lint_cross_domain_reference` | 公開宣言のない他ドメイン relation の参照（X-4） | 非公開 relation への arrow | ARC-05 X-4 |
@@ -379,8 +406,8 @@ flowchart TB
 | `lint_write_declaration` | 書込宣言（X-8） | 宣言のない relation を書くサービス | T-033 |
 | `lint_identifier_policy` | 識別子の規則（X-9） | 業務名を含む ID 規則 | T-034 |
 | `external_grant_reachability` | 外部付与可でない permission に `core/external_grant#grantee` が到達しない | 外部付与を `editor` の直接型に許す | ARC-05 §3.2 |
-| `positive_negative_tests` | 全 relation の肯定・否定試験 | 試験のない relation | RS-17#86・#87 |
-| `cross_tenant_negative_tests` | 越境の否定試験 | 試験の欠落 | ADR-011 D2-5 |
+| `positive_negative_tests` | 全 relation の肯定・否定試験。入力は `ModelChangeRequest.tests`（`.fga.yaml` と同じ tuples・check・list_objects の構成 [V][^31]） | 試験のない relation（`test_summary.uncovered_relations`） | RS-17#86・#87、CON-04 `ModelTestCase` |
+| `cross_tenant_negative_tests` | 越境の否定試験（`ModelTestCase.kind=cross_tenant_negative`） | 試験の欠落 | ADR-011 D2-5 |
 | `breaking_change` | データがある relation の削除・改名 | その場の改名 | RS-17#88 [V][^5] |
 | `permission_expansion_diff` | 権限が広がる差分。検出すると M1 と追加承認 | 直接型の追加 | AWS IAM Access Analyzer の CheckNoNewAccess と同じ考え方 [V][^10]（RS-17#92） |
 | `engine_differential` / `dsl_roundtrip` | 2 engine の判定差、OpenFGA DSL→CAM→SpiceDB schema の往復 | engine 固有機能の使用 | ADR-011 D2-2・D2-3 |
@@ -442,7 +469,20 @@ flowchart TB
 | 型名の `/` | 受理された（ARC-05 残課題 6・12 の予備的な観測。v1.21.0 での確認は TC-ARC05-10） | 受理された |
 | 限界 | CAM 生成器を通していない。試験した engine は RS-07 の確認版（OpenFGA v1.21.0、SpiceDB v1.56.2）より古い。生データは本リポジトリに保存していない（作成者の一時作業領域）。TC 未採番のため E4 に数えない | 同左 |
 
-- SpiceDB では relation と permission の名前を分ける必要があるため、計算を含む relation（例: `editor`）は直接部分を `editor_direct` として写した [M]（予備）。この写像は CAM 生成器の責務であり、ドメインは CAM 上の 1 つの名前で書く [D]（ADR-011 D2-3）。
+- 上表の予備実行は v0.4 の例（relation に式を混ぜた形）で行った [M]（予備）。SpiceDB では relation と permission の名前を分ける必要があったため、計算を含む relation（例: `editor`）の直接部分を `editor_direct` として写した [M]（予備）。v0.5 では CON-04 の `CamRelation` が式を持てないこと（模擬パネル ラウンド3 の指摘）に合わせ、全例を §4.4 の書き方（直接付与は relation、計算は permission）に書き直した [D]。SpiceDB 側の予備実行は既にこの分け方の構造で行っており、v0.5 との違いは名前（`editor_direct` → relation `editor`、計算 relation `editor` → permission `editors`）だけである [D]。試験表の問い合わせ先は動詞の permission だけで、名前を変えていない [D]。ただし v0.5 の例そのものを engine の CLI で再実行してはいない（本対応の実行環境に CLI がない。残課題 20）[D]。
+- v0.5 の機械検証 [M]（自前の確認。TC 未採番。2026-10-15）: §9.1〜§9.6 の全モデルを名前空間ごとの `CamModule` の JSON 6 件（付録 A。14 型、relation 46 件、permission 48 件）にし、CON-04 v0.2.0 の `components.schemas.CamModule`（`$ref` を解決）に対して JSON Schema 2020-12 で検証した（Python、jsonschema 4.26.0）。結果は次のとおりである。
+
+| 検査 | 結果 | 扱い |
+|---|---|---|
+| JSON Schema（`CamModule`） | 6 件とも誤り 0 件 | S-3 の完了判定を満たす形であることを確かめた |
+| CAM 式 v0 の構文（CON-04 §9.1 の EBNF、E-2 の括弧なしの混在、E-8 の入れ子）を自前の構文解析器で検査 | 48 式とも合格 | `validateModel` の `lint_expression_syntax` の代わりではない（提供前の目安） |
+| E-6（ドメインの exclusion） | 0 件 | exclusion は core 生成器が付ける（N-25） |
+| E-3（tupleset は直接型だけの relation） | 0 件 | — |
+| E-4（tupleset は `parent`・`ancestor`・他ドメイン参照・core 型の relation に限る） | 6 個の relation（`org/site#unit`、`proj/task#project`、`med/patient_record#care_team`・`#patient`、`fin/payment#account`・`#band`）を使う 11 式が当たる | 同じ名前空間の、`parent` でない参照 relation を tupleset にする形である。containment の 2 個（`org/site#unit`、`proj/task#project`）は K05-7 採用後に `parent` へ書き換える（§9.2 写像表、残課題 17）。containment でない参照（`care_team` など）は ARC-05 X-12 が「推移は permission の式で明示する」として使うことを前提にしているが、CON-04 E-4 はこれを許していない。E-4 の改訂を申し送る（§16.2 HO-R3-3） |
+| E-5・N-15（arrow の右辺は permission を推奨） | relation を指す arrow が 8 件（`care_team->member`、`patient->person`、`patient->guardian`、`band->approver`、`tenant->admin` 3 件、`tenant->security_admin` 1 件） | 推奨の水準で、構文誤りではない。core 側は INT03-K4 の決裁待ち |
+| 名前の解決（式の名前が同じ型の relation・permission、arrow の右辺が参照先の型の relation・permission） | 未解決 0 件 | core 型の relation は ARC-05 §3.1 の定義を前提にし、検査の対象外 |
+
+- 上の検証は構造と構文だけを確かめた。判定の意味（試験表の期待値）は検証していない [D]。`public` は `CamRelation` にだけあり、§9.2 の `org/site#enter_system`・`administer`（permission）に公開を宣言する欄が CON-04 にないため、付録 A では宣言していない（§16.2 HO-R3-4）[D]。
 - 正式な検証は、生成器で作った DSL を TC-ARC05-10（2 engine の判定差 0）と TC-ARC05-11・TC-013（要件カタログ全件）で行い、合格した版で本節を置き換える [D]。
 
 ### 9.1 ファイル共有
@@ -461,35 +501,39 @@ flowchart TB
 
 ```text
 type files/folder
-  relations
-    parent:              [files/folder]                                            # max_depth 5 [A-036]
-    owner:               [core/user]
-    editor:              [core/user, core/group#member, core/role#assignee] | owner | parent->editor
-    viewer:              [core/user, core/group#member, core/role#assignee, core/external_grant#grantee]
-                         | editor | parent->viewer
-    restricted_external: [core/tenant#external_member]                             # core 生成の予約 relation
+  relations                                     # 直接付与だけ（N-22）
+    parent: [files/folder]                      # max_depth 5 [A-036]
+    owner:  [core/user]
+    editor: [core/user, core/group#member, core/role#assignee]
+    viewer: [core/user, core/group#member, core/role#assignee, core/external_grant#grantee]
   permissions
-    restricted_external_inherited = restricted_external | parent->restricted_external_inherited   # core 生成
-    read           = viewer - restricted_external_inherited                        # `- ...` は core 生成器が付与
-    write          = editor - restricted_external_inherited
+    editors        = editor | owner | parent->editors      # 保持者集合（N-23。PEP は問い合わせない）
+    viewers        = viewer | editors | parent->viewers    # 保持者集合（N-23）
+    read           = viewers
+    write          = editors
     share          = owner | parent->share
     share_external = owner | parent->share_external
     delete         = owner | parent->delete
 
 type files/file
   relations
-    parent:              [files/folder]
-    owner:               [core/user]
-    editor:              [core/user, core/group#member, core/role#assignee] | owner | parent->editor
-    viewer:              [core/user, core/group#member, core/role#assignee, core/external_grant#grantee]
-                         | editor | parent->viewer
-    restricted_external: [core/tenant#external_member]
+    parent: [files/folder]
+    owner:  [core/user]
+    editor: [core/user, core/group#member, core/role#assignee]
+    viewer: [core/user, core/group#member, core/role#assignee, core/external_grant#grantee]
   permissions
-    restricted_external_inherited = restricted_external | parent->restricted_external_inherited
-    read   = viewer - restricted_external_inherited
-    write  = editor - restricted_external_inherited
-    share  = owner | parent->share
-    delete = owner | parent->delete
+    editors = editor | owner | parent->editors
+    viewers = viewer | editors | parent->viewers
+    read    = viewers
+    write   = editors
+    share   = owner | parent->share
+    delete  = owner | parent->delete
+
+# core 生成器が両方の型に付ける部分（ドメインは書かない。N-25、ARC-05 §3.1・§8.2、CON-04 E-6）
+#   relation   restricted_external: [core/tenant#external_member]
+#   permission restricted_external_inherited = restricted_external | parent->restricted_external_inherited
+#   read  → viewers - restricted_external_inherited
+#   write → editors - restricted_external_inherited
 ```
 
 **permission catalog**
@@ -507,7 +551,7 @@ type files/file
 | 項目 | 値 | 根拠 |
 |---|---|---|
 | `max_depth` | `files/folder#parent` 5 | [A-036] |
-| `max_direct` | `viewer`・`editor` 1,000（初期案。超える付与はグループで書くよう lint が警告） | ARC-05 §3.4。値は TC-ARC05-08 で確定（所有者 認可・PDP チーム、G4） |
+| `max_direct` | relation `viewer`・`editor` 1,000（初期案。超える付与はグループで書くよう lint が警告） | ARC-05 §3.4。値は TC-ARC05-08 で確定（所有者 認可・PDP チーム、G4） |
 | 一覧方式 | `files/file` L3、`files/folder` L1 | §7.3 |
 | 書込宣言 | ファイルサービスの workload が `parent`・`owner`・`editor`・`viewer` を書く。`core/external_grant` と `core/tenant#external_member` は façade が外部付与の作成・失効と同時に書く（ARC-05 §3.1）。`restricted_external` の書き手は未決（§2、残課題 14） | ARC-05 X-8、§3.1 |
 | 書込対応表 | `viewer`・`editor`（内部主体・グループ・role）← `share`、外部付与の作成 ← `share_external`、`restricted_external` の設定 ← `share_external`（案）、`parent` の変更 ← 対象の `write` かつ移動先フォルダの `write`（外部付与のある部分木へは write＋XT とデータ分類の検査）、`owner` の変更 ← `delete`（本人の owner と上位フォルダの owner） | §3.1 段 7、ADR-024 D24-13 [D] |
@@ -545,12 +589,24 @@ type files/file
 | O-4 | 拠点の業務システムには、拠点の担当者が拠点ネットワークから入れる | read-sensitive / write |
 | O-5 | 拠点に設置した業務ツールは、登録された操作者が拠点ネットワークから使える。設定は拠点の管理者だけ | write / privileged/T |
 
-**モデル**（名前空間 `org` と `tool`。`org/unit` は ARC-05 §8.3 に合わせてドメイン型とし、core への昇格は §13 INT03-K1）
+**モデル**（名前空間 `org` と `tool`。`org/unit` は ARC-05 v0.2 §8.3 に合わせてドメイン型とし、core への昇格は §13 INT03-K1）
+
+RS-18反映（2026-10-15）: ARC-05 v0.3 §8.3 は K05-6・K05-7 の推奨案の形（`core/unit`、containment の `parent` 統一）に書き換えた [D][^28]。本節のモデルは予備実行（§9.0）を行った版を保つため v0.2 の形のまま残し、決裁後に次の写像で書き換えて再実行する（残課題 17）[D]。
+
+| 本節（予備実行済み） | K05-6・K05-7 採用後 | 備考 |
+|---|---|---|
+| `org/unit` | `core/unit`（`kind` で事業部・部・課などを区別） | core の変更（M3）。ドメインは unit を定義しない（N-20） |
+| `org/unit#parent: [org/unit]` | `core/unit#parent: [core/unit, core/tenant]` | 根を `core/tenant` にする |
+| `org/unit#manager` | `core/unit#admin` | core/tenant の語彙に揃える |
+| `org/unit#user_admin`（unit ごとの委任管理者） | `core/admin_scope#delegate`＋`core/unit#admin_scope` | 委任範囲をフラットな集合にし、複数の unit をまとめて委任できるようにする（Entra の AU と同じ意味論。ARC-05 §3.6.1） |
+| `org/site#unit` | `org/site#parent: [core/unit, core/tenant]` | containment の名前を `parent` に（X-11） |
+| `tool/instance#site` | `tool/instance#parent: [org/site]` | 同上 |
+
 
 ```text
 type org/unit
   relations
-    parent:     [org/unit]                         # max_depth は TBD（§7.2、INT03-K2）
+    parent:     [org/unit]                         # max_depth は TBD（§7.2、INT03-K2）。付録 A は NA-ARC05-1 の初期案 5 を入れた
     member:     [core/user, core/group#member]
     manager:    [core/user]
     user_admin: [core/user]                        # 委任管理者（範囲＝この unit の部分木）
@@ -620,6 +676,7 @@ type tool/instance
 - テナント全体の接続元条件は G 段規則 5 で評価するので、R 段の `c.network_zone` は拠点固有の条件に限る（ARC-05 §8.3）[D]。
 - 上位から下位へ閲覧を継承するか、逆向きにするかは業務規程の選択であり、継承の向きはドメイン責任者が決めてレジストリに記録する（ARC-05 §8.3）[D]。
 - 1,000 人の異動のように 100 tuple を超える変更は、旧部署からの削除を全て確定してから新部署へ追加する（ARC-05 §11.3）[D]。途中で両方の権限を同時に持つ時間は生じない [D]。
+- RS-18反映（2026-10-15）: unit の付け替え（組織再編）で循環（自分の部分木の下への移動）と深さ超過を拒否するのは、ドメインではなく基盤の階層サービスの責任とする案である（ARC-05 §3.6.3）[D][^28]。エンジンは循環を検出しないので、ドメインが unit を自前で持つ現行の形（本節）では、ドメインサービスが付け替え時に同じ検査を実装する必要がある [D]。
 
 ### 9.3 プロジェクト管理
 
@@ -637,16 +694,18 @@ type tool/instance
 ```text
 type proj/project
   relations
-    unit:   [org/unit]                                       # 所管部署（包含ではない参照）
+    unit:   [org/unit]                                       # 所管部署（包含ではない参照）。K05-7 採用後は owning_unit に改名（X-12）
     owner:  [core/user]
-    admin:  [core/user, core/role#assignee] | owner
-    member: [core/user, core/group#member, core/role#assignee] | admin
+    admin:  [core/user, core/role#assignee]
+    member: [core/user, core/group#member, core/role#assignee]
     guest:  [core/external_grant#grantee]
   permissions
-    view_internal  = member | unit->manage
+    admins         = admin | owner                           # 保持者集合（N-23）
+    members        = member | admins                         # 保持者集合（N-23）
+    view_internal  = members | unit->manage                  # task から arrow で参照する（catalog 外）
     view           = view_internal | guest
-    edit           = member
-    manage_members = admin
+    edit           = members
+    manage_members = admins
     archive        = owner | unit->manage
 
 type proj/task
@@ -687,6 +746,7 @@ type proj/task
 - 委託先に編集を許す場合は、`edit` に「外部付与可」の印を付け、`edit` の計算式に `guest` を加えるモデル変更を M1 で出す [D]。印の付与は権限拡大として検出される（`permission_expansion_diff`）[D]。
 - 委託先の会社単位で付与する型（相手テナント・グループを付与先にする型）は v1 で提供しない（ADR-024 D24-02、K24-4 は決裁待ち）[D]。
 - 共同作業の場（共有プロジェクト）は作成したテナントが所有する資源とし、中立の共有領域は作らない（ADR-024 D24-05）[D]。
+- RS-18反映（2026-10-15）: 本節の `proj/project#unit` は「所管部署」（包含ではない参照）として書いた。プロジェクトが部署の下に**属する**（部署の廃止・移動にプロジェクトのライフサイクルが従う）なら containment であり、K05-7 採用後は `parent: [core/unit, core/tenant]` と書く。属さず所管するだけなら `owning_unit` と書く [D][^28]。どちらかを要件の平文（P-2）で先に決める。`proj/task#project` は containment なので K05-7 採用後は `parent` になる [D]。
 
 ### 9.4 医療記録
 
@@ -792,9 +852,9 @@ type fin/account
   relations
     unit:     [org/unit]
     operator: [core/user, core/role#assignee]
-    viewer:   [core/user, core/group#member, core/role#assignee] | operator
+    viewer:   [core/user, core/group#member, core/role#assignee]
   permissions
-    view     = viewer | unit->manage
+    view     = viewer | operator | unit->manage   # 参照が 1 か所なので保持者集合を作らず展開（N-23）
     initiate = operator
 
 type fin/approval_band                         # 金額帯。境界値はテナント設定（NA-INT03-2）
@@ -943,7 +1003,7 @@ type files/tenant_policy
 | ID | 類型 | 要件（代表） | 表し方 | 机上判定 | 予備 | 表せない部分の代替手段 |
 |---|---|---|---|---|---|---|
 | AC-01 | 文書・フォルダ | 親フォルダの権限が子孫に継承される | `parent` の tuple-to-userset（§9.1） | 表せる | 済 | — |
-| AC-02 | 文書・フォルダ | フォルダの owner は子孫ファイルを読み書きできる（CL-0171） | `viewer ⊇ editor ⊇ owner` と継承 | 表せる | 済 | — |
+| AC-02 | 文書・フォルダ | フォルダの owner は子孫ファイルを読み書きできる（CL-0171） | 保持者集合 `viewers ⊇ editors ⊇ owner` と継承 | 表せる | 済 | — |
 | AC-03 | 文書・フォルダ | 子フォルダで外部主体だけの継承を止める | `restricted_external`（core） | 表せる | 済 | 内部主体の継承を子で止めることは v1 で提供しない（ドメインの forbid 禁止、X-5） |
 | AC-04 | 組織階層 | 上位部署の管理者は配下全部署を管理する | `manage = manager \| parent->manage` | 表せる | 済 | 深度は K2 |
 | AC-05 | 組織階層 | 上位部署の所属者は下位部署の名簿を見る（または逆向き） | 継承の向きを permission 式で選ぶ | 表せる | 済 | — |
@@ -984,13 +1044,13 @@ type files/tenant_policy
 
 | ID | 誤り | なぜ問題か | 修正 | 検出 |
 |---|---|---|---|---|
-| E-01 | file の `read = parent->viewer`、`write = parent->editor` だけを継承し、folder の relation 間に包含がない（CL-0171） | folder の owner がファイルを読めず、editor は書けるが読めない | `viewer ⊇ editor ⊇ owner` を folder・file の両方で定義する（§9.1） | 肯定試験。予備実行で旧形のモデルは 4 件中 3 件の期待に反した [M]（予備） |
+| E-01 | file の `read = parent->viewer`、`write = parent->editor` だけを継承し、folder の relation 間に包含がない（CL-0171） | folder の owner がファイルを読めず、editor は書けるが読めない | 保持者集合 `viewers ⊇ editors ⊇ owner` を folder・file の両方で定義する（§9.1） | 肯定試験。予備実行で旧形のモデルは 4 件中 3 件の期待に反した [M]（予備）。修正後の形は保持者集合 `editors`・`viewers` で書く（§4.4） |
 | E-02 | object ID に `t123_doc456` のようにテナント ID を入れる | テナントの統合・分割で ID が変わる。ID からテナントを推測させる | 不透明 ID。テナントは資源の正本属性（N-17・N-18） | `lint_identifier_policy`、書込時検査 |
 | E-03 | object ID に患者名・ファイル名を入れる | tuple の読取だけで機微情報が漏れる（T-034） | 不透明 ID（X-9） | 同上 |
 | E-04 | 「プロジェクトごとの管理者 role」をテナントに数百作る | 役割表が資源数で増える | `proj/project#admin` の relation（RB-1） | 兆候の監視（§5.3） |
 | E-05 | ドメインが `read = viewer but not blocked_user` を書く | deny の意味論がドメインごとにばらつく（X-5） | 経路を作らない、経路の条件で絞る、外部主体の縮小は `restricted_external` | `lint_no_domain_deny` |
 | E-06 | 条件で「夜間なら拒否」を書く | 和の意味論では他の経路で許可され、拒否にならない（C-1） | 「勤務時間帯なら許可」を permit 経路に付ける。全経路に課す場合は積（C-3） | レビュー、否定試験 |
-| E-07 | 承認帯を `higher: [fin/approval_band]` と `approver = [..] \| higher->approver` の再帰で書く | `parent` 以外の再帰で深度宣言の管理外になる（X-7） | 上位帯の承認者 role を下位帯にもデータとして書く（§9.5） | `lint_recursion_depth` |
+| E-07 | 承認帯を `higher: [fin/approval_band]` と `approvers = approver \| higher->approvers` の再帰で書く | `parent` 以外の再帰で深度宣言の管理外になる（X-7） | 上位帯の承認者 role を下位帯にもデータとして書く（§9.5） | `lint_recursion_depth` |
 | E-08 | 公開文書のために `viewer: [core/user:*]` を許す | 全主体への許可は越境の経路になる（X-6） | 公開分類は public 階層として R 段で判定しない。テナント全員なら `core/tenant#member` | `lint_no_wildcard` |
 | E-09 | `editor` の直接型に `core/external_grant#grantee` を許す | 外部主体に書込が到達する | 外部付与は `viewer` だけ。編集を許すなら M1 で印を付ける | `external_grant_reachability` |
 | E-10 | token の groups claim や部署 claim を見てアプリが許可する | token は判定時点の状態を表さず、剥奪が反映されない | PDP の判定に委ねる（ADR-021 D21-38、ADR-011 D9-1） | PEP coverage 検査（DL-15） |
@@ -1002,6 +1062,7 @@ type files/tenant_policy
 | E-16 | ゲストを資源側テナントの「全メンバー」グループに入れる | 既定のグループ経由で想定外の資源に届く | 既定グループに外部主体を入れない（XS-4） | façade の書込検査 |
 | E-17 | 生成された DSL を手で直して本番に出す | 正本（CAM）と本番がずれる | CAM を直して再生成（ADR-011 D2-3） | 配布物の署名・ダイジェスト照合 |
 | E-18 | 一覧の件数を候補段（索引）の件数で表示する | 見えない資源の存在が漏れる | post-check 後の件数（LS-5） | 一覧の負例 kit（DL-80） |
+| E-19 | relation に式を書く（`editor: [core/user] \| owner \| parent->editor`）か、PEP が保持者集合（`editors`）を問い合わせる | 前者は CON-04 の `CamRelation` に式の欄がなく登録できない。後者は permission catalog の操作階層・監査の単位とずれる | 直接付与は relation、計算は permission に分け、PEP は動詞の permission だけを問い合わせる（§4.4 N-22〜N-24） | `cam_schema`（`additionalProperties: false`）、判定宣言（CON-03 §4.2 `caller_scope`） |
 
 ---
 
@@ -1025,8 +1086,8 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 
 | # | 論点 | 選択肢 | 推奨 | 帰結 | 決める人・期限 |
 |---|---|---|---|---|---|
-| INT03-K1 | 組織の木（部署・子会社など）の型の所有 | (a) 各ドメインが `org/unit` のようなドメイン型として持つ（ARC-05 §8.3 の現状）、(b) 基盤が `core/unit`（と委任範囲の型）として持つ、(c) 組織の木を認可モデルに入れず、所属をグループだけで表す | (b) | (a) は組織の木を参照する全ドメインが 1 つのドメインの公開 relation に依存し、意味（継承の向き、委任範囲）がドメインごとにばらつく。横断型を基盤が持つ理由（ARC-05 §3.1）と同じ問題が出る [D]。(b) は M3（基盤 2 名以上＋CISO 同意）の core 変更で、基盤チームの保守対象が増える [D][A-054]。(c) は「上位部署の管理者は配下を管理する」（AC-04）を表せない [D]。research/RS-18 も (b) を提案しているが、同ノートは独立検証記録がないため本推奨の根拠にはしていない [D] | CTO（CISO 同意）。Gate 3（DL-73 凍結前） |
-| INT03-K2 | 組織の木・custom role の hop で解決深度の設計値 8 [A-036] を超える問題 | (a) 組織の木からの継承を管理系 permission に限り、閲覧系は資源側の付与で表す、(b) 祖先の閉包を基盤の階層サービスが事前計算し tuple として書く、(c) 設計値を引き上げる（例: 12） | 当面 (a)。(b)・(c) は TC-ARC05-08 の結果で判断 | (a) は「上位部署の所属者は配下の文書を全部見る」型の要件を直接表せず、グループの付与で代替する [D]。(b) は組織改編のたびに大量の tuple を非原子的に書き換え、剥奪先行の順序規則と差分照合（ARC-05 §11）が前提になる [D]。(c) は Check の tail latency と PDP の計算量増幅（T-031）に効き、容量モデル（DL-58）の見直しが要る [D] | CTO。G4（TC-ARC05-08 の後） |
+| INT03-K1（RS-18反映（2026-10-15）: ARC-05 K05-6 と同じ論点。決裁は 1 回にまとめる） | 組織の木（部署・子会社など）の型の所有 | (a) 各ドメインが `org/unit` のようなドメイン型として持つ（ARC-05 §8.3 の現状）、(b) 基盤が `core/unit`（と委任範囲の型）として持つ、(c) 組織の木を認可モデルに入れず、所属をグループだけで表す | (b) | (a) は組織の木を参照する全ドメインが 1 つのドメインの公開 relation に依存し、意味（継承の向き、委任範囲）がドメインごとにばらつく。横断型を基盤が持つ理由（ARC-05 §3.1）と同じ問題が出る [D]。(b) は M3（基盤 2 名以上＋CISO 同意）の core 変更で、基盤チームの保守対象が増える [D][A-054]。(c) は「上位部署の管理者は配下を管理する」（AC-04）を表せない [D]。research/RS-18 も (b) を提案しているが、同ノートは独立検証記録がないため本推奨の根拠にはしていない [D] | CTO（CISO 同意）。Gate 3（DL-73 凍結前） |
+| INT03-K2（RS-18反映（2026-10-15）: ARC-05 K05-8 と同じ論点。ARC-05 は (a)＋(b) を推奨） | 組織の木・custom role の hop で解決深度の設計値 8 [A-036] を超える問題 | (a) 組織の木からの継承を管理系 permission に限り、閲覧系は資源側の付与で表す、(b) 祖先の閉包を基盤の階層サービスが事前計算し tuple として書く、(c) 設計値を引き上げる（例: 12） | 当面 (a)。(b)・(c) は TC-ARC05-08 の結果で判断 | (a) は「上位部署の所属者は配下の文書を全部見る」型の要件を直接表せず、グループの付与で代替する [D]。(b) は組織改編のたびに大量の tuple を非原子的に書き換え、剥奪先行の順序規則と差分照合（ARC-05 §11）が前提になる [D]。(c) は Check の tail latency と PDP の計算量増幅（T-031）に効き、容量モデル（DL-58）の見直しが要る [D] | CTO。G4（TC-ARC05-08 の後） |
 | INT03-K3 | 認可要件カタログ（§10.2）の維持責任 | (a) プラットフォームのプロダクト責任者が持ち、各ドメインが追記を申請する、(b) 各ドメインが自ドメインの分を持ち、基盤は集計だけ、(c) 独立立会人が持つ | (a) | (a) は SLI-040 の分母が 1 か所で管理され、G-108 の判定者（CTO と独立立会人）が全件を追える [D]。(b) は分母がドメインごとに揺れ、表現力の値が比較できない [D]。(c) は立会人の独立性と作成責任が衝突する [D] | CTO。G3 |
 | INT03-K4 | ドメインが core の relation を arrow で参照する形 | (a) core に参照用の公開 permission（例: テナント管理者を表す permission）を置き、ドメインはそれだけを参照する、(b) core の relation を直接参照してよい（現状の ARC-05 §8 の例） | (a) | (a) は core の relation の意味を変えても参照側が影響を受けにくく、zed の推奨（arrow は permission を指す）にも沿う。core の変更（M3）と、ARC-05 §8 の例の書換えが要る [D]。(b) は core relation が不可逆側に入り、改名・分割が多段手順になる（ADR-021 D21-27）[D] | 認可・PDP チーム（M3、CISO 同意）。DL-73 凍結前 |
 
@@ -1050,8 +1111,12 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | 12 | `max_direct` の初期値（§9.1 の 1,000）と、OpenFGA の型数上限（既定 100）への対処（ARC-05 K05-2） | C・B | 認可・PDP チーム、CTO。TC-ARC05-08、Gate 3 |
 | 13 | 実在の CTO/CISO による決裁、第三者による本書の検証は未実施（未達） | B・D | CTO・CISO。G4 |
 | 14 | `restricted_external` と資源側の `emergency` の tuple を誰が書くか（façade の専用操作か、ドメインの書込宣言か）。ARC-05・CON-04 に定めがない | A | 認可・PDP チーム。DL-73 凍結前 |
-| 15 | CON-04 の不足 3 点（CAM の式の文法、試験ケースの提出欄、変更区分 M0〜M3 の返却欄）と、意味の変更の申告欄（ADR-016 D16-08）。§15.3 | A | 認可・PDP チーム（CON-04 の所有者）。DL-73 凍結前 |
+| 15 | v0.4 で CON-04 v0.2.0 に preview として定義した（§15.3 G-1〜G-5）。残りは CAM 仕様全体への移管と第三者レビュー（ADR-011 D2-3）、条件カタログの引数の確定、M1 の高リスク階層の範囲の確定、preview から GA への昇格判断 | A | 認可・PDP チーム（CON-04 の所有者）。DL-73 凍結前 |
 | 16 | 書込対応表（§3.1 段 7）を基盤の検査で強制するか（façade が tuple の書込要求に利用者の判定結果を求めるか）、ドメインの実装と契約試験に委ねるか | B | 認可・PDP チーム、CTO。G3 |
+| 17 | RS-18反映（2026-10-15）: K05-6・K05-7 の決裁後に §9.2・§9.3 を写像表どおり書き換え、予備実行（§9.0）をやり直す。RS-18 のモデル例と ARC-05 v0.3 §8.3・§8.4 はエンジンの検証器（`fga model test`・`zed validate`）を実行していない（ARC-05 残課題 16） | C | 認可・PDP チーム。TC-ARC05-10、G3 |
+| 18 | RS-18反映: research/RS-18 は独立検証記録がない。本書の追記は ARC-05 §3.6 と ADR-021 から導いた [D] で、RS-18 の事実記述を根拠にしていない | A | 作成者以外の照合者。G3 |
+| 19 | v0.4 で CON-04 に置くと決め、preview として定義した（§15.3 G-6、CON-04 §10）。連携開発者は MK-04 の改訂後に `attachToHierarchy`・`moveHierarchyNode` を使う書込を試験できる。採否は K05-6〜K05-8 の決裁に従い、不採用なら削除する。unit の廃止とテナント統合・分割の API は未定義 | A・B | 認可・PDP チーム（CON-04 の所有者）、CTO（K05-6〜K05-8）。DL-73 凍結前 |
+| 20 | v0.5 で §4.4 の書き方に書き直した例（付録 A）を engine の CLI（`fga model test`・`zed validate`）で再実行していない。構造と構文は JSON Schema と自前の構文解析器で確かめた（§9.0）。あわせて CON-04 側の不足（E-4 の範囲、permission の公開宣言、保持者集合の印、core 生成器の付加規則。§16.2 HO-R3-1〜HO-R3-5）の解消を待つ | C・A | 認可・PDP チーム。TC-ARC05-10、DL-73 凍結前 |
 
 ---
 
@@ -1064,7 +1129,7 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | もの | 所在 | 状態 | 何に使うか |
 |---|---|---|---|
 | 判定の契約 | CON-03（`authorization-api.openapi.yaml`、AuthZEN 1.0 の evaluation・evaluations） | draft 0.1.0（CON-00 の一覧） | アプリの PEP が送る要求と、受ける応答（allow、deny、`deny_guardrail`、`deny_indeterminate`、`deny_unavailable`）の実装 |
-| 関係とモデルの契約 | CON-04（`relationship-model-registry.openapi.yaml`） | draft 0.1.1。モデル管理（登録・pin・shadow・rollback）は `x-stability: preview` | tuple の書込・削除・読取の実装、`CamModule` の JSON の作成 |
+| 関係とモデルの契約 | CON-04（`relationship-model-registry.openapi.yaml`） | draft 0.2.0。モデル管理（登録・pin・shadow・rollback）、CAM 式 v0、試験ケース欄、条件カタログ、階層サービス API は `x-stability: preview` | tuple の書込・削除・読取の実装、`CamModule` と `ModelChangeRequest`（`tests`・`semantic_change`）の JSON の作成 |
 | モック | CON-11 の MK-03（PDP façade）・MK-04（registry） | 仕様 draft 0.2 | アプリの契約試験。MK-03 は MK-04 に書いた tuple と制御 API の許可表で判定し、ドメインのモデルの意味論は評価しない（CON-11 §4.4）。MK-04 のモデル管理は example 駆動だけ（CON-11 §4.5） |
 | engine 公式 CLI | OpenFGA CLI（`fga model test`）[^26]、zed（`zed validate`）[^27] | 公開済み | モデルの意味論の試験（ADR-011 D2-4 が CI の検証経路に定めるツール） |
 | 例と規則 | 本書 §3〜§11 | 本版 | モデルの書き方、試験の観点 |
@@ -1075,8 +1140,8 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 |---|---|---|---|
 | S-1 | §3.1 段 1〜2 のとおり要件を平文で書き、REQ-03 の操作階層と置き場所を付ける | 要件表（§10.2 の形式） | 全要件に階層と置き場所がある |
 | S-2 | 名前空間コードの申請内容を CON-04 `NamespaceRequestInput` の形で作り、台帳の運用が始まっていれば `/v1/namespace-requests` で申請する。始まる前は候補コードをローカルだけで使い、払い出されたコードが異なれば本番登録の前に置き換える（未登録の名前は N-13 の改名手順の対象外）[D] | 申請内容 | 自動検査 3 種（`naming_rule` 等）に通る形である |
-| S-3 | モデルを CON-04 `CamModule` の JSON（型、relation、permission、`tier`・`marks`、`max_depth`・`max_direct`、`list_method`、`write_declarations`）で書く。`expression` は本書 §1.2 の擬似表記で書き、文法が公開されたら機械変換する（§15.3） | `CamModule` の JSON | CON-04 の JSON Schema で検証が通る（`expression` の構文を除く） |
-| S-4 | 同じモデルを OpenFGA DSL（schema 1.1）に手で写し、`.fga.yaml` に tuple と試験（check、list_objects の期待値）を書いて `fga model test` で流す [V][^3]（RS-17#86）。SpiceDB も評価する場合は zed の validation file に assertion を書いて `zed validate` で流す [V][^4]（RS-17#87）。写し方は §9.0 の予備実行と同じにする（SpiceDB では計算を含む relation の直接部分を別名にする） | 手写しの DSL と試験ファイル | §8.2 の観点（全 relation の肯定・否定、越境の否定）がそろい、全件が期待どおり。使った CLI と内蔵 engine の版を記録する |
+| S-3 | モデルを CON-04 `CamModule` の JSON（型、relation、permission、`tier`・`marks`、`max_depth`・`max_direct`、`list_method`、`write_declarations`）で書く。§4.4 のとおり、relation には直接付与だけを書き、包含・継承は保持者集合の permission（`editors` など）、操作は動詞の permission に書く。`expression` は CAM 式 v0（CON-04 §9、本書 §1.2）で書き、条件は `ConditionId` の 6 件から選ぶ。付録 A が書き方の見本である。S-4 の試験を `ModelChangeRequest.tests` の形でも書き、`semantic_change` を付ける | `ModelChangeRequest` の JSON | CON-04 の JSON Schema で検証が通る（付録 A は通ることを確かめた。§9.0）。式は CON-04 §9.1 の EBNF に合う（`validateModel` の提供前は目視と S-4 の手写しで確かめる）。アプリが CON-03 の `action.name` に渡す名前が、catalog に載せた動詞の permission だけである |
+| S-4 | 同じモデルを OpenFGA DSL（schema 1.1）に手で写し、`.fga.yaml` に tuple と試験（check、list_objects の期待値）を書いて `fga model test` で流す [V][^3]（RS-17#86）。SpiceDB も評価する場合は zed の validation file に assertion を書いて `zed validate` で流す [V][^4]（RS-17#87）。§4.4 の書き方では relation と permission の名前が分かれているので、OpenFGA DSL ではどちらも `define`、SpiceDB schema では relation は `relation`、permission は `permission` として名前を変えずに写す。演算子は CON-04 §9.3 の写像表のとおりに写す | 手写しの DSL と試験ファイル | §8.2 の観点（全 relation の肯定・否定、越境の否定）がそろい、全件が期待どおり。使った CLI と内蔵 engine の版を記録する |
 | S-5 | アプリの PEP を、PEP SDK（ARC-06）か、SDK のない言語では契約に適合する自前実装（ARC-06 PP-2。ADR-011 D5-4 との関係は ARC-06 L06-3 で未決）で実装し、CON-11 のキットで契約試験を流す。MK-03 の許可表には S-4 の試験と同じ期待値を入れる | アプリと契約試験の結果 | CON-11 §8 の段 1〜7 が合格 |
 | S-6 | tuple の書込を CON-04 の `writeRelationships`・`deleteRelationships` で MK-04 に対して実装し、書込対応表（§3.1 段 7）、書込順序（ARC-05 I-5・I-6）、整合性トークンの保存（I-4）を試験する | 書込経路の実装 | CON-11 の順序族のベクタが合格 |
 | S-7 | 一覧は SDK の一覧ヘルパだけで実装し（LS-1）、MK-03 の search（preview）で `completeness=incomplete` と post-check を試験する | 一覧の実装 | CON-11 §4.4 の一覧の応答を扱える |
@@ -1086,15 +1151,18 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 - engine の版は RS-07 の確認版（OpenFGA v1.21.0、SpiceDB v1.56.2）を基準にする [D]。§9.0 の予備実行は CLI 内蔵の古い engine で行ったため、基準版での再確認は TC-ARC05-10 で行う [D]。
 - MK-03 は判定にモデルの意味論を使わないので、アプリの契約試験が合格してもモデルの正しさは示さない [D]（CON-11 §4.4）。モデルの正しさは S-4 と、基盤提供後の S-8 で示す [D]。
 
-### 15.3 契約に足りないもの（連携開発者が待たされる点）
+### 15.3 契約に足りないもの（連携開発者が待たされる点）と v0.4 の対応
 
-| # | 不足 | 影響 | 当面の扱い | 解消の場所 |
+v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に preview として定義した。preview の要素は変わり得る（ADR-022 D-1-1・D-2-1）ので、下表の「残り」が閉じるまで正式登録の形は確定しない [D]。
+
+| # | 不足（v0.3 時点） | CON-04 v0.2.0 での対応 | 残り | 解消の場所 |
 |---|---|---|---|---|
-| G-1 | CAM の permission 式の文法が未公開（CON-04 `CamPermission.expression` は文字列で、「文法は CAM 仕様（ADR-011 D2-3）」とする）。CON-04 の例は `viewer or parent->read`、本書と ARC-05 は `a \| b` の擬似表記で、表記がそろっていない | `validateModel` に出す JSON を確定できない | 本書の擬似表記で書き、文法の公開後に機械変換する | CAM 仕様（認可・PDP チーム、DL-73 凍結前） |
-| G-2 | `ModelChangeRequest` に試験ケースの欄がない。`positive_negative_tests`・`cross_tenant_negative_tests` が何を入力に検査するのか契約から読めない | 試験をどの形式で提出するか決められない | S-4 の `.fga.yaml`・validation file を CAM のそばに置き、PR に含める | CON-04 の改訂 |
-| G-3 | `ValidationReport` は `permission_expansion` と `additional_approval_required` だけを返し、変更区分（M0〜M3）を返さない | 開発者が自分の変更の承認経路（§8.1）を事前に知れない | `permission_expansion=true` を M1 以上、`breaking_change` の検出を M2 と読む（本書の読み替え）[D] | CON-04 の改訂 |
-| G-4 | 意味の変更の申告欄（ADR-016 D16-08）が `ModelChangeRequest` にない | スキーマ差分で検出できない変更が審査に上がらない | `change_request_ref` の PR・変更票に書く | CON-04 の改訂 |
-| G-5 | 条件カタログの ID は ARC-05 §3.5 の「案」で、正式な一覧と引数の型が未公開 | 条件付きの relation を確定できない | ARC-05 §3.5 の 6 件の案の ID で書き、確定時に置き換える | 条件カタログ（認可・PDP チーム） |
+| G-1 | CAM の permission 式の文法が未公開。CON-04 の例（`viewer or parent->read`）と本書・ARC-05 の擬似表記（`a \| b`）がそろっていない | `info.description` §9 に CAM 式 v0 の EBNF・制約 E-1〜E-8・OpenFGA/SpiceDB への写像表を置き、例を `viewer \| parent->read` に改めた。`CamPermission.expression` に文字種の pattern を付けた [D] | CAM 仕様全体（ADR-011 D2-3 の「作成者以外が実装できる」記述と第三者レビュー）への移管。E-8 の上限値の根拠（TC-ARC05-10） | CAM 仕様（認可・PDP チーム、DL-73 凍結前） |
+| G-2 | `ModelChangeRequest` に試験ケースの欄がない | `tests`（必須、`ModelTestCase`: tuples・check・list_objects、`kind=cross_tenant_negative`）を加え、`ValidationReport.test_summary.uncovered_relations` を返す [D] | 生成器による `.fga.yaml`・zed validation file への写像の実装と、手写しとの一致確認（S-8） | CAM 生成器（認可・PDP チーム） |
+| G-3 | `ValidationReport` が変更区分（M0〜M3）を返さない | `change_class`・`change_class_reasons` を加え、判定規則を CON-04 §9.4 に置いた（GOV-05 §6.4 の写し）[D] | M1 の「高リスク操作階層」の範囲（REQ-03・DL-09 の確定） | DL-09・GOV-05 |
+| G-4 | 意味の変更の申告欄（ADR-016 D16-08）がない | `semantic_change`（必須。`declared=true` で M2）を加えた [D] | 申告の真偽の確かめ方（審査と shadow）の運用手順 | GOV-05 §6.4、DL-66 |
+| G-5 | 条件カタログの正式な一覧と引数の型が未公開 | `ConditionId`（6 件の列挙）と `ConditionCatalog.$defs`（各条件の tuple_context・request_context）を preview として置いた。`CamRelation.conditions` は列挙に変えた。tuple の `Condition.name`（GA）は列挙で縛らない [D] | 引数の型・既定・CEL 式の確定（ARC-05 §3.5 は案のまま） | 条件カタログ（認可・PDP チーム、DL-73 凍結前） |
+| G-6 | 階層サービス（unit の作成・移動、循環・深さ検査、祖先閉包）の API の置き場所が未定（残課題 19） | CON-04 に置くと決め、`createUnit`・`getUnit`・`attachToHierarchy`・`moveHierarchyNode`・`readAncestors` を tag `hierarchy`、`x-decision-pending: [K05-6, K05-8]` の preview で定義した。`ancestor` と unit を親に取る `parent` は階層サービスだけが書く（既存の `relation_not_writable`）[D] | K05-6〜K05-8 の決裁（不採用なら削除）。unit の廃止とテナント統合・分割の接ぎ木の API | ARC-05 §16（CTO、Gate 3・G4） |
 
 ---
 
@@ -1107,7 +1175,39 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | AF-INT03-1 | ADR-011（§6 設計文書表「G-147 の表現率目標」、TC-011-08、残課題 9） | 表現率の目標値を DL-65 に割り当てているが、SLO-01 SLI-040 は所有者 CTO・期限 G4 とし、目標値の決裁は DL-20 で行う形になっている | SLO-01 に従い、本書は目標値を置かず材料を供給する（§12）。ADR-011 の記載を「目標値は DL-20（SLO-01）、材料は DL-65」に改めることを申し送る |
 | AF-INT03-2 | ARC-05 §8.2・§8.5 | 資源側の直接型に `with c.not_expired` を重ね、条件なしの直接型と同じ relation に混在させている。ARC-05 §3.1 は条件を core 側に置くとし、CON-04 の `CamRelation.conditions` は relation 単位でしか条件を持てない | 本書の例は core 側に 1 回だけ付けた（§9.0）。ARC-05 §8 の例の書換えを申し送る |
 | AF-INT03-3 | ADR-011 D3-5 と ADR-029 D29-80 | break-glass/B を R 段の型付き例外で評価することと、D3-5 の「記録と事後審査の連携に限る」の関係（ARC-05 §18 AF-3 で申し送り済み） | ADR-029 D29-81 により D3-5 の限定を break-glass/P に当たると読み、§9.4 を書いた |
-| AF-INT03-4 | CON-04 | §15.3 の G-1〜G-4 | 当面の扱いを §15.3 に書いた |
+| AF-INT03-4 | CON-04 | §15.3 の G-1〜G-4 | v0.4 で CON-04 v0.2.0 に preview として定義済み（§15.3）。他文書の改訂は「他文書への申し送り」に記した |
+
+### 16.1 他文書への申し送り（模擬パネル ラウンド1 の対応で生じたもの）
+
+本書と CON-04 だけを編集したため、次の文書の改訂は所有者に申し送る [D]。
+
+| # | 対象 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| HO-1 | ARC-05（04_architecture/authorization-model.md）§8.1 | 擬似表記の説明を「CON-04 §9 の CAM 式 v0 と同じ。`[T]`・`with c` は `directly_related`・`conditions` の読みやすい表記」に改め、§8 の例に異なる演算子の括弧なしの混在がないか確かめる | 表記の統一（G-1）。E-2 の括弧必須 |
+| HO-2 | ARC-05 §3.3 | X-13 の検査欄に CON-04 の check `lint_reserved_relation` を、X-5 に E-6 を対応付ける | 検査名の対応 |
+| HO-3 | ARC-05 §3.5 | 条件カタログの表に CON-04 `ConditionCatalog.$defs` の引数（tuple_context・request_context）を正本として参照させ、「案」の確定手順を書く | G-5 |
+| HO-4 | ARC-05 §16・§17 | K05-6〜K05-8 の帰結に「CON-04 §10 の階層 API（preview）の採否」を加え、残課題 19 相当を閉じる | G-6 |
+| HO-5 | ADR-011 D2-3 | CAM 仕様の公開先と、CON-04 §9 を CAM 仕様へ移す時期を記す | CON-04 §9 は暫定の正本 |
+| HO-6 | GOV-05（01_governance/raci-governance.md）§6.4・§6.5 | 区分の機械判定規則（CON-04 §9.4）と、`semantic_change.declared=true` を M2 に回す規則を区分表に加える | G-3・G-4 |
+| HO-7 | CON-11（11_contracts/mock-contract-test-kit.md）MK-04 | `validateModel` の example に `tests`・`semantic_change`・`change_class` を加え、階層 API（`moveHierarchyNode` の 409・422）の example を追加する | 連携開発者の試験（§15.2 S-6） |
+| HO-8 | research/（RS-17 または新規ノート） | OpenFGA Configuration Language、SpiceDB Schema Language（演算子の優先順位）を原典として収載し、作成者以外が照合する | 本書 [^29]・[^30]、CON-04 [^17]・[^18] は research ノート未収載 |
+| HO-9 | traceability/claims-ledger.md・consistency-checks.md | CON-04 v0.2.0 の追加（CAM 式 v0、試験欄、変更区分、条件カタログ、階層 API）を記録する | 台帳の更新 |
+| HO-10 | 前提台帳（01_governance/assumptions-register.md） | CON-04 E-8 の上限（括弧 4 段、2,048 文字）と、階層の深さ上限 5（NA-ARC05-1）を前提として登録する | 根拠のない初期値 |
+
+### 16.2 他文書への申し送り（模擬パネル ラウンド3 の対応で生じたもの）
+
+本対応では本書だけを編集した。次の改訂は各文書の所有者に申し送る [D]。
+
+| # | 対象 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| HO-R3-1 | CON-04（11_contracts/relationship-model-registry.openapi.yaml）`CamRelation`・`CamPermission`・§9.4 | (a) `CamRelation` の description に「直接付与だけ。計算は `CamPermission`」（本書 N-22）を明記する。(b) 保持者集合・補助の permission（N-23・N-24）を表す印（例: `marks` に catalog 外を示す値）を設け、`tier` を形式的に入れなくて済むようにする。(c) §9.4 の M1 判定で、privileged・break_glass の permission が参照する保持者集合の式の変更も M1 に数える | (b) は現状 `tier` が必須のため `read_sensitive` を入れている（N-24）。(c) は保持者集合の変更で privileged の permission の集合が変わっても、`tier` の判定では M1 に当たらないため（`permission_expansion_diff` だけが頼りになる） |
+| HO-R3-2 | CON-04 §9・ADR-011 D2-3（CAM 仕様） | core 生成器がドメインの型に `restricted_external`・`restricted_external_inherited` を付け、動詞の permission に `- restricted_external_inherited` を付加する規則（どの permission に付けるか。例: 外部付与の経路がある permission だけか、全てか）を定める | 本書 N-25 は ARC-05 §3.1・§8.2 の記述から導いたが、付加の対象は CON-04・ARC-05 に定めがない |
+| HO-R3-3 | CON-04 §9.2 E-4 | tupleset に使える relation に、同じ名前空間の containment でない参照（ARC-05 X-12 の `care_team`・`owning_unit` など）を加えるか、加えない場合の代わりの書き方を定める | ARC-05 X-12 は推移を permission の式で明示するとして参照 relation の arrow を前提にしているが、E-4 は許していない。付録 A の 11 式が当たる（§9.0） |
+| HO-R3-4 | CON-04 `CamPermission` | `public`（X-4 の公開宣言）を permission にも持たせる | E-5 は他ドメインの arrow の右辺を「公開 permission」に限るが、公開を宣言する欄が `CamRelation` にしかない（§9.2 の `org/site#enter_system`・`administer`） |
+| HO-R3-5 | PoC（12_poc/code/model/cam.json、12_poc/code/README.md §10.2 P-10） | (a) P-10 の分割規則の出典に本書 §4.4 N-22〜N-25 を加える。(b) cam.json を CON-04 の `CamModule` の JSON Schema で検証すると 13 件の誤りが出る（最上位の `$comment`・`cam_version`・`conditions`・`guardrail_catalog_version`、`write_declarations` の形が `writer`・`types`）。PoC の拡張であれば別の schema として記す。(c) `files/folder#read` の `viewers - restricted_external - parent->restricted_inherited` は exclusion を 3 項につないでおり E-2（exclusion は 2 項）に当たる。core 生成部分をドメインの型に書いている点は N-25・E-6 と異なる | 本対応での確認 [M]（自前、jsonschema 4.26.0）。PoC は本書と同じ分割をとるが、契約の形との差は記録が要る |
+| HO-R3-6 | ARC-05（04_architecture/authorization-model.md）§8.1〜§8.6 | 例を本書 §4.4 の書き方（直接付与の relation と保持者集合・動詞の permission）に書き直す。AF-INT03-2・HO-1 と同じ改訂でまとめる | ARC-05 §8.2 は `editor: [...] \| owner \| parent->editor` の形のままで、CON-04 の `CamRelation` で表せない |
+| HO-R3-7 | CON-03 §4.2（判定宣言 `caller_scope`）、ARC-05 X-14 の追加案、CON-11 | 判定宣言には catalog に載せた動詞の permission だけを入れ、保持者集合・補助の permission を入れない規則を加える。CON-11 に「保持者集合（`editors`）の照会が `deny_guardrail:caller_scope` になる」負例を加える | 本書 N-24 の強制手段 |
+| HO-R3-8 | research/RS-18-hierarchy-modeling.md、reports/テナント配下の階層モデリング.md | relation に式を混ぜた例（直接型の `[...]` に続けて `\| owner` などを書く形）が残っている。次の改版で §4.4 の書き方に揃えるか、擬似表記であることを注記する | 連携開発者が写す際の食い違いの防止 |
 
 ---
 
@@ -1147,6 +1247,245 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 
 ---
 
+## 付録 A §9 の例の `CamModule` JSON（v0.5）
+
+§9.1〜§9.6 のモデルを、CON-04 v0.2.0 の `CamModule`（1 名前空間に 1 件）で書いたものである [D]。§9.0 の機械検証（JSON Schema の誤り 0 件）はこの JSON に対して行い、本文の `text` のモデルとの一致（14 型の relation・直接型・条件・式）も自前のスクリプトで確かめた [M]（自前の確認。スクリプトは本リポジトリに保存していない）。core 型（ARC-05 §3.1）と core 生成器が付ける部分（N-25）は含めていない。`write_declarations` の workload は仮置きの SPIFFE ID（trust domain `example.invalid`）で、本文に書込宣言のある `files`・`fin` だけに置いた [D]。`org/unit#parent` の `max_depth` 5 は NA-ARC05-1 の初期案を入れた（本文では TBD）[D]。
+
+### A.1 `files`
+
+```json
+{
+  "types": [
+    {"name": "files/folder", "list_method": "L1",
+      "relations": [
+        {"name": "parent", "directly_related": ["files/folder"], "max_depth": 5},
+        {"name": "owner", "directly_related": ["core/user"]},
+        {"name": "editor", "directly_related": ["core/user", "core/group#member", "core/role#assignee"], "max_direct": 1000},
+        {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/external_grant#grantee"], "max_direct": 1000}
+      ],
+      "permissions": [
+        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive"},
+        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive"},
+        {"name": "read", "expression": "viewers", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "write", "expression": "editors", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "share", "expression": "owner | parent->share", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "share_external", "expression": "owner | parent->share_external", "tier": "write"},
+        {"name": "delete", "expression": "owner | parent->delete", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "files/file", "list_method": "L3",
+      "relations": [
+        {"name": "parent", "directly_related": ["files/folder"]},
+        {"name": "owner", "directly_related": ["core/user"]},
+        {"name": "editor", "directly_related": ["core/user", "core/group#member", "core/role#assignee"], "max_direct": 1000},
+        {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/external_grant#grantee"], "max_direct": 1000}
+      ],
+      "permissions": [
+        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive"},
+        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive"},
+        {"name": "read", "expression": "viewers", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "write", "expression": "editors", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "share", "expression": "owner | parent->share", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "delete", "expression": "owner | parent->delete", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "files/tenant_policy",
+      "relations": [
+        {"name": "tenant", "directly_related": ["core/tenant"]},
+        {"name": "policy_admin", "directly_related": ["core/user", "core/role#assignee"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "policy_admin | tenant->admin | tenant->security_admin", "tier": "privileged", "marks": ["tenant_delegable"]},
+        {"name": "change_retention", "expression": "policy_admin | tenant->admin", "tier": "privileged", "marks": ["tenant_delegable"]},
+        {"name": "export_all", "expression": "tenant->admin", "tier": "privileged"}
+      ]
+    }
+  ],
+  "write_declarations": [
+    {"workload": "spiffe://example.invalid/ns/files/sa/file-service", "relations": ["files/folder#parent", "files/folder#owner", "files/folder#editor", "files/folder#viewer", "files/file#parent", "files/file#owner", "files/file#editor", "files/file#viewer"]}
+  ]
+}
+```
+
+### A.2 `org`
+
+```json
+{
+  "types": [
+    {"name": "org/unit",
+      "relations": [
+        {"name": "parent", "directly_related": ["org/unit"], "max_depth": 5},
+        {"name": "member", "directly_related": ["core/user", "core/group#member"]},
+        {"name": "manager", "directly_related": ["core/user"]},
+        {"name": "user_admin", "directly_related": ["core/user"]}
+      ],
+      "permissions": [
+        {"name": "view_directory", "expression": "member | manager | parent->view_directory", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "manage", "expression": "manager | parent->manage", "tier": "privileged"},
+        {"name": "manage_membership", "expression": "user_admin | manage | parent->manage_membership", "tier": "privileged"},
+        {"name": "assign_user_admin", "expression": "manage", "tier": "privileged"},
+        {"name": "restructure", "expression": "parent->manage", "tier": "privileged"}
+      ]
+    },
+    {"name": "org/site",
+      "relations": [
+        {"name": "unit", "directly_related": ["org/unit"]},
+        {"name": "staff", "directly_related": ["core/user"], "conditions": ["c.network_zone"]},
+        {"name": "facility_admin", "directly_related": ["core/user"]}
+      ],
+      "permissions": [
+        {"name": "enter_system", "expression": "staff | unit->manage", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "administer", "expression": "facility_admin | unit->manage", "tier": "privileged"}
+      ]
+    }
+  ]
+}
+```
+
+### A.3 `tool`
+
+```json
+{
+  "types": [
+    {"name": "tool/instance", "list_method": "L1",
+      "relations": [
+        {"name": "site", "directly_related": ["org/site"]},
+        {"name": "operator", "directly_related": ["core/user", "core/role#assignee"]},
+        {"name": "viewer", "directly_related": ["core/user", "core/group#member"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "viewer | operator | site->administer", "tier": "read_sensitive"},
+        {"name": "use", "expression": "operator & site->enter_system", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "configure", "expression": "site->administer", "tier": "privileged"}
+      ]
+    }
+  ]
+}
+```
+
+### A.4 `proj`
+
+```json
+{
+  "types": [
+    {"name": "proj/project",
+      "relations": [
+        {"name": "unit", "directly_related": ["org/unit"]},
+        {"name": "owner", "directly_related": ["core/user"]},
+        {"name": "admin", "directly_related": ["core/user", "core/role#assignee"]},
+        {"name": "member", "directly_related": ["core/user", "core/group#member", "core/role#assignee"]},
+        {"name": "guest", "directly_related": ["core/external_grant#grantee"]}
+      ],
+      "permissions": [
+        {"name": "admins", "expression": "admin | owner", "tier": "read_sensitive"},
+        {"name": "members", "expression": "member | admins", "tier": "read_sensitive"},
+        {"name": "view_internal", "expression": "members | unit->manage", "tier": "read_sensitive"},
+        {"name": "view", "expression": "view_internal | guest", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "edit", "expression": "members", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "manage_members", "expression": "admins", "tier": "privileged", "marks": ["tenant_delegable"]},
+        {"name": "archive", "expression": "owner | unit->manage", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "proj/task", "list_method": "L2",
+      "relations": [
+        {"name": "project", "directly_related": ["proj/project"]},
+        {"name": "assignee", "directly_related": ["core/user"]},
+        {"name": "watcher", "directly_related": ["core/user", "core/external_grant#grantee"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "project->view_internal | assignee | watcher", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "edit", "expression": "project->edit | assignee", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "delete", "expression": "project->manage_members", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    }
+  ]
+}
+```
+
+### A.5 `med`
+
+```json
+{
+  "types": [
+    {"name": "med/care_team",
+      "relations": [
+        {"name": "member", "directly_related": ["core/user"], "conditions": ["c.time_window"]}
+      ]
+    },
+    {"name": "med/patient",
+      "relations": [
+        {"name": "person", "directly_related": ["core/user"]},
+        {"name": "guardian", "directly_related": ["core/user"], "conditions": ["c.not_expired"]}
+      ]
+    },
+    {"name": "med/patient_record", "list_method": "L1",
+      "relations": [
+        {"name": "patient", "directly_related": ["med/patient"]},
+        {"name": "attending", "directly_related": ["core/user"]},
+        {"name": "care_team", "directly_related": ["med/care_team"]},
+        {"name": "billing_clerk", "directly_related": ["core/group#member"]},
+        {"name": "emergency", "directly_related": ["core/exception#holder"]},
+        {"name": "acr_gate", "directly_related": ["core/tenant#member"], "conditions": ["c.min_acr"]},
+        {"name": "researcher", "directly_related": ["core/group#member"], "conditions": ["c.purpose_in"]}
+      ],
+      "permissions": [
+        {"name": "clinician", "expression": "attending | care_team->member", "tier": "read_sensitive"},
+        {"name": "read_clinical", "expression": "(clinician & acr_gate) | emergency", "tier": "read_sensitive"},
+        {"name": "append", "expression": "clinician & acr_gate", "tier": "write"},
+        {"name": "read_billing", "expression": "attending | billing_clerk", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "read_portal", "expression": "patient->person | patient->guardian", "tier": "read_sensitive"},
+        {"name": "read_research", "expression": "researcher & acr_gate", "tier": "read_sensitive"}
+      ]
+    }
+  ]
+}
+```
+
+### A.6 `fin`
+
+```json
+{
+  "types": [
+    {"name": "fin/account",
+      "relations": [
+        {"name": "unit", "directly_related": ["org/unit"]},
+        {"name": "operator", "directly_related": ["core/user", "core/role#assignee"]},
+        {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "viewer | operator | unit->manage", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "initiate", "expression": "operator", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "fin/approval_band",
+      "relations": [
+        {"name": "approver", "directly_related": ["core/user", "core/role#assignee"]}
+      ]
+    },
+    {"name": "fin/payment", "list_method": "L2",
+      "relations": [
+        {"name": "account", "directly_related": ["fin/account"]},
+        {"name": "band", "directly_related": ["fin/approval_band"]},
+        {"name": "requester", "directly_related": ["core/user"]},
+        {"name": "released_to", "directly_related": ["core/user"], "conditions": ["c.not_expired"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "account->view | requester", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "approve", "expression": "band->approver & account->view", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "execute", "expression": "released_to & account->initiate", "tier": "write"},
+        {"name": "cancel", "expression": "requester", "tier": "write"}
+      ]
+    }
+  ],
+  "write_declarations": [
+    {"workload": "spiffe://example.invalid/ns/fin/sa/payment-service", "relations": ["fin/payment#account", "fin/payment#band", "fin/payment#requester"]},
+    {"workload": "spiffe://example.invalid/ns/fin/sa/approval-workflow", "relations": ["fin/payment#released_to"]}
+  ]
+}
+```
+
+---
+
 ## 参考文献
 
 [^1]: OpenFGA『Getting Started with Modeling』web 文書（版表記なし）. https://openfga.dev/docs/modeling/getting-started （参照箇所: A Process For Defining Authorization Models（01〜06）, roles に関する注記、確認日: 2026-10-03）（RS-17#84）
@@ -1176,6 +1515,10 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 [^25]: AuthZed『Schema Language』SpiceDB 文書（版表記なし）. https://authzed.com/docs/spicedb/concepts/schema （参照箇所: Identifiers, Prefixes、確認日: 2026-10-15。ARC-05 のレビュー時に取得した原典で research ノートに未収録。作成者以外の照合は未実施。本書では N-10 の背景としてだけ参照）
 [^26]: OpenFGA『openfga/cli』GitHub, tag v0.7.4. https://github.com/openfga/cli （参照箇所: `fga model test` コマンド。本書の予備実行に使ったツールの所在。確認日: 2026-10-15。research ノート未収録）
 [^27]: AuthZed『authzed/zed』GitHub, tag v0.30.2. https://github.com/authzed/zed （参照箇所: `zed validate` コマンド。本書の予備実行に使ったツールの所在。確認日: 2026-10-15。research ノート未収録）
+[^28]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 「汎用コンテナ一つと型付きの葉で、命名の揺れを止める」（relation 名の規約 R-1〜R-6）, 「木を保ち、循環を断ち、深さを予算に収める」, 「token には tid だけを載せ、階層は PDP で評価する」, 「補足: user_id ではなく sub、client_id、act を分ける」、確認日: 2026-10-15。項目番号と独立検証記録がないため節名で参照する。設計の入力としてだけ使い、事実の根拠には使わない）
+[^29]: AuthZed『Schema Language』SpiceDB 文書（版表記なし）. https://authzed.com/docs/spicedb/concepts/schema （参照箇所: Permissions の Operator Precedence（"For historical reasons, union (`+`) takes precedence over intersection (`&`) and exclusion (`-`)"）, Arrows の右辺に permission を推奨、確認日: 2026-10-15。模擬パネル ラウンド1 の対応で取得した原典で research ノート未収録。作成者以外の照合は未実施）
+[^30]: OpenFGA『Configuration Language』web 文書（版表記なし）. https://openfga.dev/docs/configuration-language （参照箇所: union・intersection・exclusion の演算子（`or`・`and`・`but not`）, `X from Y`（"OpenFGA does not allow the referenced relation (the word after `from`, also called the tupleset) to reference another relation"）、確認日: 2026-10-15。模擬パネル ラウンド1 の対応で取得した原典で research ノート未収録。作成者以外の照合は未実施）
+[^31]: OpenFGA『Testing Models』web 文書（版表記なし）. https://openfga.dev/docs/modeling/testing （参照箇所: Write tests（`.fga.yaml` の tests の tuples・check・list_objects、check の user・object・context・assertions）、確認日: 2026-10-15）（RS-17#86 と同じ原典。本対応で試験ファイルの要素を再確認）
 
 ---
 
@@ -1237,3 +1580,30 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 4. §9 の例は予備実行だけで、生データは本リポジトリになく、本レビューでは再実行していない（残課題 1）。脚注 [^25]〜[^27] は作成者以外の照合が済んでいない。
 5. §7.2 の hop 数の表は概算で、最悪経路の数え方（file から folder への 1 hop を含めるか）を TC-ARC05-08 の設計時に確定する必要がある。
 
+### 模擬パネル ラウンド1（2026-10-15）
+
+> 模擬パネルは AI エージェント（Claude）による自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 指摘（重大度・指摘者） | 対応 | 箇所 |
+|---|---|---|---|
+| P1-1 | High（devlead）: CAM の permission 式の文法が未公開で、CON-04 の例（`viewer or parent->read`）と INT-03・ARC-05 の擬似表記（`a \| b`）がそろっていない | CON-04 v0.2.0 §9 に CAM 式 v0（EBNF、E-1〜E-8、写像表）を置き、CON-04 の例を `viewer \| parent->read` に改めた。本書 §1.2 を CAM 式 v0 の参照に改めた。括弧必須（E-2）と tupleset の制約（E-3）は原典 [^29]・[^30] で確認した。ARC-05 §8.1 の改訂は HO-1 で申し送り | CON-04 §9・`CamPermission`、本書 §1.2・§8.2・§15.3 G-1 |
+| P1-2 | 同上: `ModelChangeRequest` に試験ケースの欄がない | `tests`（`ModelTestCase`）を必須で加え、`ValidationReport.test_summary` を返すようにした。構成は `.fga.yaml` と同じ（[^31] で再確認） | CON-04 `ModelChangeRequest`・`ModelTestCase`、本書 §1.3 D-5・§8.2・§15.3 G-2 |
+| P1-3 | 同上: `ValidationReport` が M0〜M3 を返さない | `change_class`・`change_class_reasons` を加え、判定規則を CON-04 §9.4 に置いた（GOV-05 §6.4 の写し。HO-6） | CON-04 `ValidationReport`・`ChangeClass`・§9.4、本書 §8.1・§15.3 G-3 |
+| P1-4 | 同上: 意味の変更の申告欄がない | `semantic_change`（必須、`declared=true` で M2）を加えた（ADR-016 D16-08） | CON-04 `SemanticChangeDeclaration`、本書 §8.1・§15.3 G-4 |
+| P1-5 | 同上: 条件カタログが案のまま | `ConditionId` の列挙と `ConditionCatalog.$defs` を preview で置いた。引数の確定は残る（HO-3） | CON-04 `ConditionId`・`ConditionCatalog`、本書 §15.3 G-5 |
+| P1-6 | 同上: 階層サービス API の置き場所が未定（残課題 19） | CON-04 に置くと決め（理由は CON-04 §10）、unit の作成・照会、葉ノードの接続、移動（循環・深さ・型の検査、楽観的並行制御）、祖先閉包の読取りを `x-decision-pending: [K05-6, K05-8]` の preview で定義した | CON-04 §10・tag `hierarchy`、本書 §14 残課題 19・§15.3 G-6 |
+
+- 対応後の確認: CON-04 を YAML として読み込み、全 `$ref` の解決、全 schema の JSON Schema 2020-12 としての妥当性、`ModelChangeExample`・`ValidationPassExample`・`ModelRevisionExample` の schema 適合を Python（jsonschema 4.26.0）で確かめた [M]（自前の確認。TC 未採番、生データは保存していない）。redocly lint は実行環境に CLI がなく未実施 [D]。
+- 未解決: preview の各要素の GA 昇格、条件カタログの引数、K05-6〜K05-8 の決裁、CAM 仕様全体の第三者レビュー（残課題 13・15・19）。CAM 式 v0 の例（本書 §9 を含む）はエンジンの検証器で再評価していない（残課題 1・17）[D]。
+
+### 模擬パネル ラウンド3（2026-10-15）
+
+> 模擬パネルは AI エージェント（Claude）による自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 指摘（重大度・指摘者） | 対応 | 箇所 |
+|---|---|---|---|
+| P3-1 | High（devlead）: §9.1 などの例が relation に直接付与と計算を混ぜて書き（`editor: [core/user, ...] \| owner \| parent->editor`）、§9.0 は「ドメインは CAM 上の 1 つの名前で書く」としていた。一方 S-3 は CON-04 の `CamModule` で書かせるが、`CamRelation` は `required: [name, directly_related]`・`additionalProperties: false` で式を持てず、例どおりの JSON はスキーマ検証に通らない。PoC は `editor` と `editors` に分けて回避し、アプリが CON-03 の action に渡す名前がガイドとずれた | (1) §4.4「CAM での書き方」を新設し、N-22（relation は直接付与だけ）、N-23（包含・継承は relation 名の複数形の保持者集合 permission。PoC P-10 と同じ命名）、N-24（PEP が CON-03 の `action.name` に渡すのは catalog に載せた動詞の permission だけ。保持者集合は判定宣言にも入れない）、N-25（core 生成部分はドメインに書かない）を置き、N-8 に例外を加えた。(2) §6.1・§9.1・§9.3・§9.5 のモデルを書き直した（§9.2・§9.4・§9.6 は既に直接付与だけの relation だったので式は変えていない）。§1.2・§1.3 D-3・§10.2 AC-02・§11 E-01・E-07 を合わせ、E-19 を加えた。(3) §9.0 の「1 つの名前で書く」を削除し、予備実行（v0.4 の形）との対応と、v0.5 の機械検証の結果（付録 A の 6 件が CON-04 の `CamModule` の JSON Schema で誤り 0 件、48 式が CAM 式 v0 の構文に合格、E-4 に当たる 11 式と E-5 推奨外の 8 件）を記録した。(4) S-3 の完了判定に action 名の条件を加え、S-4 の写し方を改めた。(5) CON-04 の E-4・`public`・保持者集合の印、core 生成器の規則、PoC の cam.json の契約との差、ARC-05 §8 の例の書換え、判定宣言の規則を §16.2 HO-R3-1〜HO-R3-8 で申し送った | §0-4、§1.2、§1.3、§4.2 N-8、§4.4、§6.1、§9.0、§9.1、§9.3、§9.5、§10.2、§11、§14 残課題 20、§15.2、§16.2、付録 A |
+
+- 対応後の確認 [M]（自前の確認。TC 未採番、生データは保存していない）: (a) 付録 A の 6 件を CON-04 v0.2.0 の `components.schemas.CamModule` に対して Python（jsonschema 4.26.0、Draft 2020-12）で検証し、誤り 0 件。(b) 同じ JSON の 48 式を CON-04 §9.1 の EBNF に沿う自前の構文解析器で検査し、全件合格。(c) 本文 §9.1〜§9.6 の `text` のモデル（14 型）と付録 A の relation 名・直接型・条件・式が一致することをスクリプトで確かめた。(d) 参考として PoC の 12_poc/code/model/cam.json を同じ schema で検証し、13 件の誤りを得た（HO-R3-5）。
+- 新たな事実の根拠: 本対応で使った事実は、CON-04 の `CamRelation`・`CamPermission`・E-2〜E-6、CON-03 の `Action.name` の description と §4.2、ARC-05 §3.1・§8.2・X-12、PoC の cam.json と README P-10 の記述で、いずれも本リポジトリの文書を開いて確かめた [D]。外部の原典は新たに引用していない。
+- 未解決: v0.5 の例の engine CLI による再実行（残課題 20）、CON-04 の E-4 と `CamPermission.public` の不足、core 生成器の付加規則（HO-R3-2〜HO-R3-4）。

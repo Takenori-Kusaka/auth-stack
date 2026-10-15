@@ -1,6 +1,6 @@
 # CON-04 Relationship/Model Registry API 独立レビュー記録
 
-> 文書ID: CON-04（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-04-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-091, R-145, R-147, R-148（DL-73）
 > 依存文書: 11_contracts/relationship-model-registry.openapi.yaml, CONVENTIONS.md, traceability/deliverables.md（DL-73）, 05_adr/ADR-010, ADR-011, ADR-016, ADR-021, ADR-022, 04_architecture/authorization-model.md, 11_contracts/authorization-api.openapi.yaml（CON-03/DL-72）, 11_contracts/schemas/common.schema.json（CON-02）
 

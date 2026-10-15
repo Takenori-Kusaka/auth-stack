@@ -1,0 +1,1835 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+  "$comment": "文書ID: CON-13 / DL-118 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15。対応要求: G-137, G-118, G-138（R-044, R-109）。正本の分担: 事象の一覧・配送の保証・受信側の義務は 11_contracts/lifecycle-events.asyncapi.yaml（CON-12 / DL-117）、本書は封筒と data の形だけを持つ。依存文書: 02_requirements/tenant-lifecycle.md §7（DL-49）、02_requirements/identity-lifecycle.md §16.3（DL-08）、04_architecture/revocation-continuous-evaluation.md（DL-56）、05_adr/ADR-021・ADR-022、11_contracts/schemas/common.schema.json（CON-02）。$id は README §4.5 I-1 の形（<id-domain> は未決のため id-domain.example）。CON-02 の $id は現状 id-domain.invalid の形で、$ref はその実値を指す（README §4.9 D-3 の是正で一括して揃える）。根拠の書式: [N] 原典の規範（CloudEvents 1.0.2 本体と Sequence・Partitioning 拡張。いずれも ce@v1.0.2 タグの原文を 2026-10-15 に取得して照合。本体は RS-16#9, #10、拡張は research 未収録）、[D] 設計推論。作成方法: AI エージェント（Claude）が模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド1指摘を受けて起草。作成者以外による独立レビューは未実施。 版 0.1.1（2026-10-15、模擬パネル ラウンド2の指摘への是正。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）: 文書ID CON-13・DL-118 を traceability/deliverables.md §4.5・§8 で確定し「（案）」を外した。CON-12 は DL-117 で確定。client 登録の契約（client-registration.openapi.yaml）が仮番として名乗っていた CON-13 は CON-14／DL-119 に移した。スキーマの検証内容は変えていない（記録: 11_contracts/README.md のレビュー記録 R2-1）。",
+  "title": "ライフサイクル事象（CloudEvents 1.0.2 profile v1）",
+  "description": "依存サービスへ配るテナント・利用者・所属のライフサイクル事象と、受信側からの完了報告の形。ルートは受信側の検証用で、既知の type は data まで検証し、未知の type は封筒だけを検証して受理する（anyOf。README §4.4 L-3 により if/then を使わない）[D]。publisher の CI は $defs/PublisherProfile（既知の type だけ）で検証する [D]。",
+  "x-document-id": "CON-13",
+  "x-deliverable": "DL-118",
+  "x-status": "draft",
+  "x-last-updated": "2026-10-15",
+  "x-version": "0.1.1",
+  "x-requirements": [
+    "G-137",
+    "G-118",
+    "G-138",
+    "R-044",
+    "R-109"
+  ],
+  "x-depends-on": [
+    "11_contracts/lifecycle-events.asyncapi.yaml",
+    "11_contracts/schemas/common.schema.json",
+    "02_requirements/tenant-lifecycle.md",
+    "02_requirements/identity-lifecycle.md",
+    "04_architecture/revocation-continuous-evaluation.md",
+    "05_adr/ADR-021-irreversible-identifiers.md",
+    "05_adr/ADR-022-integration-contract-standards.md"
+  ],
+  "x-standards": [
+    {
+      "id": "SS-I20",
+      "name": "CloudEvents",
+      "status": "final（1.0.2、CNCF Graduated）",
+      "checked": "2026-10-15",
+      "conformance": "JSON 形式の封筒、REQUIRED 属性、dataschema、属性名の規則"
+    },
+    {
+      "id": "未登録（standards-status へ追加を申し送り）",
+      "name": "CloudEvents Sequence 拡張・Partitioning 拡張（ce@v1.0.2 タグ）",
+      "status": "拡張仕様（v1.0.2 タグに収録）",
+      "checked": "2026-10-15",
+      "conformance": "sequence（sequencetype なし、意味は本契約）、partitionkey"
+    }
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/$defs/Envelope"
+    }
+  ],
+  "anyOf": [
+    {
+      "$ref": "#/$defs/Event_tenant_created"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_suspended"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_resumed"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_termination_effective"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_deletion_requested"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_deleted"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_merge_cutover"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_split_cutover"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_cell_move_scheduled"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_cell_move_cutover"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_legal_hold_set"
+    },
+    {
+      "$ref": "#/$defs/Event_tenant_legal_hold_released"
+    },
+    {
+      "$ref": "#/$defs/Event_membership_added"
+    },
+    {
+      "$ref": "#/$defs/Event_membership_changed"
+    },
+    {
+      "$ref": "#/$defs/Event_membership_suspended"
+    },
+    {
+      "$ref": "#/$defs/Event_membership_resumed"
+    },
+    {
+      "$ref": "#/$defs/Event_membership_removed"
+    },
+    {
+      "$ref": "#/$defs/Event_user_created"
+    },
+    {
+      "$ref": "#/$defs/Event_user_suspended"
+    },
+    {
+      "$ref": "#/$defs/Event_user_resumed"
+    },
+    {
+      "$ref": "#/$defs/Event_user_deletion_requested"
+    },
+    {
+      "$ref": "#/$defs/Event_user_deleted"
+    },
+    {
+      "$ref": "#/$defs/Event_user_legal_hold_set"
+    },
+    {
+      "$ref": "#/$defs/Event_user_legal_hold_released"
+    },
+    {
+      "$ref": "#/$defs/Event_revocation_bulk"
+    },
+    {
+      "$ref": "#/$defs/UnknownTypeEvent"
+    }
+  ],
+  "$defs": {
+    "Sequence": {
+      "description": "パーティション（source）内の順序番号。CloudEvents Sequence 拡張（v1.0.2）の sequence 属性を使う。拡張は sequence を辞書順に並べられる空でない文字列（MUST）とし、単調増加かつ連続を RECOMMENDED とする [N]。本契約は 20 桁の 0 埋め 10 進数とし、1 から始めて 1 ずつ増やす（連続・単調増加を本契約の MUST に強める）[D]。sequencetype は付けない。Integer 型は 2^31−1 で折り返すため使わず、意味は本契約が定める（拡張は sequencetype がない場合の解釈を producer との帯域外の取決めに委ねている）[N][D]。",
+      "type": "string",
+      "pattern": "^[0-9]{20}$",
+      "not": {
+        "const": "00000000000000000000"
+      },
+      "x-freeze-class": "irreversible",
+      "examples": [
+        "00000000000000000001",
+        "00000000000000004212"
+      ],
+      "x-negative-examples": [
+        {
+          "value": "4212",
+          "reason": "0 埋めなし（辞書順と数値順が一致しない）"
+        },
+        {
+          "value": "00000000000000000000",
+          "reason": "0 は使わない（1 から始める）"
+        }
+      ]
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 の時刻（UTC、Z 表記）。CloudEvents の Timestamp 型に合わせる [D]。",
+      "pattern": "Z$"
+    },
+    "ReasonClass": {
+      "description": "停止・除去の理由の区分だけを載せる。詳細（特に SEC の内容）は載せない（DL-08 §16.3、DL-49 §7）[D]。開いた列挙（README R-2）。受信側は未知の値を other と同じに扱う [D]。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[a-z][a-z0-9_]{0,31}$",
+      "examples": [
+        "admin",
+        "security",
+        "legal",
+        "source_idp",
+        "contract",
+        "principal_suspended",
+        "other"
+      ],
+      "x-enum-kind": "open",
+      "x-known-values": [
+        "admin",
+        "security",
+        "legal",
+        "source_idp",
+        "contract",
+        "principal_suspended",
+        "tenant_suspended",
+        "other"
+      ]
+    },
+    "OpaqueRef": {
+      "description": "基盤が払い出す不透明な参照（写像表、要求、保全、範囲など）。受信側は解析せず、照会 API の引数にだけ使う [D]。",
+      "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/OpaqueId"
+    },
+    "TenantData": {
+      "type": "object",
+      "description": "テナント事象の共通 data。テナント名・ドメイン名などの属性を載せない [D]。",
+      "required": [
+        "tid",
+        "effective_at"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      }
+    },
+    "TenantSuspendedData": {
+      "type": "object",
+      "description": "tenant.suspended の data。",
+      "required": [
+        "tid",
+        "effective_at",
+        "mode"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "voluntary",
+            "forced"
+          ],
+          "x-enum-kind": "closed",
+          "description": "voluntary=一時停止（T05）、forced=強制停止（T06）。DL-49 §7.1 の mode [D]。forced は SSF/CAEP の session 失効と同時に出す（DL-49 §7.3）[D]。"
+        },
+        "reason_class": {
+          "$ref": "#/$defs/ReasonClass"
+        }
+      }
+    },
+    "TenantDeletionRequestedData": {
+      "type": "object",
+      "description": "tenant.deletion.requested の data。",
+      "required": [
+        "tid",
+        "effective_at",
+        "request_id",
+        "deadline",
+        "report_to"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "deadline": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "完了報告の期限。法域別の T_del（DL-49 K-3、G-054）から producer が計算して入れる。値は TBD [D]。"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports",
+          "description": "完了報告を送る AsyncAPI channel の ID [D]。"
+        }
+      }
+    },
+    "TenantRestructureData": {
+      "type": "object",
+      "description": "tenant.merge.cutover・tenant.split.cutover の data。統合元 tid は墓石にして再利用しない（ADR-021 D21-29）[D]。付け替えの完了は deletionReports channel に outcome=completed で報告する（DL-49 §7.1 の「要（付け替え件数）」）[D]。",
+      "required": [
+        "tid",
+        "effective_at",
+        "role",
+        "counterpart_tid",
+        "mapping_ref",
+        "request_id",
+        "report_to"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "source",
+            "target"
+          ],
+          "x-enum-kind": "closed",
+          "description": "このパーティションのテナントが統合・分割の元か先か [D]。"
+        },
+        "counterpart_tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "mapping_ref": {
+          "$ref": "#/$defs/OpaqueRef",
+          "description": "付け替える対象集合・写像表への参照。中身は照会 API で引く（API は未作成、x-open-issues LC-OI-3）[D]。"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
+        }
+      }
+    },
+    "TenantCellMoveData": {
+      "type": "object",
+      "description": "cell 間移動の data。cell の ID は載せない（CON-02 TenantContext.cell_id は内部用で外部契約に出さない）。cell を意識するサービスは routing の内部 API で引く [D]。",
+      "required": [
+        "tid",
+        "effective_at",
+        "phase"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "scheduled",
+            "cutover"
+          ],
+          "x-enum-kind": "closed"
+        }
+      }
+    },
+    "LegalHoldData": {
+      "type": "object",
+      "description": "法的保全の data。tid か sub の一方を持つ [D]。",
+      "required": [
+        "effective_at",
+        "hold_ref"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "hold_ref": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "tid"
+          ]
+        },
+        {
+          "required": [
+            "sub"
+          ]
+        }
+      ]
+    },
+    "MembershipData": {
+      "type": "object",
+      "description": "所属事象の共通 data。順序キーは tid（パーティション tenant:<tid>）[D]。email などの属性を載せない（DL-08 §16.3）[D]。",
+      "required": [
+        "tid",
+        "sub",
+        "effective_at"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      }
+    },
+    "MembershipChangedData": {
+      "type": "object",
+      "description": "membership.changed の data。",
+      "required": [
+        "tid",
+        "sub",
+        "effective_at",
+        "change_kinds"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "change_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,31}$"
+          },
+          "x-enum-kind": "open",
+          "x-known-values": [
+            "roles",
+            "attributes",
+            "membership_type",
+            "org_unit"
+          ],
+          "description": "変更の種別だけを載せ、値は API で引く（DL-08 §16.3）[D]。"
+        }
+      }
+    },
+    "MembershipSuspendedData": {
+      "type": "object",
+      "description": "membership.suspended の data。user.suspended のとき、producer は主体の有効な所属ごとに reason_class=principal_suspended で本事象を出す。テナント単位で購読するサービスは主体パーティションを購読しなくてよい [D]。",
+      "required": [
+        "tid",
+        "sub",
+        "effective_at",
+        "reason_class"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "reason_class": {
+          "$ref": "#/$defs/ReasonClass"
+        }
+      }
+    },
+    "MembershipRemovedData": {
+      "type": "object",
+      "description": "membership.removed の data。扱った件数を報告する（DL-08 §16.3）[D]。",
+      "required": [
+        "tid",
+        "sub",
+        "effective_at",
+        "request_id",
+        "report_to"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "reason_class": {
+          "$ref": "#/$defs/ReasonClass"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
+        }
+      }
+    },
+    "PrincipalData": {
+      "type": "object",
+      "description": "主体事象の共通 data。順序キーは sub（パーティション principal:<sub>）[D]。",
+      "required": [
+        "sub",
+        "effective_at"
+      ],
+      "properties": {
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      }
+    },
+    "PrincipalSuspendedData": {
+      "type": "object",
+      "description": "user.suspended の data。",
+      "required": [
+        "sub",
+        "effective_at",
+        "reason_class"
+      ],
+      "properties": {
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "reason_class": {
+          "$ref": "#/$defs/ReasonClass"
+        }
+      }
+    },
+    "PrincipalDeletionRequestedData": {
+      "type": "object",
+      "description": "user.deletion.requested の data。期限は T_user_del（DL-08 §16.3、TBD）[D]。",
+      "required": [
+        "sub",
+        "effective_at",
+        "request_id",
+        "deadline",
+        "report_to"
+      ],
+      "properties": {
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "deadline": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
+        }
+      }
+    },
+    "BulkRevocationData": {
+      "type": "object",
+      "description": "revocation.bulk の data（preview）。失効の効力は基盤の強制点で生じ、本事象は依存サービスの独自 session とキャッシュの後始末に使う（ARC-09、ADR-006 D6-03）[D]。意味の正本は DL-56 で、本契約は形だけを置く [D]。",
+      "required": [
+        "effective_at",
+        "scope_kind",
+        "not_before"
+      ],
+      "properties": {
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "scope_kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$",
+          "x-enum-kind": "open",
+          "x-known-values": [
+            "principal",
+            "tenant",
+            "idp",
+            "client",
+            "grant",
+            "platform"
+          ],
+          "description": "範囲の種別（ARC-09 EV-08・EV-09 の範囲）。cell 範囲は platform として出し、cell の ID は載せない [D]。"
+        },
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "scope_ref": {
+          "$ref": "#/$defs/OpaqueRef"
+        },
+        "not_before": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "この時刻より前に確立した独自 session・キャッシュを無効とする失効下限時刻（ADR-019 D19-08 の失効下限時刻の写し）[D]。"
+        }
+      }
+    },
+    "Envelope": {
+      "type": "object",
+      "required": [
+        "specversion",
+        "id",
+        "source",
+        "type",
+        "time",
+        "datacontenttype",
+        "dataschema",
+        "partitionkey",
+        "sequence",
+        "data"
+      ],
+      "properties": {
+        "specversion": {
+          "const": "1.0",
+          "description": "CloudEvents の版。この版を指す値として 1.0 を使わなければならない（MUST）[N]。",
+          "x-freeze-class": "GA"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x21-\\x7E]{1,64}$",
+          "description": "事象の ID。producer は source と id の組を事象ごとに一意にしなければならない（MUST）。再送時は同じ id を使ってよく（MAY）、consumer は source と id が同じ事象を重複とみなしてよい（MAY）[N]。本契約は再送・replay で id を変えないことを producer の MUST にし、(source, id) を冪等キーとする [D]。",
+          "x-freeze-class": "GA"
+        },
+        "source": {
+          "type": "string",
+          "format": "uri-reference",
+          "pattern": "^https://lifecycle\\.[a-z0-9.-]+/(tenants/[\\x21-\\x2E\\x30-\\x7E]{1,64}|principals/[\\x21-\\x2E\\x30-\\x7E]{1,64}|platform)$",
+          "description": "パーティションを表す source。https://lifecycle.<id-domain>/tenants/<tid>、/principals/<sub>、/platform のいずれか。cell・リージョン・製品名を含めない（ADR-021 D21-06 と同じ規則）[D]。Sequence 拡張の順序は source 単位なので、source を順序キーと一致させる [N][D]。",
+          "x-freeze-class": "irreversible"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^example\\.id-domain\\.lifecycle\\.[a-z][a-z0-9_.]*[a-z0-9]$",
+          "description": "事象の種別。reverse-DNS 名を前置すべき（SHOULD）[N]。前置は <id-domain> の reverse-DNS（ADR-021 D21-28）で、draft の間は example.id-domain を置き場所に使う [D]。type に版を入れず、data の非互換変更は dataschema の major で表す（README I-1）[D]。名前は不可逆（ADR-022 D-1）[D]。",
+          "x-freeze-class": "irreversible"
+        },
+        "time": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "事象（occurrence）が起きた時刻 [N]。"
+        },
+        "datacontenttype": {
+          "const": "application/json"
+        },
+        "dataschema": {
+          "const": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+          "description": "data が従うスキーマ。非互換な変更は別の URI で表すべき（SHOULD）[N]。major を URI に入れる（README I-1）[D]。",
+          "x-freeze-class": "GA"
+        },
+        "partitionkey": {
+          "type": "string",
+          "pattern": "^(tenant:[\\x21-\\x7E]{1,64}|principal:[\\x21-\\x7E]{1,64}|platform)$",
+          "description": "Partitioning 拡張の partitionkey（REQUIRED、空でない文字列 MUST）[N]。値は source の末尾と同じ順序キー（tenant:<tid>、principal:<sub>、platform）。broker は同じ値の事象を同じ区画に入れ、区画内の順序を保つ [D]。中継で変わり得ると拡張が述べているため、受信側の順序判定には source と sequence を使い、partitionkey は使わない [N][D]。",
+          "x-freeze-class": "irreversible"
+        },
+        "sequence": {
+          "$ref": "#/$defs/Sequence"
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "description": "全事象に共通の CloudEvents 1.0.2 封筒（JSON 形式、structured mode）。未知の拡張属性は受理して無視する [D]。"
+    },
+    "Event_tenant_created": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.created"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.created",
+      "description": "テナントの作成",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_suspended": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.suspended"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantSuspendedData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.suspended",
+      "description": "テナントの一時停止・強制停止（mode）",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_resumed": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.resumed"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.resumed",
+      "description": "テナントの再開",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_termination_effective": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.termination.effective"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.termination.effective",
+      "description": "契約終了の発効",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_deletion_requested": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.deletion.requested"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantDeletionRequestedData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.deletion.requested",
+      "description": "テナントのデータ削除の要求（期限付き、完了報告が要る）",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_deleted": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.deleted"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.deleted",
+      "description": "テナントの墓石化の完了",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_merge_cutover": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.merge.cutover"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantRestructureData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.merge.cutover",
+      "description": "統合の切替（統合元・統合先の両パーティションへ出す）",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_split_cutover": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.split.cutover"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantRestructureData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.split.cutover",
+      "description": "分割の切替（分割元・分割先の両パーティションへ出す）",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_cell_move_scheduled": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.cell_move.scheduled"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantCellMoveData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.cell_move.scheduled",
+      "description": "cell 間移動の予告",
+      "x-freeze-class": "preview",
+      "x-preview-expires": "2027-10-15"
+    },
+    "Event_tenant_cell_move_cutover": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.cell_move.cutover"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantCellMoveData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.cell_move.cutover",
+      "description": "cell 間移動の切替",
+      "x-freeze-class": "preview",
+      "x-preview-expires": "2027-10-15"
+    },
+    "Event_tenant_legal_hold_set": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.legal_hold.set"
+        },
+        "data": {
+          "$ref": "#/$defs/LegalHoldData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.legal_hold.set",
+      "description": "テナントの法的保全の設定",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_legal_hold_released": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.legal_hold.released"
+        },
+        "data": {
+          "$ref": "#/$defs/LegalHoldData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.legal_hold.released",
+      "description": "テナントの法的保全の解除",
+      "x-freeze-class": "GA"
+    },
+    "Event_membership_added": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.membership.added"
+        },
+        "data": {
+          "$ref": "#/$defs/MembershipData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.membership.added",
+      "description": "所属の追加",
+      "x-freeze-class": "GA"
+    },
+    "Event_membership_changed": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.membership.changed"
+        },
+        "data": {
+          "$ref": "#/$defs/MembershipChangedData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.membership.changed",
+      "description": "所属の属性・ロールの変更（種別だけ）",
+      "x-freeze-class": "GA"
+    },
+    "Event_membership_suspended": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.membership.suspended"
+        },
+        "data": {
+          "$ref": "#/$defs/MembershipSuspendedData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.membership.suspended",
+      "description": "当該テナント文脈での停止（主体の停止の展開を含む）",
+      "x-freeze-class": "GA"
+    },
+    "Event_membership_resumed": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.membership.resumed"
+        },
+        "data": {
+          "$ref": "#/$defs/MembershipData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.membership.resumed",
+      "description": "当該テナント文脈での再開",
+      "x-freeze-class": "GA"
+    },
+    "Event_membership_removed": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.membership.removed"
+        },
+        "data": {
+          "$ref": "#/$defs/MembershipRemovedData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.membership.removed",
+      "description": "所属の除去（完了報告が要る）",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_created": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.created"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.created",
+      "description": "主体の作成",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_suspended": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.suspended"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalSuspendedData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.suspended",
+      "description": "主体の停止（全テナント文脈）",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_resumed": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.resumed"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.resumed",
+      "description": "主体の再開",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_deletion_requested": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.deletion.requested"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalDeletionRequestedData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.deletion.requested",
+      "description": "主体の個人データ削除の要求（期限付き、完了報告が要る）",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_deleted": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.deleted"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.deleted",
+      "description": "主体の墓石化の完了",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_legal_hold_set": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.legal_hold.set"
+        },
+        "data": {
+          "$ref": "#/$defs/LegalHoldData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.legal_hold.set",
+      "description": "主体の法的保全の設定",
+      "x-freeze-class": "GA"
+    },
+    "Event_user_legal_hold_released": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.legal_hold.released"
+        },
+        "data": {
+          "$ref": "#/$defs/LegalHoldData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.legal_hold.released",
+      "description": "主体の法的保全の解除",
+      "x-freeze-class": "GA"
+    },
+    "Event_revocation_bulk": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.revocation.bulk"
+        },
+        "data": {
+          "$ref": "#/$defs/BulkRevocationData"
+        }
+      },
+      "title": "example.id-domain.lifecycle.revocation.bulk",
+      "description": "大規模な権限剥奪（範囲指定の一括失効）の後始末の依頼",
+      "x-freeze-class": "preview",
+      "x-preview-expires": "2027-10-15"
+    },
+    "KnownTypes": {
+      "enum": [
+        "example.id-domain.lifecycle.tenant.created",
+        "example.id-domain.lifecycle.tenant.suspended",
+        "example.id-domain.lifecycle.tenant.resumed",
+        "example.id-domain.lifecycle.tenant.termination.effective",
+        "example.id-domain.lifecycle.tenant.deletion.requested",
+        "example.id-domain.lifecycle.tenant.deleted",
+        "example.id-domain.lifecycle.tenant.merge.cutover",
+        "example.id-domain.lifecycle.tenant.split.cutover",
+        "example.id-domain.lifecycle.tenant.cell_move.scheduled",
+        "example.id-domain.lifecycle.tenant.cell_move.cutover",
+        "example.id-domain.lifecycle.tenant.legal_hold.set",
+        "example.id-domain.lifecycle.tenant.legal_hold.released",
+        "example.id-domain.lifecycle.membership.added",
+        "example.id-domain.lifecycle.membership.changed",
+        "example.id-domain.lifecycle.membership.suspended",
+        "example.id-domain.lifecycle.membership.resumed",
+        "example.id-domain.lifecycle.membership.removed",
+        "example.id-domain.lifecycle.user.created",
+        "example.id-domain.lifecycle.user.suspended",
+        "example.id-domain.lifecycle.user.resumed",
+        "example.id-domain.lifecycle.user.deletion.requested",
+        "example.id-domain.lifecycle.user.deleted",
+        "example.id-domain.lifecycle.user.legal_hold.set",
+        "example.id-domain.lifecycle.user.legal_hold.released",
+        "example.id-domain.lifecycle.revocation.bulk"
+      ],
+      "x-enum-kind": "open",
+      "description": "v1 で定義した type。受信側にとっては開いた列挙で、未知の type は受理して無視する（受信側の義務 RO-6）[D]。"
+    },
+    "UnknownTypeEvent": {
+      "description": "未知の type の事象。封筒の検証だけを行い、data は検証しない（前方互換）[D]。",
+      "properties": {
+        "type": {
+          "not": {
+            "$ref": "#/$defs/KnownTypes"
+          }
+        }
+      }
+    },
+    "DeletionReport": {
+      "type": "object",
+      "title": "example.id-domain.lifecycle.deletion.report",
+      "description": "受信側が削除・付け替え・保全の反映を報告する事象（受信側 → 基盤）。CloudEvents の封筒を使う。source は報告するサービスの workload の URI、partitionkey は request_id [D]。",
+      "required": [
+        "specversion",
+        "id",
+        "source",
+        "type",
+        "time",
+        "datacontenttype",
+        "dataschema",
+        "partitionkey",
+        "data"
+      ],
+      "properties": {
+        "specversion": {
+          "const": "1.0"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source": {
+          "type": "string",
+          "format": "uri-reference",
+          "minLength": 1,
+          "description": "報告するサービスの識別（SPIFFE ID など workload ID の URI）。DL-55 の相互認証で確かめた送信者と一致しなければ基盤は報告を棄却する [D]。"
+        },
+        "type": {
+          "const": "example.id-domain.lifecycle.deletion.report"
+        },
+        "time": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "datacontenttype": {
+          "const": "application/json"
+        },
+        "dataschema": {
+          "const": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json"
+        },
+        "partitionkey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "request_id",
+            "request_type",
+            "outcome",
+            "completed_at",
+            "stores"
+          ],
+          "properties": {
+            "request_id": {
+              "$ref": "#/$defs/OpaqueRef"
+            },
+            "request_type": {
+              "type": "string",
+              "description": "報告対象の事象の type（tenant.deletion.requested など）[D]。"
+            },
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "completed",
+                "partial",
+                "failed",
+                "not_applicable"
+              ],
+              "x-enum-kind": "closed",
+              "description": "not_applicable はデータを持たないことの申告。未報告と区別するために要る [D]。"
+            },
+            "completed_at": {
+              "$ref": "#/$defs/Timestamp"
+            },
+            "affected_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "削除・付け替えた件数（DL-49 §7.1、DL-08 §16.3）[D]。"
+            },
+            "stores": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "description": "対象にした保存先の論理名（主 DB、検索インデックス、DWH、エクスポート、バックアップなど。DL-57 の経路台帳の名前）[D]。"
+            },
+            "exceptions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "category",
+                  "basis_ref"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]{0,31}$"
+                  },
+                  "basis_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "保持の根拠（法令・保全・契約）への参照 [D]。"
+                  },
+                  "retain_until": {
+                    "$ref": "#/$defs/Timestamp"
+                  }
+                }
+              },
+              "description": "削除しなかったデータと根拠。削除証明（DL-49 §10.4）に写す [D]。"
+            }
+          }
+        }
+      },
+      "x-freeze-class": "GA",
+      "examples": [
+        {
+          "specversion": "1.0",
+          "id": "rp7kq3mz2vx5ha4td6rn2cwb7y",
+          "source": "spiffe://prod.id-domain.example/billing/invoice-api",
+          "type": "example.id-domain.lifecycle.deletion.report",
+          "time": "2026-10-20T03:00:00Z",
+          "datacontenttype": "application/json",
+          "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+          "partitionkey": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+          "data": {
+            "request_id": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+            "request_type": "example.id-domain.lifecycle.user.deletion.requested",
+            "outcome": "partial",
+            "completed_at": "2026-10-20T03:00:00Z",
+            "affected_count": 1520,
+            "stores": [
+              "primary_db",
+              "search_index",
+              "export_files"
+            ],
+            "exceptions": [
+              {
+                "category": "accounting_record",
+                "basis_ref": "retention-rule:JP-tax-7y",
+                "retain_until": "2033-10-20T00:00:00Z"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "ReplayRequest": {
+      "type": "object",
+      "title": "example.id-domain.lifecycle.replay.request",
+      "x-freeze-class": "preview",
+      "x-preview-expires": "2027-10-15",
+      "description": "受信側が欠番の検知や復旧のときに再配送を求める事象。replay した事象は元と同じ id・sequence で届く [D]。",
+      "required": [
+        "specversion",
+        "id",
+        "source",
+        "type",
+        "time",
+        "data"
+      ],
+      "properties": {
+        "specversion": {
+          "const": "1.0"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source": {
+          "type": "string",
+          "format": "uri-reference",
+          "minLength": 1
+        },
+        "type": {
+          "const": "example.id-domain.lifecycle.replay.request"
+        },
+        "time": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "partitionkey",
+            "from_sequence"
+          ],
+          "properties": {
+            "partitionkey": {
+              "type": "string",
+              "pattern": "^(tenant:[\\x21-\\x7E]{1,64}|principal:[\\x21-\\x7E]{1,64}|platform)$"
+            },
+            "from_sequence": {
+              "$ref": "#/$defs/Sequence"
+            },
+            "to_sequence": {
+              "$ref": "#/$defs/Sequence"
+            }
+          }
+        }
+      }
+    },
+    "PublisherProfile": {
+      "description": "publisher 側 CI の検証用。封筒に適合し、既知の type のどれか 1 つに一致すること [D]。",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Envelope"
+        }
+      ],
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Event_tenant_created"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_suspended"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_resumed"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_termination_effective"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_deletion_requested"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_deleted"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_merge_cutover"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_split_cutover"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_cell_move_scheduled"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_cell_move_cutover"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_legal_hold_set"
+        },
+        {
+          "$ref": "#/$defs/Event_tenant_legal_hold_released"
+        },
+        {
+          "$ref": "#/$defs/Event_membership_added"
+        },
+        {
+          "$ref": "#/$defs/Event_membership_changed"
+        },
+        {
+          "$ref": "#/$defs/Event_membership_suspended"
+        },
+        {
+          "$ref": "#/$defs/Event_membership_resumed"
+        },
+        {
+          "$ref": "#/$defs/Event_membership_removed"
+        },
+        {
+          "$ref": "#/$defs/Event_user_created"
+        },
+        {
+          "$ref": "#/$defs/Event_user_suspended"
+        },
+        {
+          "$ref": "#/$defs/Event_user_resumed"
+        },
+        {
+          "$ref": "#/$defs/Event_user_deletion_requested"
+        },
+        {
+          "$ref": "#/$defs/Event_user_deleted"
+        },
+        {
+          "$ref": "#/$defs/Event_user_legal_hold_set"
+        },
+        {
+          "$ref": "#/$defs/Event_user_legal_hold_released"
+        },
+        {
+          "$ref": "#/$defs/Event_revocation_bulk"
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "specversion": "1.0",
+      "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+      "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "type": "example.id-domain.lifecycle.tenant.suspended",
+      "time": "2026-10-15T01:00:00Z",
+      "datacontenttype": "application/json",
+      "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+      "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "sequence": "00000000000000000007",
+      "data": {
+        "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "effective_at": "2026-10-15T01:00:00Z",
+        "mode": "forced",
+        "reason_class": "security"
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "e2mz7vq4hk3xa5rd6tn2pwe7bu",
+      "source": "https://lifecycle.id-domain.example/principals/k3vq7m2xh5d4ta6pzr2nbw7ycu",
+      "type": "example.id-domain.lifecycle.user.deletion.requested",
+      "time": "2026-10-15T02:00:00Z",
+      "datacontenttype": "application/json",
+      "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+      "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
+      "sequence": "00000000000000000012",
+      "data": {
+        "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
+        "effective_at": "2026-10-15T02:00:00Z",
+        "request_id": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+        "deadline": "2026-11-14T02:00:00Z",
+        "report_to": "deletionReports"
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "e5rz2kq7vm3xa4hd6tn2pwc7be",
+      "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "type": "example.id-domain.lifecycle.membership.suspended",
+      "time": "2026-10-15T02:00:01Z",
+      "datacontenttype": "application/json",
+      "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+      "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "sequence": "00000000000000000008",
+      "data": {
+        "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
+        "effective_at": "2026-10-15T02:00:00Z",
+        "reason_class": "principal_suspended"
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "e9hn3qk7zm2va4xr5dt2pwc7ye",
+      "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "type": "example.id-domain.lifecycle.tenant.future_event",
+      "time": "2027-04-01T00:00:00Z",
+      "datacontenttype": "application/json",
+      "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+      "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "sequence": "00000000000000000009",
+      "data": {
+        "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "new_field": 1
+      }
+    }
+  ],
+  "x-negative-examples": [
+    {
+      "id": "LC-NE-01",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "7",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "sequence が 0 埋め 20 桁でない"
+    },
+    {
+      "id": "LC-NE-02",
+      "value": {
+        "specversion": "1.0",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "id がない（CloudEvents の REQUIRED）"
+    },
+    {
+      "id": "LC-NE-03",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "maintenance",
+          "reason_class": "security"
+        }
+      },
+      "reason": "mode が閉じた列挙の外"
+    },
+    {
+      "id": "LC-NE-04",
+      "value": {
+        "specversion": "1.0.2",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "specversion は 1.0（major.minor だけ）"
+    },
+    {
+      "id": "LC-NE-05",
+      "value": {
+        "specversion": "1.0",
+        "id": "e2mz7vq4hk3xa5rd6tn2pwe7bu",
+        "source": "https://lifecycle.id-domain.example/principals/k3vq7m2xh5d4ta6pzr2nbw7ycu",
+        "type": "example.id-domain.lifecycle.user.deletion.requested",
+        "time": "2026-10-15T02:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
+        "sequence": "00000000000000000012",
+        "data": {
+          "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
+          "effective_at": "2026-10-15T02:00:00Z",
+          "request_id": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+          "report_to": "deletionReports"
+        }
+      },
+      "reason": "削除要求に deadline がない"
+    },
+    {
+      "id": "LC-NE-06",
+      "value": {
+        "specversion": "1.0",
+        "id": "e5rz2kq7vm3xa4hd6tn2pwc7be",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.membership.suspended",
+        "time": "2026-10-15T02:00:01Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
+        "sequence": "00000000000000000008",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
+          "effective_at": "2026-10-15T02:00:00Z",
+          "reason_class": "principal_suspended"
+        }
+      },
+      "reason": "所属事象の順序キーは tid（tenant:）"
+    },
+    {
+      "id": "LC-NE-07",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/cells/jp1-c03/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "source に cell を含む"
+    }
+  ],
+  "x-open-issues": [
+    {
+      "id": "LC-OI-1",
+      "item": "type 名の前置（<id-domain> の値）",
+      "state": "未決（ADR-021 K21-6）",
+      "owner": "ADR-021 の所有者",
+      "due": "DEC-8 前"
+    },
+    {
+      "id": "LC-OI-2",
+      "item": "非人間主体（PC-12〜PC-17）の事象を user.* に含めるか別の type にするか",
+      "state": "未決。type 名は不可逆なので DEC-8 前に決める",
+      "owner": "認証・IdP チーム（DL-08・DL-48 の所有者と協議）",
+      "due": "DEC-8 前"
+    },
+    {
+      "id": "LC-OI-3",
+      "item": "mapping_ref・scope_ref・現在状態を引く照会 API",
+      "state": "未作成",
+      "owner": "DL-49 の所有者＋プラットフォームチーム長",
+      "due": "G3"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ openapi: 3.1.0
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Relationship/Model Registry API
-  version: 0.1.1
+  version: 0.3.0
   summary: relation tuple の書込み・削除・読取りと、正規認可モデル（CAM）の版管理・名前空間審査を扱う基盤所有の契約
   license:
     name: 社内限定（未公開。公開範囲は DL-69 で決める）
@@ -34,6 +34,9 @@ info:
     - 11_contracts/schemas/common.schema.json
     - 11_contracts/authorization-api.openapi.yaml
     - 11_contracts/compatibility-deprecation-policy.md
+    - research/RS-06-workload-identity-delegation-agents.md（RS-06#25、#31、#35、#36、#41。ラウンド2 是正で追加）
+    - 03_threat-model/attacker-model.md（§3.6 ATK-06。ラウンド2 是正で追加）
+    - 04_architecture/claims-catalog.md（ARC-15 の DEV-1・DEV-5、Txn-Token の `tctx`。ラウンド2 是正で追加）
   x-requirements:
     R: [R-090, R-091, R-109, R-142, R-145, R-147, R-148, R-149, R-177, R-178, R-194, R-204, R-208]
     G: [G-066, G-070, G-072, G-107, G-112, G-116, G-118, G-120, G-126, G-144]
@@ -87,8 +90,29 @@ info:
     - id: "^16"
       citation: "AuthZed『authzed/api: authzed/api/v1/core.proto』GitHub（main ブランチ）. https://github.com/authzed/api/blob/main/authzed/api/v1/core.proto （参照箇所: ObjectReference.object_type / object_id、Relationship.relation、ContextualizedCaveat.caveat_name の validate rules（pattern・max_bytes）、確認日: 2026-10-15）"
       research: research ノート未収載（CON-04 の独立レビュー時に原典を取得して確認。research/ への収載は要追加）
+    - id: "^17"
+      citation: "OpenFGA『Configuration Language』web 文書（版表記なし）. https://openfga.dev/docs/configuration-language （参照箇所: union operator（DSL の `or`）, intersection operator（`and`）, exclusion operator（`but not`）, `X from Y`（\"OpenFGA does not allow the referenced relation (the word after `from`, also called the tupleset) to reference another relation\"）, tupleset の型制約に usersets と非具象型を許さない（\"does not allow non-concrete types (type bound public access\" and usersets）, parentheses による入れ子、確認日: 2026-10-15）"
+      research: research ノート未収載（v0.2.0 の改訂時に原典を取得して確認。research/ への収載は要追加）
+    - id: "^18"
+      citation: "AuthZed『Schema Language』SpiceDB 文書（版表記なし）. https://authzed.com/docs/spicedb/concepts/schema （参照箇所: Permissions の union `+`・intersection `&`・exclusion `-`・arrow `->`, Operator Precedence（\"For historical reasons, union (`+`) takes precedence over intersection (`&`) and exclusion (`-`)\"、`a + b & c` は `(a + b) & c` と評価）, arrow の右辺は permission を推奨、確認日: 2026-10-15）"
+      research: research ノート未収載（v0.2.0 の改訂時に原典を取得して確認。research/ への収載は要追加）
+    - id: "^19"
+      citation: "OpenFGA『Testing Models』web 文書（版表記なし）. https://openfga.dev/docs/modeling/testing （参照箇所: Write tests（`.fga.yaml` の model_file・tuples・tests、各 test の tuples・check・list_objects・list_users、check の user・object・context・assertions）、確認日: 2026-10-15）"
+      research: RS-17#86（同じ原典。本改訂で試験ファイルの要素を再確認）
+    - id: "^20"
+      citation: "A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11（Internet-Draft）, 2026-07-30. https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11 （参照箇所: §9.2（`sub`・`aud` 等の必須 claim、`tctx` は RECOMMENDED）, §12・§12.1（HTTP では `Txn-Token` ヘッダを使う MUST、`Authorization` ヘッダは MUST NOT）, §12.2（受信者は署名・`aud`・有効期限を検証する MUST、受信後の認可判断の方法は範囲外）, §13.1（replay 耐性がなく寿命を短くする MUST）, §13.12（workload の認証資格情報に使う MUST NOT）, §15.2（全体をログに残す MUST NOT）、確認日: 2026-10-03）"
+      research: RS-06#31, RS-06#35, RS-06#36, RS-06#41（ラウンド2 是正で追加。CON-03 [^10] と同じ原典）
+    - id: "^21"
+      citation: "J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02（Internet-Draft）, 2026-07-06. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5（認可ポリシーが trust domain と trust anchor を考慮せずに識別子の path 部分だけを評価する MUST NOT）、確認日: 2026-10-03）"
+      research: RS-06#25（ラウンド2 是正で追加。CON-03 [^12] と同じ原典）
   description: |
-    文書ID: CON-04 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15
+    文書ID: CON-04 / 版: 0.3.0 / 状態: draft / 最終更新: 2026-10-15
+    改版: v0.3.0（模擬パネル ラウンド2 の High 指摘 1 件（redteam: tuple 操作・階層操作のテナント結合の欠落）への対応）で、§6.1〜§6.4（G 段規則 `tenant_binding`、
+    テナント横断の実行者、宣言の SPIFFE ID 全体照合、必須化の切替え）、`Txn-Token`・`Subject-Access-Token`・`Cross-Tenant-Execution-Id` ヘッダの欄の予約、
+    `ProblemCode` の `tenant_binding_violation`（追加は minor）、負例 5 件を加えた。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    改版: v0.2.0（模擬パネル ラウンド1 の指摘 1 件への対応。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8））で、
+    CAM 式の文法（§9）、`ModelChangeRequest.tests`・`semantic_change`、`ValidationReport.change_class`、条件カタログの列挙（`ConditionCatalog.$defs`）、
+    階層サービス API（§10、tag `hierarchy`、preview）を加えた。追加はすべて preview の範囲で、GA の要素（tuple の書込み・削除・読取り）の形は変えていない [D]。
     対応成果物: DL-73（traceability/deliverables.md）。R・G の一覧は `info.x-requirements`、脅威は `info.x-threats`、
     原典は `info.x-references`（本文の `[^n]` に対応）に置く。
 
@@ -106,7 +130,7 @@ info:
     各 operation の `x-stability` に記す [D]。
     | 区分 | 対象 |
     |---|---|
-    | ga | tuple の書込み・削除・読取り、テナント指定の必須化、不透明な consistency token、エラー形式 |
+    | ga | tuple の書込み・削除・読取り、テナント指定の必須化、テナント結合（§6.1 `tenant_binding`。照合規則・ヘッダの欄・`tenant_binding_violation` は GA 候補として rc 固定。裏付けの必須化は §6.4 の宣言属性で切り替える）、不透明な consistency token、エラー形式 |
     | preview | 変更購読、bulk import/export、モデル管理（検証・登録・pin・shadow・段階展開・rollback）、名前空間の申請と審査状態 |
     preview の期限は ADR-022 D-1-2 の TBD（所有者 CTO、期限 DEC-8 前）に従う [D]。GA の契約から preview の要素へ必須依存を作らない（ADR-022 D-1-1）[D]。
     G-120 の「変わり得る箇所」は、モデル DSL、consistency token の内部形式、search のページングの挙動の 3 点に限る（ADR-022 D-2-1）[D]。
@@ -138,6 +162,51 @@ info:
     - 人の判断を伴う操作（モデルの rollout・pin 更新・rollback、import の apply、export、名前空間の申請）は、加えて人の access token（RFC 9068 系、DL-75。`operatorAccessToken`）と、
       二者承認の記録（`approvals`。申請者≠承認者、DL-46・REQ-03 §6.5 の privileged/P）を要求する [D]。
     - 書込める relation はサービスごとに CAM の書込宣言（X-8）で決め、宣言外の書込みは façade が拒否する（T-033）[D]。
+    - mTLS と書込宣言（X-8）は「どの workload が、どの relation を書けるか」を決めるだけで、「どのテナントについて書けるか」を決めない。v0.2.0 までは、
+      侵害された依存サービス（ATK-06）や誤実装のサービスが、自分の宣言の範囲で同じ cell の任意テナントの tuple を書込み・削除・読取りできた（ラウンド2 指摘）。
+      `tenant_boundary_violation`（§3）は tuple の主体と資源の所属の不一致を見るだけで、path の `tenant_id` が起点要求のテナントであることは確かめない [D]。
+      これを §6.1〜§6.4 で塞ぐ [D]。
+
+    ### 6.1 G 段規則 `tenant_binding`（テナント結合。GA 候補）
+    - 対象: `writeRelationships`・`deleteRelationships`・`readRelationships` と、hierarchy の全 operation（`createUnit`・`getUnit`・`attachToHierarchy`・`moveHierarchyNode`・`readAncestors`）[D]。
+    - façade は、起点要求のテナントを次のいずれかの検証済み token から取り、path の `tenant_id` と一致することを確かめる。不一致は engine に渡さず 403 `tenant_binding_violation` とし、何も書かず何も返さない [D]。
+      - (a) `Txn-Token` ヘッダの `tctx.tid`。下流呼出しに受信した Txn-Token を無改変で含めることと、HTTP で `Txn-Token` ヘッダを使うことは草案の MUST である [N][^20]（RS-06#35）。
+        façade は署名・`aud`（trust domain）・有効期限を検証する（受信者の検証義務は草案の MUST）[N][^20]（RS-06#35）。`tctx` は草案で RECOMMENDED の claim で [N][^20]（RS-06#31）、テナントの項目は草案に定義がないため、`tctx.tid` は社内 profile `txn-v1` の項目である（ARC-15、CON-03 §4.3 と同じ扱い）[D]。
+        Txn-Token は write 以上の経路で運ばれる（ARC-06 §2・§3.1、CON-03 §4.3）ので、tuple の書込み・削除では (a) を基本とする [D]。
+      - (b) 検証済み内部 access token（`typ=at+jwt`）の `tid`。tuple 操作と hierarchy の読取りでは `Subject-Access-Token` ヘッダ（名前は暫定。未決（ADR-011））で、hierarchy の書込み系では `operatorAccessToken`（Authorization ヘッダ）で受ける。
+        façade は署名・`exp` を検証し、`aud` が呼出し元 workload に当たることを確かめる（CON-03 §4.3 (b) と同じ規則）[D]。Txn-Token のない read 系（`readRelationships`・`getUnit`・`readAncestors`）で使う [D]。
+      - (a) と (b) の両方があれば、両方の `tid` が path の `tenant_id` と一致しなければならない [D]。
+    - hierarchy の operation の `operatorAccessToken` は、§10 の `manage` 判定の主体であると同時に、その `tid` が path の `tenant_id` と一致しなければならない。一致しない token で他テナントの木を操作する要求は、`manage` の判定に進む前に 403 `tenant_binding_violation` とする [D]。
+    - 越境共有（ADR-024）の tuple は資源側テナントの path で書き、起点要求のテナントも資源側テナントである（ゲストには資源側テナントの token を発行する。ADR-024 D24-01・D24-07、CON-03 §5）。このため本規則に越境共有の例外は置かない [D]。
+    - Txn-Token は workload の認証資格情報として使ってはならない（草案 §13.12 の MUST NOT）[N][^20]（RS-06#36）。façade は呼出し元の認証に mTLS だけを使い、(a)・(b) はテナントの裏付けにだけ使う [D]。
+      Txn-Token の全体をログに残してはならない（草案 §15.2 の MUST NOT）[N][^20]（RS-06#41）。façade は (a)・(b) とも token の全文を監査イベント（DL-77）・ログに残さず、`txn`、内部 access token の (`iss`, `jti`)、照合結果、裏付けの有無（`tenant_evidence=present|absent`）だけを残す [D]。
+    - 残余リスク: (1) 正規に多数テナントの要求を処理するサービスが侵害されると、処理中の要求の token が有効な間は、当該テナントについて宣言の範囲で操作され得る。Txn-Token は replay 耐性がなく、寿命を短くする MUST がある [N][^20]（RS-06#36）ので、窓は token の寿命に限られる [D]。
+      (2) 必須化（§6.4）までの `tenant_evidence=absent` の要求。いずれも、呼出し元ごとの一定時間内の操作テナント数と `absent` の比率を検知規則の候補とし、kri.md の所有者に申し送る（§11 HO-R2-6）[D]。
+
+    ### 6.2 テナント横断の実行者（利用者の要求を起点としない書込み・読取り）
+    - 移行工具（初期投入・複製・逆複製・突合。ADR-027 D27-10）、外部 ACL の反映、テナントの統合・分割（ADR-021 D21-29・D21-30）、テナント削除（ADR-028）のように、起点となる利用者の要求がない操作は §6.1 の (a)・(b) を持たない。
+      これらを通常の書込宣言（X-8）で扱わず、「テナント横断の実行者」としてレジストリに別に登録する [D]。
+    - 登録と実行の要件 [D]:
+      - 宣言: 呼出し元の SPIFFE ID（§6.3）、書ける・読める resource type と relation、目的の区分（移行・ACL 反映・統合分割・削除）、有効期限。登録は二者承認（申請者≠承認者、DL-46・REQ-03 §6.5 の privileged/P）を要する。
+      - 実行記録: 1 回の実行ごとに、対象テナントの集合（明示列挙。ワイルドカードや「全テナント」の指定は受け付けない）、対象 cell（1 実行で 1 cell。ADR-027 D27-10・ADR-013 D13-38）、件数の上限、dry-run の結果 ID、二者承認の記録を登録する。初期投入と大量の再同期は二者承認で実行し、件数の上限と dry-run の結果を承認に添える、とする ADR-027 D27-10 に合わせた。
+      - 要求: tuple 操作に `Cross-Tenant-Execution-Id` ヘッダで実行記録を示す。façade は、呼出し元がその実行記録の宣言者であること、記録が有効期限内であること、path の `tenant_id` が対象テナントの集合に含まれること、累計件数が上限以内であることを確かめ、外れれば 403 `tenant_binding_violation` とする。
+    - 大量の投入・削除は、既に対象テナント（`scope.tenant_ids`）・dry-run・二者承認を持つ bulk import（`createRelationshipImport`）を優先する。本節の経路は継続的な同期（逆複製、ACL 反映）のための増分書込みに限る [D]。
+    - 実行記録を登録する operation は v0.3.0 では定義しない（未決。§8）。定義までの間、`Cross-Tenant-Execution-Id` を付けた要求はすべて拒否し、テナント横断の実行者は bulk import だけを使う [D]。
+
+    ### 6.3 宣言の照合鍵（SPIFFE ID の全体）
+    - 書込宣言（X-8）、§6.2 の宣言、`readRelationships` の読取宣言（T-034）は、mTLS で認証した呼出し元の SPIFFE ID の全体（trust domain を含む）を鍵に引く。path 部分だけでは照合しない [D]。
+      認可ポリシーが trust domain と検証に使った trust anchor を考慮せずに識別子の path 部分だけを評価してはならない（WIMSE mutual-tls 草案 §5 の MUST NOT）[N][^21]（RS-06#25）。CON-03 §4.2（判定宣言 `caller_scope`）と同じ形である [D]。
+    - 宣言のない呼出し元は、どの tuple も書けず読めない（既定拒否。ADR-011 D3-1）[D]。
+
+    ### 6.4 必須化の切替え（rc 固定の範囲）
+    - DEC-8 第1段で rc 固定するのは、§6.1 の照合規則、3 つのヘッダの欄（`Txn-Token`・`Subject-Access-Token`・`Cross-Tenant-Execution-Id`）、`tenant_binding_violation` の 3 点である。これらを GA 候補（`x-stability: ga-candidate`）に予約し、固定後に追加しない [D]。
+      client は認識できない拡張メンバを無視しなければならない（MUST）[N][^11]（RS-16#12）ので、制約を強める変更を後から足しても既存の client は気付かない。照合を固定後に契約の変更として必須化すると制約を強める破壊的変更になるため、契約の形を先に固定し、必須化は宣言の属性で行う [D]。
+    - 裏付けの要否は、書込宣言・読取宣言の属性 `tenant_evidence: required | optional` で呼出し元ごとに切り替える。契約の形（operation・ヘッダ・エラー）は変えないので major 改版を要しない（CON-03 §4.3・§9 と同じ方式）[D]。
+      - 裏付けがあって不一致なら、属性によらず 403 `tenant_binding_violation` とする [D]。
+      - `required` で裏付けがなければ 403 `tenant_binding_violation`（detail で「裏付けなし」を示す）とする [D]。
+      - `optional` で裏付けがなければ従来どおり処理し、監査イベントに `tenant_evidence=absent` を記録する [D]。
+      - 新規登録の宣言の既定は `required` とする。`optional` は所有者と期限を付けた例外として登録し、期限の上限は GA 前とする初期案である [D]。全体の必須化の時期は未決（ADR-011。§8）[D]。
+    - SDK は受信した `Txn-Token` ヘッダを無改変で下流へ渡す（ARC-15 DEV-5）ので、書込み系の `required` への切替えに依存サービスのコード改修は原則として要らない [D]。read 系の `Subject-Access-Token` の付与は SDK の版上げで行う（ARC-15 DEV-5 の「内部 access token を素通ししない」との関係は §11 HO-R2-7 で申し送る）[D]。
 
     ## 7. エラー形式
     エラーは RFC 9457 の Problem Details（`application/problem+json`）で返す（ADR-022 D-2 の GA 範囲、standards-status SS-A47）[D]。
@@ -153,12 +222,103 @@ info:
     | OpenFGA の read-sensitive の窓 W 方式 | 未決（ADR-010 §2.12 決裁案 2、reconciliation-notes U-03）。本契約の読取りには影響しない |
     | 命名規則 X-2 の文字種・長さ（OpenFGA の識別子規則と `/` を含む型名の可否） | 未決（authorization-model.md §3.3 X-2、TC-ARC05-10、DL-73 凍結前）。本契約の `pattern` は案 |
     | 名前空間台帳の所有者 | 未決（ADR-021 K21-5。推奨はプラットフォームのプロダクト責任者） |
-    | CAM の構文（permission 式の文法） | CAM 仕様は ADR-011 D2-3 で別途公開。本契約は CAM 文書を JSON object として運び、構文は登録時の検証で判定する |
+    | CAM の構文（permission 式の文法） | v0.2.0 で §9 に CAM 式 v0 として公開した（preview）。ADR-011 D2-3 の CAM 仕様全体（作成者以外が実装できる程度の記述、第三者レビュー）は別に要る。§9 は CAM 仕様のうち permission 式の部分の正本とし、CAM 仕様の公開時にそちらへ移す [D] |
+    | 条件カタログの確定 | `ConditionCatalog.$defs` の 6 件は authorization-model.md §3.5 の案の写しで preview。引数の型・既定・CEL 式は認可・PDP チームが DL-73 凍結前に確定する。tuple の `Condition.name`（GA）は列挙で縛らず、カタログ外は façade が `condition_not_in_catalog` で拒否する [D] |
+    | 階層サービス API（§10）の採否 | authorization-model.md §16 K05-6（`core/unit`）・K05-8（祖先閉包）の決裁待ち。決裁まで §10 の operation は preview で、不採用なら削除する（ADR-022 D-1-1 により GA から依存しない）[D] |
+    | 変更区分の判定規則の確定 | `ValidationReport.change_class` の判定規則（§9.4）は GOV-05 §6.4 の区分表からの写しで、M1 の「高リスク操作階層」の範囲は REQ-03・DL-09 の確定に従う [D] |
     | 書込みの前提条件（preconditions）のエンジン上での原子的実現 | SpiceDB は提供 [V][^14]。OpenFGA は未確認。PoC で確認し、façade で原子的に実現できなければ preview から削除する [D] |
     | 変更購読の SpiceDB 側の取出し経路（Watch API） | 未確認（ADR-010 §4.1 M-8 は △、残課題 4） |
     | テナント ring の値の集合 | 未決（ADR-013 D13-36。本契約は文字列として運ぶ） |
     | shadow 評価モードを DL-72 側で表す値 | 未決（ADR-027 D27-12 の申し送り。ADR-011・DL-72） |
     | 剥奪書込の RPO 0 | 未決（ADR-010 §2.12 決裁案 4、A-093）。本契約の応答には影響しない |
+    | テナント結合の裏付けの全体必須化の時期（§6.4） | 未決（ADR-011。CON-03 §9 の `subject_binding` の必須化と同じ場で決める）。暫定: 新規宣言は `required`、`optional` は期限付き例外 |
+    | 内部 access token を façade に渡す形（`Subject-Access-Token` ヘッダの名前、CON-03 の本文方式との統一）と ARC-15 DEV-5 との関係 | 未決（ADR-011・ADR-005。CON-03 §9 と同じ論点） |
+    | テナント横断の実行記録を登録する operation（§6.2） | 未定義（v0.3.0）。定義までは `Cross-Tenant-Execution-Id` 付きの要求を拒否し、テナント横断の実行者は bulk import だけを使う |
+    | 変更購読（`listRelationshipChanges`）のテナント結合 | 本規則の対象外（購読者は索引・同期のサービスで、起点要求を持たない）。購読者の登録（`subscriber_not_registered`）で縛る。購読者登録にも §6.3 の SPIFFE ID 全体照合と対象テナント集合を課すかは未決（§11 HO-R2-8） |
+
+    ## 9. CAM 式 v0（permission 式の文法。preview）
+    `CamPermission.expression` の文法を次に定める。ARC-05 §8.1・INT-03 §1.2 の擬似表記と同じ記号を使い、CAM・設計文書・例で表記を 1 つにする [D]。
+
+    ### 9.1 EBNF（ISO/IEC 14977 の記法）
+    ```
+    expression   = operand
+                 | operand , { ws , "|" , ws , operand }-        (* 和 *)
+                 | operand , { ws , "&" , ws , operand }-        (* 積 *)
+                 | operand , ws , "-" , ws , operand ;           (* exclusion。core モジュールに限る *)
+    operand      = name | arrow | "(" , ws , expression , ws , ")" ;
+    arrow        = tupleset , "->" , name ;
+    tupleset     = name ;                                         (* 同じ型の relation（permission は不可） *)
+    name         = letter , { letter | digit | "_" } ;            (* 長さと末尾は RelationName の pattern *)
+    letter       = "a" | ... | "z" ;  digit = "0" | ... | "9" ;
+    ws           = { " " } ;
+    ```
+
+    ### 9.2 意味と制約
+    | # | 規則 | 理由・根拠 |
+    |---|---|---|
+    | E-1 | `name` は同じ型の relation か permission を指す。`tupleset->name` は、`tupleset` の tuple が指す object の `name` を指す（tuple-to-userset）[D] | Zanzibar の userset rewrite（union・intersection・exclusion・tuple-to-userset）で表せる範囲に限る（ADR-011 D2-1、RS-07#12）[D] |
+    | E-2 | 異なる演算子を括弧なしで同じ段に並べない（`a \| b & c` は構文誤り。`(a \| b) & c` と書く）。exclusion は 2 項に限る [D] | SpiceDB は歴史的理由で `+`（和）を `&`・`-` より優先し、`a + b & c` を `(a + b) & c` と評価する [V][^18]。優先順位をエンジンに依存させないため、CAM は優先順位を定義せず括弧を必須にする [D] |
+    | E-3 | `tupleset` は直接型だけを持つ relation に限り、permission と userset（`#relation` 付きの直接型）を持つ relation を指せない [D] | OpenFGA は `from` の後の relation（tupleset）が他の relation を参照することを許さない [V][^17]。両エンジンの共通部分に収める（ADR-011 D2-2）[D] |
+    | E-4 | `tupleset` に使える relation は `parent`（X-7・X-11）、`ancestor`（X-13。階層サービスの生成物で参照だけ可）、他ドメインの公開 relation を指す relation（X-4）、core 型の relation に限る。再帰（同じ型への `parent->`）は `parent` だけ [D] | authorization-model.md §3.3 X-7・X-11・X-13 [D] |
+    | E-5 | arrow の右辺は permission を推奨し、他ドメイン・core の型では公開 permission だけを指せる（INT-03 INT03-K4 の決裁で必須化を判断）[D] | SpiceDB は arrow の右辺に relation でなく permission を置くことを推奨している [V][^18]。X-4 [D] |
+    | E-6 | `-`（exclusion）は `core` モジュールだけが使える。ドメインのモジュールでは `lint_no_domain_deny` が不合格にする [D] | ADR-011 D3-4、X-5 [D] |
+    | E-7 | 式に条件・ワイルドカード・リテラルを書かない。条件は `CamRelation.conditions`（カタログ ID）で relation に付ける [D] | X-6、authorization-model.md §3.5 [D] |
+    | E-8 | 括弧の入れ子は 4 段以下、`expression` は 2,048 文字以下（JSON Schema の maxLength）[D] | 生成器と人のレビューの負荷を抑える初期案。根拠となる実測はなく、TC-ARC05-10 で見直す [D] |
+
+    ### 9.3 写像
+    | CAM 式 v0 | OpenFGA DSL [V][^17] | SpiceDB schema [V][^18] |
+    |---|---|---|
+    | `a \| b` | `a or b` | `a + b` |
+    | `a & b` | `a and b` | `a & b` |
+    | `a - b` | `a but not b` | `a - b` |
+    | `x->r` | `r from x` | `x->r` |
+    | `(…)` | `(…)` | `(…)` |
+    - 生成器はこの表のとおりに写す。人が DSL を直接編集した結果は本番に配布しない（ADR-011 D2-3）[D]。OpenFGA DSL→CAM の逆変換も同じ表を逆に引く（D2-3 の往復試験）[D]。
+    - 構文の検査は `validateModel` の check `lint_expression_syntax` が行う。JSON Schema の `pattern` は使える文字種だけを縛る [D]。
+
+    ### 9.4 変更区分（M0〜M3）の判定
+    `ValidationReport.change_class` は GOV-05 §6.4 の区分表を次の規則で機械判定した値である。複数に当たれば番号の大きい方を返す [D]。
+    | 区分 | 判定規則 |
+    |---|---|
+    | M3 | `core` モジュールの変更、または自動ゲート規則・条件カタログの変更 |
+    | M2 | check `breaking_change` の検出、公開 relation の取りやめ、他ドメイン型の拡張、`semantic_change.declared=true` |
+    | M1 | check `permission_expansion_diff` の検出、または `tier` が privileged・break_glass の permission（REQ-03。高リスク階層の範囲は DL-09 の確定に従う）の追加・式の変更、`marks` への `external_grantable` の追加 |
+    | M0 | 上のいずれにも当たらない追加的変更 |
+    - 意味の変更（スキーマ差分で検出できない変更）は検査で見つけられないため、申告（`semantic_change`）を必須欄にし、申告があれば M2 に回す（ADR-016 D16-08）[D]。申告の真偽は審査と shadow で確かめる [D]。
+
+    ## 10. 階層サービス API（preview。K05-6・K05-8 の決裁待ち）
+    - 置き場所: 本契約に置く [D]。理由は、(1) `parent`・`ancestor` は relation tuple であり、整合性トークン（§4）と書込宣言（X-8）を本契約と共有する、(2) 祖先閉包の書換えは剥奪先行と差分照合（authorization-model.md §11 K-1・K-4）に従い、tuple の書込みと同じ façade の順序規則に乗る、(3) 別契約にすると DL 番号の追加と契約間の整合性トークンの受渡しが要る、の 3 点である [D]。
+    - 範囲: unit の作成（`createUnit`）、葉ノードの木への接続（`attachToHierarchy`）、移動（`moveHierarchyNode`）、unit の照会（`getUnit`）、祖先閉包の読取り（`readAncestors`）[D]。unit の廃止、テナント統合・分割の接ぎ木（ADR-021 D21-29・D21-30）は v0.2.0 では定義しない（未決）[D]。
+    - 検査: 移動・接続の要求ごとに、(1) 移動先が自分の部分木に含まれない（循環）、(2) 移動後の深さが上限以内（unit の深さ上限 5 は NA-ARC05-1 の初期案）、(3) 移動先の型が `parent` の直接型の宣言に合う、を親の付け替えと同じ DB トランザクションで検査し、満たさなければ拒否する（authorization-model.md §3.6.3）[D]。
+    - 祖先閉包: 旧祖先の `ancestor` tuple の削除は要求の中で同期に確定させ、新祖先の追加は outbox で後から反映する。中間状態は deny 側に倒れる（authorization-model.md §3.6.4）[D]。
+    - 書込権限: `ancestor`（全型）と、直接型に `core/unit`・`core/tenant` を持つ `parent` は、階層サービスの workload だけを書込宣言に持ち、他の workload の `writeRelationships` は既存の `relation_not_writable` で拒否する（X-8・X-13）[D]。GA の operation の形は変えない [D]。
+    - 認可: 移動は移動元と移動先の両方の `manage` を要する（authorization-model.md §3.6.6）。要求は操作者の access token（`operatorAccessToken`）を伴い、階層サービスが DL-72 で `manage` を判定してから適用する [D]。
+    - テナント結合: `operatorAccessToken` の `tid` は path の `tenant_id` と一致しなければならず、不一致は `manage` の判定に進まず 403 `tenant_binding_violation` とする（§6.1）。`getUnit`・`readAncestors` も §6.1 の (a) または (b) で同じ照合を行う [D]。
+
+    ## 11. 改版の経緯と他文書への申し送り
+    - v0.2.0 は模擬パネル ラウンド1 の High 指摘（devlead: CAM の文法・試験提出・変更区分・階層 API の不足）への対応である。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    - 指摘と対応の記録、および ARC-05・ADR-011・GOV-05・CON-11・research・台帳への申し送り（HO-1〜HO-10）は INT-03（10_integration/authz-modeling-guide.md）§16.1 と末尾「レビュー記録」に置く [D]。
+    - v0.3.0 は模擬パネル ラウンド2 の High 指摘（redteam: tuple 操作・階層操作のテナント結合の欠落）への対応である。本書以外は並行作業のため編集しておらず、次を申し送る [D]。
+
+    | # | 宛先 | 申し送り内容 |
+    |---|---|---|
+    | HO-R2-1 | 05_adr/ADR-011-policy-language-pep-pdp-api.md | (1) G 段規則 `tenant_binding`（tuple の書込み・削除・読取りと階層操作で、`Txn-Token` の `tctx.tid` または検証済み内部 access token の `tid` を path の `tenant_id` と照合し、不一致は拒否）を、CON-03 §10 M-3 の `caller_scope`・`subject_binding` と同じ箇所（D5-7）に加える。(2) 未決に「テナント結合の裏付けの全体必須化の時期」を加え、CON-03 §9 の `subject_binding` と同じ場で決める。(3) CON-03 §10 M-4 の申し送りは、ADR-011 への反映をもって閉じる |
+    | HO-R2-2 | 03_threat-model/threat-catalog.md T-033 | 予防欄に「tuple の書込み・削除で、起点要求の token のテナントと path の `tenant_id` を照合する（CON-04 §6.1 `tenant_binding`）。利用者の要求を起点としない書込みはテナント横断の実行者として登録し、対象テナント集合の明示・二者承認・dry-run を要する（§6.2、ADR-027 D27-10）。宣言は SPIFFE ID の全体で照合する（§6.3）」を追記。検知欄に「`tenant_binding_violation` の件数、呼出し元ごとの操作テナント数、`tenant_evidence=absent` の比率」。証拠欄に E4 の負例（§6.1 の負例 5 件）。残余リスク欄に §6.1 の残余（token 寿命内の操作）を追記 |
+    | HO-R2-3 | 03_threat-model/threat-catalog.md T-034 | 予防欄に「`readRelationships`・`readAncestors` にも `tenant_binding` を適用し、読取宣言を SPIFFE ID の全体で照合する」を追記。現行の予防欄は API 経由の他テナントの読取りを扱っていない |
+    | HO-R2-4 | 04_architecture/authorization-model.md（ARC-05 X-8・§3.6.6） | X-8 の検証列に「宣言は SPIFFE ID の全体で照合（WIMSE mutual-tls §5）」「宣言属性 `tenant_evidence`」を加え、テナント横断の実行者の宣言を X-8 の別区分として定義する。§3.6.6 の階層の認可に `operatorAccessToken` の `tid` と path の照合を加える |
+    | HO-R2-5 | 11_contracts/mock-contract-test-kit.md（CON-11） | 負例ベクタ: (i) 別テナントの token で path だけ被害テナントにした write・delete・read・move がすべて 403 `tenant_binding_violation`、(ii) path だけ一致し trust domain が異なる SPIFFE ID が宣言に当たらない、(iii) `Cross-Tenant-Execution-Id` の対象集合外テナントへの書込みが拒否される、(iv) `required` の宣言で裏付けのない要求が拒否される |
+    | HO-R2-6 | 08_operations の KRI 正本（kri.md） | 検知規則の候補「呼出し元ごとの一定時間内の操作テナント数」「`tenant_evidence=absent` の比率」「`tenant_binding_violation` の件数」。閾値は TBD（所有者 認可・PDP チーム、期限 DL-73 凍結前、決め方 PoC と shadow 期間の実測の分布） |
+    | HO-R2-7 | 04_architecture/claims-catalog.md（ARC-15 DEV-5）、04_architecture/pep-contract.md（ARC-06） | 内部 access token を下流へ素通ししない DEV-5 に対し、façade（CON-03・CON-04）へ裏付けとして渡す場合を例外として定義するか、façade 宛ての token exchange で `tid` を保った token を取る形にするかを決める。SDK が `Txn-Token` を façade にも無改変で渡すことを明記する |
+    | HO-R2-8 | 05_adr/ADR-025-list-search-authorization.md、本書の変更購読 | 変更購読の購読者登録にも SPIFFE ID 全体照合と対象テナント集合を課すか（購読は多数テナントの変更を流し得る。T-034） |
+    | HO-R2-9 | 05_adr/ADR-027・ADR-028、12_poc | 移行工具・テナント削除工具をテナント横断の実行者として登録する手順と、実行記録の登録 operation（§6.2）の定義。PoC で façade での Txn-Token 検証（`tctx.tid` の照合）の遅延を測る |
+
+    ## 12. レビュー記録
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。ラウンド1 の記録は INT-03 §16.1 にある。
+
+    ### ラウンド2（2026-10-15、模擬パネル redteam 役）
+    | 重大度 | 指摘 | 対応 | 箇所 |
+    |---|---|---|---|
+    | High | tuple 操作は path の `tenant_id` を必須にするが、呼出し元は workload の mTLS と資源型単位の書込宣言（X-8）だけで認可され、起点要求の token のテナントと path を結ぶ規則がない。侵害された依存サービス（ATK-06）や誤実装のサービスが、自分の名前空間について同じ cell の任意テナントの tuple を (a) 一括削除（全テナント横断の剥奪によるサービス拒否）、(b) 協力者・ゲストへの付与の書込み（`tenant_boundary_violation` は主体と path の不一致しか見ない）、(c) `readRelationships` による関係 graph の読取り（T-034）ができる。hierarchy の `operatorAccessToken` も `tid` と path の一致を要件にしていない。CON-03 §10 M-4 の申し送りが未反映。relationships は GA 候補で、rc 固定後の必須化は破壊的変更になる | (1) §6.1 に G 段規則 `tenant_binding` を追加（`Txn-Token` の `tctx.tid` または検証済み内部 access token の `tid` と path の照合、不一致は 403 `tenant_binding_violation`）。(2) §6.2 にテナント横断の実行者（別宣言、二者承認、対象テナント集合の明示、1 cell、件数上限、dry-run。ADR-027 D27-10）を追加。(3) §6.3 で書込宣言・読取宣言・横断宣言を SPIFFE ID の全体で照合（WIMSE mutual-tls §5 の MUST NOT [^21]）。(4) §10 と hierarchy の各 operation に `operatorAccessToken` の `tid` 照合を明記し、`moveHierarchyNode` に負例を追加。(5) 負例 3 件（write・delete・read。別テナントの token で path だけ被害テナント）と、実行記録の対象外テナントの負例 1 件を追加。(6) §6.4 で照合規則・3 ヘッダの欄・エラーコードを GA 候補として rc 固定の範囲に入れ、必須化は宣言属性 `tenant_evidence` で切り替える形にした（CON-03 §4.3・§9 と同じ方式）。(7) ADR-011・threat-catalog T-033／T-034 ほかへの申し送りを §11 HO-R2-1〜HO-R2-9 に記載。新たな事実の根拠は RS-06 の検証済み原典（Transaction Tokens 草案 [^20]、WIMSE mutual-tls 草案 [^21]）と RFC 9457 [^11] | info.version、§2、§6〜§6.4、§8、§10、§11、§12、tuple 3 operation と hierarchy 5 operation の parameters・description・x-negative-examples・403 応答、components（parameters `TxnToken`・`SubjectAccessToken`・`CrossTenantExecutionId`、securitySchemes `operatorAccessToken`、`Forbidden` の例、`ProblemCode`）、x-references [^20]・[^21]、x-depends-on |
   contact:
     name: 認可・PDP チーム（契約所有者。変更提案は 11_contracts/README.md の手順）
 servers:
@@ -183,6 +343,8 @@ tags:
     description: shadow 比較・段階展開・pin・既知良好版への rollback・freeze 状態（preview。ADR-016 D16-31〜D16-36）
   - name: namespaces
     description: ドメイン名前空間の所有と審査状態（preview。ADR-021 D21-25〜D21-27、G-116）
+  - name: hierarchy
+    description: 階層サービス（core/unit の作成・移動、循環・深さ検査、祖先閉包の読取り）。preview。authorization-model.md §3.6・K05-6・K05-8 の決裁待ちで、不採用なら削除する
 paths:
   /v1/tenants/{tenant_id}/relationships/write:
     post:
@@ -205,6 +367,7 @@ paths:
         - `idempotency_key` が同じ要求の再送には、最初の応答（同じ `consistency_token`）を返す。保持期間は TBD（所有者 認可・PDP チーム、期限 G3）[D]。
         - 削除を含む書込みは剥奪として扱い、緊急 freeze 中も受け付ける（ADR-016 D16-36、ADR-027 D27-09）[D]。
         - 書込みごとに管理操作の監査イベント（DL-77）を出す [D]。
+        - path の `tenant_id` は、起点要求の `Txn-Token` の `tctx.tid`（または `Subject-Access-Token` の `tid`）と一致しなければならない。利用者の要求を起点としない書込みは `Cross-Tenant-Execution-Id` で実行記録を示す。外れれば 403 `tenant_binding_violation`（info §6.1・§6.2、ラウンド2 是正）[D]。
       x-negative-examples:
         - name: 宣言外 relation の書込み
           request: 書込宣言（X-8）にない `core/tenant#admin` を一般サービスが書く
@@ -221,12 +384,18 @@ paths:
         - name: 条件カタログ外の条件
           request: condition.name に `c.custom_script`
           expected: 400 `condition_not_in_catalog`
+        - name: テナント結合の不一致（書込み。ラウンド2 是正）
+          request: テナント A の利用者の要求を処理中のサービスが、受信した `Txn-Token`（`tctx.tid`=A）を付けたまま path の tenant_id を被害テナント B にし、B の文書に協力者アカウントの viewer を書く（書込宣言の範囲内の relation で、主体・資源とも B に属する）
+          expected: 403 `tenant_binding_violation`（engine に渡さず何も書かない。info §6.1）
         - name: 前提条件の不成立
           request: preconditions に must_not_exist を指定し、該当 tuple が既にある
           expected: 409 `precondition_failed`（何も書かれない。412 は要求ヘッダの条件に限るため使わない。RFC 9110 §15.5.13 [N][^15]）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+        - $ref: '#/components/parameters/CrossTenantExecutionId'
       requestBody:
         required: true
         content:
@@ -299,6 +468,7 @@ paths:
         削除専用の操作である。剥奪を他の変更より先に同期で確定させる手順（authorization-model.md §11.1 K-1）で使う [D]。
         応答の token を受け取ってから内容を変更すること（例 B: 剥奪後の追記）[D]。削除は緊急 freeze 中も止めない（ADR-016 D16-36）[D]。
         filter による一括削除は v1 では提供しない。テナント単位の削除は ADR-028 の手順で行う [D]。
+        削除にも `writeRelationships` と同じテナント結合（info §6.1・§6.2）を課す。剥奪は freeze 中も止めないが、他テナントの tuple を消す経路にはしない [D]。
       x-negative-examples:
         - name: 存在しない tuple の削除（既定）
           request: on_missing を省略して、存在しない tuple を指定
@@ -306,9 +476,18 @@ paths:
         - name: ワイルドカード指定
           request: subject.id に `*`
           expected: 400 `invalid_request`（filter による一括削除は提供しない）
+        - name: テナント結合の不一致（削除。ラウンド2 是正）
+          request: テナント A の `Txn-Token`（`tctx.tid`=A）を付けたまま、path の tenant_id を被害テナント B にして B の owner tuple を削除する
+          expected: 403 `tenant_binding_violation`（何も削除しない。剥奪の経路でも照合は省かない。info §6.1）
+        - name: 実行記録の対象外テナント（ラウンド2 是正）
+          request: テナント横断の実行者が `Cross-Tenant-Execution-Id` を付け、実行記録の対象テナント集合にないテナントの tuple を削除する
+          expected: 403 `tenant_binding_violation`（info §6.2）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+        - $ref: '#/components/parameters/CrossTenantExecutionId'
       requestBody:
         required: true
         content:
@@ -366,7 +545,8 @@ paths:
         - `consistency.mode` を省略した場合は `fully_consistent` とする（本契約の既定。DL-17 で操作階層別の既定が決まった場合はそれに従う）[D]。
         - `at_least_as_fresh` は `consistency.token` を必須とする。検証できない token は `fully_consistent` に格上げする（info §4）[D]。
         - 応答の `consistency.mode` は実際に評価したモード（実効モード）を示す。要求より弱いモードにはならない（ADR-011 D6-3）[D]。項目名は DL-72 の応答 `consistency.mode` と揃える [D]。
-        - 関係の存在自体が機微になり得る（T-034）。呼出し元が読める resource type は書込宣言と同じ単位でレジストリに宣言し、宣言外は 403 とする [D]。
+        - 関係の存在自体が機微になり得る（T-034）。呼出し元が読める resource type は書込宣言と同じ単位でレジストリに宣言し、宣言外は 403 とする [D]。宣言は SPIFFE ID の全体で照合する（info §6.3）[D]。
+        - path の `tenant_id` は、`Subject-Access-Token` の `tid`（または `Txn-Token` の `tctx.tid`）と一致しなければならず、不一致は 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]。
         - `resource.type` の指定を必須とし、テナント内の全 tuple を一度に列挙する filter は受け付けない（T-034 の大量読取の抑止）[D]。
         - ページは cursor（`page_token`）で辿る。cursor は主体・テナント・filter に束縛した不透明値とする（ADR-025 D25-15 と同じ扱い）[D]。ページ間の原子的スナップショットは保証しない。
           スナップショットが要る場合は bulk export を使う [D]。
@@ -380,12 +560,18 @@ paths:
         - name: 他テナントの cursor
           request: 別テナントの要求で得た page_token を提示
           expected: 400 `invalid_page_token`
+        - name: テナント結合の不一致（読取り。ラウンド2 是正）
+          request: テナント A の利用者の `Subject-Access-Token`（`tid`=A）を付けたまま、path の tenant_id を被害テナント B にし、resource_type を指定して B の関係を読む（読取宣言の範囲内の型）
+          expected: 403 `tenant_binding_violation`（tuple を返さない。T-034。info §6.1）
         - name: 解釈できない token
           request: エンジン差替え後に旧形式の token を提示
           expected: 200（consistency.mode=fully_consistent。エラーにしない）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+        - $ref: '#/components/parameters/CrossTenantExecutionId'
       requestBody:
         required: true
         content:
@@ -761,14 +947,30 @@ paths:
       description: |
         ADR-016 D16-31 の段 2（CI 検査）を登録前に試す dry-run である [D]。ドメインチームの CI から呼ぶことを想定する。
         検査の項目は `ValidationReport.checks` の列挙のとおりとし、次を含む [D]。
-        - JSON Schema による CAM の構造検証、ドメイン拡張規則 X-1〜X-10 の lint（authorization-model.md §3.3）
+        - JSON Schema による CAM の構造検証、CAM 式 v0 の構文検査（§9、`lint_expression_syntax`）、予約 relation（`ancestor` など。X-13）の定義・書込宣言の拒否（`lint_reserved_relation`）、ドメイン拡張規則 X-1〜X-13 の lint（authorization-model.md §3.3）
         - 外部付与可でない permission に `core/external_grant#grantee` が到達しないことの静的解析（同 §3.2）
-        - 肯定・否定テスト、テナント越えの否定テスト（ADR-011 D2-5、ADR-010 D-42）
+        - 肯定・否定テスト、テナント越えの否定テスト（ADR-011 D2-5、ADR-010 D-42）。入力は `ModelChangeRequest.tests`。試験のない relation・permission が 1 件でもあれば不合格（`test_summary.uncovered_relations`）[D]
         - 破壊的変更の拒否。データがある relation の削除・改名を拒否する（X-10、ADR-021 D21-27）。SpiceDB もデータがある relation の削除を拒否し、移行に多段手順を示す [V][^9]（RS-17#88）
         - 権限が広がる差分の検出（追加承認の要否を返す）、2 エンジンの判定差分、OpenFGA DSL→CAM→SpiceDB schema の往復試験（ADR-011 D2-3）
         - 深度・fanout の宣言値の検査（authorization-model.md §3.4）
         全件を記号的に解析できる保証はないため、shadow（段 3）で補う（authorization-model.md §12.1）[D]。
+        応答の `change_class` は §9.4 の規則で判定した変更区分（M0〜M3）で、登録前に承認経路（GOV-05 §6.4）を知るために使う [D]。
       x-negative-examples:
+        - name: 演算子の混在
+          request: expression に `viewer | editor & member`（括弧なし）
+          expected: 200、report.result=fail、check `lint_expression_syntax` が fail（E-2）
+        - name: tupleset に permission を使う
+          request: expression に `read->view`（`read` は permission）
+          expected: 200、report.result=fail、check `lint_expression_syntax` が fail（E-3）
+        - name: ancestor の定義
+          request: ドメインのモジュールが `ancestor` relation を書込宣言に含める
+          expected: 200、report.result=fail、check `lint_reserved_relation` が fail（X-13）
+        - name: 試験のない permission
+          request: 新しい permission に check がない
+          expected: 200、report.result=fail、check `positive_negative_tests` が fail、uncovered_relations に当該 permission
+        - name: 意味の変更の申告
+          request: semantic_change.declared=true
+          expected: 200、change_class=M2
         - name: core 型への管理権限の追加
           request: ドメインのモジュールが `core/tenant` に relation を追加
           expected: 200、report.result=fail、check `lint_extension_scope` が fail（X-3）
@@ -824,6 +1026,7 @@ paths:
         - 検証に 1 件でも不合格のある変更は登録しない（authorization-model.md §12.1「無効なモデルの拒否」、CL-0104）[D]。
         - `base_revision` は直近の登録済み revision と一致しなければならない（条件付き登録。一致しなければ 409 `base_revision_conflict`）[D]。
         - 権限が広がる差分を含む変更は、`approvals` に追加承認を含めないと登録しない（ADR-016 D16-31 段 2）[D]。
+        - `change_class`（§9.4）に応じた承認記録を `approvals` に求める。M0 はドメイン内 peer review、M1 は加えてプラットフォームチームのセキュリティレビュアー、M2 は移行手順の確認、M3 は 2 名以上の合意と CISO 同意（GOV-05 §6.4）。不足は 403 `approval_required` [D]。
         - モジュール単位で所有ドメインを確かめる。他ドメインの名前空間のモジュールは変更できない（X-1、X-4）。`core` は基盤チームだけが変更できる（authorization-model.md §3.1）[D]。
           OpenFGA の modular models は、チームが増えるとモデルの所有境界が不明確になる課題に対し、モジュール分割と code owners による所有の表現を提供している [V][^10]（RS-17#85）。
         - 中央の審査は互換性・安全性の確認に限る（G-116）。審査状態は `review_status` に出す。審査待ち時間は K-31 で監視する [D]。
@@ -1634,6 +1837,271 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '404':
           $ref: '#/components/responses/NotFound'
+  /v1/tenants/{tenant_id}/units:
+    post:
+      operationId: createUnit
+      summary: core/unit を作成し、親の下に置く
+      tags: [hierarchy]
+      x-stability: preview
+      x-decision-pending: [K05-6, K05-8]
+      x-requirements:
+        R: [R-109]
+        G: [G-116]
+      security:
+        - workloadMtls: []
+          operatorAccessToken: []
+      description: |
+        階層サービスが unit の不透明 ID（ADR-021 D21-14）を払い出し、`parent` tuple と祖先閉包（`ancestor`。葉ノードに書く）を書く（info.description §10）[D]。
+        親の型・深さ上限（unit 5 段。NA-ARC05-1 の初期案）を同じトランザクションで検査する（authorization-model.md §3.6.3）[D]。
+        `kind` は表示属性で、認可判定に使わない（同 §3.6.1）。表示名は本契約で運ばない（X-9）[D]。
+        操作者は親の `manage` を要する（DL-72 で階層サービスが判定）[D]。
+        `operatorAccessToken` の `tid` は path の `tenant_id` と一致しなければならず、不一致は `manage` の判定に進まず 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]。
+      x-negative-examples:
+        - name: 深さ超過
+          request: 深さ 5 の unit の下に作成
+          expected: 422 `hierarchy_depth_exceeded`
+        - name: 型違いの親
+          request: parent に `proj/project` を指定
+          expected: 422 `parent_type_not_allowed`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUnitRequest'
+            examples:
+              dept:
+                value:
+                  parent: {type: core/unit, id: un7q2m4k9x3p5r8s2t6v4w1y0z}
+                  kind: department
+      responses:
+        '201':
+          description: 作成した
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HierarchyWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/HierarchyRejected'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/units/{unit_id}:
+    get:
+      operationId: getUnit
+      summary: unit の親・深さ・kind を返す
+      tags: [hierarchy]
+      x-stability: preview
+      x-decision-pending: [K05-6, K05-8]
+      x-requirements:
+        R: [R-109]
+        G: [G-116]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: unit_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+      responses:
+        '200':
+          description: unit
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/tenants/{tenant_id}/hierarchy/attach:
+    post:
+      operationId: attachToHierarchy
+      summary: ドメインの葉ノード（例 proj/project）を unit またはテナントの下に初めて置く
+      tags: [hierarchy]
+      x-stability: preview
+      x-decision-pending: [K05-6, K05-8]
+      x-requirements:
+        R: [R-109]
+        G: [G-116]
+      security:
+        - workloadMtls: []
+          operatorAccessToken: []
+      description: |
+        葉ノードの型は、直接型に `core/unit`・`core/tenant` を持つ `parent` を宣言していなければならない（X-11）[D]。
+        既に親を持つ葉ノードは 409 `parent_mismatch`（移動は `moveHierarchyNode`）[D]。操作者は親の `manage` を要する [D]。
+        `operatorAccessToken` の `tid` は path の `tenant_id` と一致しなければならず、不一致は 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachRequest'
+      responses:
+        '200':
+          description: 置いた
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HierarchyWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/HierarchyRejected'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/hierarchy/move:
+    post:
+      operationId: moveHierarchyNode
+      summary: unit または葉ノードの親を付け替える（循環・深さ・型の検査付き）
+      tags: [hierarchy]
+      x-stability: preview
+      x-decision-pending: [K05-6, K05-8]
+      x-requirements:
+        R: [R-109]
+        G: [G-116]
+      security:
+        - workloadMtls: []
+          operatorAccessToken: []
+      description: |
+        authorization-model.md §3.6.3・§3.6.4・§3.6.6 の手順を 1 要求で行う [D]。
+        - `expected_parent` が現在の親と一致しなければ 409 `parent_mismatch`（楽観的並行制御）[D]。
+        - 移動先が自分の部分木に含まれれば 422 `hierarchy_cycle`、移動後の深さが上限を超えれば 422 `hierarchy_depth_exceeded`、型が合わなければ 422 `parent_type_not_allowed` [D]。
+        - 操作者は移動元と移動先の両方の `manage` を要する。Azure も移動に子・現在の親・移動先の親への書込権限を要求する（authorization-model.md §3.6.6 の [V]）[D]。
+        - `operatorAccessToken` の `tid` は path の `tenant_id` と一致しなければならず、不一致は `manage` の判定に進まず 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]。
+        - 旧親の削除と新親の追加は 1 回の書込にまとめる（I-6）。旧祖先の `ancestor` 削除は応答前に確定し、新祖先の追加は outbox で反映する（`ancestor_additions`）。中間状態は deny 側に倒れる [D]。
+        - 直接付与は保持し、継承分は再評価する（authorization-model.md §3.6.6）。外部付与のある部分木への出入りは write＋XT の操作として扱う（ADR-024 D24-13）[D]。
+      x-negative-examples:
+        - name: 自分の部分木への移動
+          request: unit A を A の子 B の下へ移動
+          expected: 422 `hierarchy_cycle`
+        - name: 古い親の指定
+          request: expected_parent が現在の親と異なる
+          expected: 409 `parent_mismatch`
+        - name: 移動先の manage がない
+          request: 操作者が移動元の manage だけを持つ
+          expected: 403 `scope_violation`
+        - name: 他テナントの操作者 token（ラウンド2 是正）
+          request: テナント A の操作者の `operatorAccessToken`（`tid`=A）で、path の tenant_id を被害テナント B にして B の unit を移動する
+          expected: 403 `tenant_binding_violation`（`manage` の判定に進まない。info §6.1）
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+            examples:
+              moveProject:
+                value:
+                  node: {type: proj/project, id: pj3k8m2q7w4x9z1r5t6v2y8b0c}
+                  expected_parent: {type: core/unit, id: un7q2m4k9x3p5r8s2t6v4w1y0z}
+                  new_parent: {type: core/unit, id: un2b5c8d1f4g7h0j3k6m9n2p5q}
+      responses:
+        '200':
+          description: 親を付け替え、旧祖先の閉包を削除した
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HierarchyWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/HierarchyRejected'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/hierarchy/ancestors:
+    get:
+      operationId: readAncestors
+      summary: ノードの祖先閉包（根から親までの列）を正本から返す
+      tags: [hierarchy]
+      x-stability: preview
+      x-decision-pending: [K05-6, K05-8]
+      x-requirements:
+        R: [R-109]
+        G: [G-116]
+      description: |
+        closure table の正本からの読取りである。祖先列は一覧・検索の索引（ADR-025 の L3）と照合に使い、token や認可キーに使わない（authorization-model.md §3.6.5）[D]。
+        判定は DL-72 で行い、本応答で allow/deny を決めない [D]。`ancestor_sync` は `ancestor` tuple が正本に追いついているかを示す [D]。
+        path の `tenant_id` は `Subject-Access-Token` の `tid`（または `Txn-Token` の `tctx.tid`）と一致しなければならず、不一致は 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TypeName'
+        - name: id
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TxnToken'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+      responses:
+        '200':
+          description: 祖先閉包
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AncestorClosure'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     workloadMtls:
@@ -1643,8 +2111,50 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 人の操作者の access token（DL-75 の claim profile。typ は at+jwt）。人の判断を伴う操作で mTLS に加えて必須 [D]
+      description: 人の操作者の access token（DL-75 の claim profile。typ は at+jwt）。人の判断を伴う操作で mTLS に加えて必須 [D]。path に `tenant_id` を持つ operation では、token の `tid` が path の `tenant_id` と一致しなければならず、不一致は 403 `tenant_binding_violation`（info §6.1、ラウンド2 是正）[D]
   parameters:
+    TxnToken:
+      name: Txn-Token
+      in: header
+      required: false
+      x-stability: ga-candidate
+      description: |
+        起点要求の Txn-Token を無改変で渡す（テナント結合の裏付け。info §6.1 (a)、G 段規則 `tenant_binding`）。下流呼出しへの無改変の転送と `Txn-Token` ヘッダの使用は Transaction Tokens 草案の MUST、`Authorization` ヘッダの使用は MUST NOT [N][^20]（RS-06#35）。
+        façade は署名・`aud`・有効期限を検証し、`tctx.tid`（社内 profile `txn-v1`）を path の `tenant_id` と照合する。不一致は 403 `tenant_binding_violation` [D]。
+        呼出し元の認証には使わない（草案 §13.12 の MUST NOT）。全文をログに残さない（草案 §15.2 の MUST NOT）[N][^20]（RS-06#36, #41）。
+        欄は GA 候補として rc 固定する。欠けた要求の扱いは宣言属性 `tenant_evidence` による（info §6.4）[D]。Transaction Tokens は Internet-Draft（-11）である [D]。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 6144
+        pattern: "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+        description: JWS compact serialization。最大長は CON-03 の TxnToken と同じ暫定値（ADR-015 D15-40 の初期案 6,144 byte）[D]。
+    SubjectAccessToken:
+      name: Subject-Access-Token
+      in: header
+      required: false
+      x-stability: ga-candidate
+      description: |
+        呼出し元が検証済みの、起点要求の内部 access token（`typ=at+jwt`）。Txn-Token のない read 系でテナント結合の裏付けに使う（info §6.1 (b)）[D]。
+        façade は署名・`exp` を検証し、`aud` が呼出し元 workload に当たることを確かめ、`tid` を path の `tenant_id` と照合する。不一致は 403 `tenant_binding_violation` [D]。
+        全文をログに残さず、(`iss`, `jti`) と照合結果だけを残す [D]。ヘッダ名と渡し方（CON-03 の本文方式との統一）は未決（ADR-011。info §8）[D]。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 6144
+        pattern: "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+    CrossTenantExecutionId:
+      name: Cross-Tenant-Execution-Id
+      in: header
+      required: false
+      x-stability: ga-candidate
+      description: |
+        テナント横断の実行者（info §6.2）が、二者承認・対象テナント集合・dry-run の結果 ID・件数上限を持つ実行記録を示す。
+        façade は宣言者・有効期限・path の `tenant_id` の集合への所属・累計件数を確かめ、外れれば 403 `tenant_binding_violation` [D]。
+        実行記録を登録する operation は v0.3.0 では未定義で、定義までは本ヘッダを付けた要求をすべて拒否する（欄の予約）[D]。
+      schema:
+        type: string
+        pattern: '^cte_[A-Za-z0-9]{10,40}$'
     TenantId:
       name: tenant_id
       in: path
@@ -1713,6 +2223,13 @@ components:
                 title: この workload は当該 relation を書けない
                 status: 403
                 code: relation_not_writable
+            tenantBindingViolation:
+              summary: 起点要求の token のテナントと path の tenant_id が一致しない（info §6.1）
+              value:
+                type: https://problems.authz-registry.example.invalid/tenant-binding-violation
+                title: 要求のテナントと起点要求の token のテナントが一致しない
+                status: 403
+                code: tenant_binding_violation
     NotFound:
       description: 対象がない、または呼出し元に見えない（存在と権限なしを区別しない）
       content:
@@ -1754,6 +2271,12 @@ components:
                 properties:
                   validation_report:
                     $ref: '#/components/schemas/ValidationReport'
+    HierarchyRejected:
+      description: 階層の検査に不合格（hierarchy_cycle、hierarchy_depth_exceeded、parent_type_not_allowed）。何も書いていない
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     TooManyRequests:
       description: テナント・client 単位のクォータ超過（ADR-010 D-29）
       headers:
@@ -1792,7 +2315,7 @@ components:
                       max_direct: 1000
                   permissions:
                     - name: read
-                      expression: viewer or parent->read
+                      expression: viewer | parent->read
                       tier: read_sensitive
                       marks: [tenant_delegable]
                   list_method: L3
@@ -1800,13 +2323,39 @@ components:
                 - workload: spiffe://prod.id.example.invalid/svc/dms-api
                   relations: [dms/folder#parent, dms/folder#viewer]
         change_request_ref: CR-2026-1015-0007
+        tests:
+          - name: viewer は子フォルダを読める
+            tuples:
+              - {resource: {type: dms/folder, id: f1}, relation: viewer, subject: {type: core/user, id: u1}}
+              - {resource: {type: dms/folder, id: f2}, relation: parent, subject: {type: dms/folder, id: f1}}
+              - {resource: {type: dms/folder, id: f1}, relation: viewer, subject: {type: core/group, id: g1, relation: member}}
+              - {resource: {type: core/group, id: g1}, relation: member, subject: {type: core/user, id: u3}}
+            check:
+              - {subject: {type: core/user, id: u1}, resource: {type: dms/folder, id: f2}, expected: {read: true, viewer: false}}
+              - {subject: {type: core/user, id: u3}, resource: {type: dms/folder, id: f2}, expected: {read: true}}
+              - {subject: {type: core/user, id: u2}, resource: {type: dms/folder, id: f2}, expected: {read: false}}
+            list_objects:
+              - {subject: {type: core/user, id: u1}, resource_type: dms/folder, expected: {read: [f1, f2]}}
+          - name: 他テナントの主体は読めない
+            kind: cross_tenant_negative
+            tuples:
+              - {resource: {type: dms/folder, id: f1}, relation: viewer, subject: {type: core/user, id: u1}}
+            check:
+              - {subject: {type: core/user, id: ux_other_tenant}, resource: {type: dms/folder, id: f1}, expected: {read: false, viewer: false}}
+        semantic_change:
+          declared: false
     ValidationPassExample:
       value:
         result: pass
         permission_expansion: true
         additional_approval_required: true
+        change_class: M1
+        change_class_reasons: ['M1: permission_expansion_diff dms/folder#read']
+        test_summary: {cases: 2, assertions: 9, failed: 0, uncovered_relations: []}
         checks:
           - {name: cam_schema, status: pass}
+          - {name: lint_expression_syntax, status: pass}
+          - {name: lint_reserved_relation, status: pass}
           - {name: lint_namespace, status: pass}
           - {name: lint_naming, status: pass}
           - {name: lint_extension_scope, status: pass}
@@ -1831,6 +2380,7 @@ components:
         review_status: approved
         registered_at: "2026-10-15T02:30:00Z"
         change_request_ref: CR-2026-1015-0007
+        change_class: M1
         module_digests:
           core: sha-256:0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
           dms: sha-256:a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90
@@ -1950,6 +2500,124 @@ components:
         context:
           type: object
           maxProperties: 16
+    ConditionId:
+      description: |
+        条件カタログの ID（preview。authorization-model.md §3.5 の案の写し）。追加は条件カタログの変更（M3）で、本列挙の追加は minor [D]。
+        各 ID の引数は `ConditionCatalog.$defs` に置く
+      type: string
+      enum: [c.not_expired, c.time_window, c.network_zone, c.min_acr, c.device_managed, c.purpose_in]
+    ConditionCatalog:
+      description: |
+        条件カタログ（preview、案）。各定義の `tuple_context` は tuple に付ける引数（`Condition.context`）、`request_context` は判定要求の context（DL-72）で渡す入力である。
+        入力の区分は authorization-model.md §3.5 の表の「入力」列の写しで、型・既定・CEL 式は認可・PDP チームが DL-73 凍結前に確定する（未決）[D]。
+        tuple に個人データ・業務上の識別名を置かない（X-9）。request_context の属性は属性辞書（ADR-011 D9-4）の出所メタデータを持つものに限る [D]
+      type: object
+      $defs:
+        c.not_expired:
+          description: now < expires_at。外部付与・型付き例外・期限付き付与
+          type: object
+          properties:
+            tuple_context:
+              type: object
+              additionalProperties: false
+              required: [expires_at]
+              properties:
+                expires_at: {type: string, format: date-time}
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [now]
+              properties:
+                now: {type: string, format: date-time}
+        c.time_window:
+          description: 曜日・時間帯の範囲内
+          type: object
+          properties:
+            tuple_context:
+              type: object
+              additionalProperties: false
+              required: [days_of_week, start_time, end_time, time_zone]
+              properties:
+                days_of_week:
+                  type: array
+                  minItems: 1
+                  maxItems: 7
+                  items: {type: string, enum: [mon, tue, wed, thu, fri, sat, sun]}
+                start_time: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+                end_time: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+                time_zone: {type: string, maxLength: 64}
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [now]
+              properties:
+                now: {type: string, format: date-time}
+        c.network_zone:
+          description: 接続元が許可ゾーンに含まれる。ゾーンは edge が付与する
+          type: object
+          properties:
+            tuple_context:
+              type: object
+              additionalProperties: false
+              required: [allowed_zones]
+              properties:
+                allowed_zones:
+                  type: array
+                  minItems: 1
+                  maxItems: 16
+                  items: {type: string, pattern: '^[a-z0-9][a-z0-9_-]{0,62}$'}
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [network_zone]
+              properties:
+                network_zone: {type: string, pattern: '^[a-z0-9][a-z0-9_-]{0,62}$'}
+        c.min_acr:
+          description: 認証強度が下限以上。G 段規則 4 と重複しない資源個別の要件に限る
+          type: object
+          properties:
+            tuple_context:
+              type: object
+              additionalProperties: false
+              required: [min_acr]
+              properties:
+                min_acr: {type: string, maxLength: 128}
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [acr]
+              properties:
+                acr: {type: string, maxLength: 128}
+        c.device_managed:
+          description: 管理端末である（端末状態は属性辞書の出所付き）
+          type: object
+          properties:
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [device_managed]
+              properties:
+                device_managed: {type: boolean}
+        c.purpose_in:
+          description: 利用目的が許可された集合に含まれる
+          type: object
+          properties:
+            tuple_context:
+              type: object
+              additionalProperties: false
+              required: [allowed_purposes]
+              properties:
+                allowed_purposes:
+                  type: array
+                  minItems: 1
+                  maxItems: 16
+                  items: {type: string, pattern: '^[a-z][a-z0-9_]{0,62}$'}
+            request_context:
+              type: object
+              additionalProperties: false
+              required: [purpose]
+              properties:
+                purpose: {type: string, pattern: '^[a-z][a-z0-9_]{0,62}$'}
     Tuple:
       type: object
       additionalProperties: false
@@ -2350,10 +3018,10 @@ components:
             type: string
             pattern: '^[a-z][a-z0-9_]{1,61}[a-z0-9]/[a-z][a-z0-9_]{1,62}[a-z0-9](#[a-z][a-z0-9_]{1,62}[a-z0-9])?$'
         conditions:
+          description: 直接型に付ける条件（条件カタログの ID。v0.2.0 で列挙に変更、preview）
           type: array
           items:
-            type: string
-            pattern: '^c\.[a-z][a-z0-9_]{1,62}[a-z0-9]$'
+            $ref: '#/components/schemas/ConditionId'
         max_depth:
           description: 再帰 relation の最大深度の宣言（X-7）。宣言値の合計は設計値 8 以下 [A-036]
           type: integer
@@ -2374,10 +3042,14 @@ components:
         name:
           $ref: '#/components/schemas/RelationName'
         expression:
-          description: CAM の permission 式（union・intersection・親関係の継承。ドメインの exclusion は不可 X-5）。文法は CAM 仕様（ADR-011 D2-3）
+          description: |
+            CAM 式 v0（info.description §9 の EBNF）。和 `|`、積 `&`、exclusion `-`（core のみ。X-5・E-6）、tuple-to-userset `x->r`、括弧。
+            異なる演算子は括弧なしで並べない（E-2）。pattern は文字種だけを縛り、構文は check `lint_expression_syntax` が判定する [D]
           type: string
           minLength: 1
           maxLength: 2048
+          pattern: '^[a-z0-9_ ()|&>-]+$'
+          examples: ['viewer | parent->read', '(member | ancestor->manage) & parent->view']
         tier:
           description: 操作階層（REQ-03 の 5 分類。operation-risk-tiers-assurance.md が正本）
           type: string
@@ -2442,9 +3114,11 @@ components:
           items:
             $ref: '#/components/schemas/WriteDeclaration'
     ModelChangeRequest:
+      description: |
+        v0.2.0 で `tests`（試験ケース）と `semantic_change`（意味の変更の申告。ADR-016 D16-08 により必須）を加えた（preview の範囲の変更）[D]
       type: object
       additionalProperties: false
-      required: [base_revision, modules, change_request_ref]
+      required: [base_revision, modules, change_request_ref, tests, semantic_change]
       properties:
         base_revision:
           $ref: '#/components/schemas/ModelRevisionId'
@@ -2465,10 +3139,132 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+        tests:
+          description: |
+            check `positive_negative_tests`・`cross_tenant_negative_tests` の入力。変更後のモデル（base＋modules）に対して流す。
+            要素は OpenFGA の `.fga.yaml`（tuples・check・list_objects）[V][^19] と同じ構成にし、生成器が `.fga.yaml` と zed の validation file に写す [D]
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ModelTestCase'
+        semantic_change:
+          $ref: '#/components/schemas/SemanticChangeDeclaration'
         approvals:
           type: array
           items:
             $ref: '#/components/schemas/Approval'
+    SemanticChangeDeclaration:
+      description: |
+        スキーマ差分で検出できない変更（同じ名前の permission の意味の変更、継承の向きの変更など）の申告（ADR-016 D16-08）。
+        `declared=true` は変更区分を M2 以上にする（info.description §9.4）[D]
+      type: object
+      additionalProperties: false
+      required: [declared]
+      properties:
+        declared:
+          type: boolean
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        affected:
+          description: 意味が変わる permission・relation（`<型>#<名前>`）
+          type: array
+          items:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,61}[a-z0-9]/[a-z][a-z0-9_]{1,62}[a-z0-9]#[a-z][a-z0-9_]{1,62}[a-z0-9]$'
+      if:
+        properties:
+          declared:
+            const: true
+      then:
+        required: [description, affected]
+    TestTuple:
+      description: 試験用の tuple。本番の tuple 規則（X-9、テナント境界）と同じ形 [D]
+      type: object
+      additionalProperties: false
+      required: [resource, relation, subject]
+      properties:
+        resource:
+          $ref: '#/components/schemas/ResourceRef'
+        relation:
+          $ref: '#/components/schemas/RelationName'
+        subject:
+          $ref: '#/components/schemas/SubjectRef'
+        condition:
+          $ref: '#/components/schemas/Condition'
+    ModelTestCase:
+      description: |
+        越境の否定試験（`kind=cross_tenant_negative`）は、他テナントの主体に tuple がない限り deny であることを R 段で確かめる。
+        他テナントの主体を書く tuple は façade が書込を拒否する（§3）ため、その拒否は契約試験キット（DL-80）で確かめる [D]
+      type: object
+      additionalProperties: false
+      required: [name, tuples]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        kind:
+          description: 試験の種類。`cross_tenant_negative` は全 check が deny を期待するものに限る（ADR-011 D2-5）[D]
+          type: string
+          enum: [positive_negative, cross_tenant_negative]
+          default: positive_negative
+        tuples:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/TestTuple'
+        check:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [subject, resource, expected]
+            properties:
+              subject:
+                $ref: '#/components/schemas/SubjectRef'
+              resource:
+                $ref: '#/components/schemas/ResourceRef'
+              context:
+                description: 条件の request_context（ConditionCatalog）
+                type: object
+                maxProperties: 16
+              expected:
+                description: permission・relation 名から期待値（true=allow）への対応
+                type: object
+                minProperties: 1
+                propertyNames:
+                  $ref: '#/components/schemas/RelationName'
+                additionalProperties:
+                  type: boolean
+        list_objects:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [subject, resource_type, expected]
+            properties:
+              subject:
+                $ref: '#/components/schemas/SubjectRef'
+              resource_type:
+                $ref: '#/components/schemas/TypeName'
+              context:
+                type: object
+                maxProperties: 16
+              expected:
+                description: permission 名から、期待する object ID の集合への対応（順序は問わない）
+                type: object
+                minProperties: 1
+                propertyNames:
+                  $ref: '#/components/schemas/RelationName'
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ObjectId'
+      anyOf:
+        - required: [check]
+        - required: [list_objects]
     CheckResult:
       type: object
       additionalProperties: false
@@ -2478,6 +3274,8 @@ components:
           type: string
           enum:
             - cam_schema
+            - lint_expression_syntax
+            - lint_reserved_relation
             - lint_namespace
             - lint_naming
             - lint_extension_scope
@@ -2515,10 +3313,37 @@ components:
           type: boolean
         additional_approval_required:
           type: boolean
+        change_class:
+          $ref: '#/components/schemas/ChangeClass'
+        change_class_reasons:
+          description: 'change_class を決めた規則と対象（例 `M1: permission_expansion_diff dms/folder#read`）'
+          type: array
+          items:
+            type: string
+            maxLength: 512
+        test_summary:
+          type: object
+          additionalProperties: false
+          required: [cases, assertions, failed]
+          properties:
+            cases: {type: integer, minimum: 0}
+            assertions: {type: integer, minimum: 0}
+            failed: {type: integer, minimum: 0}
+            uncovered_relations:
+              description: 肯定・否定の試験がない relation・permission（`<型>#<名前>`）。1 件でもあれば positive_negative_tests は fail
+              type: array
+              items:
+                type: string
         checks:
           type: array
           items:
             $ref: '#/components/schemas/CheckResult'
+    ChangeClass:
+      description: |
+        変更区分（GOV-05 §6.4。M0 追加的、M1 権限拡大・高リスク階層、M2 破壊的・意味の変更・他ドメイン型の拡張、M3 横断・ガードレール）。
+        判定規則は info.description §9.4。承認経路（INT-03 §8.1）を決める。検証が不合格でも判定できた範囲で返す [D]
+      type: string
+      enum: [M0, M1, M2, M3]
     ModelRevisionState:
       type: string
       enum: [validated, shadowing, shadow_passed, shadow_failed, rolling_out, deployed, superseded, withdrawn]
@@ -2557,6 +3382,8 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/CamModule'
+        change_class:
+          $ref: '#/components/schemas/ChangeClass'
         validation_report:
           $ref: '#/components/schemas/ValidationReport'
     ShadowRunRequest:
@@ -2956,6 +3783,95 @@ components:
         decided_at:
           type: string
           format: date-time
+    HierarchyNodeRef:
+      description: 木のノード（`core/unit`、`core/tenant`、または `parent` を宣言した葉ノードの型）
+      $ref: '#/components/schemas/ResourceRef'
+    CreateUnitRequest:
+      type: object
+      additionalProperties: false
+      required: [parent, kind]
+      properties:
+        parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        kind:
+          description: テナントが定義する表示属性の語彙（division、department、subsidiary など）。認可判定に使わない
+          type: string
+          pattern: '^[a-z][a-z0-9_]{0,62}$'
+    AttachRequest:
+      type: object
+      additionalProperties: false
+      required: [node, parent]
+      properties:
+        node:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+    MoveRequest:
+      type: object
+      additionalProperties: false
+      required: [node, expected_parent, new_parent]
+      properties:
+        node:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        expected_parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        new_parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+    Unit:
+      type: object
+      additionalProperties: false
+      required: [unit, parent, depth, kind]
+      properties:
+        unit:
+          $ref: '#/components/schemas/ResourceRef'
+        parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        depth:
+          description: テナント直下を 1 とする unit の深さ
+          type: integer
+          minimum: 1
+        kind:
+          type: string
+    HierarchyWriteResult:
+      type: object
+      additionalProperties: false
+      required: [node, parent, consistency_token, ancestor_additions]
+      properties:
+        node:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        parent:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        consistency_token:
+          description: 親の付け替えと旧祖先の削除を含む整合性トークン（CT-1 と同じ扱い）
+          $ref: '#/components/schemas/ConsistencyToken'
+        ancestor_additions:
+          type: object
+          additionalProperties: false
+          required: [state]
+          properties:
+            state:
+              description: 新祖先の `ancestor` tuple の反映状態。pending の間は継承分が deny 側に倒れる
+              type: string
+              enum: [pending, applied]
+            tuples:
+              type: integer
+              minimum: 0
+    AncestorClosure:
+      type: object
+      additionalProperties: false
+      required: [node, ancestors, ancestor_sync]
+      properties:
+        node:
+          $ref: '#/components/schemas/HierarchyNodeRef'
+        ancestors:
+          description: 根（core/tenant）から直近の親までの順
+          type: array
+          maxItems: 16
+          items:
+            $ref: '#/components/schemas/HierarchyNodeRef'
+        ancestor_sync:
+          type: string
+          enum: [synced, pending]
     ProblemCode:
       description: 本契約の閉じた列挙。追加は minor、意味の変更は major（ADR-016）
       type: string
@@ -2973,6 +3889,7 @@ components:
         - unauthenticated
         - relation_not_writable
         - tenant_boundary_violation
+        - tenant_binding_violation
         - namespace_not_owned
         - subscriber_not_registered
         - approval_required
@@ -2990,6 +3907,10 @@ components:
         - pin_pointer_conflict
         - precondition_required
         - model_validation_failed
+        - hierarchy_cycle
+        - hierarchy_depth_exceeded
+        - parent_type_not_allowed
+        - parent_mismatch
         - quota_exceeded
         - unavailable
     Problem:

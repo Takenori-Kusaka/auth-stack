@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Authorization API（AuthZEN 1.0 準拠 PEP–PDP 契約）
-  version: 0.1.0
+  version: 0.2.0
   summary: OpenID AuthZEN Authorization API 1.0（Final）の evaluation・evaluations・resource search と、版付き自社 profile（decision_id、model/policy revision、consistency、reason、obligation、txn）を定める PEP–PDP 契約。
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -30,6 +30,10 @@ info:
     - research/RS-07-authz-engines-consistency.md（RS-07#60〜#68、#78）
     - research/RS-16-parallel-development-governance.md（RS-16#34、#35）
     - research/standards-status.md（SS-C13、SS-C14、SS-C18、SS-K06）
+    - research/RS-06-workload-identity-delegation-agents.md（RS-06#25、#31、#35、#36、#41。ラウンド1 是正で追加）
+    - 03_threat-model/attacker-model.md（§3.6 ATK-06。ラウンド1 是正で追加）
+    - 03_threat-model/threat-catalog.md（T-033、T-034、CE-05 の網羅表。ラウンド1 是正で追加）
+    - 04_architecture/claims-catalog.md（ARC-15 の `jti`・`cnf`・`sub` 行、DEV-1、Txn-Token の `tctx`。ラウンド1 是正で追加）
     - 11_contracts/schemas/common.schema.json（CON-02。本書は $ref せず、ModelRevision の項目名、TenantId・ConsistencyToken の形式、Reason の規則 ID 形式を独立レビュー時に揃えた。残る差分は 11_contracts/review-notes/CON-03.md に記録。共通型は凍結前に同ファイルへ移す）
   x-requirements:
     R: [R-098, R-144, R-205, R-142, R-109, R-152, R-204, R-262]
@@ -41,11 +45,12 @@ info:
     binding: HTTPS JSON binding（AuthZEN 1.0 §10.1）
     extensions-carrier: 要求・応答の context に置く名前空間付きキー `x-authz-profile`（キー名は暫定。未決（ADR-021））
   description: |
-    > 文書ID: CON-03 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+    > 文書ID: CON-03 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
     > 対応要求: R-098, R-144, R-205（DL-72 行）、R-142, R-109, R-152, R-204, R-262／G-066, G-072, G-109, G-118, G-120, G-121
     > 依存文書: info.x-depends-on を参照
     > 作成方法: AI エージェント（Claude）が ADR-011 ほかの決定を契約に落として起草した。CTO/CISO の決裁を経ていない（CONVENTIONS §8）[D]。
     > 独立レビュー: 作成者とは別のエージェント（Claude）が 2026-10-15 に原典（AuthZEN 1.0 Final）を再取得して照合し、修正した。記録は 11_contracts/review-notes/CON-03.md。人による照合は未実施 [D]。
+    > 模擬パネル: 版 0.2 は、AI エージェントによる模擬パネル（redteam 役）のラウンド1 指摘を反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（末尾「レビュー記録」）[D]。
 
     ## 1. 位置付け
     - 本契約は PEP（依存サービスの SDK または契約適合の自前実装）が cell 内の PDP façade を呼ぶ唯一の認可判定契約である（ADR-011 D5-1・D5-3・D5-4）[D]。engine（OpenFGA・SpiceDB 等）のネイティブ API・ヘッダを依存サービスが呼ぶことは CI で拒否する（ADR-022 D-3-2、G-072）[D]。
@@ -80,8 +85,39 @@ info:
     - 応答署名（AuthZEN では PDP の MAY）は v1 では採らない（ADR-011 D5-7）[D]。**未決（ADR-013 KD13-6、reconciliation-notes U-04）**: read-sensitive の fail-static を許すと決まった場合は、read-sensitive の判定記録への署名を本 profile の要件に加える [D]。
     - PEP SDK は `/.well-known/authzen-configuration` の `policy_decision_point` が取得に使った識別子と一致しないメタデータを使わない（AuthZEN §9.2.3 の MUST NOT）[N][^3]（RS-07#66）。
 
+    ### 4.1 mTLS だけでは足りない理由（ラウンド1 是正）
+    - mTLS が証明するのは「どの workload が呼んだか」だけである。`subject.id` と `tid` は PEP が組み立てた値であり、mTLS はそれを裏付けない [D]。このため、侵害された依存サービス（ATK-06。約 300 の 1 つ [A-050]）は、同じ cell に収容された全テナントについて、任意の主体×資源×permission を Check できる。他ドメインの資源型も照会できる。attacker-model §3.6 は ATK-06 の目的に「PDP への探索的な Check」を挙げている [D]。関係の存在そのものが機微な場合（T-034）、PDP は DB 権限なしに関係を引き出す oracle になる [D]。
+    - 平文で受け取った識別子を認証済みとして扱ってはならない（WIMSE identifier 草案 §7.2 の MUST NOT）[N][^11]（RS-06#25）。本 profile はこれを PEP が申告する主体にも当てはめ、PEP の申告だけを判定の根拠にしない方向をとる。以下の 2 つの G 段規則を v1 の契約に含める（v1 凍結（DEC-8）後に追加すると、制約を強める変更として major 改版になるため）[D]。
+
+    ### 4.2 呼出し元の判定宣言（G 段規則 `caller_scope`。ARC-05 の X-14 として申し送り）
+    - façade は、mTLS で認証した呼出し元の SPIFFE ID ごとに「評価してよい資源型と permission の組」をレジストリ（DL-73。X-8 の書込宣言と同じレジストリ）から引く。宣言外の組の evaluation は engine に渡さず deny する [D]。応答は 200・decision=false・reason=`deny_guardrail:caller_scope`（規則 ID は暫定。未決（ADR-011、CAM））である [D]。evaluations では要素ごとに同じ扱いとし、search では宣言外の資源型・permission を 403（受付制御）で拒否する [D]。宣言がない呼出し元は、どの組も評価できない（既定拒否。ADR-011 D3-1）[D]。
+    - 照合の鍵は SPIFFE ID の全体（trust domain を含む）とし、path 部分だけでは照合しない。trust domain と検証に使った trust anchor を考慮せずに path だけを評価してはならない（WIMSE mutual-tls 草案 §5 の MUST NOT）[N][^12]（RS-06#25）。
+    - 理由: X-8 は「関係データの書込権限は判定権限と等価」（T-033）として書込側を宣言で絞る。判定・照会側にも対になる宣言がなければ、書込を絞っても読出し（関係の有無の照会）は絞れない [D]。
+    - 宣言違反は decision event に呼出し元の SPIFFE ID と規則 ID を付けて記録し、検知規則（kri.md へ申し送り）の入力にする [D]。
+
+    ### 4.3 主体の裏付け（G 段規則 `subject_binding`。preview・欄の予約）
+    - PEP は、受信要求の主体を裏付ける token を façade に渡せる。形は次の 2 つで、どちらも preview とする [D]。
+      - (a) Txn-Token: 下流呼出しに受信した Txn-Token を無改変で含めることは草案の MUST であり、HTTP では `Txn-Token` ヘッダを使う MUST がある [N][^10]（RS-06#35）。façade の呼出しもこの下流呼出しにあたるので、PEP SDK は受信した `Txn-Token` ヘッダをそのまま façade に渡す [D]。Txn-Token は write 以上の経路で運ばれる（ARC-06 §2・§3.1、OB-09）[D]。
+      - (b) 内部 access token: 要求本文の `context.x-authz-profile.subject_evidence.access_token` に、PEP が検証済みの内部 access token（`typ=at+jwt`）を入れる。read 系のように Txn-Token がない経路で使う [D]。
+    - façade は (a) では署名・`aud`（trust domain）・有効期限を検証する（受信者の検証義務は草案の MUST）[N][^10]（RS-06#35）。(b) では署名・`exp` を検証し、`aud` が呼出し元 workload に当たることを確かめる（内部 access token は宛先ごとに取り直すので、PEP が受けた token の `aud` は PEP 自身である。ARC-15 DEV-5）[D]。そのうえで次を突き合わせる [D]。
+      - token の `sub` と `subject.id`（Txn-Token の `sub` は REQUIRED [N][^10]（RS-06#31）、内部 access token の `sub` と一致する（ARC-15 の `sub` 行、ADR-009 D09-32））
+      - token のテナント（内部 access token の `tid`、Txn-Token の `tctx.tid`）と `subject.properties.tid`（ARC-15 DEV-1。Txn-Token 草案はテナントの claim を定義しないので、`tctx` の `tid` は社内 profile `txn-v1` の項目である。RS-06 結論 13）
+      - 不一致は engine に渡さず 200・decision=false・reason=`deny_guardrail:subject_binding`（規則 ID は暫定）とする [D]。
+    - 送信者拘束の検証（`cnf` の `x5t#S256`。ARC-15 の `cnf` 行）は PEP（SDK・edge）が行う。façade は元の提示者の証明書を持たないので `cnf` を照合しない [D]。同じ理由で、façade に渡った内部 access token を ATK-06(b)（侵害された façade）が他の RS に提示しても、`aud` と `cnf` が一致しないので使えない [D]。
+    - Txn-Token は workload の認証資格情報として使ってはならない（草案 §13.12 の MUST NOT）[N][^10]（RS-06#36）。façade は PEP の認証に mTLS だけを使い、Txn-Token は主体の裏付けにだけ使う [D]。Txn-Token の全体をログに残してはならない（草案 §15.2 の MUST NOT）[N][^10]（RS-06#41）。façade は (a)・(b) とも token の全文を decision event・ログに残さず、`txn`、内部 access token の (`iss`, `jti`)（ARC-15 の層 1a の結合キー）と照合結果だけを残す [D]。
+    - **必須化の時期は未決（ADR-011。§9）**。v1.0 の暫定動作は次のとおり [D]。
+      - 裏付けがあって不一致なら deny（上記）。
+      - 裏付けがなければ従来どおり評価し、decision event に `subject_evidence=absent` を記録する。
+      - 呼出し元ごとの必須化は、判定宣言（§4.2）の属性 `subject_evidence: required` で行い、`profile_version` の major を上げない。PEP SDK は受信した token を常に転送するので、必須化に依存サービスのコード改修は要らない（SDK の版上げで足りる）[D]。
+    - 残余リスク: 必須化までは、裏付けを省いた ATK-06 の照会を §4.2 の宣言範囲内で止められない。この範囲の照会は §4.4 の検知で扱う [D]。
+
+    ### 4.4 照会の広がりの検知
+    - façade は decision event ごとに、呼出し元の SPIFFE ID、資源型、permission、`tid`、裏付けの有無を記録する [D]。呼出し元ごとの一定時間内の照会テナント数・資源型数・`subject_evidence=absent` の比率を、KRI と検知規則の候補として kri.md の所有者に申し送る（§10）[D]。閾値は TBD（所有者: 認可・PDP チーム、期限: DL-72 凍結前、決め方: PoC と shadow 期間の実測の分布）[D]。
+    - クライアント（workload）単位のクォータ（§6、ADR-013 D13-17）は流量を抑えるが、テナントを渡り歩く低速の走査は止めない。そのため、量ではなく広がりを測る指標を別に置く [D]。
+
     ## 5. テナント境界
     - テナント（`tid`）を `subject.properties` と `resource.properties` の両方に入れる（ADR-011 D6-1）[D]。`resource.properties.tid` は PEP が L0 で照合済みの resource-derived tenant であり、要求パラメータ・path・header の生値ではない（ARC-06 §3.3）[D]。
+    - G 段規則 1 は PEP が渡した 2 つの `tid` を比べるだけであり、PEP 自身が詐称した値は検出できない。主体側の `tid` の裏付けは §4.3 の `subject_binding` で、照会の範囲は §4.2 の `caller_scope` で扱う（ラウンド1 是正）[D]。
     - façade は engine に渡す前に、G 段規則 1 として両者の不一致を決定論的に deny する（ADR-010 D-28、ARC-05 §4.1）[D]。応答は decision=false、reason=`deny_guardrail:<規則ID>` である [D]。越境共有はゲストに資源側テナントの token を発行する形で表すので、照合式に例外はない（ADR-024 D24-01・D24-07）[D]。
     - `tid` の欠落は AuthZEN 上の必須項目の欠落ではないので 400 にせず、評価不能（decision=false、`deny_indeterminate`）とする（ADR-011 D3-3）[D]。
     - façade はテナントから store・cell を引いて routing する（ADR-011 D5-3）[D]。自 cell に収容されていないテナントの要求の応答は未決（ADR-013）であり、本契約の暫定動作は decision=false、`deny_indeterminate` とする [D]。
@@ -101,7 +137,7 @@ info:
     - `reason` はエンドユーザーに返さない（ADR-011 D6-1）[D]。
 
     ## 8. 正例・負例
-    各 operation の `examples` に正例とスキーマ上は妥当な負例を置き、スキーマに違反する負例（400 になるもの）は `x-negative-examples` に分けた。負例の説明は各 example の `description` に書く。主な負例: テナント不一致（`deny_guardrail`）、必須属性の欠落（400）、未対応の profile major（`unsupported_profile`）、整合性の格下げ要求（格上げして評価）、解釈できない consistency token（`fully_consistent` に格上げ）、engine 不達（`deny_unavailable`）、privileged 操作での `permit_on_first_permit`（400）、evaluations が空で上位の既定値もない要求（400）、search の `limit` 超過（400）、他主体の page token（403）。応答側は評価不能（`deny_indeterminate`）と未対応 profile（`unsupported_profile`）の例を置く。
+    各 operation の `examples` に正例とスキーマ上は妥当な負例を置き、スキーマに違反する負例（400 になるもの）は `x-negative-examples` に分けた。負例の説明は各 example の `description` に書く。主な負例: テナント不一致（`deny_guardrail`）、必須属性の欠落（400）、未対応の profile major（`unsupported_profile`）、整合性の格下げ要求（格上げして評価）、解釈できない consistency token（`fully_consistent` に格上げ）、engine 不達（`deny_unavailable`）、privileged 操作での `permit_on_first_permit`（400）、evaluations が空で上位の既定値もない要求（400）、search の `limit` 超過（400）、他主体の page token（403）、宣言外の資源型・permission の照会（`deny_guardrail:caller_scope`）、裏付け token と異なる主体（`deny_guardrail:subject_binding`）。多数テナントへの走査は 1 要求では判定できないので、要求例ではなく検知規則と試験ベクタ（CON-11・PoC への申し送り、§10）で扱う。応答側は評価不能（`deny_indeterminate`）と未対応 profile（`unsupported_profile`）の例を置く。
 
     ## 9. 未決（ADR で決まっていない点。本契約の暫定値は安全側）
     | 論点 | 決める場 | 暫定 |
@@ -116,6 +152,23 @@ info:
     | action search | ADR-011／ADR-025 | 公開しない |
     | evaluations の要素数上限・要求本文の上限 | 認可・PDP チーム（DL-20） | TBD |
     | G 段規則 ID の形式 | ADR-011（CAM、DL-17） | `[a-z0-9_.-]{1,64}` |
+    | 主体の裏付け（`subject_binding`）の必須化の時期と範囲（操作階層別か、呼出し元別か） | ADR-011（ラウンド1 是正で追加。v1 凍結前に照合規則、必須化は本項） | 裏付けがあれば照合し不一致は deny。なければ評価して `subject_evidence=absent` を記録。必須化は判定宣言の属性で行い major を上げない |
+    | 判定宣言（X-14）の粒度・登録手続・初期登録の方法 | ADR-011・ARC-05（X-14 の追加は申し送り）、DL-73 | 宣言外は deny（`caller_scope`）。宣言なしの呼出し元はすべて deny |
+    | 内部 access token を façade に渡す形（全文か、検証可能な参照か）と最大長 | ADR-011・ADR-005（ARC-15） | 全文（ログに残さない）。最大長は ADR-015 D15-40 の初期案 6,144 byte を超えない |
+    | 照会の広がりの KRI の閾値 | 認可・PDP チーム、kri.md の所有者 | TBD（DL-72 凍結前） |
+
+    ## 10. 他文書への申し送り（ラウンド1 是正。本書以外は並行作業のため未編集）
+    | # | 宛先 | 申し送る内容 |
+    |---|---|---|
+    | M-1 | 03_threat-model/threat-catalog.md | T-087「PDP の照会 oracle 化・主体の詐称」を追加し、ATK-06 の目的「PDP への探索的な Check」と結ぶ。5 統制の案: 予防＝判定宣言 X-14（§4.2）と主体の裏付け（§4.3）、検知＝照会の広がりの KRI（§4.4）、封じ込め＝呼出し元の宣言の一時停止（レジストリ）と workload 資格情報の失効、復旧＝宣言・資格情報の再発行、証拠＝decision event（呼出し元 SPIFFE ID・規則 ID・裏付けの有無）。CE-05 PDP の S 欄（現在「空欄 d」）を T-087 で埋め、G-078 の追跡を回復する。関連: T-033（書込）、T-034（関係の機微性） |
+    | M-2 | 04_architecture/authorization-model.md（ARC-05 の X 規則表） | X-8 の対として X-14「判定宣言」を追加する。呼出し元の SPIFFE ID（trust domain を含む全体）ごとに評価してよい資源型・permission と `subject_evidence` の要否をレジストリで宣言し、宣言外の evaluation を façade が拒否する。検証は façade の受付制御と TC |
+    | M-3 | 05_adr/ADR-011 | (1) D5-7 に「mTLS は呼出し元の認証であり主体の裏付けではない」と、G 段規則 `caller_scope`・`subject_binding` を加える。(2) 未決に「主体の裏付けの必須化の時期と範囲」「内部 access token の渡し方」を加える。(3) 照合規則（`sub`↔`subject.id`、token のテナント↔`subject.properties.tid`）を v1 凍結（DEC-8）前に確定する |
+    | M-4 | 05_adr/ADR-011 と 11_contracts/relationship-model-registry.openapi.yaml（CON-04） | tuple 書込みでも、path の `tenant_id` と起点要求の `tid`（裏付け token のテナント）の結合を同じ ADR で決める。現行は書込宣言（X-8）が relation を絞るだけで、テナントの裏付けがない |
+    | M-5 | 01_governance/kri.md | KRI 候補「呼出し元ごとの照会テナント数・資源型数の広がり」「`subject_evidence=absent` の比率」「宣言外照会（`caller_scope`）と主体不一致（`subject_binding`）の件数」と検知規則。閾値 TBD |
+    | M-6 | 11_contracts/mock-contract-test-kit.md（CON-11） | 負例ベクタ: (i) 宣言外の資源型・permission の照会が `deny_guardrail:caller_scope`、(ii) 裏付け token と異なる `subject.id`・`tid` が `deny_guardrail:subject_binding`、(iii) path だけ一致し trust domain が異なる SPIFFE ID の呼出し元が宣言に当たらないこと、(iv) 1 呼出し元から多数テナントへの走査で検知規則が発火すること |
+    | M-7 | 12_poc/preregistered-test-plan.md | M-6 の (i)〜(iv) を事前登録の TC として追加し、裏付けの照合による遅延の増分（p99）を測る |
+    | M-8 | 04_architecture/pep-contract.md（ARC-06）、04_architecture/claims-catalog.md（ARC-15） | PEP SDK が受信した `Txn-Token` ヘッダと検証済み内部 access token を façade に渡すこと（DEV-5 の「下流へ無改変で渡す」の façade 版）。façade が token の全文をログに残さないこと |
+    | M-9 | 11_contracts/review-notes/CON-03.md、traceability/claims-ledger.md、traceability/dissent-log.md | 本是正の記録。裏付けを v1.0 では任意とした判断（残余リスクは §4.3）を異論として記録するかの判断 |
 
     ## 参考文献
     - [^1]: O. Gazitt, D. Brossard, A. Tulshibagwale (Eds.), OpenID AuthZEN WG『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §1, §2, §4, §5（5.1〜5.5）, §11.1〜11.2、確認日: 2026-10-03。RS-07#60〜#63）
@@ -127,6 +180,18 @@ info:
     - [^7]: E. Wilde『The Sunset HTTP Header Field』RFC 8594, Informational, 2019-05. https://www.rfc-editor.org/rfc/rfc8594 （参照箇所: §3、確認日: 2026-10-03。RS-16#35）
     - [^8]: M. Nottingham, R. Fielding『Additional HTTP Status Codes』RFC 6585, 2012-04. https://www.rfc-editor.org/rfc/rfc6585 （参照箇所: §4（429 は MAY で Retry-After を含め得る。429 の応答はキャッシュに保存してはならない MUST NOT）、確認日: 2026-10-15。research に未収録のため本書作成時に原典を取得）
     - [^9]: R. Fielding, M. Nottingham, J. Reschke『HTTP Semantics』RFC 9110（STD 97）, 2022-06. https://www.rfc-editor.org/rfc/rfc9110 （参照箇所: §10.2.3 Retry-After, §15.6.4 503（server は Retry-After を送ってよい MAY）、確認日: 2026-10-15。research に未収録のため本書作成時に原典を取得）
+    - [^10]: A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11（Internet-Draft、IESG 未提出）, 2026-07-30. https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11 （参照箇所: §9.2, §12, §12.1, §12.2, §13.12, §15.2、確認日: 2026-10-03。RS-06#31, #35, #36, #41）
+    - [^11]: Y. Rosomakho, J. Salowey / IETF『Workload Identifier』draft-ietf-wimse-identifier-03（Internet-Draft）, 2026-07-06. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-identifier-03 （参照箇所: §7.2、確認日: 2026-10-03。RS-06#25）
+    - [^12]: J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02（Internet-Draft）, 2026-07-06. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5、確認日: 2026-10-03。RS-06#25）
+
+    ## レビュー記録
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+    ### ラウンド1（2026-10-15、模擬パネル redteam 役）
+    | 重大度 | 指摘 | 対応 | 箇所 |
+    |---|---|---|---|
+    | High | façade は PEP の mTLS 認証だけで要求を受け付け、`subject.id`・`tid` を検証済み token・Txn-Token と突き合わせない。G 段規則 1 は PEP が渡した 2 つの `tid` を比べるだけである。侵害された依存サービス（ATK-06）が同じ cell の全テナント・他ドメインの資源型を Check でき、関係の存在（T-034）を引き出す oracle になる。判定・照会側に呼出し元ごとの宣言がなく、ATK-06 の「PDP への探索的な Check」に T・統制・TC がない（G-078 の追跡切れ）。DEC-8 で現形のまま凍結すると、裏付けの必須化が major 改版になる | 本書内: (1) §4.1 に問題を明記。(2) §4.2 に G 段規則 `caller_scope`（判定宣言。SPIFFE ID 全体で照合）を v1 の契約として追加。(3) §4.3 に G 段規則 `subject_binding` を追加し、`Txn-Token` ヘッダ（全 operation の parameters）と `subject_evidence.access_token`（ProfileRequest、preview）の欄を予約。照合規則（`sub`↔`subject.id`、token のテナント↔`subject.properties.tid`）を定め、必須化は判定宣言の属性で行うので major 改版を要しない形にした。必須化の時期は §9 に ADR-011 の未決として明記。(4) §4.4 に照会の広がりの検知を追加。(5) §5 に G 段規則 1 の限界を明記。(6) §8 と evaluation の要求・応答の examples に負例 2 件（`callerOutOfScope`、`subjectBindingMismatch`）を追加。他文書: threat-catalog T-087、ARC-05 X-14、ADR-011、CON-04 の tuple 書込みのテナント結合、kri.md、CON-11、PoC 計画、ARC-06・ARC-15 を §10（M-1〜M-9）に申し送り。新たな事実の根拠は RS-06 の検証済み原典（Transaction Tokens 草案、WIMSE identifier・mutual-tls 草案）[^10][^11][^12] | info.version、§4.1〜§4.4、§5、§8、§9、§10、components（TxnToken、SubjectEvidence、ProfileRequest、`txn`）、/access/v1/evaluation の examples |
+    | — | 残余 | 裏付けの必須化までは、裏付けを省いた照会を宣言範囲内で止められない（§4.3 の残余リスク）。threat-catalog・kri.md・CON-11・PoC 計画の実際の追記は宛先文書の担当が行う（本書では未完了） | §4.3、§10 |
 servers:
   - url: https://{cell}.pdp.{idDomain}
     description: cell ごとの PDP façade（ADR-011 D5-3、ADR-013）。ホスト名の規則は未決（ADR-021 D21-28 の自社所有ドメイン修飾に従う）。
@@ -200,6 +265,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/XRequestId"
         - $ref: "#/components/parameters/Traceparent"
+        - $ref: "#/components/parameters/TxnToken"
       requestBody:
         required: true
         content:
@@ -309,6 +375,45 @@ paths:
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+              callerOutOfScope:
+                summary: 負例（判定宣言にない資源型の照会。ラウンド1 是正）
+                description: 文書サービスの workload が、判定宣言（§4.2、X-14 として申し送り）にない医療ドメインの資源型・permission（ARC-05 §8.5 の `med/patient_record`・`read_clinical`）を照会している。mTLS の認証は通るが、façade は engine に渡さず 200・decision=false・reason=deny_guardrail:caller_scope とし、decision event に呼出し元の SPIFFE ID と規則 ID を残す（ATK-06 の探索的な Check への対策）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: read_clinical
+                  resource:
+                    type: med/patient_record
+                    id: 3c8v1b5n9m2q6w0e4r7t1y5u8i
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+              subjectBindingMismatch:
+                summary: 負例（裏付け token と異なる主体。ラウンド1 是正、preview）
+                description: |
+                  `subject_evidence.access_token`（または `Txn-Token` ヘッダ）の `sub`・`tid` が `subject.id`・`subject.properties.tid` と一致しない。façade は engine に渡さず 200・decision=false・reason=deny_guardrail:subject_binding とする（§4.3）。
+                  token は例示のための形だけの値で、署名は検証できない（検証できない token も同じ deny になる）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 8z1x4c7v0b3n6m9q2w5e8r1t4y
+                    properties:
+                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    id: 5k2j8h4g1f7d3s9a6p0o2i8u4y
+                    properties:
+                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      subject_evidence:
+                        access_token: eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiJ9.eyJleGFtcGxlIjp0cnVlfQ.ZXhhbXBsZS1zaWduYXR1cmU
       responses:
         "200":
           description: 判定（許可・拒否とも 200）。
@@ -410,6 +515,34 @@ paths:
                           guardrail_catalog_version: g@2026.10.1
                         consistency:
                           mode: fully_consistent
+                callerOutOfScope:
+                  summary: 負例（判定宣言外。要求例 callerOutOfScope への応答。ラウンド1 是正）
+                  description: G 段規則 caller_scope による deny（§4.2）。関係の有無を問わず同じ応答なので、宣言外の照会から関係の存在は読み取れない。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: t5r2e9w6q3a0s7d4f1g8h5j2kx
+                        reason: deny_guardrail:caller_scope
+                        model_revision:
+                          model_revision: health@01JB8C2M9P
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+                subjectBindingMismatch:
+                  summary: 負例（主体の裏付けの不一致。要求例 subjectBindingMismatch への応答。ラウンド1 是正）
+                  description: G 段規則 subject_binding による deny（§4.3）。decision event には token の全文ではなく (`iss`, `jti`) と照合結果だけを残す。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: y4u7i0o3p6a9s2d5f8g1h4j7kz
+                        reason: deny_guardrail:subject_binding
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -438,6 +571,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/XRequestId"
         - $ref: "#/components/parameters/Traceparent"
+        - $ref: "#/components/parameters/TxnToken"
       requestBody:
         required: true
         content:
@@ -590,6 +724,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/XRequestId"
         - $ref: "#/components/parameters/Traceparent"
+        - $ref: "#/components/parameters/TxnToken"
       requestBody:
         required: true
         content:
@@ -743,6 +878,22 @@ components:
       schema:
         type: string
         pattern: "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+    TxnToken:
+      name: Txn-Token
+      in: header
+      required: false
+      x-maturity: preview
+      description: |
+        PEP が受信した Txn-Token を無改変で渡す（主体の裏付け。§4.3、G 段規則 `subject_binding`）。下流呼出しへの無改変の転送と `Txn-Token` ヘッダの使用は Transaction Tokens 草案の MUST、`Authorization` ヘッダの使用は MUST NOT [N]（RS-06#35）。
+        façade は署名・`aud`・有効期限を検証し、`sub` を `subject.id` と、`tctx.tid`（社内 profile `txn-v1`）を `subject.properties.tid` と照合する。不一致は decision=false・`deny_guardrail:subject_binding` [D]。
+        PEP の認証には使わない（草案 §13.12 の MUST NOT）。全文をログに残さない（草案 §15.2 の MUST NOT）[N]（RS-06#36, #41）。欠けた要求は v1.0 では拒否しない（必須化は未決（ADR-011）、判定宣言の属性で呼出し元ごとに行う）[D]。
+        Transaction Tokens は Internet-Draft（-11、SS-B04）なので preview [D]。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 6144
+        pattern: "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+        description: JWS compact serialization。最大長は ADR-015 D15-40 の初期案（内部 JWT 1 個 6,144 byte）に揃えた暫定値 [D]。
   headers:
     XRequestIdEcho:
       description: 要求に X-Request-ID があれば、PDP は同じ値を応答に含める（AuthZEN §10.1.3 の MUST）[N]。engine が返さない場合も façade が補う（ADR-011 D5-5、OpenFGA は返さない RS-07#68）[D]。PEP SDK は不一致を「判定が得られない」として扱う [D]。
@@ -786,7 +937,7 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorMessage"
     Forbidden:
-      description: 認証済みの PEP がこの操作を許されていない（search の受付制御で許可されない呼出し元、他主体・他テナントに束縛された page token）。AuthZEN §10.1.2 [N][D]。認可判定の拒否ではない（拒否は 200・decision=false）。
+      description: 認証済みの PEP がこの操作を許されていない（search の受付制御で許可されない呼出し元、判定宣言（§4.2）にない資源型・permission の search、他主体・他テナントに束縛された page token）。AuthZEN §10.1.2 [N][D]。認可判定の拒否ではない（拒否は 200・decision=false）。
       headers:
         X-Request-ID:
           $ref: "#/components/headers/XRequestIdEcho"
@@ -976,7 +1127,27 @@ components:
           pattern: "^[\\x21-\\x7E]{1,64}$"
           x-maturity: preview
           description: |
-            PEP が検証した Txn-Token の `txn`（一意の取引識別子。名前と意味は RFC 8417 の IANA 登録で固定、ADR-021 D21-36）の写し。decision event の相関に使い、認可の入力にしない [D]。Transaction Tokens は Internet-Draft（-11、確認日 2026-10-03、SS-B04）。発行範囲と façade での Txn-Token 検証の要否は未決（ADR-005 H-20・ADR-009、U-02）。Txn-Token の全文は送らない（ログに残さない義務。ADR-021 D21-37）[D]。
+            PEP が検証した Txn-Token の `txn`（一意の取引識別子。名前と意味は RFC 8417 の IANA 登録で固定、ADR-021 D21-36）の写し。decision event の相関に使い、認可の入力にしない [D]。Transaction Tokens は Internet-Draft（-11、確認日 2026-10-03、SS-B04）。発行範囲は未決（ADR-005 H-20・ADR-009、U-02）。Txn-Token の全文は本文に入れない（ログに残さない義務。ADR-021 D21-37）[D]。
+            ラウンド1 是正: 主体の裏付けのための Txn-Token の全文は、本文ではなく `Txn-Token` ヘッダ（components/parameters/TxnToken）で渡す。ヘッダがある場合、façade は検証済み Txn-Token の `txn` と本項目の一致も確かめ、不一致は `deny_guardrail:subject_binding` とする [D]。
+        subject_evidence:
+          $ref: "#/components/schemas/SubjectEvidence"
+    SubjectEvidence:
+      type: object
+      x-maturity: preview
+      x-reserved-by: ラウンド1 是正（§4.3）。v1 凍結前に欄だけを予約し、必須化の時期は未決（ADR-011）
+      description: |
+        主体の裏付け（AuthZEN 1.0 外、preview）。mTLS は呼出し元 workload の認証であり、PEP が組み立てた `subject.id`・`tid` を裏付けない（§4.1）[D]。
+        façade は `access_token` の署名・`exp` を検証し、`aud` が mTLS で認証した呼出し元 workload に当たることを確かめたうえで、`sub` を `subject.id` と、`tid` を `subject.properties.tid` と照合する（ARC-15 DEV-1）。不一致は engine に渡さず decision=false・`deny_guardrail:subject_binding` [D]。
+        `cnf`（送信者拘束）は PEP 側で検証済みのものとし、façade は照合しない（§4.3）[D]。
+        façade は全文を decision event・ログに残さず、(`iss`, `jti`)（ARC-15 の層 1a の結合キー。`jti` は RFC 9068 で REQUIRED、RS-04#60）と照合結果だけを残す [D]。
+        欠けた要求は v1.0 では拒否しない。呼出し元ごとの必須化は判定宣言（X-14 として申し送り）の属性で行う [D]。
+      properties:
+        access_token:
+          type: string
+          minLength: 1
+          maxLength: 6144
+          pattern: "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+          description: PEP が受信し検証した内部 access token（`typ=at+jwt`）の JWS compact serialization。最大長は ADR-015 D15-40 の初期案に揃えた暫定値。全文か検証可能な参照かは未決（ADR-011・ADR-005）[D]。
     Reason:
       type: string
       description: |

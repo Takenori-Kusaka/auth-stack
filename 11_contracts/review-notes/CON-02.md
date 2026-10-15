@@ -1,6 +1,6 @@
 # CON-02 共通スキーマ 独立レビュー記録
 
-> 文書ID: CON-02（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-02-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-109, R-161（DL-71）
 > 依存文書: 11_contracts/schemas/common.schema.json, CONVENTIONS.md, traceability/deliverables.md（DL-71）, 05_adr/ADR-005, ADR-009, ADR-011, ADR-014, ADR-021, ADR-022, 02_requirements/operation-risk-tiers-assurance.md, 04_architecture/claims-catalog.md, 11_contracts/schemas/audit-event.schema.json（CON-08）
 

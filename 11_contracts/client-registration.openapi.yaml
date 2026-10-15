@@ -1,0 +1,1216 @@
+openapi: 3.1.2
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Client Registration API（sandbox の RFC 7591/7592 profile と本番の登録申請 API）
+  version: 0.1.1
+  summary: OAuth/OIDC client の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01、G-141(c)、OB-2(d)）
+  license:
+    name: 社内限定（Proprietary, internal use only）
+    identifier: LicenseRef-Proprietary-Internal
+  x-document-id: CON-14（2026-10-15 に traceability/deliverables.md §4.5・§8 で確定。旧仮番 CON-13 はライフサイクル事象のスキーマ（schemas/lifecycle-event.schema.json）と衝突したため変更した。CON-12 はライフサイクル事象の AsyncAPI 契約）
+  x-deliverable: DL-119（2026-10-15 に traceability/deliverables.md §4.5 で採番）
+  x-status: draft
+  x-last-updated: "2026-10-15"
+  x-depends-on:
+    - CONVENTIONS.md
+    - traceability/deliverables.md（DL-69, DL-80, DL-119, DEC-8。§4.5 の DL-119 行と §8 の 11_contracts 行）
+    - 11_contracts/README.md（CON-00 §3 I-01、§4 命名・版付け規約）
+    - 04_architecture/token-profile.md（ARC-02 §3.2, §6, §7, §8, §9.2 行 01・02・25・34, §13 KP-1）
+    - 05_adr/ADR-005-token-profile.md（D7-1, D7-2, K-3）
+    - 05_adr/ADR-008-*.md（D8-50〜D8-54）
+    - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-18, D09-19）
+    - 05_adr/ADR-020-fapi2-applicability.md（D20-03, D20-08-4）
+    - 05_adr/ADR-021-irreversible-identifiers.md（D21-09, D21-13, D21-22〜D21-24）
+    - 05_adr/ADR-022-integration-contract-standards.md（D-1, D-2 の OIDC/OAuth profile 行, D-2-3, D-6-4, D-7-1）
+    - 08_operations/operating-model.md（§7.2 CP-1・CP-2、§5.5 有資格者名簿）
+    - 10_integration/onboarding.md（INT-04 §4.3 OB-2(d)、ONB-R2）
+    - 10_integration/integration-patterns.md（INT-02 §5.1 I-01）
+    - 11_contracts/mock-contract-test-kit.md（CON-11 §4.2 MK-01, §5.2 (c), CV-011）
+    - research/RS-16-parallel-development-governance.md（RS-16#20）, research/RS-04-oauth-oidc-profile.md（RS-04#1）, research/standards-status.md（SS-A23）
+  x-requirements:
+    - id: G-138
+      coverage: I-01（client 登録）の登録の手段を契約にした。sandbox は preview（ADR-022 D-2）、本番の申請 API も preview（ADR-022 の改版待ち）。登録する内容（種別ごとの必須項目）は ARC-02 §6 の GA 範囲を写した
+    - id: G-141
+      coverage: (c) client のセルフサービス登録の契約。(a) 信頼の分離のうち、登録段階の環境分離（本番 redirect URI・本番鍵の sandbox 登録拒否、sandbox client_id の本番での拒否）。workload の登録は範囲外（x-open-issues）
+    - id: G-118
+      coverage: client 登録の契約ファイル本体（OpenAPI 3.1.2）
+    - id: G-119
+      coverage: x-standards に準拠標準・版・状態・準拠範囲と、Experimental な RFC 7592 に依存する部分の互換方針を記載
+    - id: G-124
+      coverage: OB-2(d) の承認者案（x-approval-rules）。決裁は ONB-R2・ADR-022 の改版
+    - id: R-158
+      coverage: 登録時に redirect URI の完全一致、implicit・ROPC の拒否、非対称 client 認証を機械検査する（ARC-02 §9 行 01・02・25）
+    - id: R-255
+      coverage: 共有 client secret の登録を拒否する（ADR-009 D09-18）
+  x-standards:
+    - id: SS-A23
+      name: RFC 7591 OAuth 2.0 Dynamic Client Registration Protocol
+      status: final（Proposed Standard、2015-07。standards-status 確認日 2026-10-03。原典本文は起草者が 2026-10-15 に再取得して照合）
+      conformance: sandbox の登録 endpoint の準拠基準。要求・応答・エラーの項目名と意味は変えない。社内 profile として許容値を絞る（initial access token 必須、token_endpoint_auth_method 必須、共有秘密の方式を拒否、client_id・client_secret を登録者に選ばせない）。本番の申請 API は RFC 7591 の client metadata の名前と意味を部品として使うだけで、RFC 7591 の endpoint ではない
+    - id: 未登録（standards-status に行なし。申し送り）
+      name: RFC 7592 OAuth 2.0 Dynamic Client Registration Management Protocol
+      status: Experimental（2015-07。起草者が 2026-10-15 に原典で確認）
+      conformance: sandbox の登録の読取り・更新・削除だけに使う（preview）。Experimental のため GA にしない。registration access token を読取り・更新のたびに回転させる（RFC 7592 §5 の MAY を本 profile で必須化）
+    - id: 未登録（standards-status の行の有無は未確認。申し送り）
+      name: RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6 の client metadata
+      status: final（Proposed Standard）。各 metadata の定義は起草者が 2026-10-15 に原典で確認
+      conformance: tls_client_auth_*、tls_client_certificate_bound_access_tokens、dpop_bound_access_tokens、require_pushed_authorization_requests を種別ごとの必須項目に使う
+    - id: 未登録（standards-status の行の有無は未確認。申し送り）
+      name: OpenID Connect Dynamic Client Registration 1.0 incorporating errata set 2（Final、2023-12-15）
+      status: final。§2 の metadata 定義は起草者が 2026-10-15 に原典で確認
+      conformance: token_endpoint_auth_method の private_key_jwt、token_endpoint_auth_signing_alg、id_token_signed_response_alg の名前と意味
+    - id: SS-I16
+      name: OpenAPI Specification 3.1.2
+      status: final（確認日 2026-10-03）
+      conformance: 記述言語（CON-00 §4.4 L-1）
+  x-freeze-classes:
+    irreversible: client_id の形式と「不透明に扱う」という契約（ADR-021 D21-22、D21-13 の墓石）
+    GA: 種別ごとの必須項目と禁止項目（ClientMetadata の規則。中身は ARC-02 §6 の GA 範囲の写し）。理由コード CR01〜CR14 の意味
+    preview: sandbox の登録・管理 endpoint（ADR-022 D-2 の「非本番環境の動的登録」）、本番の登録申請 API と承認規則（ADR-022 が本番の登録手段を定めていないため。x-open-issues の ADR-022 行）
+    not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値
+  x-preview-expires: TBD（CON-00 §4.6 F-2 の初期案では preview に置いた日から 12 か月。決める人 CTO、期限 DEC-8 前）
+  description: |
+    > 文書ID: CON-14 / DL-119 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-255（全件は info.x-requirements）
+    > 依存文書: info.x-depends-on
+    > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+    ## 0. 要旨
+
+    1. **連携開発者は、本契約で「何を申請し、何が返るか」を実装・試験できる** [D]。sandbox では RFC 7591 の登録 endpoint にセルフ登録し、`client_id` と RFC 7592 の管理用 URL・token を受け取る（承認なし。G-141(c)）。本番では登録申請 API に申請し、承認後に `client_id` を受け取る（OB-2(d)）[D]。
+    2. **登録する中身は sandbox と本番で同じスキーマ（ClientMetadata）で検査する** [D]。種別（C1〜C6、C8。ARC-02 §6）ごとに grant、`token_endpoint_auth_method`、DPoP・mTLS の束縛、PAR、FAPI の層を必須項目・禁止項目として機械可読にした。sandbox で通った登録内容は、環境に依存する値（redirect URI、鍵）を差し替えれば本番の申請にそのまま使える [D]。
+    3. **sandbox と本番の issuer・登録窓口・鍵・client_id を分ける** [D]（ADR-022 D-6-4、ADR-008 D8-50〜D8-52、ADR-021 D21-22）。sandbox の登録 endpoint は sandbox の AS にだけあり、本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34）。sandbox への本番 redirect URI・本番の公開鍵の登録は拒否する（負例 CRN-01、CRN-13）[D]。
+    4. **本番の承認者は既存の変更区分（operating-model §7.2）に当てはめた案である** [D]。標準の登録は認証・IdP チームの有資格者による作成者≠承認者の審査（CP-2 相当）、層 F（FAPI）や privileged scope は CISO 組織のセキュリティレビュアーを加え、複数テナントにまたがる app-only の権限は CP-1 相当の別報告系統の二者とする（x-approval-rules）。承認者の確定は ONB-R2 と ADR-022 の改版による（未決（ADR-022））[D]。
+    5. **凍結区分**: sandbox の登録手段と本番の申請 API はどちらも preview である [D]。ADR-022 D-2 は非本番の動的登録を preview に置き、本番の登録手段は定めていないためである。種別ごとの必須項目は ARC-02 §6（GA）の写しなので GA とする [D]。ADR-022 D-2-3 は空欄を GA か preview の契約で埋めることを求めるので、G-138 の I-01 は本契約で「対応（登録手段は preview）」になる [D]。
+
+    ## 1. 範囲
+
+    | 範囲内 | 範囲外（正本） |
+    |---|---|
+    | sandbox の client 登録・読取り・更新・削除（RFC 7591/7592 profile） | 内部 workload の SVID 登録エントリ（ARC-04 W55-08、OB-2(b)）。C7 の token exchange 利用者はこちらで登録する |
+    | 本番の client 登録・変更・廃止の申請、承認、払出し結果の取得 | 交換可能な組の登録簿（ADR-009 D09-13、OB-2(c)） |
+    | 種別ごとの登録内容の検査規則、理由コード、負例 | token の取得・検証そのもの（ARC-02、CON-06） |
+    | 承認の要否を決める規則（案） | 本基盤が RP として顧客 IdP に接続する C9（ADR-004。顧客 IdP 側の登録） |
+    | | OIDC Back-Channel Logout の `backchannel_logout_uri` の登録（位置が未決。ADR-006 L6-2） |
+    | | `authorization_details` の type の登録（ADR-017 L17-5） |
+
+    ## 2. 流れ
+
+    ```mermaid
+    sequenceDiagram
+      participant Dev as 連携開発者（consumer 台帳に登録済み）
+      participant Portal as オンボーディング窓口
+      participant SB as sandbox AS（issuer B）
+      participant Req as 本番 登録申請 API
+      participant Ap as 承認者（x-approval-rules）
+      participant PA as 本番 AS（issuer A。動的登録は無効）
+      Dev->>Portal: OB-1 完了後、initial access token を受け取る（sandbox 専用）
+      Dev->>SB: POST /v1/register（ClientMetadata）＋ initial access token
+      SB-->>Dev: 201 client_id、registration_client_uri、registration_access_token（承認なし）
+      Dev->>SB: 結合試験（CON-11 の CV-xxx）
+      Dev->>Req: POST /v1/client-registration-requests（同じ ClientMetadata、本番の値）
+      Req-->>Dev: 202 request_id、required_approvals
+      Ap->>Req: POST …/decisions（作成者≠承認者）
+      Req->>PA: 承認がそろったら払出し
+      Dev->>Req: GET …/{request_id}
+      Req-->>Dev: status=provisioned、client_id（sandbox と別の値）
+    ```
+
+    ## 3. 種別ごとの必須項目（ARC-02 §6 の写し）
+
+    表のセルのうちタグのないものは ARC-02 §6・§7・§8 からの設計推論 [D] である。規範の強度は脚注の原典どおりに写す。
+
+    | 種別 | grant_types | response_types | token_endpoint_auth_method | 束縛（metadata） | PAR | 層（platform_risk_layer） | redirect_uris |
+    |---|---|---|---|---|---|---|---|
+    | C1 第一者 BFF | authorization_code（必須）、refresh_token | `["code"]` | private_key_jwt か tls_client_auth | BFF→edge は mTLS（登録 metadata ではなく経路の設定） | `require_pushed_authorization_requests: true` | B・H・F | https のみ |
+    | C2 第一者ネイティブ・CLI | authorization_code、refresh_token | `["code"]` | none | `dpop_bound_access_tokens: true` | 任意 | B・H（F1〜F6 は発行しない） | loopback の IP リテラルか、`<id-domain>` を逆順にした private-use scheme（ADR-021 D21-24） |
+    | C3 第三者サーバー型 | authorization_code、refresh_token | `["code"]` | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true`（既定）。DPoP は K-3 の例外で受容票が要る | 層 F なら必須 | B・H・F | https のみ |
+    | C4 第三者ブラウザ内 | authorization_code、refresh_token | `["code"]` | none | `dpop_bound_access_tokens: true` | 任意 | B のみ | https のみ |
+    | C5 外部 M2M、C8 AI エージェント（自身の資格情報） | client_credentials のみ | 空か省略 | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true` | 該当なし | B・F | 登録しない |
+    | C6 外部 RP | authorization_code、refresh_token | `["code"]`（hybrid は未決のため不可） | private_key_jwt か tls_client_auth | C1・C3 と同じ | 層 F なら必須 | B・H・F | https のみ |
+
+    - 全種別に共通の規則 [D]。
+      - `token_endpoint_auth_method` を必須にする。RFC 7591 と OIDC Dynamic Client Registration 1.0 は、省略時の既定値を `client_secret_basic` と定めている [N][^1][^6]。省略を許すと共有秘密の client が登録されるので、既定値に頼らせない（ADR-009 D09-18）。
+      - `client_secret_basic`・`client_secret_post`・`client_secret_jwt` は登録できない（ADR-005 D7-1、ADR-009 D09-18）。このため応答に `client_secret` は含まれない。
+      - `implicit`・`password` の grant と `token` の response type は登録できない。ROPC の禁止は RFC 9700 §2.4 の MUST NOT、implicit の無効化は SHOULD NOT を超える自社判断である（ARC-02 §6）[N][^7]。
+      - device authorization grant と jwt-bearer・saml2-bearer の grant は v0.1 では登録できない。device grant は業務 API で既定無効（ARC-02 §6 C2、ADR-005 D7-7）で、例外は受容票を付けて本番の申請で扱う（x-open-issues）。
+      - redirect URI は登録値と要求値を exact string matching で照合しなければならない（MUST）。例外は native app の localhost URI の port 番号だけである [N][^7]（RS-04#1）。そのため wildcard（`*`）と fragment を含む URI は登録できない。loopback 以外の `http` も登録できない（ARC-02 §9.2 行 25）。
+      - RFC 7591 は redirect URI を、TLS で保護されたサイト、localhost の http、client だけが使う非 HTTP の URL のいずれかに限っている（MUST）[N][^1]（§5）。本 profile は loopback を IP リテラル（`127.0.0.1`・`[::1]`）に絞る。これは自社判断である [D]。
+      - `jwks_uri` と `jwks` は同じ要求・応答に両方を入れてはならない（MUST NOT）[N][^1]（§2）。
+      - `tls_client_auth` を使う client は、証明書の主体を表す metadata をちょうど 1 つ使わなければならない（MUST）[N][^3]（RFC 8705 §2.1.2）。本 profile は `tls_client_auth_subject_dn`・`tls_client_auth_san_dns`・`tls_client_auth_san_uri` の 3 つから選ばせる [D]。
+      - `dpop_bound_access_tokens: true` を登録した client の token 要求に DPoP header がなければ、AS は拒否しなければならない（MUST）[N][^4]（RFC 9449 §5.2）。
+      - `token_endpoint_auth_signing_alg` を登録すると、その alg で署名していない private_key_jwt の token 要求は拒否しなければならない（MUST）。`none` は使ってはならない（MUST NOT）[N][^6]。本 profile では private_key_jwt の client にこの項目を必須にし、値を ES256 か PS256 に限る（ARC-02 §3.2・§8）[D]。
+      - C6 の `id_token_signed_response_alg` は、省略すると RS256 になる [N][^6]。ARC-02 K1 は ES256 か PS256 で登録させるとしているので、本 profile は必須項目にする。層 F の client は、PS256 の鍵がない間（XR-04）は ES256 に限る [D]。層 B の既定 alg は ARC-02 KP-1 で未決である。
+      - `client_id` と `client_secret` を登録者が要求に入れることはできない（ADR-021 D21-22）。`client_id` は基盤が払い出す不透明値で、環境ごとに別の値になる [D]。
+      - 所有者（`platform_owner`）と所有テナント（`platform_owning_tenant`）は metadata に持たせ、`client_id` から推論させない（ADR-021 D21-22）[D]。所有者のない client は登録できない（ADR-008 D8-54 の棚卸し）[D]。
+    - RFC 7591 が定めない項目名（`platform_` で始まる 5 項目）は本契約の名前案であり、名前空間の規則（ADR-021 D21-28）で確定する（未決（ADR-021））[D]。RFC 7591 は、AS が理解しない client metadata を無視しなければならない（MUST）としている [N][^1]（§2）。そのため、他の AS 製品へ移る場合もこれらの項目は登録記録の側（本契約の申請 API と台帳）に持ち、AS 製品の拡張機能に依存しない [D]。
+    - RFC 9126 は、RFC 7591 の metadata が、動的登録を使わない場合にも client の一般的なデータモデルとして役に立つと述べている [N][^5]（§6）。本番の申請 API が RFC 7591 の項目名を使うのはこのためである [D]。
+
+    ## 4. sandbox の登録 profile（preview）
+
+    - endpoint は sandbox の AS（issuer B）だけに置き、URL は sandbox AS の metadata の `registration_endpoint` で知らせる（ADR-022 D-3-2 の URL 直書きの禁止）[D]。
+    - RFC 7591 の登録 endpoint は、JSON の POST を受け付けなければならず（MUST）、TLS で保護しなければならない（MUST）[N][^1]（§3）。
+    - **initial access token を必須にする** [D]。RFC 7591 は、登録 endpoint が initial access token を受け付けて、事前に認可した者だけに登録を限ってよい（MAY）とし、相互運用のためには initial access token なしの登録を許すべき（SHOULD）としている [N][^1]（§3）。本 profile はこの SHOULD から外れる。理由は次の 2 つである [D]。
+      - 非本番にも本番と同じ認証の最低基準を適用するため（ADR-008 D8-53）。Midnight Blizzard では、非本番テストテナントのアカウントを足がかりに本番相当の OAuth アプリへ到達された（CON-11 §5.2 (a) [I]、RS-12#16）。
+      - 登録した client に所有者（consumer 台帳の consumer_id）を必ず結び付けるため（ADR-008 D8-54）。
+      - 補完統制: initial access token は consumer 台帳に登録済みのチームにだけ、オンボーディング窓口から発行する（OB-1 の完了が条件）。sandbox の AS でしか受理せず、consumer_id に結び付く。寿命と発行窓口は TBD（所有者 プラットフォームチーム長、期限 DEC-8 前、決め方 パイロットの利用記録）。
+    - software statement は v0.1 では受け付けない（`unapproved_software_statement`）[D]。RFC 7591 は software statement に JWS の署名か MAC と `iss` を求める（MUST）[N][^1]（RS-16#20）。署名者（ソフトウェアの発行者）の台帳がまだないため、受け付けても検証の根拠がない [D]。
+    - 応答は RFC 7591 §3.2.1 に従い、`client_id`（REQUIRED）と登録された metadata をすべて返す（MUST）[N][^1]。AS が要求値を既定値に置き換えた場合も、置き換えた値を返す [N][^1]。
+    - 管理（読取り・更新・削除）は RFC 7592 の profile にする。RFC 7592 は Experimental である [N][^2]。応答には `registration_client_uri` と `registration_access_token` が REQUIRED である [N][^2]（§3）。
+      - registration access token は bearer token で、管理 endpoint での唯一の認証になる。比較的長期の資格情報なので、開発者が保護しなければならない（MUST）[N][^2]（§5）。
+      - RFC 7592 は、読取り・更新のときにこの token を回転させてよい（MAY）としている [N][^2]（§5）。本 profile はこれを必須にし、回転後は古い token を拒否する（負例 CRN-14）[D]。
+      - 更新（PUT）は、以前に返された metadata をすべて含めなければならず、省略した項目は削除の要求として扱われる（MUST）[N][^2]（§2.2）。部分更新ではない点に注意する。
+      - 削除すると `client_id` と registration access token が無効になる。AS はその client の grant と token をすぐに無効にすべき（SHOULD）である [N][^2]（§2.3）。本 profile では sandbox の AS がこれを行う [D]。
+    - 重複の扱い: 同じ `software_id` と `software_version` を持つ別の client の登録は、疑わしいものとして扱い拒否すべき（SHOULD）とされる [N][^1]（§5）。本 profile では、別の consumer_id が同じ組を登録した場合に拒否する（CR12）[D]。
+    - 環境の分離（G-141(a) の登録段階）[D]。
+      - 本番のホスト（本番の `<id-domain>` 配下と、本番の client に登録済みの redirect URI のホスト）を redirect URI に含む登録を拒否する（CR04）。本番のホストの一覧は sandbox AS の設定として持つ。
+      - 本番の client に登録済みの公開鍵（JWK thumbprint）と同じ鍵の登録を拒否する（CR13。ADR-008 D8-52 の別の署名鍵）。
+      - sandbox で払い出した `client_id` は本番の AS では未知であり、本番の token endpoint は `invalid_client` を返す（CRN-12）。sandbox の token は本番の検証点で拒否される（CON-11 CV-011）。
+    - 登録数の上限は consumer_id ごとに置き、超えた場合は 429 を返す（CR14）。値は TBD（所有者 プラットフォームチーム長、期限 DEC-8 前）。RFC 7591 は、認可なしの登録要求について DoS を防ぐためにレート制限してよい（MAY）としている [N][^1]（§3）。
+
+    ## 5. 本番の登録申請 API（preview）と承認フロー（OB-2(d) の承認者案）
+
+    - 本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34。本番での採否は未決（ADR-022、ARC-02 AR-3））[D]。本番の client は、本 API への申請と承認を経て、プラットフォームが AS に払い出す [D]。
+    - 申請者は consumer 台帳に登録されたチームの人である。認証は社内の workforce IdP（MFA 必須、ADR-008 D8-53）で行う [D]。
+    - 申請の種類は `create`（新規）、`update`（変更）、`retire`（廃止）の 3 つである。`retire` は権限を減らす変更なので、所有者だけで成立させ、中央の承認を待たない [D]。
+    - 承認の要否は x-approval-rules で決まり、申請の応答の `required_approvals` に入る [D]。すべての承認がそろうまで払出しは行わない [D]。
+    - 承認者は有資格者名簿（operating-model §5.5）に載った者に限り、申請者自身は承認できない（403。CRN-17）[D]。
+    - 承認者案の根拠 [D]。
+      - AR-1（全申請）を CP-2 相当にしたのは、client の登録が単一テナントか第一者の構成の変更であり、operating-model §7.2 の CP-2 が作成者≠承認者の peer review を定めているためである。ADR-022 D-7-1 の「下層の実装変更は peer review」にも合う。
+      - AR-2（第三者・外部 RP）は ADR-005 D7-1 の「登録時の発行者確認」を写した。
+      - AR-3（層 F・privileged scope）は、ADR-020 D20-03 が層を client の profile 属性と操作の分類の組で決めるとしているためである。層 F の client の誤登録は、F1・F2 の管理 API を外部から呼べる状態を作る。
+      - AR-4（複数テナントにまたがる app-only の権限）は、ADR-008 D8-54 が app-only 権限の付与を CP-1 の保護操作としているためである。
+      - AR-5（C3 で mTLS の代わりに DPoP）は ADR-005 K-3 の例外の扱いで、受容票を必須にする。
+    - 本書が新たに置いた承認者はない。AR-1〜AR-5 は既存の区分（CP-1・CP-2、ADR-005 D7-1、ADR-008 D8-54、K-3）への当てはめである [D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
+    - 申請から払出しまでの時間は SLI が未採番である（INT-04 ONB-R3）[D]。
+
+    ## 6. 凍結区分（ADR-022 D-1・D-2）
+
+    | 要素 | 区分 |
+    |---|---|
+    | `client_id` の形式と「不透明に扱う」という契約 | 不可逆（ADR-021 D21-22） |
+    | ClientMetadata の種別ごとの規則、理由コード CR01〜CR14 の意味 | GA（ARC-02 §6 の写し。DEC-8 前は draft） |
+    | sandbox の登録・管理 endpoint（RFC 7591/7592 profile） | preview（ADR-022 D-2 の「非本番環境の動的登録」） |
+    | 本番の登録申請 API、承認規則 AR-1〜AR-5 | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
+    | ホスト名、initial access token の寿命、登録数の上限、承認の SLI | 凍結しない |
+
+    - GA の ClientMetadata 規則は、preview の endpoint に必須で依存していない。規則は申請 API と sandbox の両方で同じスキーマとして使うので、endpoint が変わっても規則は残る（ADR-022 D-1-1）[D]。
+
+    ## 7. 標準からの逸脱と補完統制
+
+    | 原典の規定 | 本 profile | 理由・補完統制 |
+    |---|---|---|
+    | RFC 7591 §3: 認可なしの登録を許すべき（SHOULD） | initial access token を必須にする | §4 の 2 つの理由。補完統制は consumer 台帳との結び付けと sandbox 限定 [D] |
+    | RFC 7591 §2: token_endpoint_auth_method の既定は client_secret_basic | 項目を必須にし、共有秘密の方式を拒否する | ADR-009 D09-18。既定値の上書きではなく、省略の拒否であり、RFC 7591 の AS が要求値を拒否してよい（MAY）規定の範囲内である [N][^1][D] |
+    | RFC 7592 §5: registration access token の回転は任意（MAY） | 読取り・更新のたびに回転を必須にする | bearer で長期の資格情報なので、漏えい時の悪用期間を短くする [D] |
+
+    ## 8. 未決
+
+    info.x-open-issues に一覧化した。主なものは、本番の登録手段の正式な区分と承認者（未決（ADR-022）、ONB-R2）、本番での動的登録の採否（ARC-02 AR-3）、workload の sandbox セルフ登録の契約（G-141(c) の残り）、拡張項目の名前空間（未決（ADR-021））、Back-Channel Logout の登録項目（未決（ADR-006 L6-2））である [D]。
+
+    ## 9. 他文書への申し送り（本契約は編集していない）
+
+    | # | 宛先 | 内容 |
+    |---|---|---|
+    | H-1 | traceability/deliverables.md §4.5・§8 | **対応済み（ラウンド 2、2026-10-15）**。CON-14／DL-119 として §4.5・§8 に行を追加した。CON-00 §4.1 N-2（先に §8 に行を追加してから作る）の順序を守れなかったことは deliverables.md のレビュー記録に残した |
+    | H-2 | 10_integration/integration-patterns.md（INT-02）§5.1 I-01、§9.1、要旨 4、対応表 G-138 | I-01 の状態を「対応（登録手段は preview、本契約）」に更新し、CON-00 との判定差（§9.1）を解消する |
+    | H-3 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.0・§4.2・§6.3 | §4.0 の表に本契約の行（MK-01）を追加し、§4.2 の MK-01 に issuer B の登録 endpoint（registerSandboxClient ほか 3 操作）と、本番の申請 API の example 駆動のモックを加える。§6.3 に「登録族」として x-negative-examples の CRN-01〜CRN-20 を加える。本契約の作成者は CON-11 のうち §5.2 (c) だけを編集した |
+    | H-4 | research/standards-status.md | RFC 7592（Experimental）の行を追加する。RFC 8705・RFC 9449・RFC 9126・OIDC Dynamic Client Registration 1.0 の行の有無を確かめ、なければ追加する |
+    | H-5 | 05_adr/ADR-022 D-2 の OIDC/OAuth profile 行 | 本番の登録手段（本契約の申請 API）を preview に加え、承認者 AR-1〜AR-5 を決める（ONB-R2、INT-02 §9.1 の指摘と同じ） |
+    | H-6 | 04_architecture/token-profile.md（ARC-02）§11 | 「client 登録」行に本契約を加える |
+    | H-7 | 07_slo/numeric-contracts.md（DL-20） | 本番の登録申請から払出しまでの SLI を採番する（INT-04 ONB-R3 と同じ） |
+    | H-8 | 01_governance/assumptions-register.md | 新しい仮定は置いていない。追加は不要 |
+
+    ## 10. 誠実性
+
+    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+    ## 参考文献
+
+    [^1]: J. Richer (Ed.), M. Jones, J. Bradley, M. Machulak, P. Hunt / IETF『OAuth 2.0 Dynamic Client Registration Protocol』RFC 7591, Standards Track, 2015-07. https://www.rfc-editor.org/rfc/rfc7591 （参照箇所: §2 redirect_uris・token_endpoint_auth_method・grant_types・response_types・jwks_uri・jwks と未知 metadata の扱い、§2.3、§3、§3.2.1、§3.2.2、§5、確認日: 2026-10-15。§1.2・§2.3・§3 の initial access token と software statement は RS-16#20（確認日 2026-10-03）。それ以外は research ノート外で、起草者が原典を取得して照合）
+
+    [^2]: J. Richer (Ed.), M. Jones, J. Bradley, M. Machulak / IETF『OAuth 2.0 Dynamic Client Registration Management Protocol』RFC 7592, Experimental, 2015-07. https://www.rfc-editor.org/rfc/rfc7592 （参照箇所: 冒頭の Category、§2、§2.1、§2.2、§2.3、§3、§5、確認日: 2026-10-15。research ノート外）
+
+    [^3]: B. Campbell, J. Bradley, N. Sakimura, T. Lodderstedt / IETF『OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』RFC 8705, Standards Track, 2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §2.1.2、§3.4、確認日: 2026-10-15。research ノート外。§3・§6.3 は RS-17#22）
+
+    [^4]: D. Fett, B. Campbell, J. Bradley, T. Lodderstedt, M. Jones, D. Waite / IETF『OAuth 2.0 Demonstrating Proof of Possession (DPoP)』RFC 9449, Standards Track, 2023-09. https://www.rfc-editor.org/rfc/rfc9449 （参照箇所: §5.2、確認日: 2026-10-15。research ノート外。§5・§10 は RS-04#57, #58）
+
+    [^5]: T. Lodderstedt, B. Campbell, N. Sakimura, D. Tonge, F. Skokan / IETF『OAuth 2.0 Pushed Authorization Requests』RFC 9126, Standards Track, 2021-09. https://www.rfc-editor.org/rfc/rfc9126 （参照箇所: §6、確認日: 2026-10-15。research ノート外）
+
+    [^6]: N. Sakimura, J. Bradley, M. Jones / OpenID Foundation『OpenID Connect Dynamic Client Registration 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-registration-1_0.html （参照箇所: §2 Client Metadata の id_token_signed_response_alg・token_endpoint_auth_method・token_endpoint_auth_signing_alg、確認日: 2026-10-15。research ノート外）
+
+    [^7]: T. Lodderstedt, J. Bradley, A. Labunets, D. Fett / IETF『Best Current Practice for OAuth 2.0 Security』RFC 9700, BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.1、§2.4、確認日: 2026-10-03。RS-04#1, #13, #18。§2.1 の文言は起草者が 2026-10-15 に再確認）
+
+    ## レビュー記録
+
+    > 模擬パネル（ラウンド 1）は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。本契約は同ラウンドの指摘への是正として新規に作成した [D]。
+
+    | # | 重大度 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | 1 | High | I-01 を使う 13 パターンについて、client_id・redirect URI・認証方式・grant の登録手段の契約がない。G-141(c) のセルフサービス登録も契約がなく、OB-2(d) の本番 client 登録の承認者が未決で、連携開発者が登録に何を申請し何が返るかを実装・試験できない（指摘者: devlead） | 本契約を新規に作成した。(1) sandbox のセルフ登録を RFC 7591/7592 の profile として preview で定義した（§4、registerSandboxClient ほか 3 操作）。(2) ARC-02 §6 の種別ごとの必須項目（grant、token_endpoint_auth_method、DPoP・mTLS の束縛、PAR、FAPI の層）を ClientMetadata の機械可読な規則にした（§3）。(3) sandbox と本番の issuer・登録窓口・client_id・鍵の分離を定めた（§4 の環境の分離）。(4) 本番の申請 API と承認者案 AR-1〜AR-5 を定めた（§5、x-approval-rules）。(5) 負例 CRN-01〜CRN-20（本番 redirect URI の sandbox 登録拒否を含む）とモックの振る舞い（x-mock）を置いた。関連して CON-00 §3・§8 残課題 7、INT-04 §4.3 OB-2(d)・ONB-R2、CON-11 §5.2 (c) を更新した。INT-02 §5.1 I-01 と CON-11 のモック・負例の表は担当外のため §9 で申し送った | 本ファイル全体、§9 |
+
+    - 本ラウンドで閉じられなかったもの [D]: 承認者の確定（ONB-R2、ADR-022 の改版）、workload の sandbox セルフ登録の契約、文書ID と DL の採番（H-1。ラウンド 2 で対応済み）、作成者以外による原典の照合、モックの起動と負例の実行（TC-026）。
+
+    ### ラウンド 2（模擬パネル、2026-10-15、版 0.1.0 → 版 0.1.1）
+
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。本ファイルの是正は文書ID と DL の確定だけで、API・スキーマの中身は変えていない [D]。
+
+    | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | R2-1 | High・devlead | 文書ID「CON-13」を本契約（仮番）とライフサイクル事象のスキーマ（案）が同時に名乗っている。本契約は CON-00 §2.1 の一覧と §2.5 の役割別の表になく、deliverables.md §8 にも行がないため、G-118・G-131 の確認対象から漏れる | **対応**。deliverables.md §4.5・§8 で本契約を CON-14／DL-119 と確定し、x-document-id・x-deliverable・x-depends-on・冒頭の文書ID・§9 H-1 を合わせた。CON-13 はライフサイクル事象のスキーマ（DL-118）、CON-12 は AsyncAPI 契約（DL-117）で確定した。版は CON-01 CP-60 (1) に従い 0.1.1 に上げた。Redocly lint 2.63.0 を版 0.1.1 で再実行し、エラー 0・警告 0 を確かめた [M]（CON-00 §2.3）。本文の仮番「CON-13」を参照している INT-04（§4.3 の表、ONB-R2）と CON-11 §5.2 (c) の更新は担当外のため申し送った（CON-00 §9 申し送り 10） | info（x-document-id、x-deliverable、x-depends-on、version、description 冒頭、§9 H-1、本表） |
+  x-lint-notes:
+    - rule: Redocly CLI 2.63.0 lint（recommended 規則、設定ファイルなし）
+      result: エラー 0・警告 0（起草者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置き、リポジトリには残していない）
+      reason: 規則の部分スキーマ（AuthMethodRules・Rules*）に additionalProperties true を明示した。RFC 7591 §2 が未知の metadata を無視させる（MUST）ことと一致し、example 検査が部分スキーマごとに追加項目を拒否する誤判定を避けるためである
+    - rule: Python jsonschema 4.26.0（Draft202012Validator、FormatChecker あり）
+      result: components.schemas の check_schema に合格。examples 6 件が適合し、負例 10 件（CRN-02〜CRN-09 相当、C4 の層 F、C5 の refresh_token）がスキーマで拒否された（起草者が 2026-10-15 に実行）
+      reason: CR04・CR10〜CR14 は設定・状態に依存するためスキーマでは検査できない（ClientMetadata の x-constraint）
+  x-open-issues:
+    - id: ADR-022（本番の登録手段）
+      text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-5 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
+    - id: ARC-02 AR-3
+      text: 本番の AS で RFC 7591 の動的登録を許すか。本契約は無効を前提とする。許す場合は発行者確認（ADR-005 D7-1）を経た client に限る
+    - id: G-141(c) の workload
+      text: sandbox の workload（SVID）のセルフ登録の契約は本契約の範囲外で、まだない。所有者 PEP SDK・開発者支援チーム（ARC-04 の所有者と協議）、期限 DEC-8 前
+    - id: ADR-021 D21-28（拡張項目名）
+      text: platform_client_category・platform_owner・platform_owning_tenant・platform_risk_layer・platform_acceptance_ref の名前。外部に出す名前は自社所有ドメインで修飾する規則との関係。DEC-8 前
+    - id: ADR-021 D21-23（client_id の値域）
+      text: client_id を sub と別の発番空間にするか区別子を持たせるか（TC-021-05、G3）。本契約は不透明値としてだけ扱い、形式に依存しない
+    - id: ADR-006 L6-2
+      text: backchannel_logout_uri の登録を本契約に含めるか。位置が決まるまで登録できない
+    - id: ADR-017 L17-5
+      text: authorization_details_types の登録。v1 では受け付けない
+    - id: ARC-02 KP-1
+      text: 層 B の client の id_token_signed_response_alg の既定。本契約は明示を必須にし、ES256・PS256 に限る。KP-1 で RS256 を許す場合は enum に加える（互換な追加）
+    - id: ADR-005 D7-7（device grant）
+      text: device authorization grant の例外登録（受容票付き）を本番の申請 API で受けるか。v0.1 は受け付けない
+    - id: initial access token と上限
+      text: initial access token の寿命・発行窓口、consumer ごとの登録数の上限。所有者 プラットフォームチーム長、期限 DEC-8 前、決め方 パイロットの利用記録
+    - id: RFC 7592 の Experimental
+      text: RFC 7592 が Experimental のままなので、管理操作を GA にしない。ベンダー製品が RFC 7592 を実装しない場合は、本契約の申請 API と同じ形の sandbox 管理 API に置き換える（preview の改版）
+  x-approval-rules:
+    description: 本番の登録申請に必要な承認（案）。条件に当てはまる規則の承認者をすべて required_approvals に入れる。承認者は有資格者名簿（operating-model §5.5）の者に限り、申請者は承認できない。確定は ONB-R2・ADR-022 の改版（未決）
+    rules:
+      - { id: AR-1, applies: "kind が create か update の全申請", approver: "認証・IdP チームの有資格者（作成者≠承認者）", basis: "operating-model §7.2 CP-2、ADR-022 D-7-1", checks: "種別ごとの規則の自動検査の結果、scope の最小化、所有者・副所有者の有無" }
+      - { id: AR-2, applies: "platform_client_category が C3・C4・C6、または外部の発行者のソフトウェア", approver: "認証・IdP チームの有資格者（発行者確認の記録を付ける）", basis: "ADR-005 D7-1", checks: "発行者の確認、redirect URI のホストの所有" }
+      - { id: AR-3, applies: "platform_risk_layer が F、または privileged の scope（F1・F2）を含む", approver: "CISO 組織のセキュリティレビュアー（非同期）を AR-1 に加える", basis: "ADR-020 D20-03、ARC-02 §8", checks: "PAR・mTLS・alg の固定値、操作の分類登録（DL-67）との整合" }
+      - { id: AR-4, applies: "client_credentials で、複数テナントにまたがる権限（app-only）を要求する", approver: "別報告系統の二者（CP-1 相当）", basis: "ADR-008 D8-54、operating-model §7.2 CP-1", checks: "テナント横断の必要性、権限の上限" }
+      - { id: AR-5, applies: "C3 で tls_client_certificate_bound_access_tokens の代わりに dpop_bound_access_tokens を使う", approver: "AR-1 に加え、受容票（platform_acceptance_ref）の参照が必須", basis: "ADR-005 K-3", checks: "受容票の有効期限" }
+      - { id: AR-0, applies: "kind が retire", approver: "不要（所有者だけで成立）", basis: "権限を減らす変更", checks: "払出し後、その client の grant と token を無効化する（RFC 7592 §2.3 の SHOULD を本番にも適用）" }
+  x-reason-codes:
+    CR01: { error: invalid_client_metadata, http: 400, meaning: token_endpoint_auth_method がない、または共有秘密の方式（client_secret_basic・client_secret_post・client_secret_jwt）、または種別と合わない方式 }
+    CR02: { error: invalid_client_metadata, http: 400, meaning: 許されない grant_types・response_types（implicit、password、token、device_code、jwt-bearer など）、または種別と合わない組合せ }
+    CR03: { error: invalid_redirect_uri, http: 400, meaning: redirect URI に wildcard・fragment がある、loopback 以外の http、または種別で許されない形式 }
+    CR04: { error: invalid_redirect_uri, http: 400, meaning: sandbox の登録で、本番のホストを redirect URI に含む }
+    CR05: { error: invalid_client_metadata, http: 400, meaning: jwks_uri と jwks の両方がある、または private_key_jwt なのに鍵がない }
+    CR06: { error: invalid_client_metadata, http: 400, meaning: 種別が求める束縛の metadata（dpop_bound_access_tokens・tls_client_certificate_bound_access_tokens）や PAR の指定がない }
+    CR07: { error: invalid_client_metadata, http: 400, meaning: 登録者が client_id・client_secret を指定した }
+    CR08: { error: invalid_client_metadata, http: 400, meaning: tls_client_auth なのに証明書の主体を表す metadata が 0 個か 2 個以上 }
+    CR09: { error: invalid_client_metadata, http: 400, meaning: 種別で許されない層（C2 の F、C4 の H・F）、または platform_owner・platform_client_category がない }
+    CR10: { error: invalid_token, http: 401, meaning: initial access token がない、無効、他の consumer のもの、または sandbox 以外で発行されたもの }
+    CR11: { error: unapproved_software_statement, http: 400, meaning: software statement を提示した（v0.1 は受け付けない） }
+    CR12: { error: invalid_client_metadata, http: 400, meaning: 別の consumer_id が同じ software_id と software_version で登録済み（RFC 7591 §5） }
+    CR13: { error: invalid_client_metadata, http: 400, meaning: 本番の client に登録済みの公開鍵と同じ鍵（JWK thumbprint が一致） }
+    CR14: { error: rate_limited, http: 429, meaning: consumer_id ごとの登録数か要求頻度の上限を超えた。Retry-After を返す }
+  x-negative-examples:
+    description: 登録族の負例。期待結果はすべて拒否（または払出し 0 件）と、理由コード付きの記録。CON-11 §6.3 に「登録族」として追加する（申し送り H-3）。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
+    items:
+      - { ref: CRN-01, op: registerSandboxClient, case: "本番のホスト（例 https://app.<本番 id-domain>/cb）を redirect_uris に含む sandbox 登録", expect: "400 invalid_redirect_uri / CR04" }
+      - { ref: CRN-02, op: registerSandboxClient, case: "token_endpoint_auth_method=client_secret_basic", expect: "400 invalid_client_metadata / CR01" }
+      - { ref: CRN-03, op: registerSandboxClient, case: "token_endpoint_auth_method を省略（既定値 client_secret_basic に頼る）", expect: "400 invalid_client_metadata / CR01" }
+      - { ref: CRN-04, op: registerSandboxClient, case: "grant_types に implicit、response_types に token", expect: "400 invalid_client_metadata / CR02" }
+      - { ref: CRN-05, op: registerSandboxClient, case: "redirect URI に wildcard（https://*.partner.example/cb）", expect: "400 invalid_redirect_uri / CR03" }
+      - { ref: CRN-06, op: registerSandboxClient, case: "loopback 以外の http の redirect URI", expect: "400 invalid_redirect_uri / CR03" }
+      - { ref: CRN-07, op: registerSandboxClient, case: "jwks_uri と jwks の両方", expect: "400 invalid_client_metadata / CR05" }
+      - { ref: CRN-08, op: registerSandboxClient, case: "C2 で dpop_bound_access_tokens を省略", expect: "400 invalid_client_metadata / CR06" }
+      - { ref: CRN-09, op: registerSandboxClient, case: "client_id を指定（例 acme-billing-sandbox）", expect: "400 invalid_client_metadata / CR07" }
+      - { ref: CRN-10, op: registerSandboxClient, case: "initial access token なし", expect: "401 invalid_token / CR10" }
+      - { ref: CRN-11, op: registerSandboxClient, case: "他の consumer の initial access token", expect: "401 invalid_token / CR10（登録は他 consumer に結び付かない）" }
+      - { ref: CRN-12, op: "（本番 AS の token endpoint）", case: "sandbox で払い出した client_id で本番の AS に token 要求", expect: "401 invalid_client（CON-11 CV-011 の資格情報版）" }
+      - { ref: CRN-13, op: registerSandboxClient, case: "本番の client に登録済みの公開鍵を jwks に入れる", expect: "400 invalid_client_metadata / CR13" }
+      - { ref: CRN-14, op: readSandboxClient, case: "回転前の registration access token で読取り", expect: "401（RFC 6750 の invalid_token）" }
+      - { ref: CRN-15, op: readSandboxClient, case: "削除後の registration access token で読取り、削除した client の access token を sandbox の RS に提示", expect: "401。access token も拒否" }
+      - { ref: CRN-16, op: updateSandboxClient, case: "PUT で client_secret を指定", expect: "400 invalid_client_metadata / CR07" }
+      - { ref: CRN-17, op: decideClientRegistrationRequest, case: "申請者自身が承認", expect: "403。払出し 0 件" }
+      - { ref: CRN-18, op: submitClientRegistrationRequest, case: "platform_risk_layer=F で AR-3 の承認がそろわない", expect: "status は pending_review のまま。払出し 0 件" }
+      - { ref: CRN-19, op: submitClientRegistrationRequest, case: "C4 で platform_risk_layer=F", expect: "400 Problem（code=invalid_client_metadata、reason_code=CR09）" }
+      - { ref: CRN-20, op: registerSandboxClient, case: "C5 で grant_types に refresh_token を含む", expect: "400 invalid_client_metadata / CR02" }
+  x-mock:
+    description: CON-11 の MK-01（開発用 AS・IdP）への追加案（申し送り H-3）。CON-11 の作成者が取り込むまでは本節を仕様とする
+    MK-01:
+      - issuer B（sandbox 役）に registerSandboxClient・readSandboxClient・updateSandboxClient・deleteSandboxClient を実装し、ClientMetadata の規則と CR01〜CR14 の判定を返す
+      - issuer A（本番役）には登録 endpoint を置かない。issuer B で払い出した client_id は issuer A で invalid_client になる（CRN-12）
+      - 本番役の redirect URI のホストと公開鍵の一覧を制御 API（POST /__kit/fixtures）で登録し、CR04・CR13 の判定に使う
+      - 本番の登録申請 API は examples から起動する example 駆動のモックにする。承認は制御 API の inject で模し、required_approvals がそろうまで provisioned にしない
+servers:
+  - url: https://sandbox-as.id-domain.example
+    description: sandbox の AS（issuer B）。ホスト名は仮置きで凍結しない。consumer は AS metadata の registration_endpoint から URL を得る
+tags:
+  - name: sandbox-registration
+    description: sandbox の client セルフ登録（RFC 7591/7592 profile）。preview
+  - name: production-registration-request
+    description: 本番の client 登録・変更・廃止の申請と承認。preview
+paths:
+  /v1/register:
+    post:
+      operationId: registerSandboxClient
+      tags: [sandbox-registration]
+      summary: sandbox の client を登録する（RFC 7591 §3.1）
+      x-freeze-class: preview
+      description: |
+        sandbox の AS に client を登録する。承認は不要である（G-141(c)）。要求本文は ClientMetadata で、`application/json` で送る（RFC 7591 §3 の MUST）。
+        成功すると 201 と、払い出した `client_id`、登録された metadata のすべて、RFC 7592 の `registration_client_uri` と `registration_access_token` を返す。
+        `client_secret` は返さない（共有秘密の方式を登録できないため）。
+      security:
+        - sandboxInitialAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientMetadata'
+            examples:
+              bffClient:
+                summary: 正例。C1 第一者 BFF（private_key_jwt、PAR 必須）
+                value:
+                  platform_client_category: C1
+                  platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: orders-oncall@partner-team.example }
+                  platform_risk_layer: B
+                  client_name: Orders BFF (sandbox)
+                  redirect_uris: [https://orders-bff.sandbox-apps.example/callback]
+                  grant_types: [authorization_code, refresh_token]
+                  response_types: [code]
+                  token_endpoint_auth_method: private_key_jwt
+                  token_endpoint_auth_signing_alg: ES256
+                  jwks_uri: https://orders-bff.sandbox-apps.example/.well-known/jwks.json
+                  require_pushed_authorization_requests: true
+                  scope: orders.read orders.write
+              m2mClient:
+                summary: 正例。C5 外部 M2M（tls_client_auth、証明書束縛）
+                value:
+                  platform_client_category: C5
+                  platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: billing-oncall@partner-team.example }
+                  platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  platform_risk_layer: B
+                  client_name: Billing batch (sandbox)
+                  grant_types: [client_credentials]
+                  token_endpoint_auth_method: tls_client_auth
+                  tls_client_auth_subject_dn: CN=billing-batch,O=Partner Team,C=JP
+                  tls_client_certificate_bound_access_tokens: true
+                  scope: invoice.read
+      responses:
+        '201':
+          description: 登録成功（RFC 7591 §3.2.1、RFC 7592 §3）
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxClientInformation'
+              examples:
+                registered:
+                  summary: 正例。C1 の登録結果
+                  value:
+                    client_id: s4hb8xq2kz7mn3vc6tr9pwe5ya
+                    client_id_issued_at: 1792022400
+                    registration_client_uri: https://sandbox-as.id-domain.example/v1/register/s4hb8xq2kz7mn3vc6tr9pwe5ya
+                    registration_access_token: rat_Q2x9Lm4Zp7Tn1Vb8Kc3Rf6Wd0Hs5Jy
+                    platform_client_category: C1
+                    platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: orders-oncall@partner-team.example }
+                    platform_risk_layer: B
+                    platform_environment: sandbox
+                    client_name: Orders BFF (sandbox)
+                    redirect_uris: [https://orders-bff.sandbox-apps.example/callback]
+                    grant_types: [authorization_code, refresh_token]
+                    response_types: [code]
+                    token_endpoint_auth_method: private_key_jwt
+                    token_endpoint_auth_signing_alg: ES256
+                    jwks_uri: https://orders-bff.sandbox-apps.example/.well-known/jwks.json
+                    require_pushed_authorization_requests: true
+                    scope: orders.read orders.write
+        '400':
+          $ref: '#/components/responses/RegistrationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/register/{client_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClientIdPath'
+    get:
+      operationId: readSandboxClient
+      tags: [sandbox-registration]
+      summary: sandbox の client の登録内容を読む（RFC 7592 §2.1）
+      x-freeze-class: preview
+      description: |
+        登録内容を返す。応答の `registration_access_token` は新しい値に回転しており、要求に使った token は以後拒否される（本 profile の必須。RFC 7592 §5 の MAY を強めた）。
+        client が存在しない場合は 401 を返し、使われた token を無効にする（RFC 7592 §2.1 の MUST・SHOULD）。
+      security:
+        - registrationAccessToken: []
+      responses:
+        '200':
+          description: 登録内容（registration_access_token は回転後の値）
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxClientInformation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      operationId: updateSandboxClient
+      tags: [sandbox-registration]
+      summary: sandbox の client の登録内容を置き換える（RFC 7592 §2.2）
+      x-freeze-class: preview
+      description: |
+        以前に返された metadata をすべて含めて送る。省略した項目は削除の要求として扱われる（RFC 7592 §2.2 の MUST）。部分更新ではない。
+        `client_id` を本文に含め、現在の値と一致させる（MUST）。`registration_access_token`・`registration_client_uri`・`client_id_issued_at` は含めない（MUST NOT）。`client_secret` は指定できない（CR07）。
+        検査規則は registerSandboxClient と同じである。
+      security:
+        - registrationAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SandboxClientUpdate'
+      responses:
+        '200':
+          description: 更新後の登録内容（registration_access_token は回転後の値）
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxClientInformation'
+        '400':
+          $ref: '#/components/responses/RegistrationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      operationId: deleteSandboxClient
+      tags: [sandbox-registration]
+      summary: sandbox の client を削除する（RFC 7592 §2.3）
+      x-freeze-class: preview
+      description: |
+        `client_id` と registration access token を無効にし、その client の grant・access token・refresh token をすぐに無効にする（RFC 7592 §2.3 の SHOULD を本 profile で必須化）。
+        削除した `client_id` は墓石として保持し、再発番しない（ADR-021 D21-13）。
+      security:
+        - registrationAccessToken: []
+      responses:
+        '204':
+          description: 削除成功（RFC 7592 §2.3 の MUST）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/client-registration-requests:
+    servers:
+      - url: https://onboarding.id-domain.example
+        description: 本番の登録申請 API。本番の AS とは別の窓口で、本番の AS の動的登録は無効（ホスト名は仮置き）
+    post:
+      operationId: submitClientRegistrationRequest
+      tags: [production-registration-request]
+      summary: 本番の client の登録・変更・廃止を申請する
+      x-freeze-class: preview
+      description: |
+        申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ）。
+        sandbox と同じ ClientMetadata を使えるが、`client_id` は本番で別の値が払い出される（ADR-021 D21-22）。
+      security:
+        - workforceOidc: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegistrationRequest'
+            examples:
+              createFapiClient:
+                summary: 正例。C3 第三者サーバー型、層 F（AR-1・AR-2・AR-3 の承認が要る）
+                value:
+                  kind: create
+                  justification: 顧客テナント管理の外部連携（F3 の write）
+                  metadata:
+                    platform_client_category: C3
+                    platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: partner-oncall@partner-team.example }
+                    platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    platform_risk_layer: F
+                    client_name: Partner Sync
+                    redirect_uris: [https://sync.partner-apps.example/oauth/callback]
+                    grant_types: [authorization_code, refresh_token]
+                    response_types: [code]
+                    token_endpoint_auth_method: private_key_jwt
+                    token_endpoint_auth_signing_alg: ES256
+                    jwks_uri: https://sync.partner-apps.example/.well-known/jwks.json
+                    tls_client_certificate_bound_access_tokens: true
+                    require_pushed_authorization_requests: true
+                    scope: tenant.config.write
+      responses:
+        '202':
+          description: 受付。承認待ち（retire は承認不要で、払出しの完了まで pending_provisioning）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationRequestStatus'
+              examples:
+                pending:
+                  summary: 承認待ち
+                  value:
+                    request_id: r7pz3kx9mq2tn6vb4hc8wde5ya
+                    kind: create
+                    status: pending_review
+                    submitted_at: "2026-10-15T09:00:00Z"
+                    required_approvals:
+                      - { rule: AR-1, role: authn-idp-reviewer }
+                      - { rule: AR-2, role: authn-idp-reviewer }
+                      - { rule: AR-3, role: ciso-security-reviewer }
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+  /v1/client-registration-requests/{request_id}:
+    servers:
+      - url: https://onboarding.id-domain.example
+        description: 本番の登録申請 API（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/RequestIdPath'
+    get:
+      operationId: getClientRegistrationRequest
+      tags: [production-registration-request]
+      summary: 申請の状態と払出し結果を読む
+      x-freeze-class: preview
+      description: 払出しが済むと `status=provisioned` と、払い出した `client_id`・登録された metadata を返す。申請者と所有チーム、承認者だけが読める。
+      security:
+        - workforceOidc: []
+      responses:
+        '200':
+          description: 申請の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationRequestStatus'
+              examples:
+                provisioned:
+                  summary: 払出し済み
+                  value:
+                    request_id: r7pz3kx9mq2tn6vb4hc8wde5ya
+                    kind: create
+                    status: provisioned
+                    submitted_at: "2026-10-15T09:00:00Z"
+                    required_approvals:
+                      - { rule: AR-1, role: authn-idp-reviewer, decision: approve, decided_at: "2026-10-15T10:00:00Z" }
+                    client_id: p2nd6vq9hx4kz7mc3tr8bwe5ya
+                    client_id_issued_at: 1792026000
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+  /v1/client-registration-requests/{request_id}/decisions:
+    servers:
+      - url: https://onboarding.id-domain.example
+        description: 本番の登録申請 API（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/RequestIdPath'
+    post:
+      operationId: decideClientRegistrationRequest
+      tags: [production-registration-request]
+      summary: 申請を承認または却下する
+      x-freeze-class: preview
+      description: |
+        承認者が、required_approvals の 1 つの規則について判断を記録する。申請者自身、または有資格者名簿にない者が送ると 403 を返す（CRN-17）。
+        すべての規則が approve になると払出しを行う。1 つでも reject なら status は rejected になる。
+      security:
+        - workforceOidc: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+            examples:
+              approve:
+                summary: AR-1 の承認
+                value: { rule: AR-1, decision: approve, comment: 規則の自動検査に合格、scope は最小 }
+      responses:
+        '200':
+          description: 判断を記録した後の申請の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationRequestStatus'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+components:
+  securitySchemes:
+    sandboxInitialAccessToken:
+      type: http
+      scheme: bearer
+      description: RFC 7591 §3 の initial access token。consumer 台帳に登録済みのチームにだけ、オンボーディング窓口から発行する。sandbox の AS でしか受理しない
+    registrationAccessToken:
+      type: http
+      scheme: bearer
+      description: RFC 7592 の registration access token。読取り・更新のたびに回転する（本 profile の必須）
+    workforceOidc:
+      type: openIdConnect
+      openIdConnectUrl: https://workforce-idp.id-domain.example/.well-known/openid-configuration
+      description: 社内の workforce IdP（MFA 必須。ADR-008 D8-53）。ホスト名は仮置き
+  parameters:
+    ClientIdPath:
+      name: client_id
+      in: path
+      required: true
+      description: 払い出された client_id（不透明値。ADR-021 D21-22）
+      schema:
+        $ref: '#/components/schemas/ClientId'
+    RequestIdPath:
+      name: request_id
+      in: path
+      required: true
+      description: 申請 ID（不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
+  headers:
+    CacheControlNoStore:
+      description: 資格情報を含む応答をキャッシュさせない
+      schema:
+        type: string
+        const: no-store
+  responses:
+    RegistrationError:
+      description: 登録エラー（RFC 7591 §3.2.2）。reason_code は info.x-reason-codes
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegistrationErrorBody'
+          examples:
+            prodRedirect:
+              summary: 負例 CRN-01。sandbox に本番のホストを登録しようとした
+              value: { error: invalid_redirect_uri, reason_code: CR04 }
+    Unauthorized:
+      description: initial access token または registration access token が無効（RFC 6750）
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+    Forbidden:
+      description: この client を読む・変える・消す権限がない（RFC 7592 §2.1〜§2.3 の 403）
+    TooManyRequests:
+      description: 登録数か要求頻度の上限を超えた（CR14）
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 0
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegistrationErrorBody'
+    ProblemBadRequest:
+      description: 申請の内容が規則に反する（RFC 9457。code と reason_code を持つ）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            layerF:
+              summary: 負例 CRN-19。C4 で層 F
+              value: { type: "about:blank", title: Bad Request, status: 400, code: invalid_client_metadata, reason_code: CR09 }
+    ProblemUnauthorized:
+      description: 認証されていない
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ProblemForbidden:
+      description: 権限がない（申請者自身による承認、有資格者名簿にない承認者、consumer 台帳にないチームの申請）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ProblemNotFound:
+      description: 申請がない、または読む権限がない（存在の有無を区別しない）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    OpaqueId:
+      description: 基盤が払い出す不透明値（CON-02 OpaqueId と同じ形にする。凍結前に $ref へ寄せる。CON-00 §4.9 D-7）
+      type: string
+      pattern: '^[a-z0-9]{26}$'
+    ClientId:
+      description: OAuth client_id。受信側は形式を解析しない（ADR-021 D21-22・D21-23）
+      $ref: '#/components/schemas/OpaqueId'
+    RedirectUri:
+      description: |
+        redirect URI。wildcard と fragment を含まない。https、loopback の IP リテラルの http、または private-use scheme（`<id-domain>` を逆順にした名前。ADR-021 D21-24）に限る。
+        照合は exact string matching（RFC 9700 §2.1 の MUST）。例外は native app の loopback の port だけ。
+      type: string
+      maxLength: 2048
+      pattern: '^(https://[^*#\s]+|http://127\.0\.0\.1(:[0-9]{1,5})?/[^*#\s]*|http://\[::1\](:[0-9]{1,5})?/[^*#\s]*|[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+:/[^*#\s]*)$'
+    HttpsRedirectUri:
+      type: string
+      maxLength: 2048
+      pattern: '^https://[^*#\s]+$'
+    NativeRedirectUri:
+      type: string
+      maxLength: 2048
+      pattern: '^(http://127\.0\.0\.1(:[0-9]{1,5})?/[^*#\s]*|http://\[::1\](:[0-9]{1,5})?/[^*#\s]*|[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+:/[^*#\s]*)$'
+    Owner:
+      type: object
+      required: [consumer_id, secondary_contact]
+      properties:
+        consumer_id:
+          description: consumer 台帳の ID（CON-01 §6.1）
+          $ref: '#/components/schemas/OpaqueId'
+        secondary_contact:
+          description: 副所有者の連絡先（チームの共有アドレス。個人のアドレスを避ける）
+          type: string
+          format: email
+    ClientMetadata:
+      description: |
+        登録内容。RFC 7591 §2 の項目名と意味をそのまま使い、`platform_` で始まる 5 項目だけを本契約で加えた（名前は案。ADR-021）。
+        AS は理解しない項目を無視しなければならない（RFC 7591 §2 の MUST）ので、未知の項目を送ってもエラーにはならないが、登録されない。
+        種別ごとの規則は oneOf の各分岐（x-constraint を含む）で表す。
+      type: object
+      additionalProperties: true
+      required: [platform_client_category, platform_owner, platform_risk_layer, client_name, grant_types, token_endpoint_auth_method]
+      properties:
+        platform_client_category:
+          description: ARC-02 §6 の client 種別。C7（内部 workload）と C9（本基盤が RP）は範囲外
+          type: string
+          enum: [C1, C2, C3, C4, C5, C6, C8]
+        platform_owner:
+          $ref: '#/components/schemas/Owner'
+        platform_owning_tenant:
+          description: 所有テナント（第三者・顧客の client）。第一者の client では省略する（ADR-021 D21-22）
+          $ref: '#/components/schemas/OpaqueId'
+        platform_risk_layer:
+          description: ARC-02 §8 の層（B・H・F）。層の判定は client 登録の profile 属性と操作の分類登録の組で行う（ADR-020 D20-03）
+          type: string
+          enum: [B, H, F]
+        platform_acceptance_ref:
+          description: 例外の受容票の参照（AR-5 など）
+          type: string
+          maxLength: 128
+        client_name:
+          type: string
+          maxLength: 200
+        redirect_uris:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/RedirectUri'
+        grant_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [authorization_code, refresh_token, client_credentials]
+        response_types:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [code]
+        token_endpoint_auth_method:
+          description: 必須。省略時の既定値（client_secret_basic）に頼らせない
+          type: string
+          enum: [private_key_jwt, tls_client_auth, none]
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum: [ES256, PS256]
+        jwks_uri:
+          type: string
+          format: uri
+          pattern: '^https://'
+        jwks:
+          type: object
+          required: [keys]
+          properties:
+            keys:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [kty]
+                properties:
+                  kty:
+                    type: string
+                    enum: [EC, RSA]
+                  d:
+                    description: 秘密鍵の成分を登録しない
+                    not: {}
+        tls_client_auth_subject_dn:
+          type: string
+          maxLength: 1024
+        tls_client_auth_san_dns:
+          type: string
+          maxLength: 253
+        tls_client_auth_san_uri:
+          type: string
+          format: uri
+        tls_client_certificate_bound_access_tokens:
+          type: boolean
+        dpop_bound_access_tokens:
+          type: boolean
+        require_pushed_authorization_requests:
+          type: boolean
+        id_token_signed_response_alg:
+          type: string
+          enum: [ES256, PS256]
+        scope:
+          type: string
+          maxLength: 2048
+        software_id:
+          type: string
+          maxLength: 128
+        software_version:
+          type: string
+          maxLength: 64
+        contacts:
+          type: array
+          items:
+            type: string
+            format: email
+        client_id:
+          description: 登録者は指定できない（CR07、ADR-021 D21-22）
+          not: {}
+        client_secret:
+          description: 登録者は指定できない（CR07）
+          not: {}
+        software_statement:
+          description: v0.1 では受け付けない（CR11）
+          not: {}
+      not:
+        description: jwks_uri と jwks を両方入れない（RFC 7591 §2 の MUST NOT、CR05）
+        properties:
+          jwks_uri: {}
+          jwks: {}
+        required: [jwks_uri, jwks]
+      allOf:
+        - $ref: '#/components/schemas/AuthMethodRules'
+        - oneOf:
+            - $ref: '#/components/schemas/RulesC1'
+            - $ref: '#/components/schemas/RulesC2'
+            - $ref: '#/components/schemas/RulesC3'
+            - $ref: '#/components/schemas/RulesC4'
+            - $ref: '#/components/schemas/RulesC5C8'
+            - $ref: '#/components/schemas/RulesC6'
+      x-constraint:
+        - "sandbox: redirect_uris のホストと jwks の鍵が、本番の一覧に含まれない（CR04・CR13。設定に依存するためスキーマでは表せない）"
+        - "C3 で dpop_bound_access_tokens=true とする場合は platform_acceptance_ref が必須（AR-5）"
+        - "software_id・software_version の組が別の consumer_id で登録済みでない（CR12）"
+    AuthMethodRules:
+      additionalProperties: true
+      description: 認証方式ごとの必須項目（CR05・CR08）
+      anyOf:
+        - properties:
+            token_endpoint_auth_method: { const: private_key_jwt }
+          required: [token_endpoint_auth_signing_alg]
+          anyOf:
+            - required: [jwks_uri]
+            - required: [jwks]
+        - properties:
+            token_endpoint_auth_method: { const: tls_client_auth }
+          oneOf:
+            - required: [tls_client_auth_subject_dn]
+            - required: [tls_client_auth_san_dns]
+            - required: [tls_client_auth_san_uri]
+        - properties:
+            token_endpoint_auth_method: { const: none }
+    ConfidentialAuth:
+      additionalProperties: true
+      properties:
+        token_endpoint_auth_method:
+          enum: [private_key_jwt, tls_client_auth]
+    CodeFlowGrants:
+      additionalProperties: true
+      required: [redirect_uris, response_types]
+      properties:
+        grant_types:
+          contains: { const: authorization_code }
+          items:
+            enum: [authorization_code, refresh_token]
+        response_types:
+          const: [code]
+    RulesC1:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/ConfidentialAuth'
+        - $ref: '#/components/schemas/CodeFlowGrants'
+      required: [require_pushed_authorization_requests]
+      properties:
+        platform_client_category: { const: C1 }
+        require_pushed_authorization_requests: { const: true }
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/HttpsRedirectUri'
+    RulesC2:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/CodeFlowGrants'
+      required: [dpop_bound_access_tokens]
+      properties:
+        platform_client_category: { const: C2 }
+        token_endpoint_auth_method: { const: none }
+        dpop_bound_access_tokens: { const: true }
+        platform_risk_layer: { enum: [B, H] }
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/NativeRedirectUri'
+    RulesC3:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/ConfidentialAuth'
+        - $ref: '#/components/schemas/CodeFlowGrants'
+        - anyOf:
+            - required: [tls_client_certificate_bound_access_tokens]
+              properties:
+                tls_client_certificate_bound_access_tokens: { const: true }
+            - required: [dpop_bound_access_tokens, platform_acceptance_ref]
+              properties:
+                dpop_bound_access_tokens: { const: true }
+        - anyOf:
+            - properties:
+                platform_risk_layer: { enum: [B, H] }
+            - required: [require_pushed_authorization_requests]
+              properties:
+                require_pushed_authorization_requests: { const: true }
+      properties:
+        platform_client_category: { const: C3 }
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/HttpsRedirectUri'
+    RulesC4:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/CodeFlowGrants'
+      required: [dpop_bound_access_tokens]
+      properties:
+        platform_client_category: { const: C4 }
+        token_endpoint_auth_method: { const: none }
+        dpop_bound_access_tokens: { const: true }
+        platform_risk_layer: { const: B }
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/HttpsRedirectUri'
+    RulesC5C8:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/ConfidentialAuth'
+      required: [tls_client_certificate_bound_access_tokens]
+      properties:
+        platform_client_category: { enum: [C5, C8] }
+        grant_types: { const: [client_credentials] }
+        response_types: { maxItems: 0 }
+        redirect_uris: { maxItems: 0 }
+        tls_client_certificate_bound_access_tokens: { const: true }
+        platform_risk_layer: { enum: [B, F] }
+    RulesC6:
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/ConfidentialAuth'
+        - $ref: '#/components/schemas/CodeFlowGrants'
+        - anyOf:
+            - properties:
+                platform_risk_layer: { enum: [B, H] }
+            - required: [require_pushed_authorization_requests]
+              properties:
+                platform_risk_layer: { const: F }
+                require_pushed_authorization_requests: { const: true }
+                id_token_signed_response_alg: { const: ES256 }
+      required: [id_token_signed_response_alg]
+      properties:
+        platform_client_category: { const: C6 }
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/HttpsRedirectUri'
+    SandboxClientInformation:
+      description: RFC 7591 §3.2.1 と RFC 7592 §3 の client information response。登録された metadata をすべて含む
+      allOf:
+        - $ref: '#/components/schemas/IssuedMetadata'
+        - type: object
+          required: [registration_client_uri, registration_access_token]
+          properties:
+            registration_client_uri:
+              type: string
+              format: uri
+            registration_access_token:
+              description: 資格情報。ログに残さない
+              type: string
+              minLength: 32
+    IssuedMetadata:
+      description: 払い出し後の登録内容。client_id と client_id_issued_at を基盤が付ける。client_secret は含まない
+      type: object
+      required: [client_id, platform_environment]
+      properties:
+        client_id:
+          $ref: '#/components/schemas/ClientId'
+        client_id_issued_at:
+          type: integer
+          minimum: 0
+        platform_environment:
+          description: 払い出した環境。sandbox の client_id は本番で未知（CRN-12）
+          type: string
+          enum: [sandbox, production]
+        platform_client_category: { type: string }
+        platform_owner: { $ref: '#/components/schemas/Owner' }
+        platform_owning_tenant: { $ref: '#/components/schemas/OpaqueId' }
+        platform_risk_layer: { type: string }
+        client_name: { type: string }
+        redirect_uris: { type: array, items: { type: string } }
+        grant_types: { type: array, items: { type: string } }
+        response_types: { type: array, items: { type: string } }
+        token_endpoint_auth_method: { type: string }
+        token_endpoint_auth_signing_alg: { type: string }
+        jwks_uri: { type: string }
+        jwks: { type: object }
+        tls_client_auth_subject_dn: { type: string }
+        tls_client_auth_san_dns: { type: string }
+        tls_client_auth_san_uri: { type: string }
+        tls_client_certificate_bound_access_tokens: { type: boolean }
+        dpop_bound_access_tokens: { type: boolean }
+        require_pushed_authorization_requests: { type: boolean }
+        id_token_signed_response_alg: { type: string }
+        scope: { type: string }
+        client_secret:
+          description: 返さない
+          not: {}
+    SandboxClientUpdate:
+      description: RFC 7592 §2.2 の更新要求。ClientMetadata に現在の client_id を加えたもの（client_id 以外の規則は ClientMetadata と同じ。検査は AS が行う）
+      type: object
+      required: [client_id]
+      properties:
+        client_id:
+          $ref: '#/components/schemas/ClientId'
+        registration_access_token: { not: {} }
+        registration_client_uri: { not: {} }
+        client_id_issued_at: { not: {} }
+        client_secret: { not: {} }
+      x-constraint:
+        - "client_id を除いた本文は ClientMetadata に適合する（スキーマの client_id 禁止と両立させるため、AS が client_id を除いて検査する）"
+    ClientRegistrationRequest:
+      type: object
+      required: [kind, justification]
+      properties:
+        kind:
+          type: string
+          enum: [create, update, retire]
+        target_client_id:
+          description: update・retire で必須
+          $ref: '#/components/schemas/ClientId'
+        justification:
+          type: string
+          maxLength: 1000
+        metadata:
+          description: create・update で必須
+          $ref: '#/components/schemas/ClientMetadata'
+      anyOf:
+        - properties: { kind: { const: create } }
+          required: [metadata]
+        - properties: { kind: { const: update } }
+          required: [metadata, target_client_id]
+        - properties: { kind: { const: retire } }
+          required: [target_client_id]
+    ApprovalItem:
+      type: object
+      required: [rule, role]
+      properties:
+        rule:
+          type: string
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5]
+        role:
+          type: string
+          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control]
+        decision:
+          type: string
+          enum: [approve, reject]
+        decided_at:
+          type: string
+          format: date-time
+    RegistrationRequestStatus:
+      type: object
+      required: [request_id, kind, status, submitted_at, required_approvals]
+      properties:
+        request_id:
+          $ref: '#/components/schemas/OpaqueId'
+        kind:
+          type: string
+          enum: [create, update, retire]
+        status:
+          type: string
+          enum: [pending_review, pending_provisioning, provisioned, rejected, withdrawn, expired]
+        submitted_at:
+          type: string
+          format: date-time
+        required_approvals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalItem'
+        client_id:
+          description: status が provisioned のときだけ
+          $ref: '#/components/schemas/ClientId'
+        client_id_issued_at:
+          type: integer
+          minimum: 0
+        issued_metadata:
+          $ref: '#/components/schemas/IssuedMetadata'
+        reason_code:
+          description: 却下・受付拒否の理由コード（CR01〜CR13）
+          type: string
+          pattern: '^CR[0-9]{2}$'
+    ApprovalDecision:
+      type: object
+      required: [rule, decision]
+      properties:
+        rule:
+          type: string
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5]
+        decision:
+          type: string
+          enum: [approve, reject]
+        comment:
+          type: string
+          maxLength: 1000
+    RegistrationErrorBody:
+      description: RFC 7591 §3.2.2 のエラー。error は REQUIRED、error_description は OPTIONAL。reason_code は本 profile の追加メンバで、受信側は理解しないメンバを無視しなければならない（RFC 7591 §3.2.2 の MUST）
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [invalid_redirect_uri, invalid_client_metadata, invalid_software_statement, unapproved_software_statement, rate_limited]
+        error_description:
+          type: string
+        reason_code:
+          type: string
+          pattern: '^CR[0-9]{2}$'
+    Problem:
+      description: RFC 9457 の problem details（CON-02 Problem と同じ形にする。凍結前に $ref へ寄せる。CON-00 §4.9 D-7）
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        reason_code: { type: string }

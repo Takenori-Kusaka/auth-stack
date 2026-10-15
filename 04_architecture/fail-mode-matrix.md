@@ -1,6 +1,6 @@
 # 失敗モード表（fail-mode matrix）
 
-> 文書ID: ARC-08 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: ARC-08 / 版: 0.3 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-080, R-081, R-082, R-083, R-084, R-085, R-086, R-087, R-262, R-188.3, R-210, G-058（R-requirements.md・G-goal-criteria.md で本書のパスまたは DL-19 を対応成果物に含む全行）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-19 行）, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0106, CL-0108, CL-0168, CL-0177, CL-0182, CL-0203, CL-0255, CL-0276）, traceability/rejected-hypotheses.md（RH-002, RH-130）, traceability/dissent-log.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md (GOV-04), 01_governance/loss-scenarios.md (GOV-03), 01_governance/kri.md, 01_governance/stop-authority.md (GOV-06), 02_requirements/operation-risk-tiers-assurance.md (REQ-03), 03_threat-model/threat-catalog.md, 03_threat-model/attacker-model.md, 03_threat-model/fraud-abuse-controls.md (THR-04 §7.6・§13.2), 04_architecture/pep-contract.md (ARC-06 §3.5), 05_adr/ADR-001, ADR-005, ADR-006, ADR-007, ADR-010, ADR-011, ADR-013, ADR-014, ADR-023, ADR-024, ADR-029, 05_adr/reconciliation-notes.md, research/RS-04, RS-07, RS-09, RS-10, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が、上記の ADR・要件・統治文書と調査ノート RS-09 を読み、決定済み（proposed）の ADR の範囲で各セルを具体化した。本書の判断は自己レビューであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research ノートにない原典は新たに取得していない。脚注の原典はすべて research の検証済み項目（RS-xx#n）を経由している [D]。
@@ -452,7 +452,7 @@ fail-mode は SDK と edge の設定値で表すので（ADR-013 D13-28）、依
 
 ### 6.12 FM-12 リージョン障害
 
-前提: 日本の各 cell は副リージョンに待機 cell を対で持ち、cell ごとに切り替える（ADR-013 D13-20）[D]。全 cell を同時に切り替えない [D]。RTO 1 時間・ID と tuple の RPO 5 分・監査の重要イベントの RPO 1 分以内を仮置きする [A-093]。EU・米国の DR は未決（ADR-013 KD13-4）である [D]。障害中のテナント移動は回復手段にしない（ADR-013 D13-20）[D]。
+前提: 日本の各 cell は副リージョンに待機 cell を対で持ち、cell ごとに切り替える（ADR-013 D13-20）[D]。全 cell を同時に切り替えない [D]。RTO 1 時間・ID と tuple の RPO 5 分・監査の重要イベントの RPO 1 分以内を仮置きする [A-093]。日本の主リージョンを失うと canary＋標準 4 の 5 cell、利用者の 85% が同時に影響を受ける [D][A-061]。順次切替の総所要時間、副リージョンの容量確保、検証の限界は ARC-13 §5.5 で扱う（下の注記）[D]。EU・米国の DR は未決（ADR-013 KD13-4）である [D]。障害中のテナント移動は回復手段にしない（ADR-013 D13-20）[D]。
 
 | 行 | 挙動 | キャッシュ最大齢 | 必要整合性 | 監査不能時 | 代替経路 | 根拠 | 検証 TC |
 |---|---|---|---|---|---|---|---|
@@ -467,6 +467,9 @@ fail-mode は SDK と edge の設定値で表すので（ADR-013 D13-28）、依
 - 他リージョン・他の所在地群へ波及しないことを TC-13-13・TC-13-14 で確かめる [D]。AWS 2025-10-19/20 では us-east-1 の障害で、root 資格情報や signin.aws.amazon.com を使う federation で他リージョンの console に login しようとした利用者にエラーが生じた [I][^16]（RS-09#71）。
 - 切替直後は session store の喪失に伴う再ログインが集中し得るため、Tier 順・テナント順の段階受付で受ける（ADR-023 D23-43、ADR-013 D13-20）[D]。
 - RPO 内に失われた剥奪は、復旧後に権限を復活させる（T-035、ADR-010 D-21）[D][A-093]。この扱いは KD08-4 の決裁事項である [D]。
+- **順次切替の総所要時間（版 0.3 で追加）**: 最後に切り替わる cell の停止時間は T_total = T_detect + T_declare + Σ_wave max_i (T_prov,i + T_switch,i + T_warm,i + T_admit,i) であり、write 以上はさらに KD08-4 の確認時間 T_KD08-4 を足す（ARC-13 §5.5.1）[D]。照合は T_total ≤ RTO 1 時間 [A-093]、T_total + T_KD08-4 ≤ write の MTPD 2 時間（BIA の仮置き NA-01）で行う [D]。T_detect＋T_declare を 15 分と置くと、1 cell ずつ（m = 1）切り替える場合の 1 cell あたりの持ち時間は RTO で 9 分、write の MTPD で 21 分である（感度、ARC-13 §5.5.1）[D]。各項は TBD であり、本表の w・pT・bgB の「切替まで停止」の長さはこの式で決まる [D]。
+- **副リージョンの容量（版 0.3 で追加）**: 待機 cell が pilot light の場合、主リージョン喪失時に副リージョンで約 5 cell 分の計算資源を同時に起動する必要があり、同じ障害で他の利用者の需要も同じ副リージョンへ移るので、予約がなければ確保に失敗するおそれがある（確率は原典未確認）[D]。待機 cell の稼働形態と容量予約は ARC-13 の決裁案 K58-5 で決める [D]。確保に失敗した cell では、本表の「切替まで停止」が RTO・MTPD を超えて続く [D]。
+- **検証の限界（版 0.3 で追加）**: POC-01 の系統 2 は 1 cell 相当なので、TC-106・TC-ARC08-12 で測れるのは 1 cell の切替時間の内訳である [D]。総所要時間は「1 cell の実測 × wave 数」で推定し、wave 間の干渉と副リージョンでの同時確保は推定に含まれない [D]。複数 cell の同時演習は G6 で行う（残課題）[D]。
 
 ### 6.13 補助列 FM-13 誤った応答
 
@@ -556,7 +559,7 @@ G-058 の合格基準は「全セルが定義済みで、注入試験での逸�
 | FM-09 | TC-13-16、TC-014-03、TC-014-04、TC-014-15 | H1〜H5 を個別に注入 | privileged は H3 で拒否。bgP は帯域外複写なしで不実行。spool 上限前の欠損 0 件 |
 | FM-10 | H6-08、H6-09、TC-ARC08-10 | SSF の受信停止、送信先停止 | 基盤の強制が送受信の成否で変わった件数 0。S_ssf 超過の警報 |
 | FM-11 | TC-13-12、TC-13-15、TC-24-05、TC-ARC08-11 | cell 間の通信遮断 | 自 cell 内の誤り率変化が平常の変動幅内。新規 guest session の成立 0 件。H_g 超過の guest 利用 0 件 |
-| FM-12 | TC-13-13、TC-13-14、TC-07-14、TC-010-12、TC-ARC08-12 | 1 リージョン遮断と cell ごとの切替 | 他の所在地群への波及なし。障害 cell の known-good の使用 0 件。失われた剥奪 0 件（KD08-4 の (a) の場合） |
+| FM-12 | TC-13-13、TC-13-14、TC-07-14、TC-010-12、TC-ARC08-12、TC-106（POC-01） | 1 リージョン遮断と cell ごとの切替。系統 2 では 1 cell の切替（T_prov・T_switch・T_warm・T_admit・T_KD08-4 の内訳を記録） | 他の所在地群への波及なし。障害 cell の known-good の使用 0 件。失われた剥奪 0 件（KD08-4 の (a) の場合）。1 cell の実測 × wave 数で推定した総所要時間を RTO 1 時間・write の MTPD 2 時間と照合（ARC-13 §5.5.1）。複数 cell の同時切替の実測は G6 で行い、G4 時点では推定に留まる |
 | FM-13 | TC-13-05、TC-ARC08-13 | 全 allow・全 deny・古い版の注入 | freeze の発動。最終一致時刻より後の known-good の使用 0 件 |
 | FM-14 | TC-13-02、TC-23-03、TC-23-04 | control plane の全停止、H の到達 | 期限切れ配布物での allow 0 件。CP 停止中の剥奪が R(t, c) 以内に反映 |
 | FM-15 | H6-02 | 失効配布路の停止 | M_rev 超過後の rs 以上の allow 0 件 |
@@ -661,7 +664,19 @@ G-058 の合格基準は「全セルが定義済みで、注入試験での逸�
 | L08-1〜L08-6 の ADR-013・ADR-023・THR-04 への反映 | ADR の改版が要る | CTO＋CISO | G3 |
 | 新規仮定 N08-1〜N08-3 の前提台帳への登録 | 本書では前提台帳を編集しない | 前提台帳の管理者 | G3 |
 | BIA の仮置き MTPD（BIA の新規仮定 NA-01）の事業責任者による署名 | 事業側の決定が要る | 事業責任者（各ドメイン） | G0→G4 |
+| FM-12 の順次切替の総所要時間（ARC-13 §5.5）の各項の値と、複数 cell の同時切替演習 | 系統 2 の PoC は 1 cell 相当で、G4 時点では「1 cell の実測 × wave 数」の推定しか得られない | SRE 責任者（演習）、PoC チーム（TC-106 の 1 cell 実測） | G4（1 cell 実測）、G6（複数 cell 演習） |
+| 待機 cell の稼働形態と容量予約（ARC-13 K58-5）、予約なしの場合の残余リスクの台帳登録 | 費用と確保失敗の受容は経営判断であり、残余リスク台帳は本書の範囲外 | CTO＋CFO＋事業責任者 | G3 |
 | 実在の CTO/CISO による決裁 | 本書の判断は AI による自己レビューである（CONVENTIONS §8） | CTO＋CISO | G3 |
+
+## 他文書への申し送り（版 0.3）
+
+本書は次の文書を編集していない [D]。
+
+| # | 対象 | 申し送り内容 |
+|---|---|---|
+| 1 | POC-01 TC-106 | 合否の「切替時間は RTO 1 時間と照合」を、1 cell の内訳（T_prov〜T_admit、T_KD08-4）の記録と「× wave 数」による推定に改め、複数 cell の同時演習は G6 で行うことを残課題として明記する。TC-ARC08-12 の採番時に TC-106 と統合する |
+| 2 | ADR-013 D13-20 | 同時切替数 m と、RTO 1 時間との両立条件（ARC-13 §5.5.1）を追記する |
+| 3 | 00_decision/05-residual-risk-register.md | RRG-040 の枝番として、予約なし pilot light での容量確保失敗の残余リスクを追加する（文案は ARC-13「他文書への申し送り」3） |
 
 ---
 
@@ -747,3 +762,16 @@ ADR-001/005/006/007/010/011/013/014/023/024/029、REQ-03、GOV-04・GOV-06・KRI
 | U4 | SSF Verification Event への顧客 IdP 製品の対応 | 製品文書の確認が要る | プロダクト責任者（DL-78） |
 | U5 | TC-ARC08-xx（TC-ARC08-16 を含む）の採番 | DL-22 が未作成 | PoC チーム |
 | U6 | ASVS を [N] として引く扱い（CONVENTIONS §3 の原典例に OWASP が明示されていない） | リポジトリ全体の扱いに合わせて変えていない | 規約の管理者 |
+
+### ラウンド 1（模擬パネル、版 0.3）
+
+> 模擬パネルは AI エージェント（Claude）による自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。実施日: 2026-10-15。
+
+| # | 重大度・観点 | 指摘 | 対応 |
+|---|---|---|---|
+| R1-1 | High・sre | FM-12 で、日本の主リージョン喪失（5 cell、利用者の 85%）の順次切替の総所要時間が RTO・MTPD に収まるかの式がない | §6.12 の前提と注記に T_total・T_write の式、照合式、1 cell あたりの持ち時間（感度）を追加し、詳細を ARC-13 §5.5.1 に置いた |
+| R1-2 | 同上 | pilot light での副リージョン容量の同時確保（相関需要）が扱われていない | §6.12 の注記に追加し、決定を ARC-13 K58-5 へ回した。本書に新たな外部事実は置いていない（原典は ARC-13 の脚注 34〜36） |
+| R1-3 | 同上 | 系統 2 の PoC は 1 cell 相当で、複数 cell の順次切替を TC-106 で検証できないことが未開示 | §6.12 の注記、§8 の FM-12 行（1 cell 実測 × wave 数の推定、G6 の演習）、残課題に明記。POC-01 への反映を申し送り 1 にした |
+| R1-4 | 同上 | 予約なしの場合の残余リスクが台帳にない | 残課題と申し送り 3 に記載 |
+
+- 対応件数: 4 件（指摘 1 件の 4 つの修正項目）[D]。

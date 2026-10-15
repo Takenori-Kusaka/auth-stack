@@ -1,6 +1,6 @@
 # CON-08 監査イベントスキーマ 独立レビュー記録
 
-> 文書ID: CON-08（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-08-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
 > 対応要求: R-118, R-119, R-127, R-232, R-257（DL-77）
 > 依存文書: 11_contracts/schemas/audit-event.schema.json, CONVENTIONS.md, traceability/deliverables.md（DL-77）, 05_adr/ADR-005, ADR-009, ADR-011, ADR-014, ADR-021, 02_requirements/operation-risk-tiers-assurance.md, 04_architecture/audit-privacy.md, 04_architecture/claims-catalog.md, 11_contracts/schemas/common.schema.json（CON-02）, 11_contracts/scim.openapi.yaml, 11_contracts/ssf-caep.openapi.yaml
 

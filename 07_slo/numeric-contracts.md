@@ -1,9 +1,9 @@
 # 数値契約台帳（SLI/SLO）
 
-> 文書ID: SLO-01 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: SLO-01 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-077, R-087, R-188〜R-196（子要求 R-188.1〜R-195.5 を含む）, R-220, R-271, G-024, G-057, G-060, G-106, G-144, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-20 を含む全行。末尾の対応表を参照）／関連: CL-0108, CL-0131, CL-0168, CL-0169, CL-0193, CL-0204, CL-0236, CL-0255, CL-0262、RH-001, RH-013〜RH-015
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-20 行）, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/rejected-hypotheses.md, 01_governance/assumptions-register.md（GOV-01）, 01_governance/business-impact-analysis.md（GOV-04）, 01_governance/risk-appetite-draft.md（GOV-02）, 01_governance/kri.md, 01_governance/loss-scenarios.md（GOV-03）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03）, 02_requirements/identity-lifecycle.md, 03_threat-model/fraud-abuse-controls.md, 04_architecture/reference-architecture-v2.md（ARC-01）, 04_architecture/capacity-model.md（ARC-13）, 04_architecture/fail-mode-matrix.md（ARC-08）, 04_architecture/revocation-continuous-evaluation.md（ARC-09）, 05_adr/README.md と ADR-005, ADR-006, ADR-007, ADR-010, ADR-013, ADR-014, ADR-016, ADR-019, ADR-023, ADR-027, research/RS-03, RS-04, RS-05, RS-07, RS-09, RS-10, RS-16, research/standards-status.md
-> 作成方法: AI エージェント（Claude）が上記文書の数値・TBD・決め方を集約し、SLI-ID を採番した。新しい数値は導出していない（候補値はすべて上流文書の A-ID・規範・ADR 初期案からの転記）。本書の判断と決裁案は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research に収載のない原典（SRE 本 第 4 章、SRE Workbook 付録 B）は本書の作成者が 2026-10-15 に取得して照合した [D]。
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-20 行）, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/rejected-hypotheses.md, 01_governance/assumptions-register.md（GOV-01）, 01_governance/business-impact-analysis.md（GOV-04）, 01_governance/risk-appetite-draft.md（GOV-02）, 01_governance/kri.md, 01_governance/loss-scenarios.md（GOV-03）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03）, 02_requirements/identity-lifecycle.md, 03_threat-model/fraud-abuse-controls.md, 04_architecture/reference-architecture-v2.md（ARC-01）, 04_architecture/capacity-model.md（ARC-13）, 04_architecture/fail-mode-matrix.md（ARC-08）, 04_architecture/revocation-continuous-evaluation.md（ARC-09）, 05_adr/README.md と ADR-005, ADR-006, ADR-007, ADR-010, ADR-013, ADR-014, ADR-015, ADR-016, ADR-019, ADR-023, ADR-027, 10_integration/developer-faq.md, 12_poc/preregistered-test-plan.md, research/RS-03, RS-04, RS-05, RS-07, RS-09, RS-10, RS-16, research/standards-status.md
+> 作成方法: AI エージェント（Claude）が上記文書の数値・TBD・決め方を集約し、SLI-ID を採番した。新しい数値は導出していない（候補値はすべて上流文書の A-ID・規範・ADR 初期案からの転記）。本書の判断と決裁案は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research に収載のない原典（SRE 本 第 4 章、SRE Workbook 付録 B、Dean・Barroso「The Tail at Scale」）は本書の作成者が 2026-10-15 に取得して照合した [D]。版 0.2 で模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド 3 指摘に対応した（末尾「レビュー記録」）[D]。
 > 表の注記: 表のセルでタグのないものは、同じ行の「根拠」列・脚注に示した文書の記述を転記・要約した設計推論 [D] であり、この注記で個別のタグに代える。
 
 ## 0. 結論（要旨）
@@ -34,7 +34,7 @@
 |---|---|---|
 | CTO/CISO | §0、§2、§3、§8 | SLI の 3 種別、plane・cell 別の構成、error budget 方針、決裁案 5 件 |
 | 事業責任者 | §2.2、§5.5（可用性）、§8 | BIA の署名がどの SLI を「導出済」に上げるか |
-| 連携開発者 | §3.4、§5.2、§5.3、§6 | 依存予算、SDK の既定値（timeout、cache 最大齢、retry 予算）の SLI-ID |
+| 連携開発者 | §3.4、§3.5、§5.2、§5.3、§6 | 依存予算、要求あたりの認可遅延予算の合成規則と申告事項、SDK の既定値（timeout、cache 最大齢、retry 予算）の SLI-ID |
 | SRE・PoC 担当（DL-22） | §4、§5、§7 | 測定点、集計単位、TC との対応 |
 
 ### 1.3 用語
@@ -170,6 +170,64 @@ flowchart TB
 
 - 依存サービスは、基盤を重要依存として扱う操作の割合と自サービスの目標を申告する（ADR-023 D23-45）[D][^28]。基盤の判定系が 99.95% なら、依存サービスは約 99.5%、99.99% なら約 99.9% を超える目標を約束しにくい [D][A-090]（ADR-023 の新規仮定 NA-023-5 による試算。前提台帳へ追加要）[^28]。
 - SDK の既定値（PDP 呼出しの deadline、retry 予算、JWKS cache 最大齢、判定 cache の最大齢）は、本書の SLI-ID を参照して決める（G-106）[D]。値はすべて TBD であり、連携開発者は個別値を設定しない [D]。寿命 profile を 3 種類以内に絞り API ごとの個別値を認めない ADR-005 D3 と同じ理由による [D][^21]。
+- Check 1 回の遅延（SLI-030）と deadline（SLI-035）は、それだけでは業務の応答時間を約束しない [D]。1 回の edge 要求は複数の Check・token exchange・introspection を経るので、依存サービスは §3.5 の合成規則で自分の遅延 SLO と deadline の伝播を設計し、直列 Check の深さを申告する [D]。
+
+### 3.5 要求あたりの認可遅延予算
+
+**目的**: 約 300 の依存サービス・20〜30 チームが、基盤側の決裁（G4）を待たずに、自サービスの遅延 SLO と deadline の伝播を同じ規則で並行して設計できるようにする [D][A-050]。Check 1 回の分位点（SLI-030）を、業務がタイムアウトとみなす時間（GOV-04 B14）に直結させない [D]。B14 は 1 回の利用者操作の全体に対する値であり（GOV-04 §3.2）、1 回の edge 要求は平均 2.5 回の Check（A-025）に加え、token exchange・introspection を経るからである [D][^7][A-025]。
+
+**(1) 直列 hop の合成**
+
+1 回の edge 要求 req の認可に起因する追加遅延を、直列に並ぶ hop について足し合わせる [D]。
+
+```
+L_authz(req) = Σ_{h ∈ 直列 hop} ( L_check(h) + L_exchange(h) + L_introspect(h) )
+
+予算条件:  L_authz(req) ≦ α × B14(o)          （o は req が属する業務操作）
+Check 1 回の目標:  SLI-030 の目標分位点 ≦ ( α × B14(o) − L_exch,intro ) ÷ k_serial
+Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元から伝播した残り deadline )
+```
+
+| 記号 | 意味 | 値・状態 | 所有者・期限・決め方 |
+|---|---|---|---|
+| B14(o) | 業務操作 o がタイムアウトとみなす応答時間（GOV-04 票B） | TBD。GOV-04 では任意欄であり、署名は 0 行 [D][^7] | 事業責任者。G0（署名）。B14 の必須化は他文書への申し送り 1 |
+| α | B14 のうち認可（Check・token exchange・introspection）に割り当てる比率（0 ＜ α ＜ 1） | TBD（NA-SLO-4） | SRE 責任者＋CTO（値の承認に事業責任者）。G4。決め方: As-Is のトレース（G1）で業務処理・DB・外部呼出しの所要時間を差し引いた残りと、TC-101・TC-120 の端から端の実測 |
+| k_serial | 1 回の edge 要求の中で、前の Check の結果を待ってから次の Check を始める（直列の）Check の最大段数 | TBD（NA-SLO-5）。A-025 の内訳（gateway 段 1＋resource-local 1＋子リソース・フィールド 0.5）[A-025] から読める直列段は gateway 段と resource-local 段の 2 段であり、これは内部 hop 数 f＝1（ADR-015 N15-2 の試算の下限）の場合に限る [D] | CTO＋プラットフォームチーム長。G4。決め方: G1 の As-Is トレースで直列 Check 数の分布を実測し、SDK の既定上限（超過時は警告と申告の再提出）として置く |
+| L_exch,intro | 直列 hop 上の token exchange と introspection の遅延の合計 | TBD。交換済み token を寿命内 cache すれば平常時は 0 に近い（ARC-13 §12 の 4）[^11] | SRE 責任者。G4。TC-120 |
+| n_par | 1 回の edge 要求で並列に呼ぶ Check の数（`evaluateAccessBatch` 1 回は SDK 上 1 回として数え、batch の遅延は SLI-030 の batch 区分で別に測る） | TBD。申告事項（下記 (3)） | 依存サービスの申告。G4 前の連携申請時 |
+
+- 分位点は足し算で合成できない [D]。各 hop の p99.9 の和は、和（L_authz）の p99.9 と一致しない [D]。上の式は設計時の割付け（予算の配分）に使う近似であり、合否は端から端の L_authz(req) の実測分位点で判定する [D]（TC-101・TC-120 の拡張。他文書への申し送り 5）。
+- k_serial の上限がないと、Check 1 回の目標をいくら厳しくしても L_authz は直列段数に比例して伸びる [D]。このため k_serial を SDK の既定上限と申告事項の両方で押さえる [D]。
+- deadline は hop ごとに独立に置かず、呼出し元から残り時間を伝播し、残りが足りなければ待たずに失敗させる [D]。SRE 本は deadline の伝播と、backend が使えないときの早い失敗を勧めている [V][^50]（RS-09#38）。D(t) の超過は従来どおり `deny_unavailable` として階層別の fail-mode に回す（§5.3 SLI-035、ARC-08 §4）[D][^12]。
+
+**(2) 並列 Check による tail の増幅**
+
+並列に n 回の Check を呼び、業務がそのすべての応答を待つ場合、各 Check が閾値 x 以内に応答する確率を q（例: x を p99 に取れば q＝0.99）とすると、少なくとも 1 回が x を超える確率は 1 − qⁿ である [D]（各 Check の遅延が独立という仮定の下での計算。同じ PDP・同じ store を共有すると相関が生じ、実際の値は実測で確かめる）。
+
+| n | q＝0.99（各 Check の p99 を閾値） | q＝0.999（各 Check の p99.9 を閾値） |
+|---|---|---|
+| 1 | 1.00% | 0.10% |
+| 3 | 2.97% | 0.30% |
+| 5 | 4.90% | 0.50% |
+| 10 | 9.56% | 1.00% |
+| 25 | 22.22% | 2.47% |
+| 100 | 63.40% | 9.52% |
+
+- 上表は本書の計算である [D]。n＝100・q＝0.99 の値は、各 server の p99 が 1 秒のとき 100 台へ並列に要求すると利用者要求の 63% が 1 秒を超えるという Dean・Barroso の例示と一致する [V][^51]。同論文は、個々の構成要素の遅延のばらつきがサービス全体の水準で拡大されるとしている [V][^51]。
+- 要求単位で分位点 Q（例: p99）を守るには、各 Check に q ≧ Q^(1/n) を求める必要がある [D]。Q＝0.99 なら、n＝3 で各 Check に約 p99.67、n＝10 で約 p99.9、n＝25 で約 p99.96 が要る [D]。SLI-030 が p99.9 まで定義するのはこのためであり、目標分位点は申告された n_par の上位値から決める [D]。
+- 一覧は 1 件ずつ並列に Check せず、`evaluateAccessBatch` で 1 回にまとめる（INT-03・FQ-67）[D]。上表の n を小さく保つことが、Check 1 回の分位点を厳しくするより安い [D]。
+
+**(3) 依存サービスが申告・実装すること（並行開発の規則）**
+
+| # | すること | 理由 |
+|---|---|---|
+| 1 | 連携の申請時に、業務操作ごとに B14(o)（未署名なら事業部門の暫定値と所有者）、1 edge 要求あたりの Check の平均数、直列の深さ（k_serial の見込み）、並列数 n_par、token exchange・introspection を直列 hop 上で呼ぶか否かを申告する | ARC-13 §12 の 6 は平均数と一覧比率だけを申告させており、直列の深さと並列数がない [D][^11]。平均だけでは L_authz と tail を見積もれない [D]。様式の拡張は他文書への申し送り 2 |
+| 2 | 自サービスの遅延 SLO は、α × B14(o) の範囲で、§3.5 (1) の式と (2) の表を使って Check 1 回あたりの許容値を逆算して設計する。基盤の SLI-030 の決裁値が出るまでは TBD のまま仮値を明記して試験する（K20-3 案 A） | 決裁前でも同じ式で設計でき、値が決まった時点で代入して再判定できる [D] |
+| 3 | deadline は SDK の既定（呼出し元からの残り時間の伝播）を使い、hop ごとに独自の timeout を足さない | §3.5 (1)。SDK の既定値は SLI-035・SLI-044 を参照する（§3.4）[D] |
+| 4 | 同じ txn の中で、前段で同じ（主体、操作、資源、文脈）について判定済みの Check を下流で繰り返さない。ただし hop ごとの token の取り直し（aud の検査）と、下流が自分の資源について行う resource-local の判定は省かない | 直列段数を増やさないため [D]。下流での判定の省略を許す範囲と条件は ADR-009・ADR-011 の決定に従う必要があり、本書は規則案の提示に留める（他文書への申し送り 3）[D] |
+| 5 | 申告値を超えた直列の深さ・並列数を本番で観測した場合は、申告を出し直す | 申告値と本番の PDP メトリクスの照合（ARC-13 §10.4、§12 の 6）[D][^11] |
+
+- B14 が未記入の業務操作では、α × B14(o) を計算できない [D]。この場合、当該操作の SLI-030・SLI-035 の目標は「導出済」に上げず、ADR-023 の Tier 1（重要依存サービス）の業務では本番承認（§7.1）の前に B14 の署名を必須とする [D]。BIA 側で B14 を Tier 0・Tier 1 の業務に必須とするか、未記入時の既定値と所有者を置く変更は、他文書への申し送り 1 とする [D][^28]。
 
 ## 4. 新規仮定（前提台帳へ追加要）
 
@@ -180,8 +238,11 @@ flowchart TB
 | NA-SLO-1 | 予算型 SLI の測定点は PEP SDK 側とし、到達しなかった要求を不良に数える | — | §3.2 [D] | SRE 責任者、G4、TC-13-04 で SDK 側とサーバ側の差を測る |
 | NA-SLO-2 | 単一事象で事後分析を必須にする予算消費の閾値 | 30 日予算の 20% | SRE Workbook の例示 [V][^32] | SRE 責任者＋CTO、G6 開始から 12 か月、運用実績 |
 | NA-SLO-3 | テナント単位の最悪値の監視に使う分位点 | TBD | — | SRE 責任者＋事業責任者（B2B）、G4、K20-1 の決裁 |
+| NA-SLO-4 | 業務操作がタイムアウトとみなす時間 B14 のうち、認可（Check・token exchange・introspection）に割り当てる比率 α | TBD | §3.5 (1) [D] | SRE 責任者＋CTO（値の承認に事業責任者）、G4、G1 の As-Is トレースと TC-101・TC-120 の端から端の実測 |
+| NA-SLO-5 | 1 回の edge 要求あたりの直列 Check 数の上限 k_serial（SDK の既定上限と申告事項） | TBD | §3.5 (1)、A-025 の内訳 [D][A-025] | CTO＋プラットフォームチーム長、G4、G1 の As-Is トレースで直列 Check 数の分布を実測 |
+| NA-SLO-6 | 並列 Check の tail 増幅の見積り（1 − qⁿ）で、各 Check の遅延を独立とみなす | — | §3.5 (2) [D] | SRE 責任者、G4、TC-101 で並列数を変えた端から端の分位点と計算値を比べる |
 
-- 上流文書が置いた新規仮定のうち本書が使うものは、GOV-04 の NA-01・NA-02、ARC-13 の NA-58-x、ARC-09 の NA-ARC09-1、ADR-016 の NA-016-1・NA-016-7、ADR-023 の NA-023-5 である [D]。いずれも前提台帳へ追加要のまま本書で参照している [D]。
+- 上流文書が置いた新規仮定のうち本書が使うものは、GOV-04 の NA-01・NA-02、ARC-13 の NA-58-x、ARC-09 の NA-ARC09-1、ADR-016 の NA-016-1・NA-016-7、ADR-023 の NA-023-5、ADR-015 の N15-2（内部 hop 数 f）である [D]。いずれも前提台帳へ追加要のまま本書で参照している [D]。
 
 ## 5. SLI 台帳
 
@@ -259,7 +320,7 @@ flowchart TB
 
 | SLI | 名称（R-ID） | 種別 | 定義 | 測定方法・集計単位 |
 |---|---|---|---|---|
-| SLI-030 | Check 遅延 p95/p99/p99.9（R-190.1） | 予算型 | PEP SDK が PDP façade に要求を送ってから応答を受けるまで | PEP SDK 側（NA-SLO-1）。cell × 操作階層 × 一致性（fresh／bounded）× テナント |
+| SLI-030 | Check 遅延 p95/p99/p99.9（R-190.1） | 予算型 | PEP SDK が PDP façade に要求を送ってから応答を受けるまで（Check 1 回）。要求あたりの認可遅延 L_authz(req) は §3.5 の合成規則で別に扱い、本 SLI の値を業務の応答時間とみなさない | PEP SDK 側（NA-SLO-1）。cell × 操作階層 × 一致性（fresh／bounded）× 単発／batch × テナント。端から端の L_authz(req) は edge の trace で別掲する |
 | SLI-031 | Check 可用性（R-190.2） | 予算型 | 有効な Check 要求のうち、`deny_unavailable`・5xx・deadline 超過にならなかった割合 | PEP SDK 側。cell × 操作階層。SLI-060 の内数として報告する |
 | SLI-032 | 最大 graph depth（R-190.3） | 設定上限型 | モデルで強制する深さの上限（Q1） | モデルの静的検査（CI）と PDP の評価記録 |
 | SLI-033 | 最大 fanout（R-190.3） | 設定上限型 | 1 userset の最大構成員数 | store の統計。テナント別 |
@@ -279,12 +340,12 @@ flowchart TB
 
 | SLI | 導出の鎖 | 候補値（根拠） | 状態 | 決める人・期限 | 検証 TC |
 |---|---|---|---|---|---|
-| SLI-030 | GOV-04 B14 → SLI-035（deadline）より短い p99.9 → ARC-13 の負荷（最大テナント区画 14,745/秒、全体 117,626/秒）で実測 | TBD（所有者 CTO、期限 G4、決め方 TC-010-03 と TC-13-04 の p99/p99.9 と B14）。公開性能値は容量判断の根拠にしない（ARC-13 要旨 4）[^11] | TBD | CTO | TC-010-03、TC-13-04、TC-010-08、TC-010-11 |
+| SLI-030 | GOV-04 B14(o) × α（NA-SLO-4）＝要求あたりの認可遅延予算 → (α × B14 − L_exch,intro) ÷ k_serial（NA-SLO-5）＝Check 1 回の許容値 → 申告された並列数 n_par から目標分位点を q ≧ Q^(1/n) で選ぶ（§3.5 (2)）→ SLI-035（deadline）より短いこと → ARC-13 の負荷（最大テナント区画 14,745/秒、全体 117,626/秒）で実測し、端から端の L_authz(req) で合否を判定 | TBD（所有者 CTO、期限 G4、決め方 TC-010-03 と TC-13-04 の p99/p99.9、TC-101・TC-120 の多 hop 端から端の p99、B14・α・k_serial）。B14 が未署名の業務操作では導出済に上げない（§3.5 (3)）。公開性能値は容量判断の根拠にしない（ARC-13 要旨 4）[^11] | TBD | CTO | TC-010-03、TC-13-04、TC-010-08、TC-010-11、TC-101・TC-120（多 hop の端から端。申し送り 5） |
 | SLI-031 | SLI-060 の内数 | SLI-060 と同じ候補帯 | 仮置き（帯） | SLI-060 と同じ | TC-13-04 |
 | SLI-032 | A-036（深度 8、範囲 4〜25）→ 組合せ上限の感度（b=3 で深さ 8 から 10 に増えると上限 9 倍）→ モデルで強制 | 初期案 10（A-036 の規制強化値。基準 8 を含む）。製品の既定上限は OpenFGA `resolveNodeLimit` 25 [V][^38]（RS-07#19）（ARC-13 §7.3 Q1）[^11] | 仮置き | ARB（CTO）。G4 | TC-010-03（深さ 8・10・25） |
 | SLI-033 | A-036・A-009（最大 fanout 10 万＝最大テナントの全員 group） | TBD（所有者 CTO、期限 G4、決め方 TC-010-03 の最悪形モデル）。10 万は負荷条件であり上限値ではない [A-036] | TBD | CTO | TC-010-03 |
 | SLI-034 | ARC-13 §7.3 Q2・Q3 | TBD（所有者 CTO、期限 G4、決め方 TC-010-03 の p99.9）[^11]。超過の reason は未決（ADR-011） | TBD | CTO | TC-010-03 |
-| SLI-035 | GOV-04 B14 → TC-13-04 の p99 → DL-19 の fail-mode と同時に決める（短くすると fail-mode の発動が増える） | TBD（所有者 CTO、期限 G4、決め方 TC-13-04 の p99 と B14）（ARC-08 §4 D(t)）[^12] | TBD | CTO | TC-13-04 |
+| SLI-035 | GOV-04 B14(o) × α ÷ k_serial（§3.5 (1)）を上限 → 呼出し元から伝播した残り deadline との最小値 → TC-13-04 の p99 → DL-19 の fail-mode と同時に決める（短くすると fail-mode の発動が増える） | TBD（所有者 CTO、期限 G4、決め方 TC-13-04 の p99、B14・α・k_serial、TC-101・TC-120 の多 hop 端から端の実測）（ARC-08 §4 D(t)）[^12]。deadline の伝播は SRE 本の勧め [V][^50]（RS-09#38） | TBD | CTO | TC-13-04、TC-101・TC-120（申し送り 5） |
 | SLI-036 | ADR-025 の post-check → ARC-13 §7.3 Q5 | ページ長 25（上限 100）× f（ADR-025 の新規仮定 NA-025-1・NA-025-2。前提台帳へ追加要）[^11]。OpenFGA の ListObjects 既定（3 秒・1,000 件で打切り）[V][^38]（RS-07#20）は打切りによる欠落の判定に使う | 仮置き | CTO。G4 | TC-025-xx（ADR-025 §7） |
 | SLI-037 | ARC-13 §5.3 の q_t の導出式 → H-11 で補正 | TBD（所有者 CTO、期限 G4、決め方 ARC-13 §5.3 と TC-010-11）[^11] | TBD | CTO＋SRE 責任者 | TC-010-11 |
 | SLI-038 | GOV-02 T4 の選択肢 → 操作階層 → differential 試験（R-175） | cross-tenant: 全選択肢で 0 件。privileged・break-glass、write: 選択肢 A・B で 0 件。read-sensitive: 選択肢 B では率の上限 TBD（GOV-02 §3.4.3）[^8]。「0 件」は見つかった不一致をすべて原因分析し本番化前に是正すること [D][^8] | 仮置き（GOV-02 の選択肢に依存） | 経営会議（GOV-02 決裁案 1）、率の上限は CISO。G4 | differential・shadow 試験（R-175、DL-22）、K-04 |
@@ -580,10 +641,10 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | R-189.5 | 緊急失効完了時間 | §5.2 SLI-025 | C | 要実測 |
 | R-189.6 | JWKS cache 最大齢 | §5.2 SLI-026 | C | 要実測 |
 | R-190 | 数値契約: 認可 | §5.3 | C | 要実測 |
-| R-190.1 | Check p95/p99/p99.9 | §5.3 SLI-030 | C | 要実測 |
+| R-190.1 | Check p95/p99/p99.9 | §3.5、§5.3 SLI-030 | C | 要実測 |
 | R-190.2 | availability | §5.3 SLI-031、§5.5 SLI-060 | C | 要実測 |
 | R-190.3 | 最大 graph depth/fanout | §5.3 SLI-032、SLI-033 | C | 要実測 |
-| R-190.4 | query budget | §5.3 SLI-034〜SLI-037 | C | 要実測 |
+| R-190.4 | query budget | §3.5、§5.3 SLI-034〜SLI-037 | C | 要実測 |
 | R-190.5 | 誤 allow 許容値 | §5.3 SLI-038、§2.3 | C | 要実測（許容値は GOV-02 で決裁案） |
 | R-190.6 | 誤 deny 予算 | §5.3 SLI-039 | C | 要実測 |
 | R-191 | 数値契約: 剥奪 | §5.4 | C | 要実測 |
@@ -618,10 +679,10 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | R-196 | 数値は BIA と実測で決め、空欄の本番承認不可 | §2、§7.1、§9 | B | 決裁案まで |
 | R-220 | 可用性・遅延・整合性・変更安全性を数値で保証 | §5.3、§5.4、§5.5、§5.7 | C | 要実測 |
 | R-271 | 承認条件 6: 実測して剥奪 SLO を満たす | §5.4 | C | 要実測 |
-| G-024 | 全数値に導出の鎖と状態、根拠のない数値 0 件 | §2、§4、§5 の全表 | A | 本書の範囲で閉じた（条件: NA-SLO-1〜3 と上流の新規仮定の前提台帳への登録。全体の判定は DL-111 の自動検査と作成者以外のレビュー） |
+| G-024 | 全数値に導出の鎖と状態、根拠のない数値 0 件 | §2、§4、§5 の全表 | A | 本書の範囲で閉じた（条件: NA-SLO-1〜6 と上流の新規仮定の前提台帳への登録。全体の判定は DL-111 の自動検査と作成者以外のレビュー） |
 | G-057 | plane 別 SLO・RTO・RPO・切替時間・dependency budget を BIA と実測から導出し決裁 | §3、§5.5 | C（B 併用） | 要実測 |
 | G-060 | session・再認証・利用者負担の指標の定義と測定 | §5.1 SLI-001、SLI-005、SLI-006、SLI-008、SLI-010〜SLI-012 | C（B 併用） | 要実測 |
-| G-106 | 連携側の既定値に SLI-ID と根拠、決裁 | §3.4、§6 | C（B 併用） | 決裁案まで（SLI-ID と根拠は付与済、決裁 0 件） |
+| G-106 | 連携側の既定値に SLI-ID と根拠、決裁 | §3.4、§3.5、§6 | C（B 併用） | 決裁案まで（SLI-ID と根拠は付与済、決裁 0 件） |
 | G-144 | オンボーディング各段階のリードタイム SLI | §5.7 SLI-086〜SLI-091 | C（B 併用） | 要実測 |
 | G-147 | 柔軟性 4 指標の目標値と実測 | §5.3 SLI-040〜SLI-043 | C（B 併用） | 要実測 |
 
@@ -638,7 +699,7 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | # | 残課題 | 担当（役割） | 閉じるゲート | 関連 |
 |---|---|---|---|---|
 | 1 | GOV-04 の BIA 行の署名（E2）を得て、SLI-001・SLI-002・SLI-039・SLI-060〜SLI-069 を「導出済」に上げる | 各事業責任者 | G0 | R-196、G-057 |
-| 2 | 新規仮定 NA-SLO-1〜3 と、本書が参照する上流の新規仮定（GOV-04 NA-01・NA-02、ADR-016 NA-016-1・NA-016-7、ADR-023 NA-023-5、ARC-09 NA-ARC09-1、ADR-025 NA-025-1・NA-025-2）を前提台帳に登録する | 前提台帳（GOV-01）の所有者 | G0 | G-024 |
+| 2 | 新規仮定 NA-SLO-1〜6 と、本書が参照する上流の新規仮定（GOV-04 NA-01・NA-02、ADR-016 NA-016-1・NA-016-7、ADR-023 NA-023-5、ARC-09 NA-ARC09-1、ADR-025 NA-025-1・NA-025-2）を前提台帳に登録する | 前提台帳（GOV-01）の所有者 | G0 | G-024 |
 | 3 | TC の仮番（TC-13-xx、TC-010-xx、TC-014-xx、TC-19-xx、TC-027-xx、TC-ARC09-xx、PT-3、PT-11、IL-TC15 ほか）を DL-22 で採番・事前登録し、本書の検証 TC 列を置き換える | PoC 担当（DL-22） | G4 入場前 | R-188〜R-195 |
 | 4 | 「TC 未採番」の SLI（SLI-002、SLI-040〜SLI-043、SLI-067、SLI-069、SLI-086〜SLI-091、SLI-100〜SLI-102）の試験案を作る | PoC 担当、CTO | G4 入場前 | G-144、G-147 |
 | 5 | 決裁案 K20-1〜K20-5 を決める | 経営会議、CTO、CISO | G0〜G3 | R-077、R-196 |
@@ -646,12 +707,28 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | 7 | 未決の ADR 論点（ADR-013 KD13-1・KD13-6、ADR-011 の予算超過 reason、ADR-019 L19-5、ADR-025 L-1、ADR-006 K6-1）の決着を受けて、該当 SLI を再定義する | CTO＋CISO | G3〜G4 | SLI-034、SLI-050〜SLI-057、SLI-103 |
 | 8 | 本書で新たに参照した原典（SRE 本 第 4 章、SRE Workbook 付録 B）を作成者以外が照合する | 引用監査（DL-29） | Phase 4 | G-024 |
 | 9 | 保持期間（SLI-073）の PCI 以外の区分を法務の判定（L-03、DL-34）で決める | 法務責任者 | G3 | R-193.4 |
+| 10 | §3.5 の α（NA-SLO-4）と k_serial（NA-SLO-5）を、G1 の As-Is トレース（内部 hop 数 f と直列 Check 数の分布）と TC-101・TC-120 の多 hop 端から端の実測から決める | SRE 責任者、CTO、プラットフォームチーム長 | G1（実測）→G4（決裁） | R-190.1、R-190.4、G-106 |
+| 11 | 他文書への申し送り 1〜6 の反映を各文書の所有者が確認する | 各文書の所有者 | G1 | R-190.1、G-106 |
+
+## 他文書への申し送り（版 0.2）
+
+本書は指示された範囲外の文書を編集しない [D]。§3.5 の新設に伴い、次の変更を各文書の所有者に申し送る [D]。
+
+| # | 対象文書 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| 1 | 01_governance/business-impact-analysis.md（GOV-04 §3.2 票B の B14、§6.2 の導出規則の表） | B14 を ADR-023 の Tier 0・Tier 1 に当たる業務の行では必須欄にする。必須にしない場合は、未記入時の既定の扱い（当該行の SLI-030・SLI-035 を導出済に上げない）と B14 の記入の所有者を置く。導出規則の行（「p99 ＜ 業務がタイムアウトとみなす時間」）に、認可については「α × B14 を要求あたりの予算とし、DL-20 §3.5 の合成規則で Check 1 回に配分する」と注記する | B14 は 1 回の利用者操作全体に対する任意欄であり、Check 1 回へ直結できない（§3.5）[D][^7] |
+| 2 | 04_architecture/capacity-model.md（ARC-13 §12 の 6、連携の申告様式。DL-72 とオンボーディング手順） | 申告事項に、平均 Check 数と一覧比率に加えて、業務操作ごとの B14(o)、直列 Check の深さ、並列 Check 数 n_par、直列 hop 上の token exchange・introspection の有無を加える | 平均値だけでは要求あたりの遅延と tail の増幅を見積もれない（§3.5 (3) の 1）[D][^11] |
+| 3 | 10_integration/integration-patterns.md（INT-02） | 「同じ txn の中で、前段で同じ（主体、操作、資源、文脈）について判定済みの Check を下流で繰り返さない。hop ごとの token の取り直しと、下流自身の資源についての resource-local 判定は省かない」という規則案を、ADR-009・ADR-011 の所有者の確認を経て明記するか、採らない理由を記録する | 直列段数 k_serial を増やさないため（§3.5 (3) の 4）。Txn-Token は判定結果を運ぶ仕組みではないので、省略を許す条件は ADR 側で決める必要がある [D] |
+| 4 | 10_integration/developer-faq.md（FQ-66） | 「値は未決」に加え、(a) 要求あたりの認可遅延は直列 hop の和で、α × B14 の範囲に収めること、(b) 並列 n 回の Check では少なくとも 1 回が p99 を超える確率が 1 − 0.99ⁿ になること、(c) 連携申請時に直列の深さ・並列数を申告すること、(d) deadline は SDK の既定で残り時間を伝播すること、を追記し DL-20 §3.5 を根拠に挙げる | 約 300 サービス・20〜30 チームが値の決裁を待たずに同じ規則で設計できるようにする（§3.5）[D] |
+| 5 | 12_poc/preregistered-test-plan.md（POC-01 の TC-101・TC-120） | TC-101 に、直列 Check を 1・2・k_serial 段、並列 Check を 1・3・10・25 回に変えた多 hop の連鎖で、端から端の L_authz(req) の p99・p99.9 を測る測定点を加える。TC-120 に、token exchange・introspection を直列 hop に含めた場合と cache 済みの場合の差を加える。計算値（1 − qⁿ）と実測の差を記録する | 分位点は足し算で合成できず、合否は端から端の実測で判定する（§3.5 (1)、NA-SLO-6）[D] |
+| 6 | 01_governance/assumptions-register.md（G1 の実測項目）、02_requirements/as-is-inventory.md（DL-50）、05_adr/ADR-015（N15-2） | G1 の As-Is 実測項目に、edge 要求あたりの内部 hop 数 f の分布と、直列 Check 数・並列 Check 数の分布（業務操作別）を加える。NA-SLO-4〜6 を前提台帳に登録する | k_serial・α を実測から決めるため。f は ADR-015 N15-2 でも TBD のまま（決め方は As-Is のトレース）である [D] |
 
 ## 変更履歴
 
 | 版 | 日付 | 内容 |
 |---|---|---|
 | 0.1 | 2026-10-15 | 初版。8 分類と G-060・G-106・G-144・G-147 の指標を SLI-001〜SLI-106（80 件）として採番。SLI の 3 種別、plane・cell 別の構成、error budget 方針案、決裁案 5 件を記載 |
+| 0.2 | 2026-10-15 | 模擬パネル ラウンド 3 の指摘（sre、High）に対応。§3.5「要求あたりの認可遅延予算」を新設（直列 hop の合成式、α、k_serial、並列 Check の tail 増幅 1 − qⁿ、申告・実装の規則）。SLI-030・SLI-035 の導出の鎖を「B14 × α ÷ k_serial」に改め、多 hop 端から端の TC を加えた。新規仮定 NA-SLO-4〜6、残課題 10・11、他文書への申し送り 1〜6、レビュー記録を追加 |
 
 ## 参考文献
 
@@ -701,3 +778,13 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 [^47]: European Parliament and Council『Regulation (EU) 2016/679 (General Data Protection Regulation)』. https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng （参照箇所: Art. 33(1)。RS-02#45 で検証済み。確認日: 2026-10-03）
 [^48]: 本リポジトリ『ADR-019 侵害時対応』. 05_adr/ADR-019-compromise-response.md （参照箇所: D19-10〜D19-14, D19-31, §7 TC-19-01〜TC-19-08, L19-5、確認日: 2026-10-15）
 [^49]: 本リポジトリ『ADR-016 版管理・非推奨』. 05_adr/ADR-016-versioning-deprecation.md （参照箇所: 要旨, NA-016-1, NA-016-7, §2 の期間表、確認日: 2026-10-15）
+[^50]: Mike Ulrich（Google）『Site Reliability Engineering』Chapter 22 "Addressing Cascading Failures", 2016. https://sre.google/sre-book/addressing-cascading-failures/ （参照箇所: Latency and Deadlines（deadline の伝播）、Retries。RS-09#38 で検証済み。確認日: 2026-10-03）
+[^51]: Jeffrey Dean, Luiz André Barroso（Google）『The Tail at Scale』Communications of the ACM, Vol. 56, No. 2, pp. 74–80, 2013-02. https://www.barroso.org/publications/TheTailAtScale.pdf （参照箇所: p. 76「Variability in the latency distribution of individual components is magnified at the service level」の段落と、100 台への並列要求で 63% が 1 秒を超える例示。research に収載されていないため、本書の作成者が取得して確認した。確認日: 2026-10-15）
+
+## レビュー記録
+
+模擬パネルは自己レビュー（AI エージェントによる役割別の点検）であり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| ラウンド | 指摘者（役割） | 重大度 | 指摘 | 対応 | 箇所 |
+|---|---|---|---|---|---|
+| 3 | sre | High | SLI-030（Check 遅延）と SLI-035（deadline）を GOV-04 B14 に Check 1 回で直結している。B14 は利用者操作全体の値で任意欄。edge 要求は平均 2.5 Check（A-025）・token exchange・introspection を経て、hop 数 f も TBD（N15-2）。直列 hop の合成と並列 fan-out の tail 増幅（1 − 0.99ⁿ）が導出の鎖になく、直列 Check 数の上限もない。FQ-66 は「値は未決」とだけ答え、並行開発の設計規則がない | (1) §3.5 を新設し、L_authz(req) の直列和、α（NA-SLO-4、TBD・所有者・期限・決め方付き）、並列の 1 − qⁿ の表と q ≧ Q^(1/n) の逆算を置いた。tail 増幅は Dean・Barroso の原典で確認した [^51]。deadline の伝播は SRE 本（RS-09#38）[^50]。SLI-030・SLI-035 の導出の鎖を「B14 × α ÷ k_serial」に改めた。(2) k_serial を NA-SLO-5 として置き、SDK の既定上限と申告事項にした。ARC-13 §12 の 6 の様式拡張と、integration-patterns の再判定しない規則は申し送り 2・3。(3) B14 未記入の業務では SLI-030・SLI-035 を導出済に上げない規則を本書に置き、B14 の必須化は申し送り 1。(4) G1 の As-Is 実測項目（f、直列・並列 Check 数の分布）と TC-101・TC-120 の多 hop 端から端の測定を申し送り 5・6、残課題 10 に置いた。(5) FQ-66 の追記は申し送り 4。本書の範囲は対応済、他文書の反映は申し送り待ち | §3.4、§3.5、§4、§5.3 (a)(b)、対応表、残課題 10・11、他文書への申し送り |

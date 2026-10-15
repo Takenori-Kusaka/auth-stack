@@ -1,6 +1,6 @@
 # 成果物計画（マスターファイル計画）
 
-> 文書ID: TRC-03 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-03
+> 文書ID: TRC-03 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-025（全要求を単一台帳へ載せ所有者を割当）、R-197〜R-202（追跡可能性と決裁範囲）、ほか R-001〜R-210 全件の成果物割当。G-xxx は未確定（traceability/G-goal-criteria.md の確定後に追記）
 > 依存文書: CONVENTIONS.md, traceability/seed/seed-01-ciso-assurance.md, traceability/seed/seed-02-cto-technical.md, traceability/seed/seed-03-redteam-decision.md, 20年運用を前提とした認証・認可基盤提案のCTO CISOレビュー.md
 
@@ -111,7 +111,7 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | 統合 | D25 | 監査ログ設計と PIA を同一ファイル |
 | 1 対多 | D12 | ADR 集は 05_adr/README.md と ADR 29 件（§5） |
 
-## 4. 追加成果物（DL-35〜DL-114）
+## 4. 追加成果物（DL-35〜DL-119）
 
 ### 4.1 リポジトリ全体・決裁パッケージ（00_decision）
 
@@ -183,6 +183,9 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | DL-78 | SSF/CAEP stream API profile | 11_contracts/ssf-caep.openapi.yaml | SSF の stream 構成、push/poll 配送、検証エンドポイントについて、本基盤が送受信する範囲の profile を定義する。 | R-112, R-143／seed-02 2-6／失効・継続評価の伝播契約 | 3 | A・C | E4 |
 | DL-79 | SSF/CAEP イベント（SET）スキーマ | 11_contracts/schemas/ssf-caep-set.schema.json | session 失効、資格情報変更、token claims 変更等の CAEP/RISC イベントの SET payload profile と、受信義務の範囲を定義する。 | R-112, R-191／seed-02 2-6／失効イベントの機械検証 | 3 | A・C | E4 |
 | DL-80 | モック・契約試験キット仕様 | 11_contracts/mock-contract-test-kit.md | 各契約のモックサーバ、consumer-driven contract test、負例ベクタ（cross-tenant、alg 混同、aud 誤り等）、CI 組込み手順、合格判定を定める。 | R-062, R-071, R-172／連携側が契約適合を自動検証できるようにする | 3 | C | E4 |
+| DL-117 | ライフサイクルイベント契約（AsyncAPI） | 11_contracts/lifecycle-events.asyncapi.yaml | 依存サービスへ送るテナント・利用者のライフサイクル事象と大規模な権限剥奪の一覧、配送の保証（at-least-once、冪等キー、順序キー、再送、dead letter、replay）、受信側の義務、完了報告、SSF/CAEP との分担、凍結区分を定める。2026-10-15 の模擬パネル（自己レビュー）ラウンド 1 の指摘への是正として先に作成され、ラウンド 2 で本行を追加した（CON-00 §4.1 N-2 の順序を守れなかった。末尾「レビュー記録」）。 | R-044, R-109／G-137, G-118, G-138／DL-49 §7・DL-08 §16.3 の義務を契約にする | 5 | A・C | E4 |
+| DL-118 | ライフサイクル事象スキーマ | 11_contracts/schemas/lifecycle-event.schema.json | DL-117 の事象の封筒（CloudEvents 1.0.2）と type ごとの data、完了報告・replay 要求の形、正例・負例を JSON Schema 2020-12 で定義する。事象の一覧・配送の保証・受信側の義務の正本は DL-117。追加の経緯は DL-117 と同じ。 | R-044, R-109／G-137, G-118, G-138／事象の機械検証 | 5 | A・C | E4 |
+| DL-119 | Client Registration API | 11_contracts/client-registration.openapi.yaml | sandbox の RFC 7591/7592 profile によるセルフ登録（preview）と、本番の承認付き登録申請 API（preview）を定義し、ARC-02 §6 の client 種別ごとの必須項目・禁止項目（GA）を機械可読にする。承認者案、理由コード、負例、モックの振る舞いを含む。2026-10-15 の模擬パネル（自己レビュー）ラウンド 1 の指摘への是正として仮番「CON-13」で先に作成され、ラウンド 2 で CON-14 として本行を追加した（末尾「レビュー記録」）。 | R-158, R-255／G-138（I-01）, G-141(c), G-118, G-119, G-124／client 登録の手段を契約にする | 5 | A・C | E4 |
 
 ### 4.6 PoC（12_poc）
 
@@ -233,6 +236,7 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | DL-112 | 変更履歴 | traceability/change-log.md | 版ごとの変更点、旧提案書からの主要変更、決裁パッケージの版間差分を記録する。 | R-202／seed-03 §4 付属 L／版管理 | 1→6 | A | E2 |
 | DL-114 | Phase 1 網羅性批評 | traceability/phase1-critique-R.md, traceability/phase1-critique-G.md | R/G 分解に対する独立の completeness critic の記録。 | R-197／分解漏れの検出 | 1 | A | E3 |
 | DL-115 | claim 目録 | 04_architecture/claims-catalog.md | access token・Transaction Token・認可判定記録の3層識別子体系と trace_id との監査上の結合、claim ごとの採用区分・規格・状態・PII・理由、W3C VC Data Model 2.0 との対応と VC 受入れの将来設計、claim 追加審査のガードレール。2026-10-15 ユーザー要望で追加。 | R-161, R-162, R-118／G（将来性・証跡） | 3 | A | E2 |
+| DL-116 | RS-18 テナント配下の階層モデリング（deep research） | research/RS-18-hierarchy-modeling.md, reports/テナント配下の階層モデリング.md, research_notes/テナント配下の階層モデリング/ | containment・membership・管理委任範囲の 3 関係の分離と、主要基盤・認可エンジンの階層表現を調べた報告と作業メモ。reports/ は報告の原稿（RS-18 と同文）、research_notes/ は作業メモ。独立検証記録は未作成（open-items OI-V04）。2026-10-15 の DL-111 自動検査で未登録ファイルとして検出し追記した。 | R-142〜R-149, R-205／DL-17・DL-48 へ供給 | 2 | A | E3 |
 
 ## 5. ADR ファイル名（05_adr、DL-12）
 
@@ -261,7 +265,7 @@ ADR-001〜ADR-019 は seed-02 の A01〜A19 の読み替えであり[^3]、ADR-0
 | ADR-019 | A19 | 05_adr/ADR-019-compromise-response.md | 侵害時対応の設計原則（kill switch、全 session 失効、鍵切替、PDP 隔離、証拠保全の方式） | R-110〜R-116 | DL-24 | — |
 | ADR-020 | 追加 | 05_adr/ADR-020-fapi2-applicability.md | FAPI 2.0 を必須とする API 範囲と sender constraint 方式（レビュー Gate 3 の分離要求） | R-096, R-160 | DL-16, DL-60 | — |
 | ADR-021 | 追加 | 05_adr/ADR-021-irreversible-identifiers.md | 不可逆識別子（issuer URL、sub/tid 形式、WebAuthn RP ID、SAML entityID/ACS、resource type 名前空間）を自社所有ドメインと不透明 ID で固定する | R-037, R-047, R-209／seed-03 §7-13 | DL-71, DL-48 | 対象 |
-| ADR-022 | 追加 | 05_adr/ADR-022-integration-contract-standards.md | 連携契約の標準（OIDC/OAuth profile、RFC 9068、AuthZEN、SSF/CAEP、SCIM）、contract-first、薄い SDK、契約外依存の禁止 | R-105, R-109, R-208／seed-03 §7-14 | DL-62, DL-69〜DL-80 | 対象 |
+| ADR-022 | 追加 | 05_adr/ADR-022-integration-contract-standards.md | 連携契約の標準（OIDC/OAuth profile、RFC 9068、AuthZEN、SSF/CAEP、SCIM）、contract-first、薄い SDK、契約外依存の禁止 | R-105, R-109, R-208／seed-03 §7-14 | DL-62, DL-69〜DL-80, DL-117〜DL-119 | 対象 |
 | ADR-023 | 追加 | 05_adr/ADR-023-dependency-tiers.md | 依存階層と「この基盤に依存してはならないもの」、データプレーンの静的安定性と剥奪反映のトレードオフ | R-207, R-210／seed-03 D1 | DL-63, DL-18 | — |
 | ADR-024 | 追加 | 05_adr/ADR-024-cross-tenant-sharing.md | 外部共有・ゲスト・テナント越え権限付与のモデルと、resource-derived tenant 照合規則の例外の扱い | R-011, R-172／seed-03 §7-8 | DL-17, DL-65 | — |
 | ADR-025 | 追加 | 05_adr/ADR-025-list-search-authorization.md | 一覧・検索の認可（ListObjects/LookupResources、ACL 反映インデックス、件数・ページングからの情報漏えい対策） | R-190／seed-03 §7-6 | DL-17, DL-57, DL-64 | — |
@@ -285,7 +289,7 @@ DEC の正式な定義・文言・承認者は DL-39（00_decision/03-decision-i
 | DEC-5 | CISO | 独立保証計画（評価者の任命・調達、Gate 4 立会い範囲） | DL-07, DL-30, DL-59, DL-60, DL-61 |
 | DEC-6 | 事業責任者 | PoC 期間限定の残余リスク受容 | DL-05, DL-41 |
 | DEC-7 | CTO＋CISO | 前回指摘のうち検証済み項目のクローズと繰延べ項目のゲート割当 | DL-38, DL-101, DL-104, DL-110 |
-| DEC-8 | CTO＋CISO | 連携契約 v1 の凍結（他システムがモック・契約試験キットで並行開発を開始できる状態の承認） | DL-62〜DL-80, ADR-022 |
+| DEC-8 | CTO＋CISO | 連携契約 v1 の凍結（他システムがモック・契約試験キットで並行開発を開始できる状態の承認） | DL-62〜DL-80, DL-117〜DL-119, ADR-022 |
 | DEC-9 | CTO＋CISO（経営へ報告） | Plan B（中止・方針転換時の既定経路）の事前承認 | DL-42, DL-44 |
 
 ### 6.2 決裁資料の付属 A〜L の所在
@@ -335,10 +339,10 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 
 | 区分 | 件数 |
 |---|---|
-| DL（DL-01〜DL-115） | 115 |
+| DL（DL-01〜DL-119） | 119 |
 | うち seed-01 由来（DL-01〜DL-34） | 34 |
-| うち追加（DL-35〜DL-115） | 81 |
-| 計画ファイル数（§8、既存ファイルと 12_poc/code・data 配下の個別ファイルを除く） | 141 |
+| うち追加（DL-35〜DL-119） | 85 |
+| 計画ファイル数（§8、既存ファイルと 12_poc/code・data 配下の個別ファイルを除く） | 169（2026-10-15 の DL-111 自動検査で §8 の行から再計数した 166 に、模擬パネル ラウンド 2 の是正で 11_contracts の 3 行（DL-117〜DL-119）を加えた。旧値 141） |
 | うち ADR（ADR-001〜ADR-029） | 29 |
 
 ## 8. ディレクトリごとのファイル一覧
@@ -423,6 +427,7 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 04_architecture/capacity-model.md | ARC-13 | DL-58 | |
 | 04_architecture/product-evaluation-exit.md | ARC-14 | DL-13 | |
 | 04_architecture/claims-catalog.md | ARC-15 | DL-115 | ユーザー要望で追加 |
+| 04_architecture/architecture-reconciliation-notes.md | ARC-RN | DL-54 | 補助文書（04_architecture 15 文書の整合調整記録）。DL-111 で検出し追記 |
 
 ### 05_adr/（DL-12）
 
@@ -458,6 +463,7 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 05_adr/ADR-027-migration-dual-run-rollback.md | ADR-027 | DL-12 | |
 | 05_adr/ADR-028-tenant-lifecycle-operations.md | ADR-028 | DL-12 | |
 | 05_adr/ADR-029-privileged-support-access.md | ADR-029 | DL-12 | |
+| 05_adr/reconciliation-notes.md | ADR-RN | DL-12 | 補助文書（主要 ADR 8 本の整合調整記録）。DL-111 で検出し追記 |
 
 ### 06_controls/
 
@@ -465,6 +471,10 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 |---|---|---|---|
 | 06_controls/control-mapping-ledger.md | CTL-01 | DL-28 | C-xxx の定義場所 |
 | 06_controls/applicability.md | CTL-02 | DL-34 | |
+| 06_controls/mappings/nist-csf-iso27001.md | CTL-03 | DL-28 | DL-28 の分冊（CSF 2.0 / ISO/IEC 27001）。DL-111 で検出し追記 |
+| 06_controls/mappings/identity-appsec.md | CTL-04 | DL-28 | DL-28 の分冊（SP 800-63-4 / ASVS / API Top 10 / RFC 9700 / FAPI 2.0）。DL-111 で検出し追記 |
+| 06_controls/mappings/cloud-supplychain.md | CTL-05 | DL-28 | DL-28 の分冊（CCM / SSDF / SLSA / SOC 2）。DL-111 で検出し追記 |
+| 06_controls/mappings/regulations.md | CTL-06 | DL-28 | DL-28 の分冊（日本・EU/英国・米国・業界規制）。DL-111 で検出し追記 |
 
 ### 07_slo/
 
@@ -520,6 +530,18 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 11_contracts/ssf-caep.openapi.yaml | CON-09 | DL-78 | |
 | 11_contracts/schemas/ssf-caep-set.schema.json | CON-10 | DL-79 | |
 | 11_contracts/mock-contract-test-kit.md | CON-11 | DL-80 | |
+| 11_contracts/lifecycle-events.asyncapi.yaml | CON-12 | DL-117 | AsyncAPI 3.1.0。G-137 のライフサイクルイベント契約（事象一覧・配送の保証・受信側の義務）。2026-10-15 ラウンド 2 で追加（ファイルが先に作られた） |
+| 11_contracts/schemas/lifecycle-event.schema.json | CON-13 | DL-118 | CON-12 の封筒と data の JSON Schema。2026-10-15 ラウンド 2 で追加（同上） |
+| 11_contracts/client-registration.openapi.yaml | CON-14 | DL-119 | client 登録（sandbox セルフ登録と本番の登録申請）。旧仮番 CON-13 は CON-13（DL-118）と衝突したため CON-14 とした。2026-10-15 ラウンド 2 で追加（同上） |
+| 11_contracts/review-notes/CON-02.md | CON-02-RV | DL-71 | CON-02 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-03.md | CON-03-RV | DL-72 | CON-03 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-04.md | CON-04-RV | DL-73 | CON-04 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-05.md | CON-05-RV | DL-74 | CON-05 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-06.md | CON-06-RV | DL-75 | CON-06 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-07.md | CON-07-RV | DL-76 | CON-07 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-08.md | CON-08-RV | DL-77 | CON-08 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-09.md | CON-09-RV | DL-78 | CON-09 の独立レビュー記録。DL-111 で検出し追記 |
+| 11_contracts/review-notes/CON-10.md | CON-10-RV | DL-79 | CON-10 の独立レビュー記録。DL-111 で検出し追記 |
 
 ### 12_poc/
 
@@ -553,7 +575,17 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | research/RS-15-build-buy-tco.md | RS-15 | DL-99 | |
 | research/RS-16-parallel-development-governance.md | RS-16 | DL-100 | |
 | research/RS-17-integration-patterns-modeling.md | RS-17 | DL-113 | |
+| research/RS-18-hierarchy-modeling.md | RS-18 | DL-116 | 2026-10-15 追加。独立検証記録は未作成。DL-111 で検出し追記 |
 | research/verification/RS-xx-verification.md | — | DL-85〜DL-100, DL-113 | 各ストリームの独立検証記録 |
+
+### reports/・research_notes/（RS-18 の報告原稿と作業メモ）
+
+| パス | 文書ID | DL | 備考 |
+|---|---|---|---|
+| reports/テナント配下の階層モデリング.md | RS-18-RPT | DL-116 | RS-18 と同文の報告原稿。DL-111 で検出し追記 |
+| research_notes/テナント配下の階層モデリング/authz_engine_hierarchy.md | — | DL-116 | 作業メモ（メタ情報ブロックの対象外） |
+| research_notes/テナント配下の階層モデリング/cloud_platform_hierarchies.md | — | DL-116 | 作業メモ（メタ情報ブロックの対象外） |
+| research_notes/テナント配下の階層モデリング/saas_identity_org_models.md | — | DL-116 | 作業メモ（メタ情報ブロックの対象外） |
 
 ### traceability/
 
@@ -565,7 +597,7 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | traceability/traceability-matrix.md | TRC-04 | DL-104 | |
 | traceability/claims-ledger.md | TRC-05 | DL-105 | CL-xxxx の定義場所 |
 | traceability/citation-audit-proposal.md | TRC-06 | DL-29 | 旧提案書の引用監査 |
-| traceability/citation-audit-review.md | TRC-06b | DL-29 | レビュー側の引用監査 |
+| traceability/citation-audit-review.md | TRC-06-R | DL-29 | レビュー側の引用監査（旧計画 ID TRC-06b。既発行文書と参照元の表記 TRC-06-R に揃えた） |
 | traceability/phase1-critique-R.md | TRC-14 | DL-114 | R 分解の網羅性批評 |
 | traceability/phase1-critique-G.md | TRC-15 | DL-114 | G 分解の網羅性批評 |
 | traceability/dissent-log.md | TRC-07 | DL-106 | 見解相違ログ（DS-xx） |
@@ -587,3 +619,24 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 [^4]: 計画エージェント（レッドチームレンズ）『種資料03: 決裁パッケージに対するレッドチーム分析』2026-10-03. traceability/seed/seed-03-redteam-decision.md （参照箇所: §1〜§7、確認日: 2026-10-03）
 [^5]: 『20年運用を前提とした認証・認可基盤提案のCTO/CISOレビュー』. 20年運用を前提とした認証・認可基盤提案のCTO CISOレビュー.md （参照箇所: 重大な不足, 進め方の再設計 Gate 0〜6, 必須の数値契約, 承認条件、確認日: 2026-10-03）
 [^6]: 『マルチテナントSaaS認証・認可基盤の比較調査と設計指針』（旧提案書）. マルチテナントSaaS認証・認可基盤の比較調査と設計指針.md （参照箇所: 導入ロードマップ Phase 0〜3、確認日: 2026-10-03）
+
+---
+
+## レビュー記録
+
+### ラウンド 2（模擬パネル、2026-10-15、版 0.1 → 版 0.2）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[^1]。本節は本書のうち 11_contracts の採番に関わる是正だけを記録する。本書のそれ以外の変更（DL-115・DL-116 の追加ほか）は各行の備考に経緯がある [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R2-1 | High・devlead | §8 に CON-12・CON-13・client 登録の行がない。このため G-118（11_contracts 一式）と G-131（§8 のファイル一覧との差分 0 件）の確認対象から漏れている。文書ID「CON-13」を client 登録（仮番）とライフサイクル事象のスキーマ（案）の 2 ファイルが同時に名乗っている | **対応**。(1) §4.5 に DL-117（lifecycle-events.asyncapi.yaml）・DL-118（schemas/lifecycle-event.schema.json）・DL-119（client-registration.openapi.yaml）の行を加えた。(2) §8 の 11_contracts 表に CON-12／DL-117、CON-13／DL-118、CON-14／DL-119 の 3 行を加えた。CON-12・CON-13 は両ファイルが自称していた番号をそのまま確定し、client 登録は衝突を避けて CON-14 にした。(3) §6.1 の DEC-8 行と §5 の ADR-022 行の対応 DL に DL-117〜DL-119 を加えた（3 ファイルは連携契約 v1 の凍結の束に入るため。CON-00 §6.1）。(4) §7 の件数を DL 119 件・追加 85 件・計画ファイル数 169 に直した。(5) 3 ファイルとも、本書 §1 の「本書にないファイルを作る場合は、先に本書へ DL を追加する」と CON-00 §4.1 N-2 の順序を守らずに作られた。各行の内容欄にその経緯を残した [D] | §4（見出し）、§4.5、§5 の ADR-022 行、§6.1 の DEC-8 行、§7、§8 の 11_contracts 表、冒頭のメタ情報 |
+
+**他文書への申し送り** [D]
+
+| # | 対象文書 | 申し送る内容 |
+|---|---|---|
+| 1 | traceability/consistency-checks.md（DL-111） | G-131 の §8 差分検査を、本版の §8（169 行）に対して再実行する |
+| 2 | traceability/traceability-matrix.md（DL-104） | DL-117〜DL-119 を R/G の追跡表に加え、孤児 DL にしない |
+| 3 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12） | `x-document-id` と `x-deliverable` と description 冒頭の「（案）」を外す（本書で確定した） |
+| 4 | traceability/G-goal-criteria.md | G-118・G-137 の申し送り行（458 行付近）の「例」を、確定した CON-12／DL-117・CON-13／DL-118 に更新する |

@@ -1,0 +1,6 @@
+[
+ {"check": "deliverables", "file": "traceability/deliverables.md", "action": "§8 に未登録 20 ファイルの行を追記（ARC-RN, ADR-RN, CTL-03〜CTL-06, CON-02-RV〜CON-10-RV, RS-18, RS-18-RPT, research_notes 3 件）"},
+ {"check": "deliverables", "file": "traceability/deliverables.md", "action": "§4.8 に DL-116（RS-18 と報告原稿・作業メモ）を末尾採番で追加し、§7 の件数（DL 116、追加 82、計画ファイル数 166）を更新"},
+ {"check": "meta", "file": "traceability/deliverables.md", "action": "§8 の citation-audit-review.md の文書ID を TRC-06b から既発行の TRC-06-R に揃えた（参照元 2 文書も TRC-06-R）"},
+ {"check": "meta", "file": "11_contracts/review-notes/CON-02/03/04/06/07/08.md", "action": "文書ID を CON-0x（契約本体と衝突）から CON-0x-RV に揃えた（CON-05/09/10 の既存表記に合わせた）"}
+]

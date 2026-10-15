@@ -1,8 +1,8 @@
 # 主体カタログ
 
-> 文書ID: REQ-01 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-03
+> 文書ID: REQ-01 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-029, R-282, G-101（主なもの）。関連: R-027, R-044, R-100, R-209、DS-06（traceability/dissent-log.md）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, research/RS-03-identity-lifecycle.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-14-b2b-customer-identity.md, research/RS-17-integration-patterns-modeling.md, research/RS-05-root-of-trust-keys-supply-chain.md, research/RS-09-resilience-cell-failmode.md
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, research/RS-03-identity-lifecycle.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-14-b2b-customer-identity.md, research/RS-17-integration-patterns-modeling.md, research/RS-05-root-of-trust-keys-supply-chain.md, research/RS-09-resilience-cell-failmode.md, research/RS-18-hierarchy-modeling.md（v0.2 で追加。独立検証記録なし）, 04_architecture/claims-catalog.md（ARC-15 §3.9）, 04_architecture/authorization-model.md（ARC-05 §3.6）
 
 ## 0. 結論
 
@@ -98,7 +98,8 @@
 | 外部 IdP 由来の連携 ID | （テナント ID、IdP 識別子［OIDC issuer／SAML entityID］、外部 subject）の 3 つ組で記録し、本基盤の subject と別に持つ [D] | RP は subject を発行 IdP と切り離して処理してはならない（RS-14#2）[N][^9]。3 つ組は RS-14 §5.1 の ADR-004 入力による [D] |
 | 再割当ての禁止 | 削除後も subject・SPIFFE ID・client_id を再利用しない。計画期間（A-100）を通じて墓石として保持する [D][A-100] | SCIM の id は再割当てしてはならない（MUST、RS-03#75）[N][^14]。workload 識別子は trust domain の方針で意図する場合を除き再割当てすべきでない（SHOULD NOT、RS-06#25）[N][^22] |
 | 名前空間の衝突防止 | subject は類型を跨いで一意な単一の名前空間から本基盤が払い出し、client 登録者が値を選べないようにする [D] | RFC 9068 は client credentials で client 識別子を sub に使う場合、client が任意の値を登録できると高権限の resource owner の sub を選ばれ得ると述べる（§5、小文字の should で BCP 14 の規範語ではない）[N][^19] |
-| 類型の表現 | 類型は token と監査の明示属性で運び、subject の文字列から推論させない [D]。claim 名は ADR-005 で決める [D] | 形式から類型を推論させると、識別子形式（不可逆）が類型体系の変更を縛るため [D] |
+| 類型の表現 | 類型は token と監査の明示属性で運び、subject の文字列から推論させない [D]。claim 名は ADR-005 で決める [D]。RS-18反映（2026-10-15）: subject は人もシステムも同じ値域の「種別付き不透明 ID」とし、種別は sub とは別の claim（概念名 `subject_type`、内部 claim 名案 `ptype`。ARC-15 §3.9・KC-1）で運ぶ [D][^60] | 形式から類型を推論させると、識別子形式（不可逆）が類型体系の変更を縛るため [D] |
+| データモデル上の名前（RS-18反映（2026-10-15）） | 依存サービスのデータモデル・API・監査では、主体の列を `user_id` と名付けず、`subject_id`（値は sub）と `subject_type` の 2 欄で持つ。本カタログの類型（PC-xx）は `subject_type` の値ではなく、利用者群・保証レベルの区分として別に扱う（§0 の結論 2）[D] | `user_id` は人間の主体を前提にし、非人間主体（PC-12〜PC-17）が主体になると `user_id` と `service_id` が並ぶ命名の揺れを生む [D][^60]。AuthZEN の Subject と同じ `{type, id}` の形にそろえる（ADR-021 D21-26）[D] |
 | テナント | テナント ID は主体識別子と別の属性にする [D] | 複数テナント所属の利用者が 2.1 万いると置いている（A-015）[A-015] |
 | 相関の制御 | 資源サーバー間で sub を相関させない必要がある場合は pairwise の採否を ADR-021 で決める [D] | RFC 9068 §6 は sub をプライバシー影響評価に従って設定し、資源サーバー間の追跡を防ぐ必要があれば相関できない値にするよう述べる（小文字の should）[N][^19] |
 | As-Is の移行 | 既存 12 ストアの ID を新主体へ対応付けるときも、email の一致で自動統合しない [D][A-111] | 重複アカウント率 15% と置いている（A-111）[A-111] |
@@ -109,6 +110,7 @@
 
 - RFC 8693 は、impersonation では A が B と区別できなくなり、delegation では A は B と別の ID を保ったまま B を代表すると定義している（RS-06#43）[N][^18]。本基盤は delegation だけを使う [D]。
 - token 上の表現は次のとおりとする [D]。sub は権利の主体（委任元）、client_id は要求している client、act は現在の行為者（中継する workload、エージェント、support、代理人）を表す [D]。RFC 9068 は JWT access token の sub と client_id を REQUIRED とする（RS-04#60）[N][^19]。AIMS 草案は、エージェントの ID を client_id に、代わりに動く対象の主体を sub に置くとしている（RS-06#70、WG の -00 草案）[N][^25]。
+- RS-18反映（2026-10-15）: 主体は「誰か（sub）」「どの種別か（subject_type）」「何を通じてか（client_id。要求元ソフトウェア）」「誰の代わりにか（act）」の 4 軸で表し、一つの ID に押し込まない [D][^60]。client_id の値域は sub と分ける（ADR-021 D21-23）[D]。PC-19（ネイティブアプリ・CLI）と PC-15 の client は client_id の軸に、PC-16 の委任動作は act の軸に現れ、sub の軸には操作する人（委任元）が入る [D]。
 - アクセス制御に使うのは、token の最上位 claim と現在の actor だけである（RFC 8693 §4.1 の MUST、RS-06#45）[N][^18]。入れ子の過去 actor は監査用の情報として扱う [D]。チェーン長の上限と過去 actor による拒否の要否は DL-55・DL-74 で決める（RS-06 §5.2）[D]。
 - may_act には処理義務がない（RS-06#45）[N][^18]。委任関係の正本は認可基盤の付与（relation）に置き、may_act は補助にとどめる [D]。
 - 自律動作は委任動作と別の workload ID か別の scope で区別しなければならない（WIMSE arch 草案 §3.4.11 の MUST、RS-06#20）[N][^24]。PC-16 の自律動作と委任動作には別の client_id を払い出す [D]。
@@ -498,7 +500,8 @@ DS-06 は、SP 800-207 を [N] の根拠にする範囲を主体ごとに区分�
 | ADR-002、DL-09 | §4.2 の初期案を user group ごとの評価の出発点にする。PC-03 の device-bound 要件は事業責任者（B2B）と合意する [D] |
 | ADR-017 | §3.3 と §4 の PC-16 の初期案、決裁案 1、§5 の所有者不在の扱い [D] |
 | ADR-029、ADR-008 | PC-06〜PC-08 の発行系統・昇格・監査属性と決裁案 4 [D] |
-| ADR-005、DL-16 | 類型を表す claim、sub・client_id・act の使い分け、device grant の印 [D] |
+| ADR-005、DL-16 | 類型を表す claim、sub・client_id・act の使い分け、device grant の印 [D]。RS-18反映（2026-10-15）: 類型 claim の概念名を `subject_type` とし、内部名（`ptype` か `subject_type` か）は ARC-15 KC-1 で決める [D] |
+| 依存サービス（DL-64・DL-65） | RS-18反映（2026-10-15）: 主体の列を `subject_id`＋`subject_type` で持ち、`user_id` を新設しない（§3.2）。テナント配下の所属（部署・プロジェクト）は主体の属性にせず、認可モデルの関係（ARC-05 §3.6）で表す [D] |
 | DL-55、DL-74 | act チェーンの上限、過去 actor の扱い、Txn-Token 内部開始フローの発行方針台帳（PC-14 に限定） [D] |
 | ADR-026 | PC-14 の 3 役の記録と決裁案 3 [D] |
 | ADR-024 | PC-09 の 2 区分と決裁案 5 [D] |
@@ -538,12 +541,15 @@ R/G の集計: 本書で閉じた 3 件、決裁案まで 0 件、要実測 0 �
 | 11 | 作成者以外による G-101 の判定 | 作成者以外のレビュアー | Phase 4 | A |
 | 12 | PC-xx を CONVENTIONS §2 の ID 体系に登録するか | 規約管理者 | review 段階 | A |
 | 13 | SCIM エージェント拡張・Transaction Tokens・AIMS など草案の状態変化の監視 | プラットフォームチーム長 | 定期（ADR-016 の再検討トリガー） | A |
+| 14 | RS-18反映（2026-10-15）: research/RS-18 は独立検証記録がない。§3.2・§3.3 の追記は ADR-021 D21-10・D21-23 から導いた [D] で、RS-18 を事実の根拠にしていない。RS-18 のモデル例のエンジン検証器による検証は未実行（ARC-05 残課題 16） | 作成者以外の照合者 | G3 | A・C |
+| 15 | RS-18反映: 既存 12 ストア（A-111）の `user_id` 系の列を `subject_id`＋`subject_type` へ移す移行方式（DL-50 の As-Is 調査の入力） | プラットフォームチーム長 | G3 | A・B |
 
 ## 変更履歴
 
 | 版 | 日付 | 内容 |
 |---|---|---|
 | 0.1 | 2026-10-03 | 初版。19 類型、共通規則、類型別カタログ、非人間主体のライフサイクル、主体数、決裁案 7 件を記載 |
+| 0.2 | 2026-10-15 | RS-18反映（2026-10-15）。§3.2 に種別付き不透明 ID と `subject_id`／`subject_type` の命名規則、§3.3 に主体の 4 軸、§8 の申し送り 2 行、§10 の残課題 14・15 を追加 |
 
 ## 参考文献
 
@@ -606,3 +612,4 @@ R/G の集計: 本書で閉じた 3 件、決裁案まで 0 件、要実測 0 �
 [^57]: IETF (B. Campbell, J. Bradley, N. Sakimura, T. Lodderstedt)『RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §6.3、確認日: 2026-10-03）
 [^58]: Microsoft『Granular delegated admin privileges (GDAP) introduction』Partner Center, ms.date 2026-04-28. https://learn.microsoft.com/en-us/partner-center/customers/gdap-introduction （参照箇所: What is GDAP in Partner Center?、確認日: 2026-10-03）
 [^59]: 『20年運用を前提とした認証・認可基盤提案のCTO/CISOレビュー』. 20年運用を前提とした認証・認可基盤提案のCTO CISOレビュー.md （参照箇所: 進め方の再設計 Gate 1: 要件（L151）、確認日: 2026-10-03）
+[^60]: 本リポジトリ『階層を三つの関係に分けて名前の揺れを断つ』research/RS-18-hierarchy-modeling.md（deep research、2026-10-15、commit 30b3260）. research/RS-18-hierarchy-modeling.md （参照箇所: 「補足: user_id ではなく sub、client_id、act を分ける」, 「ID は不透明な値と型の組にし、パスは属性に追い出す」、確認日: 2026-10-15。項目番号と独立検証記録がないため節名で参照する。設計の入力としてだけ使い、事実の根拠には使わない）
