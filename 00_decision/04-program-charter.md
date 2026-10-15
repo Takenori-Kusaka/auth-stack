@@ -1,6 +1,6 @@
 # プログラム憲章・スコープ・非目標
 
-> 文書ID: DCS-04 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: DCS-04 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15（0.2（PoC/R7反映）: 模擬パネル ラウンド 7 の MP-7-14（Low、legal。DEC-2 決議文案 1 は未成年者・児童の扱いを CTL-02 L-14 に従わせるが、承認対象の本書に記載がない）により、§3.1 に PC-01（B2C）の未成年者・児童の扱いが未決である旨の注記を、§10 に残課題 11 を加え、末尾に「レビュー記録」を置いた。主体の範囲の提案は変えていない）
 > 対応要求: R-022, R-202, R-217, G-041, G-052, G-146, G-148（主なもの）。関連: G-042, G-049, G-071, R-276
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-40 行、§6.1）, traceability/R-requirements.md, traceability/G-goal-criteria.md, 01_governance/assumptions-register.md, 01_governance/durability-charter-20y.md（DL-47）, 01_governance/stop-authority.md（DL-46）, 02_requirements/principal-catalog.md（DL-48）, 02_requirements/as-is-inventory.md（DL-50）, 04_architecture/reference-architecture-v2.md（DL-54）, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-009-workload-identity-token-exchange.md, 05_adr/ADR-017-non-human-ai-agent-identity.md, 08_operations/phased-rollout.md（DL-31）, 10_integration/onboarding.md（DL-66）, research/RS-16-parallel-development-governance.md, research/RS-03-identity-lifecycle.md
 > 作成方法: AI エージェント（Claude）が上記の文書と research の検証済み項目を読み、単独で起草した。作成者以外による確認は未了である。本書の判断は作成者の設計推論であり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。
@@ -89,6 +89,8 @@
 - PC-07 と PC-08(a) を対象外にしたのは、基盤自身の管理者認証が基盤に依存する循環を避けるためである（G-049）[D][^4][^9]。
 - 前提台帳 A-115 は、自社で認証する人間利用者 47.5 万人に従業員 3 万人を含めている [A-115]。本書の社員 ID の範囲（workforce IdP の broker）と食い違うため、A-115 の改訂を §10 の 3 に載せた [D]。
 - 主体の保証レベルは主体の種別ではなく利用者群に付ける [D][^9]。SP 800-63-4 は、影響度を user group ごとに、その group が実行できる transaction を基にして評価することを求めている（SHALL、RS-03#4）[N][^19]。
+
+- **PC-01（B2C）の未成年者・児童（PoC/R7反映）**: B2C 利用者（基準 27 万人 [A-002]）に未成年者・児童を含むか（前提台帳 A-064 の NA-9）と、その扱い（CTL-02 L-14。A 受け入れる／B 対象外とし利用規約で利用可能年齢を制限する／C 事業・法域ごとに分ける）は未決である [D][^20]。本書の PC-01 を「対象」とする提案は、L-14 の決定に従う条件付きのものであり、L-14 の決定前は未決として開示する（DCS-03 §4.2 DEC-2 決議文案 1）[D][^20]。L-14 で A または C を採る場合は、登録・同意・回復の設計（REQ-02、ADR-003）と §4 の機能カタログに保護者の同意・承認の機能が加わり得る [D]。決める人は事業責任者（B2C）＋法務責任者、期限は G0 である（POA&M の OI-L10）[D][^20]。
 
 ### 3.2 規模の範囲
 
@@ -351,6 +353,7 @@ OPS-04 は「§8 の基準で採点した上位の組」を選ぶとし、採点
 | 8 | 将来提供の 2 機能のゲート（ARC01-D1） | B | CTO | G4 | 未決 |
 | 9 | パイロットでの G-146 の 4 指標と G-144 の実測 | C | CTO、独立立会人 | G4 | 未達 |
 | 10 | 本書の作成者以外による確認と、模擬パネルでの検査 | A | 作成者以外のレビュアー | Phase 4 | 未了。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない |
+| 11 | PC-01（B2C）の未成年者・児童の扱い（CTL-02 L-14、NA-9）の決定と、§3.1・§4 への反映（PoC/R7反映 で追加。MP-7-14） | B | 事業責任者（B2C）＋法務責任者 | G0 | 未決（POA&M の OI-L10・OI-K10）[D][^20] |
 
 ## 11. 対応表
 
@@ -363,6 +366,12 @@ OPS-04 は「§8 の基準で採点した上位の組」を選ぶとし、採点
 | G-052 | パイロットのオーナーの確約と見積りへの同意 | §5.5 | B | 未達（確約欄は空欄） |
 | G-146 | パイロットでの並行開発 4 指標の実測 | §5.1、§5.5 | C | 未達 |
 | G-148 | 機能カタログの区分と「提供しない」機能の規則 | §4 | A | 区分を記載。将来提供のゲートは未決 |
+
+## レビュー記録
+
+| ラウンド | 指摘（模擬パネル。自己レビューであり実在の CTO/CISO の決裁ではない） | 対応 |
+|---|---|---|
+| PoC/R7反映（ラウンド 7 の Medium/Low の反映） | MP-7-14（Low、legal）: DEC-2 決議文案 1 は未成年者の扱いを L-14 に従わせるが、承認対象の DCS-04 に記載がない（R4-3 未適用） | 対応した。§3.1 に注記、§10 に残課題 11 を加えた。主体の範囲の提案は変えていない。作業担当の AI エージェントによる反映であり、作成者以外の確認は未実施 [D] |
 
 ## 参考文献
 
@@ -385,3 +394,4 @@ OPS-04 は「§8 の基準で採点した上位の組」を選ぶとし、採点
 [^17]: 計画エージェント（レッドチームレンズ）『種資料03: 決裁パッケージに対するレッドチーム分析』2026-10-03. traceability/seed/seed-03-redteam-decision.md （参照箇所: §1 C3, §3 D2。構成の入力としてのみ使用、確認日: 2026-10-15）
 [^18]: CNCF TAG App Delivery『CNCF Platforms White Paper』（latest 版）. https://tag-app-delivery.cncf.io/whitepapers/platforms/ （参照箇所: Challenges with platforms（トップダウンの強制への警告と少数チームからの開始）、確認日: 2026-10-03。RS-16#65）
 [^19]: NIST『SP 800-63-4 Digital Identity Guidelines』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63.html （参照箇所: §3.2 user group ごとの影響評価、確認日: 2026-10-03。RS-03#4）
+[^20]: 本リポジトリ『決裁事項詳細（DEC-1〜DEC-10）』DCS-03 版 0.10. 00_decision/03-decision-items.md （参照箇所: §4.2 DEC-2 の依存の行（CTL-02 L-14、NA-9）と決議文案 1、確認日: 2026-10-15）。および『残課題・是正追跡（POA&M）』traceability/open-items.md OI-L10（確認日: 2026-10-15）

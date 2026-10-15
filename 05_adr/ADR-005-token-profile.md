@@ -1,6 +1,6 @@
 # ADR-005 token profile（opaque/JWT 境界・寿命・sender constraint・claim profile）
 
-> 文書ID: ADR-005 / 版: 0.1 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-03
+> 文書ID: ADR-005 / 版: 0.2 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-15（0.2（PoC/R7反映）: PoC 実測レポート POC-02（§6.5 TC-004〜007 の未実施、§6.4 の TC-015 行、§6.3 の TC-016 行）と模擬パネル ラウンド 7 の指摘により、§7.1.1（PoC 系統 1 の結果と未実施の扱い）、§8 の実測トリガー、残課題、レビュー記録を加えた。PoC の値は自己実行の参考値で Gate 4 の証拠ではない。版 0.1 は 2026-10-03）
 > 可逆性: 条件付き可逆（非対称）。外部境界の opaque 化は可逆で、opaque から JWT へ寄せても内容を読まない client は壊れない。逆に、外部へ JWT を出してから opaque に戻す変更は、claim を解析する外部実装を壊すため事実上不可逆になる（§3.1 案A）。本書の決定のうち不可逆側に入るのは次の 5 点である。(1) issuer 識別子（ADR-021）、(2) `sub` の形式と非再割当の約束（ADR-021）、(3) 契約に載せる typ 名・claim 名・claim の意味（ADR-022、DL-75）、(4) 外部契約に書く opaque token の最大長（D10-2）、(5) 監査証跡に残す相関 ID の意味（ADR-014）
 > DEC-3 対象: いいえ（traceability/deliverables.md の ADR 表で DEC-3 列は「—」）。依存先の ADR-001・ADR-007・ADR-013・ADR-021・ADR-022 は DEC-3 対象である
 > 対応要求: R-095, R-158（本書を対応成果物に含む行）／G-087, G-020（同）。関連: R-046, R-087, R-112, R-118, R-143, R-159, R-160, R-161, R-162, R-163, R-173, R-189.1, R-189.2, R-189.4, R-189.5, R-189.6, R-206, R-239, R-240, R-249, R-250, R-251, R-259, R-270, R-283／G-024, G-062, G-068, G-072, G-088, G-089, G-106, G-115, G-138（全件と閉じ方は末尾の対応表）
@@ -658,6 +658,18 @@ Storm-0558 では、開発者が「ライブラリが完全に検証する」と
 | H-23 | 状態照会のログ・経路から主体の追跡ができない（VC DM 2.0 §4.10 の趣旨の準用） | 照会ログに主体と利用先の対応が残らない | — |
 | H-24 | 寿命 profile 3 種類で、全 API の寿命が U1〜U5 を満たす | 違反 0 件 | 満たせない API があれば profile を追加する前に API の階層分割を検討 |
 
+### 7.1.1 PoC 系統 1 の結果と未実施の扱い（PoC/R7反映、版 0.2）
+
+以下の値はすべて PoC 系統 1 の自己実行（実施者は AI エージェント、立会人なし、凍結タグなし、`git_dirty`）の参考値であり、POC-01 §2.2.1 の W-1〜W-4 を満たさないため Gate 4 の証拠ではない。原因区分は実施者の記録で、作成者以外は確かめていない。独立再現（reproduction-log）も同じ機械で別の AI エージェントが行ったもので、立会人による再実行ではない [D][^52]。
+
+- **H-01 の系統 1 の証拠は何もない** [D]。H-01 に当たる POC-01 の TC-004（audience 取違え・token exchange の負例）、TC-005（mix-up・redirect URI・PKCE）、TC-006（JWT 負例ベクタの全検証点での拒否）、TC-007（DPoP replay・盗まれた refresh token）は、担当の試験群（token-misuse）が作業を中断し成果物を作らなかったため**未実施**である（POC-02 DEV-19 候補。系統 1 の実行体制・環境の制約による未実施で、中止基準による中止ではない）[D][^52]。POC-01 版 0.1 §3.3 は、これらを系統 1 で言えることの筆頭に挙げていた [D][^52]。
+- **決定への影響** [D]: D2（token 種別・typ・検証規則）、D4（refresh token の保護）、D5（sender constraint）の検証規則は、すべて設計推論と規範要求の写しにとどまり、実測の裏付けがない。本書の決定は変えないが、G4 までに次を行う。(1) TC-004〜007 を、立会い下の系統 1 の再実行（POC-02 §7.1 R-2）で初めて実行する。(2) その前に、負例ベクタ（typ 混同、alg 混同、mix-up、PKCE downgrade、DPoP の Bearer 提示、盗まれた refresh token）の一覧を事前登録し、SDK の版 N・N−1・N−2 と外部 RP 相当の標準ライブラリを対象に含める。(3) TC-004 が未実施のため、token exchange と AI エージェントの系統 2（TC-120・TC-125）の前提が立っていないことを ADR-009・ADR-017 の担当と共有する（POC-02 §7.2）。
+- **関連する観測（参考値）** [D][^52]:
+  - TC-020（回復・step-up）: refresh で acr・auth_time は変わらず、L2 の token で privileged は 401、step-up 後に 200 だった。D6-4（auth_time と acr は refresh で変わらず、privileged の前に step-up を必須にする）と整合する観測である。
+  - TC-015（alg 切替）: 切替・巻戻し・退役で検証失敗 0。ただし内部 token の発行 alg を ES256 以外にすると、契約 schema の `issuedAlg`（ES256 のみ）とずれる（RK-DEV-07）。H-19 の「利用側の改修 0 件」は契約 schema の側で崩れ得るので、ADR-015・ADR-022 と契約の alg の列挙を直す（POC-02 MR-10）。
+  - TC-016（監査の再構成）: PEP SDK が受信 token の `txn` を発行側の pattern で検査し、それ以外を拒否した（F-2）。契約 schema の `opaqueId` の注記（受信側はこの pattern で拒否しない）と食い違う。本書 D9 の `txn` の受信側の規則をどちらに合わせるかを ADR-022 D-8-5 の担当と決める（POC-02 MR-10）。
+  - TC-025（sandbox の鍵）: 区画をまたぐ提示の受理 0（edge・STS・SDK・第三者 RP・mTLS・AS）。
+
 ### 7.2 第三者評価で確かめること
 
 - OIDF の FAPI 2.0 Security Profile Final・Message Signing Final の適合試験を、採用版で mTLS 構成と DPoP 構成の両方について自前で実行し、E7 として保存する（適合試験の提供は告知済み [N][^45]、RS-04#52）（G-089）[D]。
@@ -677,6 +689,8 @@ Storm-0558 では、開発者が「ライブラリが完全に検証する」と
   - H-07 が閾値超過なら、rotation 併用をやめる（FAPI の論理に合わせる）[D]。
   - H-22 で grant を移せず再同意の費用が BIA で許容できなければ、案G を再評価する [D]。
   - H-19 で ML-DSA 化が利用側の改修 0 件で済まなければ、内部形式の進化可能性の前提を見直す [D]。
+  - **PoC/R7反映（版 0.2）**: POC-01 TC-004〜007 を立会い下で初めて実行し（POC-02 §7.1 R-2）、負例の受理が 1 件でも出た場合は、該当する D2・D4・D5 の検証規則と SDK の検証手順を見直す。G4 の時点で TC-004〜007 が未実施のままなら、H-01 を「要実測」のまま残し、G4 の判定材料にしない [D]。
+  - **PoC/R7反映（版 0.2）**: 契約 schema と実装の食い違い（`issuedAlg`、`txn` の受信側の pattern 検査）が契約の改版で解消できない場合は、D9 の `txn` の受信規則と内部 alg の方針を見直す [D]。
 - **前提の変化**:
   - NA-03（end-to-end mTLS を張れる第三者の比率）が低ければ、第三者の既定を DPoP＋nonce に変え、mTLS は privileged・FAPI だけに限る（K-3）[D]。
   - A-013 の実態が下端（client 300 未満）でほぼ第一者だけなら、外部 opaque の便益が下がり、案A・案C の勝利条件に近づく [D]。grant が上端（10 万）を超えた場合も見直す [D]。
@@ -771,6 +785,15 @@ Storm-0558 では、開発者が「ライブラリが完全に検証する」と
 | 最終起草者が新たに照合した原典（IANA JWT Claims registry、RFC 8417、RFC 7519、OIDC Core §8、VC DM 2.0、OpenID IDA）の照合ログを traceability/ に追記し、作成者以外が検証する | 照合ログの所有者 | G3 |
 | OIDF 適合試験と pentest（§7.2） | CISO、独立評価者 | G5 |
 | 判定者採点は模擬パネルの自己レビューであり、実在の CTO/CISO の決裁は未達 | CTO・CISO | G3 |
+| PoC/R7反映（版 0.2）: POC-01 TC-004〜007 の負例ベクタの事前登録と初回実行、契約 schema の `issuedAlg`・`opaqueId` と実装のずれの解消（POC-02 MR-10） | PoC リード（TC）、契約の所有者・ADR-022 の所有者（schema） | 事前登録は DEC-4 第 1 段の付議前、実行は G4 |
+
+---
+
+## レビュー記録
+
+| 版・契機 | 指摘・入力 | 対応 |
+|---|---|---|
+| 0.2（PoC/R7反映。PoC 実測レポート POC-02、模擬パネル ラウンド 7。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない） | ラウンド 7（cto・ciso・sre）: POC-02 の結果が設計文書に入っていない [D][^53]。POC-02 §6.5（TC-004〜007 の未実施）、§6.3 の TC-016 行、§6.4 の TC-015 行、§9 MR-10 | §7.1.1 に未実施の扱いと関連する観測、§8 に 2 項目、残課題に 1 行を加えた。PoC の値は自己実行の参考値で、Gate 4 の証拠にしていない |
 
 ---
 
@@ -827,3 +850,5 @@ Storm-0558 では、開発者が「ライブラリが完全に検証する」と
 [^49]: NIST『IR 8547 ipd Transition to Post-Quantum Cryptography Standards』Initial Public Draft, 2024-11-12（状態: ipd）. https://csrc.nist.gov/pubs/ir/8547/ipd （参照箇所: §4.1.1 Table 2、確認日: 2026-10-03）RS-11#8
 [^50]: M. Prorock, O. Steele『RFC 9964: ML-DSA for JOSE and COSE』Standards Track, 2026-05. https://www.rfc-editor.org/rfc/rfc9964 （参照箇所: §3, §5 Table 1、確認日: 2026-10-03）RS-11#41
 [^51]: Microsoft『Configure how users consent to applications』Microsoft Entra ID, Microsoft Learn, ms.date 2025-06-15. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent （参照箇所: 既存の同意に関する注記、確認日: 2026-10-03）RS-17#62
+[^52]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §3.3 への言及（要旨 1）、§4.1 の TC-004〜007・TC-015・TC-016・TC-020・TC-025 行、§5.6 DEV-19、§6.3 の TC-016 行、§6.4 の TC-015 行、§6.5、§7.1 R-2、§7.2、§9 MR-10、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^53]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）

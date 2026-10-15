@@ -1,6 +1,6 @@
 # ADR-009 workload identity・token exchange・委任の伝搬・内部取引 context
 
-> 文書ID: ADR-009 / 版: 0.1 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-15
+> 文書ID: ADR-009 / 版: 0.2 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-15（0.2（PoC/R7反映）: PoC 実測レポート POC-02（§6.5 TC-004 の未実施、§6.3 の TC-016 行）と模擬パネル ラウンド 7 の指摘により、§7.1.1、§8 の実測トリガー、残課題、レビュー記録を加えた。PoC の値は自己実行の参考値で Gate 4 の証拠ではない）
 > 可逆性: **一部不可逆**。不可逆側に入るのは (1) SPIFFE trust domain の名前と数、(2) SPIFFE ID の path の形式と非再割当の約束、(3) 監査証跡に残す `txn` の意味（取引の一意な不透明識別子）の 3 点である。Txn-Token の claim 構成、TTS の配置、act の深さ上限、派生 token の寿命の値、クラウド federation の接続先は可逆である（§2.11）
 > DEC-3 対象: いいえ（traceability/deliverables.md §5 の ADR 表で DEC-3 列は「—」）。ただし (1)(2) は ADR-021（DEC-3 対象）の命名規則に従う識別子であり、§2.12 の論点 P09-1 を ADR-021 K21 系と同じ DEC-3 の議題に載せることを提案する
 > 対応要求: R-100（本書を対応成果物に含む行）／G-020, G-102（DL-12 として本書を含む行）。関連: R-029, R-044, R-118, R-128, R-143, R-161, R-162, R-206, R-207, R-209, R-230, R-251, R-255, R-259, R-282／G-042, G-063, G-068, G-074, G-088, G-093, G-099, G-124, G-138, G-141（全件と閉じ方は末尾の対応表）
@@ -481,6 +481,15 @@
 | H09-12 | クラウド federation が SPIFFE 資格情報で成立する | SPIRE 発行の X.509-SVID・JWT-SVID で Entra・Google Cloud・AWS（Roles Anywhere）へ接続し、鍵数上限・大文字小文字一致の失敗挙動を確かめる（RS-06 §5.3 の 9） | 接続の成立と失敗挙動の記録 | D09-03 |
 | H09-13 | 法域越えの委任が identity chaining で成立し、未許可の越境が拒否される | パーティション間で JWT authorization grant を使う | 許可した組だけ成立、他は拒否 | D09-37 |
 
+### 7.1.1 PoC 系統 1 の結果と未実施の扱い（PoC/R7反映、版 0.2）
+
+以下の値はすべて PoC 系統 1 の自己実行（実施者は AI エージェント、立会人なし、凍結タグなし、`git_dirty`）の参考値であり、POC-01 §2.2.1 の W-1〜W-4 を満たさないため Gate 4 の証拠ではない。原因区分は実施者の記録で、作成者以外は確かめていない。独立再現（reproduction-log）も同じ機械で別の AI エージェントが行ったもので、立会人による再実行ではない [D][^41]。
+
+| POC-01 の TC | 本書の仮説 | 観測（参考値） | 本書の決定への影響 |
+|---|---|---|---|
+| TC-004（aud 取違え・token exchange・Txn-Token の盗用） | H09-01・H09-02・H09-03 | **未実施**。担当の試験群（token-misuse）が作業を中断し、成果物がない（POC-02 DEV-19 候補。系統 1 の実行体制・環境の制約による未実施で、中止基準による中止ではない）[D][^41] | 委任の負例（未登録の組、`resource` の欠落・複数、scope 拡大、act の深さ超過、actor の循環）と Txn-Token の束縛の性質には、系統 1 の証拠が何もない。決定は変えないが、立会い下の系統 1 の再実行（POC-02 §7.1 R-2）で初めて実行し、系統 2 の TC-120（token exchange）・TC-125（AI エージェント）の前提にする。それまで H09-01〜03 を G4 の判定材料にしない [D] |
+| TC-016（3 hop の監査の再構成） | H09-07・H09-08 | 正式な実行（v1）で再構成率は write 55/55・read-sensitive 61/61、偽造 trace による差分 0。adapter を自社形式の `txn` に差し替えた後の再構成は 0/12 で不合格（PEP SDK が受信した `txn` を発行側の pattern で検査して拒否した、F-2）。試験と STS の修正後の参考実行では 12/12 [D][^41] | H09-08（adapter 差替えで依存サービスの差分 0）は、受信側が `txn` の形式を検査しない前提に立つ。契約 schema の `opaqueId` の注記（受信側はこの pattern で拒否しない）と SDK の実装が食い違ったので、受信側の規則を契約に揃える（ADR-022 D-8-5、POC-02 MR-10）。参考実行の合格は H09-08 の証拠にしない [D] |
+
 ### 7.2 第三者評価で確かめること
 
 - 内部からの pentest（E6）で、侵害 workload を起点に登録範囲外のサービス・他テナント・他パーティションへ到達できないこと（ATK-06）[D]。
@@ -498,6 +507,8 @@
 | 標準 | identity chaining の RFC 発行 | D09-37（社内 profile を RFC に合わせる） |
 | 標準 | WIMSE workload-creds・WPT の WGLC、SPIFFE WIT-SVID の Stable 化 | D09-05（WPT の `tth` による Txn-Token の hop 束縛の採否）[N][^16] |
 | 標準 | SPIFFE が URI 名前制約を必須化する改訂 | D09-06、RR09-3 |
+| 実測（PoC/R7反映） | POC-01 TC-004 の初回実行（立会い下）で、委任・Txn-Token の負例の受理が 1 件でも出た | 該当する D09 の検証規則（STS の exchange 方針、TTS の束縛）、H09-01〜03 の手順 |
+| 実測（PoC/R7反映） | `txn` の受信側の形式検査をめぐる契約と SDK の食い違い（TC-016 F-2）が契約の改版で解消できない | D09-23〜D09-26 の adapter 差替えの前提、H09-08 |
 | 標準 | TLS 1.3 の ML-DSA 認証の RFC 化 | D09-43（ADR-015 と共同） |
 | 実測 | H09-05 で r が大きく、exchange 量が STS・署名の容量を超える | D09-10（read 系の下流 hop で C2 寄りにするか） |
 | 実測 | H09-06 不合格、または Signer の例外 backend が承認されない | D09-33（U-02 を (b) へ） |
@@ -579,6 +590,7 @@
 | 項目 | 所有者 | 期限 |
 |---|---|---|
 | P09-1（SPIFFE trust domain の数）の DEC-3 での決裁 | CTO＋CISO | G3 |
+| PoC/R7反映（版 0.2）: POC-01 TC-004 の負例の事前登録と初回実行、`txn` の受信側規則の契約への反映（POC-02 MR-10） | PoC リード（TC）、契約の所有者・ADR-022 の所有者（規則） | 事前登録は DEC-4 第 1 段の付議前、実行は G4 |
 | P09-2（U-02）の決裁 | CTO＋CISO | H09-06 の後 |
 | NA09-1〜NA09-6 の前提台帳への登録 | 前提台帳の所有者 | G1 |
 | N_act・SVID 寿命・Txn-Token 寿命・派生 token 最大寿命の値 | CTO＋CISO | G3〜G4（DL-20） |
@@ -630,6 +642,8 @@
 [^38]: DMTF『DSP0262 Cloud Auditing Data Federation (CADF) - Data Format and Interface Definitions Specification』Version 1.0.0, 2014-06-19. https://www.dmtf.org/sites/default/files/standards/documents/DSP0262_1.0.0.pdf （参照箇所: §4.2.2、確認日: 2026-10-03。RS-10#13）
 [^39]: SPIFFE Project『SPIFFE Trust Domain and Bundle』GitHub spiffe/spiffe main（standards/SPIFFE_Trust_Domain_and_Bundle.md、Stability: Stable）. https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE_Trust_Domain_and_Bundle.md （参照箇所: §3 SPIFFE Bundle の "When validating an SVID, validators must choose the bundle corresponding to the trust domain that the SVID resides in"（小文字 must）、確認日: 2026-10-15。research ノート外。独立レビュー者が確認）
 [^40]: D. Cooper ほか / IETF『RFC 5280: Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile』Standards Track, 2008-05. https://www.rfc-editor.org/rfc/rfc5280 （参照箇所: §4.2.1.10 Name Constraints "For URIs, the constraint applies to the host part of the name."、確認日: 2026-10-15。research ノート外。独立レビュー者が確認）
+[^41]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-004・TC-016 行、§5.6 DEV-19、§6.3 の TC-016 行、§6.5、§7.1 R-2、§7.2 の TC-120・TC-125 行、§9 MR-10、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^42]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
 
 ---
 
@@ -672,3 +686,11 @@
 - P09-3: `rctx` の v2 候補 4 項目の採否は ADR-005 の所有者の判断待ちである [D]。
 - RR09-7（1 つの workload が複数の Txn trust domain の Txn-Token を受ける構成）: draft-11 に許容・禁止の明文はない。§11.3 は「TTS が複数の trust domain を支える場合」に言及するだけである（レビュー者が 2026-10-15 に確認）[N][^1][D]。
 - 新規仮定 NA09-1〜NA09-6 の前提台帳への登録、本レビューで取得した [^39]・[^40] と起草者取得分の traceability/ への照合ログ追記は未了である（指示外のため本レビューでは編集していない）[D]。
+
+### PoC/R7反映（版 0.2）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| 指摘・入力 | 対応 |
+|---|---|
+| 模擬パネル ラウンド 7（cto・ciso・sre）: POC-02 の結果が設計文書に入っていない [D][^42]。POC-02 §6.5（TC-004 の未実施）、§6.3 の TC-016 行、§7.2 の TC-120・TC-125 行、§9 MR-10 | §7.1.1 に TC-004 の未実施の扱いと TC-016 の観測、§8 に 2 行、残課題に 1 行を加えた。PoC の値は自己実行の参考値で、Gate 4 の証拠にしていない |

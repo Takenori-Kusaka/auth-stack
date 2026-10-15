@@ -1,6 +1,6 @@
 # R/G 追跡表（双方向トレーサビリティ）
 
-> 文書ID: TRC-04 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15（0.5: 続行ワークフローの報告段の最終整合（模擬パネル ラウンド 7 の後）で、作業ツリーの変化（PoC 実測レポート POC-02 版 0.1 の作成、TRC-09 版 0.3、TRC-10 版 0.4、自動検査の再実行 TRC-12 §10、DL-120・DL-121 の追加）に状態欄を合わせた。G の現状の区分は変わらない。§0 の 3・5、§3.3、§4.2 の注記、§4.3・§5 の DL-81 の × 印、§6.1 の DL-81 の状態、残課題 6・12・13 を更新した。再抽出はしていない。0.4: 模擬パネル ラウンド 6（audit）の指摘で、§2.4 に「未達（成果物内で開示）」の区分を加え、対応成果物が合格条件の未達を明記している G-012・G-018・G-019・G-022 を「充足」から移した。§0 の 5、§4.2、§4.3 を更新した。0.3: 模擬パネル ラウンド 4（cto）の指摘で、承認条件 4 の R 5 行（R-058・R-059・R-061・R-062・R-269）に TC-121 を割り当てた。再抽出ではなく POC-01 版 0.3 の対応表に合わせた手作業の更新である。0.2: Phase 4 の最終整合で、抽出後に作成された DL と自動検査・模擬パネル・独立反証の記録に合わせて G の現状と未作成 DL を更新した。R→G・R→DL→C の再抽出はしていない。末尾「レビュー記録」）
+> 文書ID: TRC-04 / 版: 0.8 / 状態: draft / 最終更新: 2026-10-15（0.8（最終整合、phase4c.js の報告段、模擬パネル ラウンド 10 の後）: 指摘ではなく、ラウンド 10 までの是正の後の作業ツリーへの追随。自動検査の再実行（TRC-12 §11）、TRC-09 版 0.4、TRC-10 版 0.6、TRC-11 版 0.15・0.16 の内容を §4.2 の注記（最終整合での確認）、残課題 13、申し送りの反映状況（新設）、脚注 26〜28、末尾「レビュー記録」に反映した。G の現状の区分と件数（充足 47、未達（成果物内で開示）8 ほか）は変わらない。再抽出はしていない。0.7（ラウンド 9 audit）: 模擬パネル ラウンド 9 の audit 指摘（High。G-130 を「充足」としているが、TRC-11 自身がラウンド 8 で G-130 の申し送り追跡の欠落を記録し、DCS-05 版 0.13 の RA-0078・RA-0079 と §12.1 の申し送りが POA&M に未起票）により、G-130 を「未達（成果物内で開示）」に移した。同じ規則（§2.4）で「充足」の残り 50 件を再点検し、対応成果物が合格条件の中身の未達を自ら書いている G-138（INT-02）・G-143（INT-00）・G-151（ARC-13）も移した。§0 の 5、§2.4、§4.2（集計・段階別表・段階1 の机上準備 74 → 70 件・注記）、§4.3 の 4 行、残課題 14・15、申し送り 9・10、脚注 20〜25、末尾「レビュー記録」ラウンド 9 を改めた。再抽出はしていない。0.6（PoC/R7反映）: POC-01 の最新版（版 0.5。系統 1 は TC-001〜TC-029、系統 2 は TC-101〜TC-133）に合わせ、§6.3 に TC-029・TC-132・TC-133 の行を、§4.3 の G-003・G-061・G-062・G-078 の TC 欄にその TC を加えた。模擬パネル ラウンド 7 の MP-7-18（G-082・G-105 の TC 欄が「—」で正引きと逆引きが一致しない）により、両行の TC 欄を TC-121 にした。§0 の 7 と §6.3 の注記に、PoC 実測レポート POC-02 と独立再現ログ（12_poc/reproduction-log.md、POC-04（仮））の記録が証跡（E4・E5）に数えられないことを記し、§6.1 の DL-81 行に再現ログを加えた。G の現状の区分と件数は変えていない。申し送り 8、脚注 18〜19、末尾「レビュー記録」PoC/R7反映 を加えた。0.5: 続行ワークフローの報告段の最終整合（模擬パネル ラウンド 7 の後）で、作業ツリーの変化（PoC 実測レポート POC-02 版 0.1 の作成、TRC-09 版 0.3、TRC-10 版 0.4、自動検査の再実行 TRC-12 §10、DL-120・DL-121 の追加）に状態欄を合わせた。G の現状の区分は変わらない。§0 の 3・5、§3.3、§4.2 の注記、§4.3・§5 の DL-81 の × 印、§6.1 の DL-81 の状態、残課題 6・12・13 を更新した。再抽出はしていない。0.4: 模擬パネル ラウンド 6（audit）の指摘で、§2.4 に「未達（成果物内で開示）」の区分を加え、対応成果物が合格条件の未達を明記している G-012・G-018・G-019・G-022 を「充足」から移した。§0 の 5、§4.2、§4.3 を更新した。0.3: 模擬パネル ラウンド 4（cto）の指摘で、承認条件 4 の R 5 行（R-058・R-059・R-061・R-062・R-269）に TC-121 を割り当てた。再抽出ではなく POC-01 版 0.3 の対応表に合わせた手作業の更新である。0.2: Phase 4 の最終整合で、抽出後に作成された DL と自動検査・模擬パネル・独立反証の記録に合わせて G の現状と未作成 DL を更新した。R→G・R→DL→C の再抽出はしていない。末尾「レビュー記録」）
 > 対応要求: R-025, R-213, R-214, R-197, G-003, G-021（主なもの）。R-001〜R-283（枝番を含む 326 行）と G-001〜G-151 の全件を追跡対象とする
 > 依存文書: traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/deliverables.md, 06_controls/control-mapping-ledger.md, 12_poc/preregistered-test-plan.md, 08_operations/compromise-runbooks.md, 07_slo/numeric-contracts.md, 01_governance/loss-scenarios.md, 03_threat-model/threat-catalog.md, 01_governance/kri.md, 01_governance/risk-appetite-draft.md, 00_decision/05-residual-risk-register.md, CONVENTIONS.md
 > 作成方法: AI エージェント（Claude）が、上記の台帳の表を機械抽出し（抽出時点 2026-10-15 10:32）、突き合わせた結果を表にした。表の値は各台帳の転記と機械照合の結果であり、内容の妥当性の判定ではない。本書の判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -12,9 +12,9 @@
 2. **R→G の区間は閉じていない。G-021 の合格基準（孤児 R・孤児 G・孤児 DL がいずれも 0 件）を満たさないため、G-021 は「不合格（是正中）」とする** [D]。G 台帳の関連 R 欄は種資料 seed-01 の R-ID で書かれており[^2]、R-211〜R-283 は G 台帳の作成後に追加された [D][^1]。全件を対象とする G（G-010, G-022, G-029）を除くと、個別の G に結び付かない R は **78 行**、全件 G を含めても結び付かない R は **6 件**（R-278, R-279, R-280, R-281, R-282, R-283）である [D]。候補 G を §4.4 に示した（未確定。G 台帳の改訂で確定する）[D]。
 3. **孤児 DL（R・G・成果物計画の対応要求のいずれからも参照されない DL）は 0 件である** [D]。抽出時点に未作成だった DL 10 件のうち 9 件は、再最終整合（2026-10-15、模擬パネル ラウンド 7 の後）までに作成された（DL-81 の実測レポートは POC-02 版 0.1 として作成済み）。未作成で残るのは **DL-59 の 1 件**である。抽出後に成果物計画へ追加された DL-120（契約試験キット本体）と DL-121（ライフサイクル状態の照会 API）も未作成である（§3.3）[D]。
 4. **孤児 G は、関連 R を持たない 4 件（G-043, G-052, G-129, G-133）である** [D]。/goal 原文から導いた基準で、レビュー指摘に対応する R がない [D]。抽出時点にあった「計画上の対応成果物がすべて未作成の G」7 件は、最終整合までに対応成果物が作成され 0 件になった（§3.4）[D]。
-5. **G-001〜G-151 の現状は、充足 51、未達（成果物内で開示）4、一部（照合未了）2、決裁案まで 32、要実測 50、要第三者 5、未着手 3（いずれも一部着手）、不合格 4 である（ラウンド 6 で更新。最終整合の時点では充足 55。再最終整合（ラウンド 7 の後）で区分の変更はない）** [D]。未達（成果物内で開示）は G-012・G-018・G-019・G-022 である。いずれも対応成果物が自ら、合格条件の中身を満たしていないと書いている。G-012 は統制台帳が写像の未完成を[^4]、G-018 は主張台帳が版・取得日・スナップショットハッシュ・検証者の列の欠落を[^15]、G-019 は主張台帳が新パッケージの主張（決裁事項・ADR の結論を支える主張）の未登録を[^15]、G-022 は前回指摘対照表が検証記録のない 168 行を[^14]、それぞれ未達の理由として挙げている（§2.4、§4.2 の注記）[D]。一部（照合未了）は G-003 と G-038 である。G-003 は §3.6 の許容度と受容者の照合が終わっていない。G-038 は模擬パネル判定記録が G 全件の判定を持たない [D]。不合格は G-021 に加え、自動検査（DL-111）の再実行で基準を満たさなかった G-017・G-037・G-131 である（§4.2 の注記）[D]。ここでの「充足」は「区分 A の対応成果物がすべて存在する」という机上の準備状態（G-ID を明示した記述が見当たらないものは「充足※」）であり、G 台帳 §4.3 の「達成」（作成者以外の確認済み、B は E1/E2/E9、C は独立立会いの実測、D は E6/E7）に当たるものは **0 件**である [D][^2]。
+5. **G-001〜G-151 の現状は、充足 47、未達（成果物内で開示）8、一部（照合未了）2、決裁案まで 32、要実測 50、要第三者 5、未着手 3（いずれも一部着手）、不合格 4 である（ラウンド 9 で更新。ラウンド 6〜PoC/R7反映の時点では充足 51・未達 4、最終整合の時点では充足 55）** [D]。未達（成果物内で開示）は G-012・G-018・G-019・G-022 と、ラウンド 9 で移した G-130・G-138・G-143・G-151 である。G-130 は、残課題台帳（TRC-11）が自ら、ラウンド 7・8・9 で申し送りの POA&M 未起票（G-130 の申し送り追跡の欠落、群 g の型の再発）を記録しており[^20][^22]、DCS-05 版 0.13 の RRG-011-1（RA-0078）・RRG-076（RA-0079）と §12.1 の申し送り 73〜80・83・84 は 2026-10-15T09:10Z（UTC）の作業ツリーで POA&M に 0 件である[^21][^20]。G-138 は INT-02 が「契約に定義のないインタフェースに依存するパターン 0 件」を未達とし[^23]、G-143 は INT-00 が機能ごとの提供時期の日付がないため未達とし[^24]、G-151 は ARC-13 が拡張の所要期間（TBD）と成長シナリオの A-xxx 登録を未達としている[^25]（§4.2 の注記）[D]。いずれも対応成果物が自ら、合格条件の中身を満たしていないと書いている。G-012 は統制台帳が写像の未完成を[^4]、G-018 は主張台帳が版・取得日・スナップショットハッシュ・検証者の列の欠落を[^15]、G-019 は主張台帳が新パッケージの主張（決裁事項・ADR の結論を支える主張）の未登録を[^15]、G-022 は前回指摘対照表が検証記録のない 168 行を[^14]、それぞれ未達の理由として挙げている（§2.4、§4.2 の注記）[D]。一部（照合未了）は G-003 と G-038 である。G-003 は §3.6 の許容度と受容者の照合が終わっていない。G-038 は模擬パネル判定記録が G 全件の判定を持たない [D]。不合格は G-021 に加え、自動検査（DL-111）の再実行で基準を満たさなかった G-017・G-037・G-131 である（§4.2 の注記）[D]。ここでの「充足」は「区分 A の対応成果物がすべて存在する」という机上の準備状態（G-ID を明示した記述が見当たらないものは「充足※」）であり、G 台帳 §4.3 の「達成」（作成者以外の確認済み、B は E1/E2/E9、C は独立立会いの実測、D は E6/E7）に当たるものは **0 件**である [D][^2]。
 6. **実測で閉じる区分 C の R 147 行のうち、41 行は TC・RB・演習（EX）のいずれにも割り当てられていない（抽出時点）** [D]。ラウンド 4 で承認条件 4 の 5 行を TC-121 に割り当て、未割当は 36 行になった [D][^5]。統制台帳の試験欄に置かれた脅威由来の試験候補 TH-TC 58 件のうち 47 件は、PoC 試験計画の TC に吸収された記録がない [D]（§3.5）。
-7. **証跡は 1 件も取得していない** [D]。R が要求する証拠種別の延べ件数は E1 55、E2 96、E3 17、E4 53、E5 71、E6 18、E7 2、E8 25、E9 12、E10 1、E11 4 である [D]。E1・E6・E7・E9 は本リポジトリ内では得られない [D][^3]。
+7. **証跡は 1 件も取得していない** [D]。PoC/R7反映: PoC 系統 1 の凍結実行 50 件（POC-02）と独立再現の 37 件（POC-04（仮）、`_repro/`）は、いずれも立会人がいない自己実行であり、E4・E5 の証跡に数えない（§6.3 の注記）[D][^18][^19]。R が要求する証拠種別の延べ件数は E1 55、E2 96、E3 17、E4 53、E5 71、E6 18、E7 2、E8 25、E9 12、E10 1、E11 4 である [D]。E1・E6・E7・E9 は本リポジトリ内では得られない [D][^3]。
 8. **上位 10 件の損失シナリオ（S-xx）の連鎖は、番号の区間（S→T→C→TC→RB→K）では途切れがない。しかし、許容度と受容者の区間は閉じていない。このため G-003 を「一部（照合未了）」とする**（§3.6）[D]。番号の区間は 10 件すべてで欠落が 0 件である [D]。許容度の区間では、GOV-02 の許容度項目（T1〜T7、Z1〜Z7、P1〜P6、L1〜L4）に照らせない S が 2 件ある（S-18、S-14。T1 以外に該当する項目がない）[D][^13]。受容者の区間では、残余リスク台帳（DCS-05）の受容者の段が 1 シナリオに 1 名とはならない。GOV-03 §7 の受容者案と DCS-05 の段がすべての行で一致する S は S-08 だけである [D][^12][^8]。合格値の多くは TBD であり、受容の記録（E9）は 0 件である [D]。
 
 ## 1. 位置付けと範囲
@@ -85,7 +85,7 @@ G-021 は孤児の定義を置いていない[^2]。本書は次のとおり定�
 | 未着手 | 計画上の対応成果物（DL-81・DL-82 を除く）がすべて未作成 |
 | 未着手（一部） | 計画上の対応成果物の一部が未作成。集計では未着手に含めて内数を示す |
 | 充足 | 区分 A で、対応成果物がすべて存在する。G-ID を明示参照する既存文書がない場合は「充足※」とし、内容の照合が済んでいないことを示す |
-| 未達（成果物内で開示） | 区分 A で対応成果物はすべて存在するが、対応成果物のいずれかが、その G の合格条件の中身（件数・範囲・網羅・記録項目）を満たしていないと明記している（ラウンド 6 で追加。本版では G-012・G-018・G-019・G-022）。判定者（作成者以外）の確認が未実施であることだけを理由に「未達」と書いている場合は、この区分に入れない |
+| 未達（成果物内で開示） | 区分 A で対応成果物はすべて存在するが、対応成果物のいずれかが、その G の合格条件の中身（件数・範囲・網羅・記録項目）を満たしていないと明記している（ラウンド 6 で追加。本版では G-012・G-018・G-019・G-022・G-130・G-138・G-143・G-151。後の 4 件はラウンド 9 で追加）。判定者（作成者以外）の確認が未実施であることだけを理由に「未達」と書いている場合は、この区分に入れない |
 | 一部（照合未了） | 区分 A で対応成果物はすべて存在するが、本書の照合で合格基準の一部の区間が閉じていないことを確認した（本版では G-003・G-038。G-003 は §3.6） |
 | 決裁案まで | 区分 B で、対応成果物（決裁案・選択肢・様式）がすべて存在する。経営・法務の決定（E1/E2/E9）は未取得 |
 | 要実測 | 区分 C または C（B併用）で、計画文書（事前登録計画・設計）がすべて存在する。実測（DL-81）は未取得 |
@@ -185,10 +185,10 @@ G-021 は孤児の定義を置いていない[^2]。本書は次のとおり定�
 | R-ID | 要求（要約） | 対応 DL | 状況 |
 |---|---|---|---|
 | R-047 | 「どのテナントのどのIdPがこの主体を保証したか」の結合 | DL-08, DL-12 | TC・RB・EX のいずれにも未割当 |
-| R-058 | 全entry point inventory（batch/q | DL-10, DL-50 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4）[^5] |
-| R-059 | enforcement coverageの機械的検証 | DL-15 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4）[^5] |
-| R-061 | DB/storage側tenant guardrail（RL | DL-15, DL-57 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4）[^5] |
-| R-062 | 上記のCI継続自動検証 | DL-15, DL-80 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4）[^5] |
+| R-058 | 全entry point inventory（batch/q | DL-10, DL-50 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4。最新の版 0.5 でも同じ。PoC/R7反映 で確認）[^5] |
+| R-059 | enforcement coverageの機械的検証 | DL-15 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4。最新の版 0.5 でも同じ。PoC/R7反映 で確認）[^5] |
+| R-061 | DB/storage側tenant guardrail（RL | DL-15, DL-57 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4。最新の版 0.5 でも同じ。PoC/R7反映 で確認）[^5] |
+| R-062 | 上記のCI継続自動検証 | DL-15, DL-80 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4。最新の版 0.5 でも同じ。PoC/R7反映 で確認）[^5] |
 | R-093 | 選定評価軸13項目（整合性、最大深度、tail latenc | DL-13 | TC・RB・EX のいずれにも未割当 |
 | R-099 | ADR: PDP topology、cell・fault d | DL-12, DL-18 | TC・RB・EX のいずれにも未割当 |
 | R-105 | version negotiation | DL-23, DL-70 | TC・RB・EX のいずれにも未割当 |
@@ -224,7 +224,7 @@ G-021 は孤児の定義を置いていない[^2]。本書は次のとおり定�
 | R-232 | 全IAM変更（権限・ロール・relation・設定の変更）を | DL-25, DL-77 | TC・RB・EX のいずれにも未割当 |
 | R-235 | 原則7 侵害を前提に検知・封じ込め・復旧する: インシデント | DL-24, DL-32 | TC・RB・EX のいずれにも未割当 |
 | R-246 | ソフトウェア供給網: SLSA 1.2 をビルド来歴・署名・ | DL-12, DL-61 | TC・RB・EX のいずれにも未割当 |
-| R-269 | 承認条件4: 全entry pointのPEP covera | DL-10, DL-15 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4）[^5] |
+| R-269 | 承認条件4: 全entry pointのPEP covera | DL-10, DL-15 | 抽出時点は未割当。TC-121 に割当済み（POC-01 版 0.3、ラウンド 4。最新の版 0.5 でも同じ。PoC/R7反映 で確認）[^5] |
 
 - 数値契約の指標（R-188.x〜R-195.x）のうち、設定上限型の指標（例: R-189.1 の token 寿命）は CI の設定検査で測る設計である[^7]。設定検査を TC として採番するか、C-ID の試験として記録するかを試験計画で決める必要がある [D]。
 - PEP 網羅（R-058、R-059、R-061、R-062、R-269）は、POC-01 版 0.3 で TC-121 の対応要求に加わり、承認条件 4 の判定量（未宣言入口の検出率、DB 直接接続の列挙の完全性、変異体の検出力の下限）が合否基準 (7) として凍結対象に書かれた[^5]。本書の 5 行はこれに合わせて TC-121 に割り当てた（ラウンド 4）[D]。property test の検出力の下限は TBD（所有者 CISO、期限 TC-121 の凍結前）であり、TC-121 は未凍結である[^5]。段階導入（R-177、R-178、R-180）は DL-31 の範囲に近いが、試験の割当てはまだない [D]。
@@ -294,8 +294,8 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 
 | 現状 | 件数 | G-ID |
 |---|---|---|
-| 充足 | 51 | G-001, G-002, G-004〜G-006, G-008, G-010, G-013〜G-016, G-020, G-023〜G-027, G-035, G-036, G-042, G-043, G-049, G-055, G-064, G-073, G-077, G-078, G-097〜G-101, G-104, G-107, G-109, G-118〜G-120, G-124, G-125, G-127, G-128, G-130, G-132, G-135, G-137, G-138, G-140, G-143, G-148, G-151 |
-| 未達（成果物内で開示） | 4 | G-012, G-018, G-019, G-022 |
+| 充足 | 47 | G-001, G-002, G-004〜G-006, G-008, G-010, G-013〜G-016, G-020, G-023〜G-027, G-035, G-036, G-042, G-043, G-049, G-055, G-064, G-073, G-077, G-078, G-097〜G-101, G-104, G-107, G-109, G-118〜G-120, G-124, G-125, G-127, G-128, G-132, G-135, G-137, G-140, G-148 |
+| 未達（成果物内で開示） | 8 | G-012, G-018, G-019, G-022, G-130, G-138, G-143, G-151 |
 | 一部（照合未了） | 2 | G-003, G-038 |
 | 決裁案まで | 32 | G-011, G-028〜G-033, G-039〜G-041, G-044〜G-047, G-052〜G-054, G-065, G-067, G-071, G-074, G-079, G-080, G-087, G-094, G-096, G-116, G-126, G-129, G-133, G-134, G-139 |
 | 要実測 | 50 | G-009, G-048, G-050, G-051, G-056〜G-060, G-062, G-063, G-066, G-068〜G-070, G-072, G-075, G-081, G-082, G-084, G-086, G-088, G-090, G-092, G-093, G-095, G-102, G-103, G-105, G-106, G-108, G-110〜G-115, G-117, G-121〜G-123, G-136, G-141, G-142, G-144〜G-147, G-149, G-150 |
@@ -307,11 +307,11 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 
 | 最終判定の段階 | 充足 | 未達（成果物内で開示） | 一部（照合未了） | 決裁案まで | 要実測 | 要第三者 | 未着手（一部を含む） | 不合格 |
 |---|---|---|---|---|---|---|---|---|
-| 段階1（86 件） | 51 | 4 | 2 | 23 | 2 | 0 | 0 | 4 |
+| 段階1（86 件） | 47 | 8 | 2 | 23 | 2 | 0 | 0 | 4 |
 | 段階2（54 件） | 0 | 0 | 0 | 3 | 45 | 3 | 3 | 0 |
 | 段階3（11 件） | 0 | 0 | 0 | 6 | 3 | 2 | 0 | 0 |
 
-- 次回決裁で判定する段階1 の 86 件のうち、机上の準備がそろったもの（充足・決裁案まで）は 74 件である（ラウンド 6 で更新。最終整合の時点は 78 件、抽出時点は 70 件）[D]。残りは、G-012・G-018・G-019・G-022 の未達（成果物内で開示）、G-003・G-038 の一部（照合未了）、G-017・G-021・G-037・G-131 の不合格（是正中）、段階1 で判定する実測（G-121・G-122 の契約試験キットの動作確認）である [D]。
+- 次回決裁で判定する段階1 の 86 件のうち、机上の準備がそろったもの（充足 47・決裁案まで 23）は 70 件である（ラウンド 9 で更新。ラウンド 6 の時点は 74 件、最終整合の時点は 78 件、抽出時点は 70 件。抽出時点と同じ値だが中身は異なる）[D]。残りは、G-012・G-018・G-019・G-022・G-130・G-138・G-143・G-151 の未達（成果物内で開示）、G-003・G-038 の一部（照合未了）、G-017・G-021・G-037・G-131 の不合格（是正中）、段階1 で判定する実測（G-121・G-122 の契約試験キットの動作確認）である [D]。
 - **最終整合（2026-10-15）での判定の根拠** [D]:
   - G-001・G-008・G-025: 抽出時点で未作成だった DL-35・DL-112・DL-37 が作成され、対応成果物がすべてそろったので §2.4 の規則で「充足」とした。G-025 は模擬パネルが判定者に入るが、パネルは自己レビューであり、作成者以外の確認には当たらない [D]。
   - G-006: DL-108（traceability/independent-challenge-review.md）が作成され、4 手法の記録と ICR-01〜ICR-22 の持込み先 DEC がある。合格判定は作成者以外のレビュアーが行う（ICR-22、未実施）ため「充足」（準備済）にとどめた [D]。
@@ -328,6 +328,21 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
     - G-007: TRC-09 版 0.3 も報告系統外の独立反証は未達とし、評価者は未任命である。「要第三者」のままとした [D]。
     - G-038: DL-109 は TRC-10 版 0.4 に更新され、ラウンド 1〜7 の判定・件数・Medium/Low 223 件を記録している。最新の判定済みラウンド 7 は承認可（条件付き）4・差戻し 4 で、ラウンド 7 の是正 25 件は再審査未実施である。G 全件への判定と根拠は依然として持たないため「一部（照合未了）」のままとした [D]。
     - DL-81 を対応成果物に持つ G（G-009 ほか 14 件）: 実測レポート POC-02 版 0.1 が作成されたが、全実行で立会人がおらず、合否に使える実測（[M]）は 0 件である（POC-02、open-items 要旨）。§2.4 の「要実測」の定義（実測は未取得）に当たるため、区分は変えず、§4.3 の × 印だけを外した [D]。
+  - **ラウンド 9（模擬パネル audit 指摘）での移動と再点検** [D]。
+    - G-130（「充足」から移した）: G-130 の合格条件は、経営承認・第三者評価・実測・本番運用実績が必要な事項が残課題台帳に「未達」として載り、証拠のない「達成」「完了」の表記が 0 件であることである[^2]。対応成果物の残課題台帳（TRC-11）は、冒頭の版 0.11 の記録で、ラウンド 8 の redteam 指摘として「G-130 の申し送り追跡の欠落で群 g の型の再発」を自ら記し、版 0.9 追補（ラウンド 7 sre）と版 0.12（ラウンド 9 legal）でも同じ型の再発を記している[^20]。群 g（申し送り・是正の POA&M 未起票）は模擬パネル判定記録（TRC-10）§4.4 でラウンド 2〜7 に 16 件の MP-ID を持ち、解消時期を「次回決裁の起案前（G-130）」としている[^22]。さらに、残余リスク台帳（DCS-05）版 0.13 が加えた RRG-011-1（受容票 RA-0078）と RRG-076（RA-0079）、§12.1 の申し送り 73〜80・83・84 は、2026-10-15T09:10Z（UTC）に作業ツリーの TRC-11（版 0.12）を検索して 0 件だった（RA-0078、RA-0079、RRG-011-1、RRG-076、「§12.1 の 73」〜「§12.1 の 80」「§12.1 の 83」「§12.1 の 84」。81・82 は版 0.12 の OI-C27 (4)(5) で起票済み）[^21][^20]。TRC-11 が §4.7.7 で示した「DCS-05 の RRG-ID 集合との差集合 0 件」は版 0.10 の 77 件についての結果であり、79 件の版 0.13 では成り立たない [D]。成果物自身が合格条件の中身（未達の事項が台帳に載ること）を満たしていないと書いているので、§2.4 の規則で移した [D]。
+    - G-138（同）: 合格条件は、パターン×インタフェース×契約の行列の空欄 0 件と、契約に定義のないインタフェースに依存するパターン 0 件である[^2]。対応成果物の INT-02（DL-64）§5.2 の判定は、I-15 に依存する P-06 と I-05（一部）を使うパターンが残るため「契約に定義のないインタフェースに依存するパターン 0 件」は未達とし、未解決事項でも「G-138 は未達のまま」とする[^23]。ARC-02（DL-16）も G-138 全体を未達とする [D]。
+    - G-143（同）: 合格条件は、契約 v1 の全機能に提供時期があり、暫定方式・残余リスク・切替の条件と期限がそろうことである[^2]。対応成果物の INT-00（DL-62）§0 の 6 は、DCS-06 §8 が機能ごとの提供ゲートの割当て案までで日付を置いていないため「G-143 は未達である」とする[^24]。
+    - G-151（同）: 合格条件は、全成長シナリオで第三者が上限を再計算でき、全要素に予兆指標と拡張手段があることで、本文は成長シナリオの A-xxx 登録と拡張の所要期間を求める[^2]。対応成果物の ARC-13（DL-58）の対応表は、拡張の所要期間が TBD（NA-58-9）で一部未達、成長・低／高（NA-58-3）と 6 年目以降のシナリオが前提台帳に未登録で「A-xxx として登録」は未達とする[^25]。
+    - 再点検の範囲と結果: 「充足」の残り 50 件（移す前）について、2026-10-15T09:00Z〜09:10Z（UTC）に、作業ツリーの全 .md（本書と G 台帳を除く）から、当該 G-ID の前後 40〜200 文字に「未達」「満たさない」「満たしていない」「不合格」「未充足」がある箇所を正規表現で検索し、該当 16 箇所を原文で読んだ。上の 3 件のほかは、判定者の未実施だけを理由とするもの（G-004: THR-01 の第三者再導出、G-008: TRC-08、G-055: ARC-13 の人間による再計算、G-118: CON-00 の自動検査 DL-111 の再実行と独立レビュー。DCS-01 の「G-118 は未達」も同じ理由）、実証の未実施を理由とするもの（G-049: INT-01 §0 は「循環依存 0 件」を機械検査と同時停止演習 TC-115 で示すとし、実測の未実施を理由に未達とする。循環依存が見つかったとは書いていない）、別の ID の一部として現れたもの（G-006・G-036・G-073: RRG の失効条件や TC の不合格の記述）であり、移していない [D]。検索は ID の近くの語に頼るので、ID を書かずに未達を記す箇所は拾えない [D]。
+    - 点検者: 本書の作成者と同じ AI エージェント（ラウンド 9 の是正担当）であり、作成者以外の点検ではない。作成者以外による再点検は残課題 15 とした [D]。
+  - **最終整合（phase4c.js の報告段、模擬パネル ラウンド 10 の後、2026-10-15T10:00Z 頃（UTC））での確認** [D]。区分の変更はない。
+    - G-017・G-037: 自動検査の再実行（consistency-checks.md §11、`final-r10`）で、主張タグ欠落の候補が 00_decision・ADR 本文に 277 箇所（再最終整合は 240）、エグゼクティブ要約の表を除く本文にタグのない文の候補が 181 文（同 111 文）、DCS-03 で 144 文（同 112 文）になった。不合格（是正中）のままとした [D][^26]。
+    - G-131: 同じ再実行で、メタ情報ブロック欠落が 3 件（POC-02、独立再現ログ POC-04（仮）、12_poc/data/README.md）、未定義 ID は 7 種・340 箇所（THR-03 が T-087〜T-091・T-094 を定義して 6 種が解消。RB-13 250・S-20 71 は増加）、§8 にあって実ファイルのないものは 3 件（DL-59、DL-120、DL-121）である。不合格（是正中）のままとした [D][^26]。
+    - G-035: 禁止表現 36 箇所は再最終整合と同じ語・同じ文脈（行番号の移動のみ）であった。作成者以外の確認は未実施のため「充足」のままとした [D][^26]。
+    - G-006: DL-108 は TRC-09 版 0.4 に更新され、89 件の指摘（回答の対象 73 件は回答済 31・部分回答 39・未回答 3〔SM-1b、SM-3a、SM-1e〕）、MBT 16 件（全件未検証。MBT-16 は PoC 系統 1 で偽と観測）、ICR-01〜ICR-27 がある。合格判定は作成者以外のレビュアー（ICR-22、未実施）が行うため「充足」（準備済）のままとした。SM-1e と ICR-27 は本更新と同時に POA&M の OI-J08・OI-J09 に起票された [D][^27]。
+    - G-007: TRC-09 版 0.4 も「報告系統外の独立反証は未達」と冒頭で宣言している。「要第三者」のままとした [D][^27]。
+    - G-038: DL-109 は TRC-10 版 0.6 に更新され、ラウンド 1〜10 の判定・件数・Medium/Low 311 件・8 役の判定理由を記録している。最新の判定済みラウンド 10 は承認可 1・差戻し 7 で、ラウンド 10 の是正 22 件は再審査未実施である。G 全件への判定と根拠は依然として持たないため「一部（照合未了）」のままとした [D][^28]。
+    - G-130: 申し送り 9 の (1) は、TRC-11 版 0.14 の OI-R58 と §4.7.7 の対応表で RRG-011-1（RA-0078）・RRG-076（RA-0079）が起票された。一方、(3) の G-138・G-151・NA-58-9 は 2026-10-15T10:00Z 頃の TRC-11 に 0 件で、申し送り 7 の G-019 の行も起票されていない。TRC-11 は版 0.14・0.15 でも、ラウンド 10 の audit・devlead 指摘として群 g（申し送りの POA&M 未起票）の型の再発を自ら記している。「未達（成果物内で開示）」のままとした [D][^20]。
   - G-039・G-040・G-133: 区分 B で対応成果物がそろったので「決裁案まで」とした。内部監査の所見（G-039）、DEC の決議（G-040）、承認記録（G-133）はいずれも未取得である。模擬パネルの内部監査役はラウンド 3 でも差戻しであった [D]。
 - 段階2・段階3 の G は、本リポジトリ内では「要実測」「要第三者」「決裁案まで」より先に進めない [D]。CONVENTIONS §8 に従い、達成済みとは書かない [D][^11]。
 - 「充足※」は なし である。対応成果物は存在するが、G-ID を明示した記述が見当たらないため、内容の照合が済んでいない [D]。
@@ -338,7 +353,7 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 |---|---|---|---|---|---|---|---|
 | G-001 | A | 段階1 | **充足** | R-197〜R-199 | DL-35, DL-83 | — | research/README.md, 00_decision/05-residual-risk-register.md, 00_decision/06-gate-plan-and-plan-b.md, 01_governance/durability-charter-20y.md ほか 4 件 |
 | G-002 | A | 段階1 | **充足** | R-202 | DL-39, DL-83 | — | 00_decision/03-decision-items.md, research/README.md, 00_decision/05-residual-risk-register.md |
-| G-003 | A | 段階1 | **一部（照合未了）** | R-001〜R-007, R-023 | DL-02, DL-11, DL-104 | — | 01_governance/loss-scenarios.md, 03_threat-model/threat-catalog.md, 00_decision/05-residual-risk-register.md, 02_requirements/data-classification.md |
+| G-003 | A | 段階1 | **一部（照合未了）** | R-001〜R-007, R-023 | DL-02, DL-11, DL-104 | TC-029, TC-132（PoC/R7反映。POC-01 版 0.5 §6.6） | 01_governance/loss-scenarios.md, 03_threat-model/threat-catalog.md, 00_decision/05-residual-risk-register.md, 02_requirements/data-classification.md |
 | G-004 | A | 段階1 | **充足** | R-002, R-167 | DL-02, DL-10, DL-11 | — | 01_governance/loss-scenarios.md, 03_threat-model/dfd-entry-points.md, 03_threat-model/threat-catalog.md, 00_decision/05-residual-risk-register.md ほか 2 件 |
 | G-005 | A | 段階1 | **充足** | R-088, R-208 | DL-44 | — | 00_decision/08-alternatives-comparison.md, 00_decision/05-residual-risk-register.md, 05_adr/ADR-001-build-buy-identity-provider.md |
 | G-006 | A | 段階1 | **充足** | R-201 | DL-108 | — | 00_decision/05-residual-risk-register.md, 09_assurance/independent-assurance-plan.md |
@@ -396,8 +411,8 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | G-058 | C | 段階2 | **要実測** | R-079〜R-086 | DL-09, DL-19, DL-81 | TC-010, TC-011, TC-014, TC-019, TC-103, TC-104, TC-105, TC-106, TC-109, TC-112, TC-114, TC-115, TC-126, TC-128 | 02_requirements/operation-risk-tiers-assurance.md, 04_architecture/fail-mode-matrix.md, 00_decision/05-residual-risk-register.md, 04_architecture/root-of-trust.md ほか 11 件 |
 | G-059 | C | 段階2 | **要実測** | R-112, R-174 | DL-22, DL-24, DL-58 | TC-111, RB-02, RB-03, RB-04, EX-05 | 04_architecture/capacity-model.md, 08_operations/compromise-runbooks.md, 12_poc/preregistered-test-plan.md, 00_decision/05-residual-risk-register.md ほか 7 件 |
 | G-060 | C（B併用） | 段階2 | **要実測** | R-027, R-030, R-031, R-188 | DL-09, DL-12, DL-20 | — | 02_requirements/operation-risk-tiers-assurance.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 7 件 |
-| G-061 | D | 段階2 | **未着手（一部）** | R-032, R-041〜R-043 | DL-08, DL-12, ×DL-59 | — | 02_requirements/identity-lifecycle.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 8 件 |
-| G-062 | C | 段階2 | **要実測** | R-012, R-042, R-176 | DL-52, DL-81 | — | 03_threat-model/fraud-abuse-controls.md, 00_decision/05-residual-risk-register.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-005-token-profile.md ほか 4 件 |
+| G-061 | D | 段階2 | **未着手（一部）** | R-032, R-041〜R-043 | DL-08, DL-12, ×DL-59 | TC-133（PoC/R7反映。POC-01 版 0.5） | 02_requirements/identity-lifecycle.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 8 件 |
+| G-062 | C | 段階2 | **要実測** | R-012, R-042, R-176 | DL-52, DL-81 | TC-133（PoC/R7反映。POC-01 版 0.5） | 03_threat-model/fraud-abuse-controls.md, 00_decision/05-residual-risk-register.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-005-token-profile.md ほか 4 件 |
 | G-063 | C | 段階2 | **要実測** | R-123, R-125〜R-128, R-193 | DL-25, DL-58, DL-81 | — | 04_architecture/audit-privacy.md, 04_architecture/capacity-model.md, 00_decision/05-residual-risk-register.md, 04_architecture/claims-catalog.md ほか 5 件 |
 | G-064 | A | 段階1 | **充足** | R-118, R-119, R-122 | DL-25 | — | 04_architecture/audit-privacy.md, 00_decision/05-residual-risk-register.md, 04_architecture/claims-catalog.md, 05_adr/ADR-014-audit-data.md ほか 1 件 |
 | G-065 | B | 段階1 | **決裁案まで** | R-104, R-208, R-209 | DL-47 | — | 01_governance/durability-charter-20y.md, 00_decision/03-decision-items.md, 00_decision/05-residual-risk-register.md, 04_architecture/claims-catalog.md ほか 6 件 |
@@ -413,11 +428,11 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | G-075 | C | 段階2 | **要実測** | R-150, R-209 | DL-12, DL-23, DL-49 | — | 02_requirements/tenant-lifecycle.md, 04_architecture/evolution-pqc.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md ほか 12 件 |
 | G-076 | D | 段階3 | **要第三者** | R-181〜R-187 | DL-32 | — | 09_assurance/continuous-assurance-plan.md, 01_governance/durability-charter-20y.md, 01_governance/kri.md, 04_architecture/product-evaluation-exit.md ほか 3 件 |
 | G-077 | A | 段階1 | **充足** | R-002, R-166 | DL-51 | — | 03_threat-model/attacker-model.md, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-017-non-human-ai-agent-identity.md, 05_adr/ADR-020-fapi2-applicability.md ほか 1 件 |
-| G-078 | A | 段階1 | **充足** | R-135, R-167, R-168 | DL-11 | — | 03_threat-model/threat-catalog.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md, 05_adr/ADR-006-revocation-continuous-evaluation.md ほか 3 件 |
+| G-078 | A | 段階1 | **充足** | R-135, R-167, R-168 | DL-11 | TC-029, TC-132（PoC/R7反映。POC-01 版 0.5 §6.6） | 03_threat-model/threat-catalog.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md, 05_adr/ADR-006-revocation-continuous-evaluation.md ほか 3 件 |
 | G-079 | B | 段階3 | **決裁案まで** | R-011, R-023 | DL-11, DL-41 | — | 00_decision/05-residual-risk-register.md, 03_threat-model/threat-catalog.md, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-024-cross-tenant-sharing.md |
 | G-080 | B | 段階1 | **決裁案まで** | R-011 | DL-01 | — | 01_governance/risk-appetite-draft.md, 00_decision/03-decision-items.md, 01_governance/kri.md, 04_architecture/pep-contract.md ほか 3 件 |
 | G-081 | C | 段階2 | **要実測** | R-168, R-173 | DL-22, DL-53, DL-81 | TC-004, TC-006, TC-007, TC-014, TC-019, TC-020, TC-025, TC-104, TC-105, TC-106, TC-108, TC-109, TC-113, TC-115, TC-116, TC-126, TC-127, TC-128 | 03_threat-model/incident-casebook.md, 12_poc/preregistered-test-plan.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 4 件 |
-| G-082 | C | 段階2 | **要実測** | R-058, R-059, R-061, R-062, R-164 | DL-10, DL-15, DL-57 | — | 03_threat-model/dfd-entry-points.md, 04_architecture/data-outside-pep.md, 04_architecture/pep-contract.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 4 件 |
+| G-082 | C | 段階2 | **要実測** | R-058, R-059, R-061, R-062, R-164 | DL-10, DL-15, DL-57 | TC-121（PoC/R7反映。MP-7-18） | 03_threat-model/dfd-entry-points.md, 04_architecture/data-outside-pep.md, 04_architecture/pep-contract.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 4 件 |
 | G-083 | D | 段階2 | **未着手（一部）** | R-060, R-065 | DL-30, ×DL-59 | — | 09_assurance/rfp-sow.md, 04_architecture/pep-contract.md, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-011-policy-language-pep-pdp-api.md ほか 4 件 |
 | G-084 | C | 段階2 | **要実測** | R-049〜R-054, R-056, R-057 | DL-12, DL-14, DL-24 | RB-01, RB-08, EX-01, EX-02, EX-03 | 04_architecture/root-of-trust.md, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md ほか 11 件 |
 | G-085 | D | 段階3 | **要第三者** | R-055 | DL-14 | — | 04_architecture/root-of-trust.md, 05_adr/ADR-001-build-buy-identity-provider.md, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, 09_assurance/independent-assurance-plan.md ほか 2 件 |
@@ -440,7 +455,7 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | G-102 | C | 段階2 | **要実測** | R-100, R-206 | DL-12, DL-55, DL-74 | — | 04_architecture/workload-identity-delegation.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 15 件 |
 | G-103 | C | 段階2 | **要実測** | R-172, R-205, R-206 | DL-22, DL-80, DL-82 | TC-002, TC-004, TC-005, TC-007, TC-019, TC-021, TC-022, TC-023, TC-024, TC-027, TC-028, TC-104, TC-112, TC-115, TC-117, TC-120, TC-121, TC-125, TC-128 | 11_contracts/mock-contract-test-kit.md, 12_poc/preregistered-test-plan.md, 05_adr/ADR-006-revocation-continuous-evaluation.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 2 件 |
 | G-104 | A | 段階1 | **充足** | R-207, R-210 | DL-63 | — | 10_integration/dependency-tiers.md, 05_adr/ADR-013-cell-partitioning-fail-mode.md, 05_adr/ADR-023-dependency-tiers.md |
-| G-105 | C | 段階2 | **要実測** | R-058, R-061 | DL-57, DL-81 | — | 04_architecture/data-outside-pep.md, 04_architecture/audit-privacy.md, 04_architecture/pep-contract.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 4 件 |
+| G-105 | C | 段階2 | **要実測** | R-058, R-061 | DL-57, DL-81 | TC-121（R-058・R-061 経由。PoC/R7反映。MP-7-18） | 04_architecture/data-outside-pep.md, 04_architecture/audit-privacy.md, 04_architecture/pep-contract.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 4 件 |
 | G-106 | C（B併用） | 段階3 | **要実測** | R-189, R-190 | DL-20, DL-64 | — | 07_slo/numeric-contracts.md, 10_integration/integration-patterns.md, 04_architecture/revocation-continuous-evaluation.md, 04_architecture/token-profile.md ほか 6 件 |
 | G-107 | A | 段階1 | **充足** | R-205 | DL-17, DL-65, DL-113 | — | 04_architecture/authorization-model.md, 10_integration/authz-modeling-guide.md, 03_threat-model/threat-catalog.md, 05_adr/ADR-010-authz-engine-store-consistency.md ほか 3 件 |
 | G-108 | C | 段階2 | **要実測** | R-171, R-205 | DL-17, DL-22, DL-65 | TC-013 | 04_architecture/authorization-model.md, 10_integration/authz-modeling-guide.md, 12_poc/preregistered-test-plan.md, 05_adr/ADR-010-authz-engine-store-consistency.md ほか 5 件 |
@@ -466,19 +481,19 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | G-128 | A | 段階1 | **充足** | R-138 | DL-68 | — | 10_integration/developer-faq.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md, 05_adr/ADR-026-async-long-running-delegation.md, traceability/open-items.md |
 | G-129 | B | 段階1 | **決裁案まで** | —（/goal 由来） | DL-66, DL-67 | — | 10_integration/definition-of-ready.md, 10_integration/onboarding.md, 00_decision/03-decision-items.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 2 件 |
 | G-134 | B | 段階1 | **決裁案まで** | R-109 | DL-12, DL-39, DL-69, DL-80 | — | 00_decision/03-decision-items.md, 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md ほか 11 件 |
-| G-130 | A | 段階1 | **充足** | R-202 | DL-110 | — | traceability/open-items.md |
+| G-130 | A | 段階1 | **未達（成果物内で開示）**（ラウンド 9。TRC-11 版 0.11・0.12 冒頭の群 g の再発、DCS-05 版 0.13 の RA-0078・RA-0079 と §12.1 の 73〜80・83・84 の未起票、TRC-10 §4.4 群 g） | R-202 | DL-110 | — | traceability/open-items.md |
 | G-131 | A | 段階1 | **不合格（是正中）** | R-197, R-199 | DL-111 | — | traceability/consistency-checks.md |
 | G-132 | A | 段階1 | **充足** | R-068, R-069 | DL-30 | — | 09_assurance/rfp-sow.md, traceability/open-items.md |
 | G-133 | B | 段階1 | **決裁案まで** | —（/goal 由来） | DL-35, DL-112 | — | 01_governance/raci-governance.md, 03_threat-model/threat-catalog.md, traceability/citation-audit-proposal.md, traceability/open-items.md |
 | G-135 | A | 段階1 | **充足** | R-058, R-206 | DL-63, DL-64, DL-113 | — | 10_integration/dependency-tiers.md, 10_integration/integration-patterns.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md, 05_adr/ADR-017-non-human-ai-agent-identity.md ほか 3 件 |
 | G-136 | C | 段階2 | **要実測** | R-058, R-059, R-206 | DL-22, DL-57, DL-64, DL-81 | TC-024, TC-122 | 04_architecture/data-outside-pep.md, 10_integration/integration-patterns.md, 12_poc/preregistered-test-plan.md, 04_architecture/pep-contract.md ほか 7 件 |
 | G-137 | A | 段階1 | **充足** | R-044, R-109 | DL-08, DL-49, DL-78 | — | 02_requirements/identity-lifecycle.md, 02_requirements/tenant-lifecycle.md, 11_contracts/ssf-caep.openapi.yaml, 00_decision/06-gate-plan-and-plan-b.md ほか 20 件 |
-| G-138 | A | 段階1 | **充足** | R-109, R-206, R-208 | DL-16, DL-64, DL-69 | — | 04_architecture/token-profile.md, 10_integration/integration-patterns.md, 11_contracts/README.md, 05_adr/ADR-005-token-profile.md ほか 10 件 |
+| G-138 | A | 段階1 | **未達（成果物内で開示）**（ラウンド 9。INT-02 §5.2 の判定） | R-109, R-206, R-208 | DL-16, DL-64, DL-69 | — | 04_architecture/token-profile.md, 10_integration/integration-patterns.md, 11_contracts/README.md, 05_adr/ADR-005-token-profile.md ほか 10 件 |
 | G-139 | B | 段階2 | **決裁案まで** | R-010, R-024 | DL-18, DL-34, DL-64, DL-86 | — | 04_architecture/cell-blast-radius.md, 06_controls/applicability.md, 10_integration/integration-patterns.md, 05_adr/ADR-013-cell-partitioning-fail-mode.md ほか 4 件 |
 | G-140 | A | 段階1 | **充足** | R-108, R-208 | DL-12, DL-62, DL-70 | — | 05_adr/ADR-002-assurance-levels-by-tier.md, 05_adr/ADR-003-account-recovery-authenticators.md, 05_adr/ADR-004-b2b-federation-linking-scim.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 18 件 |
 | G-141 | C | 段階2 | **要実測** | R-062, R-071 | DL-22, DL-66, DL-80 | TC-025, TC-122 | 10_integration/onboarding.md, 11_contracts/mock-contract-test-kit.md, 12_poc/preregistered-test-plan.md, 04_architecture/workload-identity-delegation.md ほか 8 件 |
 | G-142 | C | 段階2 | **要実測** | R-071, R-109, R-172 | DL-80, DL-82, DL-100 | TC-026 | 11_contracts/mock-contract-test-kit.md, 00_decision/03-decision-items.md, 00_decision/08-alternatives-comparison.md, 05_adr/ADR-012-pep-coverage-storage-guardrails.md ほか 7 件 |
-| G-143 | A | 段階1 | **充足** | R-177, R-179 | DL-31, DL-41, DL-42, DL-62 | — | 00_decision/05-residual-risk-register.md, 00_decision/06-gate-plan-and-plan-b.md, 08_operations/phased-rollout.md, 10_integration/README.md ほか 7 件 |
+| G-143 | A | 段階1 | **未達（成果物内で開示）**（ラウンド 9。INT-00 §0 の 6） | R-177, R-179 | DL-31, DL-41, DL-42, DL-62 | — | 00_decision/05-residual-risk-register.md, 00_decision/06-gate-plan-and-plan-b.md, 08_operations/phased-rollout.md, 10_integration/README.md ほか 7 件 |
 | G-144 | C（B併用） | 段階2 | **要実測** | R-140 | DL-06, DL-20, DL-66 | TC-119 | 01_governance/kri.md, 07_slo/numeric-contracts.md, 10_integration/onboarding.md, 00_decision/04-program-charter.md ほか 10 件 |
 | G-145 | C（B併用） | 段階2 | **要実測** | R-136〜R-138 | DL-27, DL-62, DL-68 | — | 08_operations/operating-model.md, 10_integration/README.md, 10_integration/developer-faq.md, 05_adr/ADR-022-integration-contract-standards.md ほか 2 件 |
 | G-146 | C | 段階2 | **要実測** | R-205, R-206 | DL-22, DL-40, DL-81 | TC-119 | 00_decision/04-program-charter.md, 12_poc/preregistered-test-plan.md, 00_decision/03-decision-items.md, 00_decision/08-alternatives-comparison.md ほか 3 件 |
@@ -486,7 +501,7 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | G-148 | A | 段階1 | **充足** | R-203, R-204 | DL-40, DL-54 | — | 00_decision/04-program-charter.md, 04_architecture/reference-architecture-v2.md, 05_adr/ADR-014-audit-data.md |
 | G-149 | C | 段階2 | **要実測** | R-027, R-188 | DL-08, DL-09, DL-34 | TC-123, TC-124 | 02_requirements/identity-lifecycle.md, 02_requirements/operation-risk-tiers-assurance.md, 06_controls/applicability.md, 05_adr/ADR-002-assurance-levels-by-tier.md ほか 6 件 |
 | G-150 | C | 段階2 | **要実測** | R-073, R-187 | DL-32, DL-61, DL-89 | TC-123, TC-124 | 09_assurance/continuous-assurance-plan.md, 09_assurance/self-assessments.md, 04_architecture/root-of-trust.md, 05_adr/ADR-016-versioning-deprecation.md ほか 3 件 |
-| G-151 | A | 段階1 | **充足** | R-125, R-192, R-209 | DL-18, DL-45, DL-58 | — | 04_architecture/capacity-model.md, 04_architecture/cell-blast-radius.md, 00_decision/06-gate-plan-and-plan-b.md, 01_governance/durability-charter-20y.md ほか 8 件 |
+| G-151 | A | 段階1 | **未達（成果物内で開示）**（ラウンド 9。ARC-13 対応表の G-151 行） | R-125, R-192, R-209 | DL-18, DL-45, DL-58 | — | 04_architecture/capacity-model.md, 04_architecture/cell-blast-radius.md, 00_decision/06-gate-plan-and-plan-b.md, 01_governance/durability-charter-20y.md ほか 8 件 |
 
 ### 4.4 個別 G 未接続の R と候補 G
 
@@ -997,7 +1012,7 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | DL-78 | SSF/CAEP stream API pr… | 作成済 | A・C | E4 | 0 件 | G-111, G-137 | R-112, R-143 |
 | DL-79 | SSF/CAEP イベント（SET）スキーマ | 作成済 | A・C | E4 | 0 件 | G-111, G-118 | R-112, R-191 |
 | DL-80 | モック・契約試験キット仕様 | 作成済 | C | E4 | 3 件: R-062, R-172, R-242 | G-072, G-088, G-103, G-121〜G-123, G-134, G-141, G-142 | R-071 |
-| DL-81 | PoC 実測レポート | 作成済（POC-02 版 0.1、draft、作成者以外の確認未実施。再最終整合で確認。立会人のない自己実行の記録で、[M] の証拠ではない） | C | E5（＋E4） | 0 件 | G-009, G-048, G-051, G-056, G-058, G-062, G-063, G-081, G-105, G-110, G-114, G-136, G-146, G-147 | — |
+| DL-81 | PoC 実測レポート | 作成済（POC-02 版 0.1、draft、作成者以外の確認未実施。再最終整合で確認。立会人のない自己実行の記録で、[M] の証拠ではない）。PoC/R7反映: 関連ファイルとして独立再現ログ（12_poc/reproduction-log.md、POC-04（仮）版 0.1、draft。独立立会人ではない）を作成済み | C | E5（＋E4） | 0 件 | G-009, G-048, G-051, G-056, G-058, G-062, G-063, G-081, G-105, G-110, G-114, G-136, G-146, G-147 | — |
 | DL-82 | PoC コードと再現手順 | 作成済（最終整合で確認） | C | E4／E10 | 0 件 | G-056, G-103, G-123, G-142 | R-169, R-205, R-206 |
 | DL-83 | 調査ノート総覧・調査手法 | 作成済 | A | E2 | 0 件 | G-001, G-002, G-010, G-016 | R-197〜R-199 |
 | DL-84 | 標準ステータス台帳 | 作成済 | A | E3 | 1 件: R-281 | G-013, G-071, G-119 | R-026, R-198 |
@@ -1152,6 +1167,7 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | TC-026 | 契約試験・モック一致・CI ガード | 1 | — | G-142 | — | 可 | E4/E5・12_poc/data/（未取得） |
 | TC-027 | 一覧・検索の認可（打切り・cursor・側路） | 1 | R-205 | G-103 | — | 可 | E4/E5・12_poc/data/（未取得） |
 | TC-028 | 連携パターン参照実装の負例 | 1 | R-191.3, R-205, R-206 | G-103 | — | 可 | E4/E5・12_poc/data/（未取得） |
+| TC-029 | ライフサイクル事象の受信側の負例（LC-CV-09〜LC-CV-16。POC-01 版 0.5 で追加。PoC/R7反映 で本表に追加） | 1 | — | G-003, G-078 | — | 待（MK-08 の実装） | E4/E5・12_poc/data/（未取得。未実施） |
 | TC-101 | 容量段階 P1〜P5（Check tail・最大… | 2 | R-078, R-089, R-188.2, R-190.1, R-190.2, R-190.3, R-190.4, R-205, R-220 | G-056 | — | 待（DL-20） | E4/E5・12_poc/data/（未取得） |
 | TC-102 | エンジン比較（OpenFGA と SpiceDB… | 2 | R-089, R-097, R-190.1, R-205, R-271, R-280 | G-056, G-066, G-117 | — | 待（ADR-010 §2.10 の事前登録） | E4/E5・12_poc/data/（未取得） |
 | TC-103 | 整合性と stale allow（本番構成） | 2 | R-080, R-081, R-097, R-143〜R-146, R-168, R-191.1, R-220, R-271 | G-058 | — | 待（B、B_rs） | E4/E5・12_poc/data/（未取得） |
@@ -1183,6 +1199,10 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | TC-129 | 契約の進化（版・識別子・非推奨） | 2 | R-205 | — | — | 待（DL-20） | E4/E5・12_poc/data/（未取得） |
 | TC-130 | 運用・要員負荷の計測 | 2 | — | — | — | 記録 | E4/E5・12_poc/data/（未取得） |
 | TC-131 | 利用者負担の指標（login 成功率等） | 2 | R-188.1 | G-147 | — | 記録 | E4/E5・12_poc/data/（未取得） |
+| TC-132 | ライフサイクル事象の注入・偽造（本番構成。POC-01 版 0.5 で追加。PoC/R7反映 で本表に追加） | 2 | — | G-003, G-078 | — | 待（ADR-007 族 9 の決裁、CON-15 の版の固定、W_burst・N_burst、LC-OI-9） | E4/E5・12_poc/data/（未取得） |
+| TC-133 | 管理者 1 名のテナントの回復への映像注入・deepfake（POC-01 版 0.5 で追加。PoC/R7反映 で本表に追加） | 2 | R-042 | G-061, G-062 | — | 待（W_B1 の候補値、本人確認事業者の選定） | E4/E5・12_poc/data/（未取得） |
+
+- PoC/R7反映: 系統 1 の 23 TC には 12_poc/data/ に実行記録があるが（POC-02 の凍結実行 50 件、独立再現の `_repro/` 37 件）、いずれも立会人のいない自己実行であり POC-01 §2.2.1 の凍結後の実測の条件を満たさないので、本表の「証跡」欄は「未取得」のままとする [D][^18][^19]。正式な不合格 5 件（TC-010・013・016・027・028）は凍結時のコードが残っておらず再現できない（RL-P1、POA&M の OI-C35）[D][^19]。
 
 ### 6.4 RB→S・R・G・C
 
@@ -1240,8 +1260,9 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | 10 | 欄の自由記述に書かれた番号のない参照（§2.1 の注記）を ID に置き換え、機械抽出の取りこぼしをなくす | 各文書の担当 | Phase 4 |
 | 11 | G-003 の許容度と受容者の照合を終える。S-18・S-14 の許容度項目を定め、GOV-03 §7 の受容者を DCS-05 の RRG-ID と段に置き換えた後に、§3.6.2 を再照合して G-003 の現状を判定し直す | 本書（DL-104）。前提は他文書への申し送り 1〜4 | Phase 4（DEC-1・DEC-6 の前） |
 | 12 | 抽出後に追加された DL-116〜DL-121 を §5・§6 に入れ、DL 総数 121 で再抽出する（DL-120・DL-121 は再最終整合の時点で未作成） | 本書（DL-104） | Phase 4 |
-| 13 | G-017・G-037・G-131 の不合格（自動検査の再実行結果）の是正。主張タグ欠落の候補 240 箇所（再最終整合。最終整合は 206 箇所）の抜取り確認と付与、未定義 ID 13 種の解消、POC-02 のメタ情報の補完、§8 にあり未作成の DL-59・DL-120・DL-121 の作成（consistency-checks.md §8・§10） | 各文書の担当、DL-111 | Phase 4（次回決裁の起案前） |
-| 14 | 未達（成果物内で開示）の G-012・G-018・G-019・G-022 について、開示された未達の理由（G-012: 写像の要素単位化と範囲外判断の承認、G-018: 版・取得日・ハッシュ・検証者の列と 2 名の突合、G-019: 新パッケージの主張の CL-0288 以降への登録と前提 ID の継承、G-022: 検証記録のない 168 行への記録の付与）が解消した後に、本書の現状を再判定する。POA&M の受け先は OI-R10（G-012）、OI-V02（G-018）、OI-V07（G-022）で、G-019 は未起票（他文書への申し送り 7） | 本書（DL-104） | 各 OI の完了後（段階1 の判定の前） |
+| 13 | G-017・G-037・G-131 の不合格（自動検査の再実行結果）の是正。主張タグ欠落の候補 277 箇所（ラウンド 10 の後の最終整合。再最終整合は 240、最終整合は 206 箇所）の抜取り確認と付与、未定義 ID 7 種（RB-13、S-20、TC-057、P-28〜P-30、R-170.1。T-087〜T-094 は THR-03 で解消）の解消、POC-02・POC-04（仮）・12_poc/data/README.md のメタ情報の補完、§8 にあり未作成の DL-59・DL-120・DL-121 の作成（consistency-checks.md §8・§10・§11） | 各文書の担当、DL-111 | Phase 4（次回決裁の起案前） |
+| 14 | 未達（成果物内で開示）の G-012・G-018・G-019・G-022 について、開示された未達の理由（G-012: 写像の要素単位化と範囲外判断の承認、G-018: 版・取得日・ハッシュ・検証者の列と 2 名の突合、G-019: 新パッケージの主張の CL-0288 以降への登録と前提 ID の継承、G-022: 検証記録のない 168 行への記録の付与）が解消した後に、本書の現状を再判定する。POA&M の受け先は OI-R10（G-012）、OI-V02（G-018）、OI-V07（G-022）で、G-019 は未起票（他文書への申し送り 7）。ラウンド 9 で移した G-130（POA&M の未起票の解消と、DCS-05 の RRG-ID 集合との差集合 0 件の再確認）、G-138（I-15・I-05 の契約化）、G-143（機能ごとの提供時期の日付）、G-151（拡張の所要期間と成長シナリオの A-xxx 登録）も同じく再判定する。受け先は他文書への申し送り 9・10 | 本書（DL-104） | 各 OI の完了後（段階1 の判定の前） |
+| 15 | 「充足」47 件について、対応成果物が合格条件の中身の未達を書いていないかを、作成者以外が再点検する。ラウンド 9 の点検（§4.2 の注記）は作成者と同じ AI エージェントによる ID 近傍の語の検索であり、ID を書かずに未達を記す箇所は拾えない。点検の時刻・点検者・検索語を記録する | 独立反証レビュー（DL-108）または自動検査（DL-111）の担当 | 次回決裁の起案前 |
 
 ## 他文書への申し送り
 
@@ -1254,6 +1275,26 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | 5 | 06_controls/control-mapping-ledger.md（DL-28）の C-048・C-050 の試験欄 | 試験欄に POC-01 TC-121 を加える。加えた後に本書を再抽出すれば、§6 の C-048・C-050 の TC 欄も TC-121 になる | POC-01 版 0.3 の TC-121[^5]、本書レビュー記録ラウンド 4 |
 | 6 | 00_decision/01-executive-summary.md（DCS-01）§10 の追跡性の段落 | 「追跡性は不合格である。」の段落に、G-019 が未達であること（主張台帳 TRC-05 は旧提案書の主張 287 件だけを登録し、決裁事項・ADR の結論を支える新パッケージの主張は未登録）を加える。あわせて、本書が G-012・G-018・G-019・G-022 を「未達（成果物内で開示）」としたことを引く。現在の §10 は G-018 の未達（§1）と G-021 の不合格を書くが、G-019 は書いていない | 本書 §2.4・§4.2、TRC-05 §0・§4[^15]、DCS-01 §1・§10[^17] |
 | 7 | traceability/open-items.md（TRC-11、POA&M）§4.7.3 | G-019 の是正を新しい行として起票する（ID は POA&M 側で採番。案: OI-R33）。項目: 決裁事項（DEC-1〜DEC-10）と ADR の結論を支える主張を主張台帳に CL-0288 以降として登録し、[D] の主張に前提の CL／A／RS の ID を、仮定に依存する推論に [A-xxx] を継承させ、作成者以外のレビュアーが「結論から前提まで辿れない主張 0 件」を判定する。区分 A。担当（案）: 主張台帳（DL-105）の担当（登録）、決裁事項・ADR の各文書の所有者（主張の抽出）、判定は作成者以外のレビュアー。期限（案）: 次回決裁の起案前（G-019 は段階1 の判定対象）。出典: 本書 §0 の 5・§4.2・残課題 14。現在の POA&M には G-019 と主張台帳を出典とする行がない（本書の作成時に open-items.md を検索して確認） | 本書 §4.2、G-019 の合格条件[^2]、TRC-05 §0・§4[^15] |
+| 8 | traceability/G-goal-criteria.md（DL-102）、06_controls/control-mapping-ledger.md（DL-28） | PoC/R7反映: G-003・G-078（TC-029・TC-132）、G-061・G-062（TC-133）、G-082・G-105（TC-121）の対応成果物・検証欄に POC-01 版 0.5 の TC を加える。加えた後に本書を再抽出し、§4.3 の TC 欄と §6.3 の逆引きの一致を機械で確かめる（TRC-12 の検査） | POC-01 版 0.5 §3.4・§6.6、TRC-10 MP-7-18[^18] |
+| 9 | traceability/open-items.md（TRC-11、POA&M）§4.7.7・§4.11 | ラウンド 9 audit: (1) DCS-05 版 0.13 の RRG-011-1（受容票 RA-0078）と RRG-076（RA-0079）を起票し、§4.7.7 の RRG-ID 対応表に加えて、DCS-05 §4 の RRG-ID 集合（79 件）との差集合 0 件を再確認する。(2) DCS-05 §12.1 の申し送り 73〜80・83・84 の受け先行を起票するか、既存行（OI-G03〜OI-G07 など）で受けるならその対応を書く（77 は OI-G05 の状態の書換えを求めている）。(3) G-138（INT-02 §5.2 の I-15・I-05 の未定義依存）、G-143（INT-00 §0 の 6 の提供時期の日付）、G-151（ARC-13 の NA-58-9 の所要期間と NA-58-3 等の前提台帳への登録）の是正を行として起票する（2026-10-15T09:10Z（UTC）の検索で G-138・G-151・NA-58-9・NA-58-3 は 0 件、G-143 は OI-R13 の参照 1 件のみ）。(4) G-130 の申し送り追跡の欠落が群 g の型として 3 ラウンド続けて再発したことを踏まえ、源文書の申し送り表の行と POA&M 行の対応を機械で照合する検査（TRC-12 への追加）を起票する | 本書 §4.2 の注記（ラウンド 9）、DCS-05 冒頭・§0 の 1・§12.1[^21]、TRC-11 冒頭・§4.7.7[^20]、TRC-10 §4.4 群 g[^22]、INT-02[^23]、INT-00[^24]、ARC-13[^25] |
+| 10 | 00_decision/01-executive-summary.md（DCS-01）§10、traceability/mock-panel-report.md（TRC-10）§4.4 | 本書の G の現状が充足 47・未達（成果物内で開示）8 になり、段階1 の机上準備が 70 件になったことを、G の件数を引く箇所に反映する。TRC-10 の群 g の解消時期（G-130）の欄に、本書が G-130 を未達としたことを書く | 本書 §0 の 5・§4.2 |
+
+### 申し送りの反映状況（最終整合、模擬パネル ラウンド 10 の後、2026-10-15）
+
+2026-10-15T10:00Z 頃（UTC）の作業ツリーで、宛先の文書を文字列検索して確かめた [D]。確認は本書の更新者（AI エージェント、final-consistency 担当）によるもので、作成者以外の確認ではない [D]。
+
+| # | 状態 | 確認した箇所 |
+|---|---|---|
+| 1 | 未反映 | GOV-03 は版 0.1 のままで、「許容度項目」の語は 0 件 [D] |
+| 2 | 未確認 | GOV-02 §3.1 の S-18・S-14 の行は残る。許容度項目の追加の有無は本更新では判定していない [D] |
+| 3 | 未反映（検索の範囲） | SLO-01 に S-15 と SLI-ID を結ぶ記述は見当たらない [D] |
+| 4 | 未反映 | G 台帳（DL-102）は 09:01（JST）以降更新されていない [D] |
+| 5 | 未反映 | 統制台帳（CTL-01）に「TC-121」は 0 件 [D] |
+| 6 | 未反映 | DCS-01 に「G-019」は 0 件 [D] |
+| 7 | 未反映 | TRC-11 に G-019 を出典とする行はない（「G-019」の出現は 1 件で、行ではない）。案の ID「OI-R33」は TRC-11 で別の行（版 0.8 追補）に使われているため、起票時は別の ID を採る必要がある [D] |
+| 8 | 未反映 | G 台帳・統制台帳とも未更新（#4・#5 と同じ）[D] |
+| 9 | 一部反映 | (1) は OI-R58 と §4.7.7 で起票済み。(2) は TRC-11 版 0.13〜0.15 の各追補で一部の番号が起票されたが、73〜80・83・84 の全件の対応は本更新では照合していない。(3) は未起票（G-138・G-151・NA-58-9 が 0 件）。(4) は OI-K11（TRC-12 の検査）に含まれるかが未明記 [D] |
+| 10 | 未反映 | DCS-01 に「充足 47」の記述は見当たらない。TRC-10 版 0.6 §4.4 の群 g の行は解消時期を「次回決裁の起案前（G-130）」のままとしている [D] |
 
 ## レビュー記録
 
@@ -1264,6 +1305,9 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 | 4 | High（cto）: 承認条件 4（R-269）を判定する TC が事前登録計画に対応付けられていない。TC-121 は R-205 だけに対応付けられ、本書は R-269 を「TC・RB・EX のいずれにも未割当」としている。G4 で何を測れば承認条件 4 が閉じるかが事前登録されておらず、事後に基準を作れる | 対応した。POC-01 版 0.3 で TC-121 の対応要求に R-269・R-058〜R-062 が加わり、判定量 3 つが合否基準 (7) として凍結対象に書かれたことを確認した[^5]（同じラウンドで同じ担当が POC-01 を修正）。§3 の未割当一覧の 5 行（R-058・R-059・R-061・R-062・R-269）、§5 正引き表の同じ 5 行、§6 の TC-121 行（R・G・凍結の欄）、§3 の PEP 網羅の注記、§0 の 6・§3.1 の件数（41 → 36。抽出時点の値は残した）、残課題 3、[^5] を更新した。再抽出はしていない。C-048・C-050 の TC 欄は統制台帳の試験欄からの抽出値であり、本書では変えていない（統制台帳の試験欄の更新は他文書への申し送り 5 とした） |
 | 6 | High（audit）: G-019 と G-022 を「充足」としているが、正本はどちらも未達と明記している。DCS-02 §1 は検証記録のない行が 168 件残るため G-022 は未達とし、TRC-05（版 0.1）は旧提案書の主張 287 件だけを登録して新パッケージの主張は未登録で、自ら G-019 の合格条件に対して未達と書く。合格条件の中身が正本で不合格と判明している G まで「充足」に数えるのは自己評価の上振れである（§0 の 5、§4.2 の集計、§4.3 の G-019・G-022 行） | 対応した。(1) §2.4 に「未達（成果物内で開示）」の区分を加え、判定者の未実施だけを理由とする「未達」の記述（G-008、G-055 など）とは区別する規則を書いた。(2) 指摘の 2 件に加え、同じ規則で対応成果物を検索し、G-012（CTL-01 §0）と G-018（TRC-05 §4、TRC-06 §0）も該当することを確認して移した。原典の記述は DCS-02 §0 の 4・§1[^14]、TRC-05 §0・§4[^15]、TRC-06 §0[^16]、CTL-01 §0[^4] で確認した。(3) §0 の 5（充足 55 → 51、未達（成果物内で開示）4）、§4.2 の集計表・段階別表・段階1 の机上準備件数（78 → 74）と注記、§4.3 の 4 行、§2.4 の他の区分の古い「本版では」の記述を更新し、残課題 14 を加えた。(4) DCS-01 §10 への G-019 の追記と POA&M への G-019 の起票（所有者・期限の案を含む）は、本書の担当外のため他文書への申し送り 6・7 とした。G-012・G-018・G-022 は POA&M の OI-R10・OI-V02・OI-V07 が受けている。再抽出はしていない |
 | 再最終整合（続行ワークフローの報告段、2026-10-15） | 指摘ではなく、模擬パネル ラウンド 4〜7 の是正の後の作業ツリーの変化（POC-02 版 0.1 の作成、TRC-09 版 0.3、TRC-10 版 0.4、自動検査の再実行 TRC-12 §10、DL-120・DL-121 の追加）への追随 | §0 の 3・5、§3.3、§4.2 の注記（再最終整合での確認）、§4.3・§5 の「×DL-81」14 箇所の × 印、§6.1 の DL-81 行、残課題 6・12・13 を更新した。G の現状の区分と件数は変わらない。G→R・R→DL→C の再抽出はしていない |
+| PoC/R7反映（2026-10-15。指摘ではなく、作業担当の AI エージェントによる反映であり、模擬パネルの判定でも実在の CTO/CISO の決裁でもない） | POC-01 版 0.5 の TC の範囲、POC-02・独立再現ログの証跡上の扱い、模擬パネル ラウンド 7 の MP-7-18 | 版 0.6 とした。§6.3 に TC-029・TC-132・TC-133 を加え、§4.3 の G-003・G-061・G-062・G-078・G-082・G-105 の TC 欄を埋めた。§0 の 7・§6.3 の注記・§6.1 の DL-81 行を改めた。G の現状の区分・件数（充足 51 ほか）は変えていない。作成者以外の確認は未実施 [D] |
+| 9（模擬パネル。自己レビューであり実在の CTO/CISO の決裁ではない） | High（audit）: G-130（未達・申し送りが残課題台帳に載り、証拠のない「達成」0 件）を「充足」としているが、TRC-11 版 0.11 の冒頭はラウンド 8 の redteam 指摘として「G-130 の申し送り追跡の欠落、群 g の型の再発」を自ら記し、DCS-05 版 0.13 の RA-0078・RA-0079 と §12.1 の 73〜84 も POA&M に未起票である。対応成果物が未達を明記する G を「充足」に残すのはラウンド 6 の本書の規則（§2.4）に反し、段階1 の机上準備 74 件を過大に見せる | 対応した（版 0.7）。(1) 原典を確認した: TRC-11 は版 0.12 に上がっており、冒頭の版 0.11・0.12・0.9 追補（ラウンド 7 sre）の記録がいずれも G-130 の申し送り追跡の欠落を記す[^20]。DCS-05 版 0.13 の RRG-011-1（RA-0078）・RRG-076（RA-0079）と §12.1 の 73〜80・83・84 は、09:10Z（UTC）の TRC-11 で 0 件だった（81・82 は版 0.12 の OI-C27 (4)(5) で起票済みのため、指摘の「73〜84」から除いた）[^21]。TRC-10 §4.4 の群 g はラウンド 2〜7 の 16 件で解消時期を G-130 としている[^22]。(2) G-130 を「未達（成果物内で開示）」に移した。(3) 同じ規則で「充足」の残り 50 件を再点検し（時刻・検索語・点検者は §4.2 の注記。点検者は作成者と同じ AI エージェントで、作成者以外ではない）、G-138（INT-02 §5.2）・G-143（INT-00 §0 の 6）・G-151（ARC-13 対応表）を移した。判定者の未実施だけを理由とする G-004・G-008・G-055・G-118 と、実測の未実施を理由とする G-049 は残した。(4) §0 の 5、§2.4、§4.2 の集計（充足 51 → 47、未達 4 → 8）・段階別表・段階1 の机上準備（74 → 70）・注記、§4.3 の 4 行、残課題 14・15、他文書への申し送り 9・10、脚注 20〜25 を改めた。POA&M への起票と DCS-01・TRC-10 の件数の追随は担当外のため申し送り 9・10 とした。再抽出はしていない。作成者以外の再点検は未実施（残課題 15） |
+| 最終整合（phase4c.js の報告段、模擬パネル ラウンド 10 の後、2026-10-15。指摘ではなく、AI エージェント（final-consistency 担当）による更新であり、模擬パネルの判定でも実在の CTO/CISO の決裁でもない） | 模擬パネル ラウンド 8〜10 の是正の後の作業ツリーの変化（自動検査の再実行 TRC-12 §11、TRC-09 版 0.4、TRC-10 版 0.6、TRC-11 版 0.15 と本更新と同時の版 0.16）への追随 | 版 0.8 とした。§4.2 の注記に「最終整合での確認」（G-017・G-037・G-131・G-035・G-006・G-007・G-038・G-130）を加え、残課題 13 の件数を改め、「申し送りの反映状況」を新設した（10 件中、一部反映 1、未確認 1、未反映 8）。G の現状の区分と件数は変わらない。G→R・R→DL→C の再抽出はしていない [D] |
 
 - 本記録は模擬パネルによる自己レビューへの対応、および AI エージェント（final-consistency 担当）による更新であり、実在の CTO/CISO の決裁ではない [D][^11]。
 
@@ -1286,3 +1330,14 @@ loss-scenarios.md §7 は「T-xxx・C-xxx・TC-xxx・K-xx の番号は採番後�
 [^15]: 本リポジトリ『主張台帳（旧提案書の主張の初期登録）』TRC-05 版 0.1・2026-10-03. traceability/claims-ledger.md （参照箇所: §0（主張数 287、CL-0001〜CL-0287 は旧提案書から抽出、「G-019 の合格条件…に対して未達」）, §4（版・取得日・スナップショットハッシュ・検証者の列を含めない「G-018 未達」、新構成の主張は CL-0288 以降として追記）、確認日: 2026-10-15）
 [^16]: 本リポジトリ『引用監査（旧提案書側）: 参考文献 60 件』TRC-06 版 0.1・2026-10-03. traceability/citation-audit-proposal.md （参照箇所: §0（作成者以外の照合者 2 名による突合は未達）、確認日: 2026-10-15）
 [^17]: 本リポジトリ『エグゼクティブ要約（決裁用 1 枚）』DCS-01 版 0.6・2026-10-15. 00_decision/01-executive-summary.md （参照箇所: §1 の表（G-018 の未達）, §10（追跡性の段落。G-019 の記載なし）、確認日: 2026-10-15）
+[^18]: 本リポジトリ『高保証 PoC 試験計画（事前登録）』POC-01 版 0.5（draft）. 12_poc/preregistered-test-plan.md （参照箇所: 要旨 1, §3.4 の TC-029・TC-121・TC-132・TC-133 の行, §6.6、確認日: 2026-10-15）。および『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1. 12_poc/measurement-report.md （参照箇所: 要旨 1〜2, §1.3、確認日: 2026-10-15）
+[^19]: 本リポジトリ『高保証 PoC 系統 1 独立再現ログ』POC-04（仮）版 0.1（draft、実装者と別の AI エージェントによる再実行。独立立会人ではない）. 12_poc/reproduction-log.md （参照箇所: 冒頭の作成方法, 要旨 1〜2, §4 RL-P1, §7、確認日: 2026-10-15）
+[^20]: 本リポジトリ『残課題・是正追跡（POA&M）』TRC-11 版 0.12（draft）・2026-10-15. traceability/open-items.md （参照箇所: 冒頭の版 0.12・0.11・0.9 追補（ラウンド 7 sre）の記録（「G-130 の申し送り追跡の欠落で群 g の型の再発」）, 要旨（§4.11.1 の起票）, §4.7.7（版 0.10 の RRG-ID 77 件との差集合 0 件）, OI-C27 (4)(5)。RA-0078・RA-0079・RRG-011-1・RRG-076 と DCS-05 §12.1 の 73〜80・83・84 の参照は 0 件、確認日時: 2026-10-15T09:10Z（UTC））
+[^21]: 本リポジトリ『残余リスク台帳』DCS-05 版 0.13（draft）・2026-10-15. 00_decision/05-residual-risk-register.md （参照箇所: 冒頭の版 0.13 の記録（RRG-011-1・RA-0078、RRG-076・RA-0079）, §0 の 1（79 件、RA-0001〜RA-0079）, §12.1 の申し送り 73〜84、確認日: 2026-10-15）
+[^22]: 本リポジトリ『模擬パネル判定記録』TRC-10 版 0.4（draft、自己レビュー）. traceability/mock-panel-report.md （参照箇所: §4.4 の群 g（申し送り・是正の POA&M 未起票。MP-2-16〜MP-7-24 の 16 件、解消時期「次回決裁の起案前（G-130）」）、確認日: 2026-10-15）
+[^23]: 本リポジトリ『連携パターン集（P-01〜P-27）』INT-02 版 0.5（draft）. 10_integration/integration-patterns.md （参照箇所: §5.2 の判定（I-15 に依存する P-06 があるため「契約に定義のないインタフェースに依存するパターン 0 件」は未達）, 未解決事項 1（G-138 は未達のまま）、確認日: 2026-10-15）
+[^24]: 本リポジトリ『連携ハンドブック総覧』INT-00 版 0.5（draft）. 10_integration/README.md （参照箇所: §0 の 6（提供時期の日付がないため G-143 は未達）、確認日: 2026-10-15）
+[^25]: 本リポジトリ『容量モデル（Capacity Model）』ARC-13 版 0.3（review）. 04_architecture/capacity-model.md （参照箇所: 対応表の G-151 行（所要期間 TBD（NA-58-9）で一部未達、成長・低／高（NA-58-3）と 6 年目以降のシナリオは前提台帳に未登録で「A-xxx として登録」は未達）、確認日: 2026-10-15）
+[^26]: 本リポジトリ『自動検査仕様と結果』TRC-12 版 0.6（draft）. traceability/consistency-checks.md （参照箇所: §11.2〜§11.4、生データ .workflows/checks/out/results-final-r10.json、確認日: 2026-10-15）
+[^27]: 本リポジトリ『独立反証レビュー記録（AI 自己反証）』TRC-09 版 0.4（draft）. traceability/independent-challenge-review.md （参照箇所: 冒頭の独立性の宣言, §0, §6.1, §6.2 ICR-27, §8.2、確認日: 2026-10-15）
+[^28]: 本リポジトリ『模擬パネル判定記録』TRC-10 版 0.6（draft、自己レビュー）. traceability/mock-panel-report.md （参照箇所: §0, §2.1, §2.2, §3, §4.3, §4.4, §6 の 9, §7 の 9・14、確認日: 2026-10-15）

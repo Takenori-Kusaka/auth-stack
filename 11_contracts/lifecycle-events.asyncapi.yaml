@@ -1,9 +1,9 @@
 asyncapi: 3.1.0
 info:
   title: Lifecycle events for dependent services
-  version: 0.4.0
+  version: 0.5.0
   description: |
-    文書ID: CON-12 / 成果物: DL-117 / 版: 0.4.0 / 状態: draft / 最終更新: 2026-10-15（0.4.0: 模擬パネル ラウンド 5 の devlead 指摘により、照会 API の契約本体（OpenAPI 3.1.2、preview）を CON-15（案）・DL-121（案）として本ファイルの拡張 `x-state-query-api` に起草し、RO-9・RO-12・§4.1・§6〜§8・§10・LC-OI-3 をそれに結び付け、LC-CV-16 を加えた。文書ID と DL は traceability/deliverables.md §4.5 で確定済みのため「案」を外した（CON-00 §9 申し送り 12）。0.3.0: 模擬パネル ラウンド 5 の redteam 指摘により、照会 API の契約を CON-15（案）として起票し、RO-12 に照会 API の publisher からの分離、RO-14（破壊的処理の量の上限）、LC-CV-15 を加えた。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない）
+    文書ID: CON-12 / 成果物: DL-117 / 版: 0.5.0 / 状態: draft / 最終更新: 2026-10-15（0.5.0: 模擬パネル ラウンド 9 の devlead 指摘により、CON-13 版 0.2.0（現行 0.2.1）で適用済みの §10 H2-3 を本書の記述に揃えた。§2 の表と x-dataschema-note・CloudEventEnvelope.lcsig の「CON-13 への追加は申し送り」を外し、RO-8・RO-12・RO-14 と LC-CV-07 に CON-13 DeletionReport の failure_reason（outcome=failed のとき必須）の値を書き込んだ。failure_reason の必須化は CON-13 版 0.2.0 で既に生じている義務で、本書はその写しである。事象・配送の保証・受信側の義務の中身は変えていない。0.4.0: 模擬パネル ラウンド 5 の devlead 指摘により、照会 API の契約本体（OpenAPI 3.1.2、preview）を CON-15（案）・DL-121（案）として本ファイルの拡張 `x-state-query-api` に起草し、RO-9・RO-12・§4.1・§6〜§8・§10・LC-OI-3 をそれに結び付け、LC-CV-16 を加えた。文書ID と DL は traceability/deliverables.md §4.5 で確定済みのため「案」を外した（CON-00 §9 申し送り 12）。0.3.0: 模擬パネル ラウンド 5 の redteam 指摘により、照会 API の契約を CON-15（案）として起票し、RO-12 に照会 API の publisher からの分離、RO-14（破壊的処理の量の上限）、LC-CV-15 を加えた。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない）
 
     本契約は、基盤が組織内の依存サービス（約 300 [A-050]）へ配るライフサイクル事象（テナント・利用者・所属・大規模な権限剥奪）と、
     受信側が返す完了報告を定める（G-137）[D]。ADR-022 D-2 の「イベント配送」行（CloudEvents 1.0.2・AsyncAPI 3.x）を具体化したものである [D]。
@@ -30,7 +30,7 @@ info:
     | tenant.resumed | tenant:<tid> | GA | 止めた処理を再開する | 義務なし | 不要 | replay |
     | tenant.termination.effective | tenant:<tid> | GA | 新規処理を止め、エクスポートを支援する | 契約終了時刻 | 不要 | 中央強制で止まる |
     | tenant.deletion.requested | tenant:<tid> | GA | 当該テナントのデータを削除し、報告する。不可逆な削除は、猶予 G_del の経過後に正本照会で要求が有効であることを確かめてから行う（RO-12、RO-13） | T_del（法域別、TBD。G_del を含む） | 要 | 削除証明に「未報告」と記載し、サービス所有者へエスカレーション |
-    | tenant.deletion.withdrawn | tenant:<tid> | GA | 猶予中の削除要求（request_id）を取り消し、準備した削除を実行しない | 猶予の満了前 | 要（outcome=withdrawn。CON-13 への追加を申し送り） | 猶予満了時の正本照会（RO-12）で撤回を検知する |
+    | tenant.deletion.withdrawn | tenant:<tid> | GA | 猶予中の削除要求（request_id）を取り消し、準備した削除を実行しない | 猶予の満了前 | 要（outcome=withdrawn。CON-13 版 0.2.0 の DeletionReport で定義済み） | 猶予満了時の正本照会（RO-12）で撤回を検知する |
     | tenant.deleted | tenant:<tid> | GA | tid を再利用しない。残った参照を墓石として扱う | — | 不要 | — |
     | tenant.merge.cutover（role） | 統合元・統合先の両方 | GA | 保存しているテナント参照と所有属性を付け替える。付け替えの前に mapping_ref と request_id を正本照会で確かめる（RO-12） | 移行期間（TBD） | 要（件数） | 付け替えの完了まで統合元の墓石化を保留する |
     | tenant.split.cutover（role） | 分割元・分割先の両方 | GA | 同上 | 同上 | 要（件数） | 同上 |
@@ -82,13 +82,13 @@ info:
     | RO-5 | 未知の type、未知の data 欄、開いた列挙の未知の値は、受理して無視する（未知の type を dead letter に送らない）。type の追加を互換な追加（minor）にするためである [D]。RFC 9457 は client に認識できない拡張メンバを無視することを MUST とし [N][^9457]（RS-16#12）、JWT は理解できない claim を無視することを MUST とする [N][^7519]（RS-16#14）。同じ考え方を事象に写した [D] |
     | RO-6 | §2 の義務を期限内に果たす。独自 session を持つサービスは、tenant.suspended・membership.suspended・membership.removed・user.suspended・revocation.bulk で無効にする（ONB-R9）[D] |
     | RO-7 | 完了報告が要る事象（§2）は、deletionReports channel へ deletion.report を期限内に送る。データを持たない場合も outcome=not_applicable で報告する（未報告と区別するため）[D]。削除しなかったデータは exceptions に根拠と保持期限を書く（DL-49 §10.4 の削除証明に写す）[D] |
-    | RO-8 | 処理に失敗した事象は自サービスの dead letter に移し、黙って ack しない。dead letter にある削除要求も期限は変わらず、期限までに outcome=failed で報告する [D] |
+    | RO-8 | 処理に失敗した事象は自サービスの dead letter に移し、黙って ack しない。dead letter にある削除要求も期限は変わらず、期限までに outcome=failed・failure_reason=processing_error で報告する [D]。CON-13（版 0.2.0 以降）の DeletionReport は outcome=failed のとき failure_reason を必須とし、既知の値は source_of_truth_mismatch（正本不一致）・state_query_unavailable（照会不能）・processing_error（受信側の処理失敗）・other である。基盤は未知の値を other と同じに扱う [D] |
     | RO-9 | 受信できない期間が W_replay 以内なら、最後に処理した sequence から replay で復旧する。W_replay を超えたら、例外台帳（DL-05）に登録し、現在状態の照会（LC-OI-3。CON-15 の listReconciliationSnapshot で全件を取り、各項目の partition_last_sequence から replay を再開する）で全件を突き合わせてから処理を再開する。その間も停止は中央強制で効く [D] |
     | RO-10 | 事象を認可の根拠にしない。事象に基づく処理は、実行時に基盤の判定で再認可する（ADR-022 D-8-7）[D]。破壊的・不可逆な処理は再認可に加えて RO-12 の正本照会を要し、事象だけでは実行しない [D] |
     | RO-11 | 署名の検証。すべての事象について、処理の前に `lcsig` の JWS を検証する [D]。(a) 鍵は L1 署名付き鍵マニフェストから得て、(iss, typ, kid) → 許可鍵集合の表にない組合せを拒否する（ADR-007 D7-21）。(b) alg は鍵に固定した値だけを受け入れ、alg none を拒否する（ADR-007 D7-22）。(c) iss と env が自環境の publisher と一致し、source・type・id・sequence・partitionkey が JWS の payload と一致する [D]。署名がない、検証できない、または不一致の事象は処理せず、隔離領域に移し、所有者と SOC へ警報する [D]。この事象は sequence の処理済みに数えない。同じ番号の真正な事象は RO-4 の replay で取り直す [D]。RFC 9967 は publisher と直接通信しない受信者に JWS による発信者の検証を MUST とする [N][^9967]（RS-14#35）。RFC 8725 は鍵が issuer に属することの検証を MUST とする [N][^8725]（RS-05#36） |
-    | RO-12 | 破壊的・不可逆な処理の前の正本照会。tenant.deletion.requested・user.deletion.requested（削除の実行）、tenant/user.legal_hold.released（削除の再開）、tenant.merge.cutover・tenant.split.cutover（付け替え）、membership.removed（データの削除・移管）は、実行の直前に照会 API（LC-OI-3。CON-15 の verifyLifecycleAction）で、対象の状態と request_id（保全は hold_ref、付け替えは mapping_ref）が事象と一致し、要求が撤回されていないことを確かめる [D]。実行してよいのは verdict=proceed の応答を得た場合だけで、理由コードから報告への写像は CON-15 の QC-2〜QC-4 による [D]。一致しなければ実行せず、outcome=failed（理由: 正本不一致）で報告し、SOC へ警報する [D]。照会 API（CON-15 案）は、テナント状態・主体台帳の正本を読む読取り専用の部品とし、publisher（outbox から送る部品）とは別の workload ID・別の配備にする。受信側は broker を経ずに相互 TLS で直接呼ぶ [D]。publisher だけを侵害した者が、事象と照会の結果を同時に偽れないようにするためである（THR-03 T-093 の攻撃経路 (d)。ラウンド 5 で追加）[D]。照会 API に届かない場合は実行を保留し、期限内に届かなければ outcome=failed で報告する（削除の遅延を偽造の受理より優先する）[D] |
+    | RO-12 | 破壊的・不可逆な処理の前の正本照会。tenant.deletion.requested・user.deletion.requested（削除の実行）、tenant/user.legal_hold.released（削除の再開）、tenant.merge.cutover・tenant.split.cutover（付け替え）、membership.removed（データの削除・移管）は、実行の直前に照会 API（LC-OI-3。CON-15 の verifyLifecycleAction）で、対象の状態と request_id（保全は hold_ref、付け替えは mapping_ref）が事象と一致し、要求が撤回されていないことを確かめる [D]。実行してよいのは verdict=proceed の応答を得た場合だけで、理由コードから報告への写像は CON-15 の QC-2〜QC-4 による [D]。一致しなければ実行せず、outcome=failed・failure_reason=source_of_truth_mismatch（正本不一致）で報告し、SOC へ警報する [D]。照会 API（CON-15 案）は、テナント状態・主体台帳の正本を読む読取り専用の部品とし、publisher（outbox から送る部品）とは別の workload ID・別の配備にする。受信側は broker を経ずに相互 TLS で直接呼ぶ [D]。publisher だけを侵害した者が、事象と照会の結果を同時に偽れないようにするためである（THR-03 T-093 の攻撃経路 (d)。ラウンド 5 で追加）[D]。照会 API に届かない場合は実行を保留し、期限内に届かなければ outcome=failed・failure_reason=state_query_unavailable（照会不能）で報告する（削除の遅延を偽造の受理より優先する）[D] |
     | RO-13 | 削除の猶予。deletion.requested を受けたら、猶予 G_del（TBD）が満了するまで不可逆な削除を実行しない。猶予中は可逆な準備（処理の停止、削除予定の印）だけを行い、deletion.withdrawn を受けたら準備を戻して outcome=withdrawn で報告する [D]。猶予満了時は撤回事象の受信の有無にかかわらず RO-12 の照会を行い、その結果で実行の可否を決める（撤回事象の偽造で削除を止められても、正本照会で検知できる）[D] |
-    | RO-14 | 破壊的処理の量の上限（案。ラウンド 5 で追加）。受信側は、窓 W_burst（TBD）の間に実行しようとする破壊的・不可逆な処理（RO-12 の対象）の対象テナント数・主体数が N_burst（TBD）を超えたら、超えた分の実行を保留し、SOC と所有者へ警報する。基盤の確認（照会 API の正本状態と、正本側の二者承認の記録）を得てから再開する [D]。保留中も可逆な準備は行い、期限は変えない。期限に間に合わなければ outcome=failed で報告する [D]。署名も正本照会も通る事象（publisher と照会 API の同時侵害、正本への誤った要求の登録）による大量削除の範囲を限るためである（THR-03 T-093）[D] |
+    | RO-14 | 破壊的処理の量の上限（案。ラウンド 5 で追加）。受信側は、窓 W_burst（TBD）の間に実行しようとする破壊的・不可逆な処理（RO-12 の対象）の対象テナント数・主体数が N_burst（TBD）を超えたら、超えた分の実行を保留し、SOC と所有者へ警報する。基盤の確認（照会 API の正本状態と、正本側の二者承認の記録）を得てから再開する [D]。保留中も可逆な準備は行い、期限は変えない。期限に間に合わなければ outcome=failed・failure_reason=other で報告する（量の上限による保留を表す既知の値は CON-13 にない。値の追加は §10 H9-1）[D]。署名も正本照会も通る事象（publisher と照会 API の同時侵害、正本への誤った要求の登録）による大量削除の範囲を限るためである（THR-03 T-093）[D] |
 
     ### 4.1 照会 API の契約 CON-15（案）の起票（ラウンド 5）
     LC-OI-3 の照会 API を、契約 CON-15（案）「ライフサイクル状態の照会 API」として起票する。本節は最小要件を定める [D]。契約本体（OpenAPI 3.1.2、版 0.1.0、preview）は、版 0.4.0 で本ファイルの拡張 `x-state-query-api` に起草した（ラウンド 5 の devlead 指摘）。並行作業の約束で新しいファイルを作れないためであり、単独ファイルへの切出しは §10 H5-1 で申し送る。最小要件と operation の対応は同契約の description §0 にある [D]。所有者は DL-49 の所有者＋プラットフォームチーム長、期限は DEC-8 第 1 段の付議前とする [D]。契約一覧（11_contracts/README.md）と成果物計画への登録は申し送る（§10 H3-3）[D]。
@@ -146,7 +146,7 @@ info:
     |---|---|---|---|
     | H2-1 | 03_threat-model/threat-catalog.md | 事象の注入・偽造の T を起票する（STRIDE の S/T。CE はライフサイクル publisher・broker・broker に書き込める workload）。統制は PO-10・PO-13・RO-11〜RO-13、試験は LC-CV-09〜LC-CV-14。採番は threat-catalog の所有者 | ラウンド2の指摘 6。現行の catalog に該当する T がない（ラウンド 5 で THR-03 版 0.3 の T-093（P1、CE-17）として起票済み）|
     | H2-2 | 05_adr/ADR-007-key-hierarchy-kms-hsm.md | D7-10 に L2 の用途族「ライフサイクル事象の署名」（環境別・cell 別、1 鍵 1 alg）を加え、platform パーティションの鍵スコープと鍵マニフェストへの (iss, typ, kid) の登録を決める（LC-OI-8） | PO-13 の鍵の所在。現行の 8 族に該当がない（ラウンド 5 で ADR-007 版 0.2 の D7-10 族 9・D7-10a・KD7-9 として案を追加済み。決裁は DEC-3）|
-    | H2-3 | 11_contracts/schemas/lifecycle-event.schema.json（CON-13） | Envelope に `lcsig`（JWS Compact、必須）を加える。Event_tenant_deletion_withdrawn・Event_user_deletion_withdrawn と KnownTypes を加える。DeletionReport の outcome に withdrawn を加え、failed の理由に正本不一致を加える | PO-13、RO-12、RO-13。本書の x-dataschema は追加前の $defs を指す |
+    | H2-3 | 11_contracts/schemas/lifecycle-event.schema.json（CON-13） | Envelope に `lcsig`（JWS Compact、必須）を加える。Event_tenant_deletion_withdrawn・Event_user_deletion_withdrawn と KnownTypes を加える。DeletionReport の outcome に withdrawn を加え、failed の理由に正本不一致を加える | PO-13、RO-12、RO-13。**適用済み**: CON-13 版 0.2.0 で適用された（lcsig の必須化、withdrawn の 2 type、outcome=withdrawn、failure_reason）。本書側の記述（§2 の表、RO-8・RO-12・RO-14、x-dataschema-note、CloudEventEnvelope.lcsig、LC-CV-07）は版 0.5.0 で揃えた（ラウンド 9）。lcsig の pattern は両方で同じ文字列であり、変える場合は両方を同時に改版する |
     | H2-4 | 02_requirements/tenant-lifecycle.md（DL-49）§7・K-3、02_requirements/identity-lifecycle.md（DL-08）§16.3 | 削除要求の猶予 G_del と撤回事象、受信側の正本照会（RO-12）を事象の意味の正本に追記し、G_del を T_del・T_user_del と同時に決める | 事象の意味の正本は両書（§1） |
     | H2-5 | 照会 API の契約（新規。所有者は LC-OI-3） | 対象の状態、request_id・hold_ref・mapping_ref の有効性、撤回の有無を返す読取り専用 API を、DEC-8 第 1 段の前に契約として作る | RO-9・RO-12 の前提（ラウンド 5 で CON-15（案）として起票し、最小要件を §4.1 に置いた。契約本体は版 0.4.0 で `x-state-query-api` に preview として起草済み。残りは H5-1・H5-2 と GA への昇格）|
     | H2-6 | 03_threat-model/dfd-entry-points.md（H6・AC-09） | broker の ACL（PO-10 (a)〜(c)）を本番の日次走査の対象に加える | PO-10 |
@@ -158,6 +158,8 @@ info:
     | H5-1 | 11_contracts/README.md（CON-00）、traceability/deliverables.md §4.5・§8 | (a) `x-state-query-api` の値を、内容を変えずに単独ファイル 11_contracts/lifecycle-state.openapi.yaml（H3-3 の例の名前）へ切り出し、本ファイルには参照だけを残す。(b) CON-15・DL-121 を確定する（DL-121 は 2026-10-15 時点の deliverables.md で未使用であることを本書の作成者が検索で確かめた案。採番は deliverables.md の所有者）。CON-00 側の登録は同日の CON-00 版 0.6 で行った | ラウンド 5 の devlead 指摘。並行作業の約束で本ファイル以外を作れなかった |
     | H5-2 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.11・§6.3・§11.4 | (a) §4.11 の「照会 API のモック」行を「CON-15（`x-state-query-api`）の operation と examples から作る。暫定の path と形は廃止する」に改め、L11-11 を閉じる。(b) §11.4 の `LIFECYCLE_STATE_QUERY_URL` の説明「照会 API の契約は未作成」を「CON-15（案）の servers に当たる URL」に改める。(c) §6.3 のライフサイクル族に LQN-01〜LQN-19 と LC-CV-16 を加え、CV 番号へ採番する。(d) MK-08 の注入に 503・Retry-After、古い読取り（LQ11）、応答の不適合（LQN-13・LQN-17）を加える | §8。CON-15 の x-negative-examples |
     | H5-3 | traceability/open-items.md（POA&M） | H3-1 (2)「CON-15 の契約本体の作成」を「CON-15 の独立レビューと GA への昇格（§4.1 Q-5）、単独ファイルへの切出し（H5-1）」に改める | 契約本体は版 0.4.0 で起草済み |
+    | H9-1 | 11_contracts/schemas/lifecycle-event.schema.json（CON-13） | failure_reason の既知の値に、RO-14 の量の上限による保留（例 burst_hold）を加えるかを決める。加えるまでは other で報告する（RO-14）。開いた列挙なので追加は互換である | ラウンド 9。CON-13 x-known-values に該当がない |
+    | H9-2 | 02_requirements/tenant-lifecycle.md（DL-49）§7、02_requirements/identity-lifecycle.md（DL-08）§16.3 | H2-4 に加え、DeletionReport の outcome=withdrawn と failure_reason（outcome=failed のとき必須。既知の値は RO-8 のとおり）を完了報告の規定に加える（CON-13 x-handoffs R8-H6 と同件） | 事象の意味と完了報告の義務の正本は両書（§1） |
     | H3-5 | 05_adr/ADR-009（workload identity） | LC-OI-9 の方向案（受信サービスの workload の鍵による deletion.report・replay.request の署名）を検討する（ADR-007 申し送り A7-3 と同件） | LC-OI-9 |
 
     ## 11. レビュー記録
@@ -170,11 +172,13 @@ info:
     | 2 | 1 | High | 事象の真正性が workload ID の相互認証（PO-10）と RO-1 だけに依る。broker 経由では受信側の mTLS は broker を認証するので、broker の ACL の誤り・侵害、broker に書き込める workload の侵害で偽造を見分けられない。偽造した deletion.requested 1 件で全サービスに不可逆な削除を起動でき、legal_hold.released・merge/split.cutover も同様。RO-10 は削除を止めない。照会 API（LC-OI-3）は未作成で RO-9 にしか使われない。threat-catalog に該当 T がない（指摘者: redteam） | (1) PO-13（`lcsig` の JWS 署名。ADR-007 の専用鍵、環境別・cell 別）と RO-11（検証、不一致は処理せず隔離・警報）を加えた。根拠は RFC 9967 §5 の MUST の準用 [N][^9967]。(2) RO-12 として破壊的事象の実行前の正本照会を義務付け、LC-OI-3 を GA の前提（DEC-8 第 1 段の前）に格上げした。(3) RO-13 と G_del（§7）で削除の最短猶予を置き、deletion.withdrawn の 2 type を加えた。(4) PO-10 に broker の書込権限の限定と本番日次走査を明記した。(5) LC-CV-10〜LC-CV-14 を加え、LC-CV-09 を改めた。(6) threat-catalog への T の起票ほかを §10 で申し送った。RO-1・RO-10 を改め、§1・§2・§6 を更新した | §1、§2、§3 PO-10・PO-13、§4 RO-1・RO-10〜RO-13、§6、§7、§8、§10、x-open-issues、x-conformance-vectors、CloudEventEnvelope |
     | 5 | 1 | High | ライフサイクル事象の偽造・注入によるテナント越境と大量削除の攻撃経路が、THR-03（H2-1 未反映）、DCS-05（RRG なし）、POA&M（起票なし）のいずれにもない。署名鍵の用途族は ADR-007 にない（H2-2、LC-OI-8）。RO-12 が依存する照会 API（LC-OI-3）の契約は未作成で、LC-OI-9 も未決（指摘者: redteam） | (1) THR-03 に T-093 を起票した（同じ担当）。(2) DCS-05 に RRG-073（段2）を追加した（同じ担当）。(3) ADR-007 D7-10 に族 9 を案として加えた（同じ担当。決裁は DEC-3）。(4) 照会 API の契約を CON-15（案）として起票し、最小要件を §4.1 に置いた。RO-12 で照会 API を publisher と別の workload・配備にした。(5) DEC-8 第 1 段の前提を §6 に明記し、DCS-03 への明記を H3-2 で申し送った。加えて RO-14（破壊的処理の量の上限）と W_burst・N_burst、LC-CV-15 を置き、LC-OI-9 に方向案を記した。POA&M への起票は H3-1 で申し送った。新しい外部事実は加えていない（RFC 9967 §5 は既存の脚注 [^9967]、RS-14#35） | §1、§4 RO-12・RO-14・§4.1、§6、§7、§8、§10 H2-1・H2-2・H2-5・H3-1〜H3-5、x-open-issues LC-OI-3・LC-OI-8・LC-OI-9、x-conformance-vectors LC-CV-15 |
     | 5 | 2 | High | RO-9・RO-12 は照会 API（LC-OI-3）を呼ぶことを義務とするが、照会 API の契約ファイルがない。CON-11 §11.4 の LIFECYCLE_STATE_QUERY_URL は存在しない契約を指し、本書 §6 も照会 API が揃うまで GA の凍結を付議しないとしている。テナントのデータを持つほぼ全サービスが削除の義務を負うのに、削除経路の実装と単体試験の入出力を書けない。ラウンド 2 の MP-2-28 が 3 ラウンド閉じていない（指摘者: devlead） | 照会 API の契約本体を OpenAPI 3.1.2・preview・版 0.1.0 で起草し、本ファイルの拡張 `x-state-query-api` に置いた（CON-15（案）・DL-121（案））。§4.1 Q-1〜Q-5 を満たし、tenant・principal・membership の現在状態（state、cell、保全と hold_ref、要求の状態）、mapping_ref の有効性と digest、request_id・hold_ref・mapping_ref と事象の照合（verifyLifecycleAction）、撤回の有無（request_status、LQ02）、相互 TLS（mutualTLS）、不一致・到達不能・古い読取りの応答と理由コード LQ00〜LQ11・LQ20〜LQ24、正例 10 件と x-negative-examples LQN-01〜LQN-19 を持つ。RO-9・RO-12・§4.1・§6・§7（Q_fresh）・§8・LC-OI-3 を結び付け、LC-CV-16 を加えた。単独ファイルへの切出しと DL の確定は H5-1、CON-11 の MK-08・§11.4 の改訂は H5-2、POA&M の改訂は H5-3 で申し送った。CON-00 には同日に登録した。新しい外部事実（OpenAPI 3.1.2 の mutualTLS、RFC 9111 §5.2.2.5、RFC 9110 §10.2.3・§15.6.4、RFC 6585 §4、AsyncAPI 3.1.0 の Specification Extensions）は 2026-10-15 に原文を取得して確かめ、CON-15 の x-references に脚注を置いた | 冒頭、§1、§4 RO-9・RO-12・§4.1、§6、§7、§8、§10 H2-5・H5-1〜H5-3、x-open-issues LC-OI-3、x-conformance-vectors LC-CV-16、x-lint-notes、x-state-query-api |
+    | 9 | 1 | High | CON-13 は版 0.2.0 で封筒の required に lcsig を加え、withdrawn 系の type と failure_reason（outcome=failed のとき必須）を加えたが、本書は §2 の表・§10 H2-3 で「CON-13 への追加を申し送り」「未適用」のままで、RO-8 は failure_reason を知らない。2 つの規範文書が食い違い、本書だけに従った完了報告は CON-13 に適合しない（指摘者: devlead。CON-00・CON-11・INT-00・POA&M の追随漏れと同じ指摘） | CON-13 x-handoffs R8-H2 を適用した。§2 の表の tenant.deletion.withdrawn 行、TenantDeletionWithdrawn・UserDeletionWithdrawn の x-dataschema-note、CloudEventEnvelope.lcsig の description から「申し送り」を外し、§10 H2-3 を適用済みに改めた。RO-8 に failure_reason=processing_error と CON-13 の既知の値、RO-12 に source_of_truth_mismatch・state_query_unavailable、RO-14 に other、LC-CV-07 に processing_error を書き込んだ（値は CON-13 $defs/DeletionReport の x-known-values の写し）。量の上限による保留の値の追加は H9-1、DL-49・DL-08 への反映は H9-2 で申し送った。版 0.5.0。新しい外部事実は加えていない | 冒頭、§2、§4 RO-8・RO-12・RO-14、§10 H2-3・H9-1・H9-2、§11、x-conformance-vectors LC-CV-07、x-lint-notes、CloudEventEnvelope、TenantDeletionWithdrawn、UserDeletionWithdrawn |
 
     - ラウンド 5（devlead）の検査 [M]: `x-state-query-api` の値を単独のファイルに取り出し、Redocly lint 2.63.0 でエラー 0・警告 0、Python jsonschema 4.26.0 で examples 10 件（mapping を含む）適合・要求の負例 5 件不適合、Prism 5.12.0 で 6 operation すべてが 200 を返した（同契約の x-lint-notes）。
     - ラウンド 5（devlead）で閉じられなかったもの [D]: CON-15 の作成者以外による独立レビューと GA への昇格、単独ファイルへの切出しと DL の確定（H5-1）、CON-11 の改訂（H5-2）、モックでの LQN の実行（TC-026）、Q_fresh の値。
     - ラウンド 5 で閉じられなかったもの [D]: CON-15 の契約本体（devlead 指摘の対応で preview として起草した。上記）、ADR-007 族 9 の決裁（DEC-3）、LC-OI-9 の決定、W_burst・N_burst の値、DCS-03 DEC-8 への前提の明記（H3-2）。これらが揃うまで GA の凍結を付議しない（§6）。
-    - ラウンド 2 で閉じられなかったもの [D]: 用途族の追加（ADR-007、H2-2）と CON-13 の改訂（H2-3）が終わるまで、PO-13 は本書だけの規定で schema の検証に現れない。照会 API の契約（H2-5）は未作成。受信側から publisher への deletion.report・replay.request も broker を経由し得るので、報告の偽造（削除証明の改ざん）に対するメッセージ単位の署名は未規定であり、LC-OI-9 として残す。作成者以外による原典の照合とモックでの負例の実行（TC-026）は未実施。
+    - ラウンド 9（devlead）で閉じたもの [D]: CON-13 の改訂（H2-3）は CON-13 版 0.2.0 で適用され、本書側の記述を版 0.5.0 で揃えた。PO-13 の lcsig は CON-13 の Envelope の required にもあり、schema の検証に現れる。署名そのものの検証は RO-11 による（CON-13 x-schema-limits）。用途族の決裁（DEC-3）、照会 API の GA への昇格、LC-OI-9 は引き続き未了である。
+    - ラウンド 2 で閉じられなかったもの [D]（ラウンド 9 時点の状態は直前の項目）: 用途族の追加（ADR-007、H2-2）と CON-13 の改訂（H2-3）が終わるまで、PO-13 は本書だけの規定で schema の検証に現れない。照会 API の契約（H2-5）は未作成。受信側から publisher への deletion.report・replay.request も broker を経由し得るので、報告の偽造（削除証明の改ざん）に対するメッセージ単位の署名は未規定であり、LC-OI-9 として残す。作成者以外による原典の照合とモックでの負例の実行（TC-026）は未実施。
   license:
     name: 社内限定（Proprietary, internal use only）
   x-document-id: CON-12（traceability/deliverables.md §4.5 で確定）
@@ -229,7 +233,7 @@ info:
     - {id: 'LC-CV-04', name: '未知の type', input: '既知の前置で未定義の type（例 tenant.future_event）を配送する', expected: '受理して ack し、dead letter に送らない（RO-5）'}
     - {id: 'LC-CV-05', name: '未知の data 欄・未知の列挙値', input: '既知の type に未知の欄と reason_class の未知の値を加える', expected: '受理し、未知の値を other と同じに扱う（RO-5）'}
     - {id: 'LC-CV-06', name: '削除要求と報告', input: 'tenant.deletion.requested と user.deletion.requested を配送する', expected: '期限内に CON-13 DeletionReport に適合する報告を送る。データがなければ not_applicable（RO-7）'}
-    - {id: 'LC-CV-07', name: '処理失敗', input: '受信側の処理を失敗させる（注入）', expected: '自サービスの dead letter に移し、削除要求なら期限内に outcome=failed を報告する（RO-8）'}
+    - {id: 'LC-CV-07', name: '処理失敗', input: '受信側の処理を失敗させる（注入）', expected: '自サービスの dead letter に移し、削除要求なら期限内に outcome=failed・failure_reason=processing_error を報告する（RO-8）'}
     - {id: 'LC-CV-08', name: '停止と独自 session', input: 'membership.suspended を配送した後に独自 session で要求する', expected: '独自 session が無効になっている。T_user_susp 以内（値は TBD）（RO-6、ONB-R9）'}
     - {id: 'LC-CV-09', name: '送信者の偽装', input: 'publisher 以外の workload から事象を送る。broker 経由（broker に書き込める別 workload が署名なしで書く）と直接の両方', expected: '処理しない（RO-1、RO-11）。broker 経由でも mTLS の成功を真正性の根拠にしない'}
     - {id: 'LC-CV-10', name: '他の鍵による署名', input: '非本番の鍵、別 cell の鍵、別の用途族の鍵（例 内部 token）で署名した tenant.deletion.requested を配送する', expected: '処理せず隔離し警報する。sequence の処理済みに数えず、replay で真正な事象を取り直す（RO-11）'}
@@ -239,7 +243,7 @@ info:
     - {id: 'LC-CV-14', name: '保全中の解除事象', input: '照会 API では保全が継続している hold_ref について、署名済みの tenant.legal_hold.released を配送する', expected: '削除を再開せず、正本不一致として報告し警報する（RO-12）'}
     - {id: 'LC-CV-16', name: '照会不能と古い読取り', input: '署名済みで正本とも一致する tenant.deletion.requested の猶予満了後に、照会 API（モック）が (a) 503 と Retry-After、(b) timeout、(c) 200 do_not_proceed / LQ11、(d) verdict 欄のない 200 を返す', expected: 'いずれも削除を実行せず保留し、(a) は Retry-After の後に再照会する。deadline までに proceed を得られなければ outcome=failed（照会不能）で報告する（RO-12、CON-15 QC-2〜QC-4）'}
     - {id: 'LC-CV-15', name: '破壊的事象の量の上限', input: '正しく署名され、照会 API（モック）でも有効な tenant.deletion.requested を、窓 W_burst の間に N_burst を超えるテナント分配送する', expected: 'N_burst を超えた分の不可逆な削除を実行せず保留し、SOC へ警報する。保留中も期限の管理を続ける（RO-14）'}
-  x-lint-notes: '版 0.4.0 で追加した x-state-query-api（CON-15）の検査結果は同契約の x-lint-notes にある。版 0.4.0 の本ファイル全体の検査は §11 のラウンド 5（devlead）の記録にある。版 0.3.0 と版 0.2.0 は YAML としての構文解析（PyYAML）だけを確認し、Redocly lint と @asyncapi/parser は再実行していない。以下は版 0.1.0 の結果。Redocly lint 2.63.0（recommended）の警告 info-license-strict 1 件: License Object に url を置いていない。社内限定で公開 URL がないため（README §4.7 P-1）。AsyncAPI の構文は @asyncapi/parser で検証する（README §2.3 への記録は申し送り）。payload は封筒の要約スキーマを置き、正本の JSON Schema 2020-12（CON-13）は x-dataschema で参照する。CON-13 は CON-02 を絶対 URI の $ref で参照しており、parser の解決対象にすると未決の <id-domain> を取得しにいくためである。'
+  x-lint-notes: '版 0.5.0（ラウンド 9）の検査: 本書の作成者が 2026-10-15 に Redocly lint 2.63.0（recommended、設定ファイルなし）でエラー 0・警告 1（info-license-strict。下記の版 0.1.0 の記録と同じ理由）、PyYAML の構文解析で成功を確かめた。規則 L-4 の一致検査（CON-11 §9.1 P-7）を CON-13 版 0.2.1 と行い、CloudEventEnvelope と CON-13 $defs/Envelope の required は一致し、const 3 件（specversion・datacontenttype・dataschema）も一致し、CON-13 のルートの examples 5 件はすべて要約に適合した。要約が受理した CON-13 の負例は LC-NE-03・05・06・07・10 の 5 件（data の形と source・partitionkey の pattern が要約にない、P-7 (4) の緩い点）。ReportEnvelope の required には CON-13 DeletionReport の datacontenttype・dataschema・partitionkey がない不一致が残る（CON-11 §14.2 の申し送り (1)、未対応）[M]。版 0.4.0 で追加した x-state-query-api（CON-15）の検査結果は同契約の x-lint-notes にある。版 0.4.0 の本ファイル全体の検査は §11 のラウンド 5（devlead）の記録にある。版 0.3.0 と版 0.2.0 は YAML としての構文解析（PyYAML）だけを確認し、Redocly lint と @asyncapi/parser は再実行していない。以下は版 0.1.0 の結果。Redocly lint 2.63.0（recommended）の警告 info-license-strict 1 件: License Object に url を置いていない。社内限定で公開 URL がないため（README §4.7 P-1）。AsyncAPI の構文は @asyncapi/parser で検証する（README §2.3 への記録は申し送り）。payload は封筒の要約スキーマを置き、正本の JSON Schema 2020-12（CON-13）は x-dataschema で参照する。CON-13 は CON-02 を絶対 URI の $ref で参照しており、parser の解決対象にすると未決の <id-domain> を取得しにいくためである。'
 channels:
   tenantLifecycle:
     address: lifecycle.v1.tenants
@@ -381,7 +385,7 @@ components:
         dataschema: {type: string, const: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json'}
         partitionkey: {type: string, minLength: 1}
         sequence: {type: string, pattern: '^[0-9]{20}$'}
-        lcsig: {type: string, pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$', description: 'PO-13 の JWS Compact Serialization（protected header に alg・kid・typ=lifecycle-event+jws）。CON-13 の Envelope への追加は申し送り（§10 H2-3）[D]。'}
+        lcsig: {type: string, pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$', description: 'PO-13 の JWS Compact Serialization（protected header に alg・kid・typ=lifecycle-event+jws）。CON-13（版 0.2.0 以降）の Envelope でも必須で、pattern は同じ文字列（§10 H2-3 は適用済み）[D]。'}
         data: {type: object}
     ReportEnvelope:
       description: '完了報告・replay 要求の封筒の要約。正本は CON-13 の $defs/DeletionReport・$defs/ReplayRequest。'
@@ -453,7 +457,7 @@ components:
         $ref: '#/components/schemas/CloudEventEnvelope'
       x-cloudevents-type: 'example.id-domain.lifecycle.tenant.deletion.withdrawn'
       x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_tenant_deletion_withdrawn'
-      x-dataschema-note: 'CON-13 に未定義（追加を申し送り、§10 H2-3）。data は tid・request_id・effective_at・report_to を想定する [D]。'
+      x-dataschema-note: 'CON-13 版 0.2.0 で定義済み（$defs/TenantDeletionWithdrawnData。必須は tid・request_id・effective_at・report_to。§10 H2-3 は適用済み）[D]。'
       x-freeze-class: GA
       x-partition: tenant:<tid>
     TenantDeleted:
@@ -626,7 +630,7 @@ components:
         $ref: '#/components/schemas/CloudEventEnvelope'
       x-cloudevents-type: 'example.id-domain.lifecycle.user.deletion.withdrawn'
       x-dataschema: 'https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json#/$defs/Event_user_deletion_withdrawn'
-      x-dataschema-note: 'CON-13 に未定義（追加を申し送り、§10 H2-3）。data は sub・request_id・effective_at・report_to を想定する [D]。'
+      x-dataschema-note: 'CON-13 版 0.2.0 で定義済み（$defs/PrincipalDeletionWithdrawnData。必須は sub・request_id・effective_at・report_to。§10 H2-3 は適用済み）[D]。'
       x-freeze-class: GA
       x-partition: principal:<sub>
     UserDeleted:

@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Client Registration API（sandbox の RFC 7591/7592 profile と本番の登録申請 API）
-  version: 0.3.0
+  version: 0.4.1
   summary: OAuth/OIDC client と、C7（内部 workload）の SVID 登録エントリ・交換可能な組の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01・I-16（案）・I-17（案）、G-141(c)、OB-2(a)〜(d)）
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -19,6 +19,9 @@ info:
     - 05_adr/ADR-005-token-profile.md（D7-1, D7-2, K-3）
     - 03_threat-model/threat-catalog.md（T-007, T-071）、03_threat-model/attacker-model.md（ATK-02, ATK-06, ATK-17）。版 0.3.0 の AR-4・AR-8 の対応先（§9 H-16）
     - research/RS-17-integration-patterns-modeling.md（RS-17#63。AR-8 の先行例）
+    - 06_controls/applicability.md（CTL-02 §1.4 NA-8、§3.5、§9 L-04・L-13。版 0.4.0 の AR-8 の束縛項目と AR-9 の対応先）、01_governance/assumptions-register.md（A-062）
+    - 02_requirements/data-classification.md（REQ-04 §3.2 の区分コード）、02_requirements/customer-admin-responsibility.md（REQ-06 の第三者連携・IPY-SaaS-02、§9 H-24）
+    - 11_contracts/relationship-model-registry.openapi.yaml（export の destination_region と「所在地群外への送付先」の負例。AR-9 の先行例）、05_adr/ADR-013（所在地群）、research/RS-02-regulatory-applicability.md（RS-02#8, #9, #47, #58）、research/RS-14-b2b-customer-identity.md（RS-14#50）
     - 05_adr/ADR-008-*.md（D8-50〜D8-54）
     - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-12〜D09-15, D09-18, D09-19）
     - 04_architecture/workload-identity-delegation.md（ARC-04 W55-01, W55-03, W55-04, W55-06, W55-08, W55-11）
@@ -41,7 +44,7 @@ info:
     - id: G-119
       coverage: x-standards に準拠標準・版・状態・準拠範囲と、Experimental な RFC 7592 に依存する部分の互換方針を記載
     - id: G-124
-      coverage: OB-2(d) の承認者案（x-approval-rules、AR-1〜AR-8。AR-8 の所有テナントの管理者の同意は版 0.3.0 で追加）。決裁は ONB-R2・ADR-022 の改版
+      coverage: OB-2(d) の承認者案（x-approval-rules、AR-1〜AR-9。AR-8 の所有テナントの管理者の同意は版 0.3.0 で追加。同意の束縛項目（受領者・利用目的・データ区分・処理地域・保持期間）と AR-9 の所在地群・受領法人の判定記録は版 0.4.0 で追加）。決裁は ONB-R2・ADR-022 の改版
     - id: R-158
       coverage: 登録時に redirect URI の完全一致、implicit・ROPC の拒否、非対称 client 認証を機械検査する（ARC-02 §9 行 01・02・25）
     - id: R-255
@@ -76,7 +79,7 @@ info:
     not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値
   x-preview-expires: TBD（CON-00 §4.6 F-2 の初期案では preview に置いた日から 12 か月。決める人 CTO、期限 DEC-8 前）
   description: |
-    > 文書ID: CON-14 / DL-119 / 版: 0.3.0 / 状態: draft / 最終更新: 2026-10-15（0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
+    > 文書ID: CON-14 / DL-119 / 版: 0.4.1 / 状態: draft / 最終更新: 2026-10-15（0.4.1: 模擬パネル ラウンド 10 の legal 指摘〔H-24・H-25 が宛先に未適用で、POA&M に担当と期限を持つ行がない〕により、§9 の H-24 を REQ-06 §11.4 条項 14 の起案内容に、H-25 を CTL-02 §3.5 の行と L-04・L-13 の帰結に具体化し、POA&M の起票（H-30）と RRG-076 の受容の前提（H-31）を申し送った。契約の項目・規則・理由コードは変えていない。0.4.0: 模擬パネル ラウンド 9 の legal 指摘〔AR-8 の同意が受領者・利用目的・データ区分・処理地域・保持期間を束縛せず、所在地指定テナントの管理者の同意だけで別法域・別法人の app-only client にデータが渡り得る〕により、申請に `data_processing`（DataProcessingDeclaration）を加えて同意の本体の束縛項目と同意画面の表示項目に (i)〜(v) を足し、承認規則 AR-9（処理地域が所有テナントの所在地群の外にあるか受領法人が基盤運営法人と別法人なら DL-34 の判定記録を必須）、理由コード CR24、負例 CRN-42〜CRN-46 を追加した。REQ-06 の責任分界と CTL-02 §3.5 は §9 H-24〜H-28 で申し送った。0.3.1（PoC/R7反映）: POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存し、検査されない欄から越境が成立した兆候）を受け、`platform_owning_tenant` の値そのものの検証（受付時の実在・状態・環境、変更時の再同意、払出し後の token の `tid` への固定、同意の撤回とテナントの終了）を §5 に加え、理由コード CR23 と負例 CRN-38〜CRN-41 を追加した。PoC は client 登録の部品を含まず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない。0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
     > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-251, R-255（全件は info.x-requirements）
     > 依存文書: info.x-depends-on
     > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。版 0.2.0 の §4A（workload と交換可能な組の登録）は、ラウンド 6 の指摘に答えて ARC-04 §3.1・§3.2、ADR-009 D09-12〜D09-15、INT-04 §4.3、12_poc/code のソースを読んで加えた。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -208,6 +211,7 @@ info:
       - sandbox で、呼出し先が自分の consumer_id の workload か基盤の参照サービスなら、承認者は申請者自身と同じ所有者なので、201 で即時に有効になる [D]。
       - 呼出し先が他の consumer の workload なら、202 と `status: pending_callee_approval` を返し、呼出し先の所有者が `decideSandboxExchangePair` で承認すると有効になる [D]。中央の承認は待たない（G-141(c)）[D]。
     - 変更は ADR-016 の版管理と監査の対象にする（ADR-009 D09-13）。本契約は登録・削除の操作だけを定め、版管理の仕組みは範囲外とする [D]。
+    - edge を呼出し元とする組（P-01・P-22 などで、edge が業務 API 宛ての内部 JWT に交換する経路。INT-02 §9.1 の問い。版 0.3.1、PoC/R7反映）の案: ADR-009 D09-13 をそのまま当てはめ、申請者は edge の所有者（プラットフォームチーム）、承認者は呼出し先の所有者（AR-7）とする。呼出し先のチームが自分の API を edge の背後に公開したいときは、プラットフォームチームに申請を依頼し、自分で AR-7 を承認する [D]。呼出し先のチームが自分で申請できる形にすると、edge が呼出し元の組を edge の所有者の知らないまま増やせるので採らない [D]。確定は ADR-009 の所有者による（未決（ADR-009））。
 
     ### 4A.4 本番の申請
 
@@ -240,8 +244,27 @@ info:
       - AR-6（workload）は INT-04 OB-2(b) の「プラットフォームチーム（作成者≠承認者）」を写した。AR-7（交換可能な組）は ADR-009 D09-13 の「呼出し先の所有者の承認」を写した。
       - AR-8（所有テナントの管理者の同意。版 0.3.0）は、ADR-005 D7-2 の「低リスク以外はテナント管理者の同意とし、privileged 操作として扱う」を登録の段階に写した。AR-1〜AR-4 の承認者はすべて基盤側の者なので、悪意のある社内チーム（ATK-17）や侵害された consumer（ATK-06）が `platform_owning_tenant` に被害テナントを書くと、そのテナントの誰も知らないまま、そのテナントの資源に届く client が払い出される（テナント越境）。RFC 6749 §4.4 の「事前の取決め」で守られるべき当事者は資源の所有者（ここでは所有テナント）であり、基盤側の承認ではその意思を確かめられない [N][^11][D]。先行例として、Microsoft Entra ID の admin consent workflow では、審査者に指定しても権限は昇格せず、承認するには管理者同意を付与できる権限が要り、Microsoft Graph のアプリケーション権限を求める要求を承認できるのは Global Administrator だけである [V][^12]（RS-17#63）。同意を求める範囲は、app-only の権限すべてと、操作の分類登録（DL-67）で低リスクに分類されていない scope である。分類が未登録の scope は低リスクとみなさない（fail-closed）[D]。
       - AR-8 の同意記録（`tenant_consent`）は、(a) 所有テナントの管理画面の承認 API（テナント管理者が申請 ID と scope の一覧を見て承認する。API の契約は本書の範囲外で、§9 H-17）の記録 ID か、(b) テナント管理者が署名した同意票の参照のどちらかである。同意記録は、テナント・申請（request_id か target_client_id）・scope の集合・有効期限に束縛し、同意の時点で同意者がそのテナントの管理者の役割を持っていたことを、受付時と払出しの直前に基盤が検査する。他テナントの同意、別の申請や狭い scope の同意、期限切れ、管理者でない者の同意は CR22 で拒否する [D]。AR-8 の判断は基盤側の承認者（workforce IdP の有資格者）が記録できない（403。CRN-34）[D]。
+      - **同意の本体が束縛する項目と同意画面の表示（版 0.4.0、ラウンド 9 legal）**。版 0.3.x の同意はテナント・申請・scope の集合・期限だけを束縛し、誰に、何のために、どの区分のデータが、どの地域で、いつまで渡るかを束縛していなかった [D]。このため所在地指定テナント（A-062）の管理者が同意すれば、別の法域の cell や外部で動く app-only の client に、そのテナントの利用者全体のデータが渡り得た [D]。AR-8 の同意の本体は、上の 4 項目に加えて次の (i)〜(v) を束縛し、所有テナントの管理画面の同意画面に同じ値を表示する [D]。値は申請の `data_processing`（DataProcessingDeclaration）から写し、同意の本体の値と 1 つでも異なれば CR22 で拒否する（CRN-43）[D]。
+        - (i) 受領者: client を運用する法人と事業ドメイン。表示名と識別子は基盤の法人台帳・consumer 台帳で検証した値を使い、申請者の自己申告（`client_name` など）をそのまま表示しない。RFC 7591 は AS がすべての client metadata を自己申告として扱うこと（MUST）を求め [N][^1]、`client_name` は認可時に利用者へ示す名前と定義している [N][^1]。CSA SSCF は連携の作成者を検証して同意画面に表示する仕組みを求めている（IPY-SaaS-02、must）[N][^13]（RS-14#50）。
+        - (ii) 利用目的: 自由記述の `justification` と別に、同意画面に出す利用目的を 1 つの文で持つ。
+        - (iii) データの区分: REQ-04 §3.2 の区分コード（CUS・PII・SPI・MED・AUD・AZD など）の集合。scope から基盤が導く区分を下限とし、申告がそれより狭ければ CR22 とする。scope と区分の対応表は未作成（§9 H-28）。
+        - (iv) 処理・保存の地域: client を運用し、取得したデータを処理・保存する所在地群（ADR-013 の所在地群。値の集合は relationship-model-registry の `destination_region` と同じ）の集合。
+        - (v) 保持期間: 受領者が取得したデータを保持する期間の上限（ISO 8601 の期間）。
+        - 同意の本体の 9 項目（テナント・申請・scope・期限と (i)〜(v)）は監査記録に残し、所有テナントの管理者が後から参照できるようにする。これは CTL-02 §1.4 の「監査記録に共有元法人・共有先法人・利用目的を記録できるようにする」と同じ考え方である [D]。
+      - **AR-9（所在地群と受領法人の判定記録。版 0.4.0、ラウンド 9 legal）**。管理者の同意は、テナント管理者の判断の記録であって、移転・第三者提供の法的根拠の判定ではない [D]。個人情報保護法は外国にある第三者への提供を、本人同意・基準適合体制・同等水準の国のいずれかによらせ（第 28 条）[N][^14]、GDPR は第三国移転を Chapter V の条件を満たす場合に限り（44 条）、十分性認定がなければ適切な保護措置を求め（46 条 1 項）[N][^15]、DORA は ICT 第三者サービス提供者との契約に、データを処理・保存する場所（地域または国）と変更の事前通知の義務を含めるよう求めている（30 条 2 項 (b)）[N][^16]（いずれも CTL-02 §3.5 の判定に使った原典。RS-02#8, #9, #47, #58）。テナントの管理者は B2B の委託元の担当者であり、利用者本人ではない（CTL-02 §1.2、L-02）[D]。そこで、次のどちらかに当たる申請は、DL-34（CTL-02）の判定記録の参照（`data_processing.transfer_assessment_ref`）を必須にし、ないか、判定記録が本申請の受領者・地域・区分を覆わなければ CR24 で拒否する（fail-closed）[D]。
+        - (a) `processing_regions` に、所有テナントの所在地群（A-062。テナント配置表の値）にない所在地群がある（CRN-42）。relationship-model-registry の export が、所在地群外への送付先を DL-34 の判定記録なしに拒否する前例（ADR-018 D18-12(d)）に倣った [D]。
+        - (b) 受領者の運用法人が基盤運営法人と別法人である（CRN-45）。CTL-02 §1.4 (β) のとおり、別法人への個人データの提供は第三者提供に当たり得、委託・共同利用の構成に収まるかは L-13 で決まる [D]。NA-8 が未確定の間は、別法人かどうかを法人台帳で判定し、不明なら別法人として扱う [D]。
+        - 判定記録で足りるか（管理者の同意と判定記録の組で移転・第三者提供の要件を満たすか）の法的判断そのものは、本契約では決めない。L-04・L-13 と OI-P02（非机上の法務判断）に委ねる [D]。本規則は、その判断がない申請を払い出さない仕組みだけを置く [D]。
+        - AR-9 の判定記録の参照は基盤側の承認者が decide で代わりに記録できない（403。AR-8 と同じ。CRN-34 に準じる）[D]。update で `data_processing` のどれか、または `platform_owning_tenant` を変える申請は、AR-8 の新しい同意と AR-9 の再評価を要する（CRN-44）[D]。
+        - 限界 [D]: `processing_regions` は申請者の申告であり、client が実際にどこで動くかを基盤は登録時に確かめられない。C7 の workload なら SVID の trust domain と cell で確かめられるが、外部で動く C5 の client にはその手段がない。申告と異なる地域からの token 要求の検知（mTLS の証明書・送信元の地域の記録）は案にとどめ、§9 H-27 で残余リスクとして申し送った。
       - 同意を得られても、テナント管理者自身が悪意を持つ場合（ATK-02）や、管理者が欺かれて同意する場合（consent phishing、T-007）は防げない。この残余は §9 H-18 で残余リスク台帳に申し送った [D]。
-    - 本書が新たに置いた承認者はない。AR-1〜AR-8 は既存の区分（CP-1・CP-2、ADR-005 D7-1・D7-2、ADR-008 D8-54、K-3、INT-04 OB-2(b)、ADR-009 D09-13）への当てはめである [D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
+      - **`platform_owning_tenant` の値そのものの検証（版 0.3.1、PoC/R7反映）**。AR-8 は同意記録と申請の一致を確かめるが、所有テナントの値が実在し、払出し後もその値に閉じることまでは確かめない [D]。POC-02 §6.2 の X-D（façade の関係書込 API が、object 側のテナント検査を通したうえで、他テナントの role を subject として受理した）と X-C（外部ゲストの閉じ込めが R 段の 1 層だけに依存した）は、テナント境界の検査を 1 つの層・1 つの欄に置くと、検査されない欄から越境が成立し得ることの兆候である [D]。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではなく、原因区分も作成者以外が確かめていない（POC-02 §1.3・§6.1）[D]。この含意を登録の経路に写し、次の 4 点を受付・払出し・実行時の別々の層で検査する [D]。
+        - (1) 受付時: `platform_owning_tenant` は、REQ-05（02_requirements/tenant-lifecycle.md）§2.1 の主状態が A（有効）の顧客テナントで、申請先の環境（本番）のテナントでなければならない。未知の ID、P（申込中）・S1・S2（停止）・M（移行中。境界を変える設定は凍結）・N（解約予告）・R 以降の状態、sandbox のテナント ID は CR23 で拒否する（CRN-38）。払出しの直前にも再検査する。
+        - (2) 変更時: update で `platform_owning_tenant` を T から U に変える申請は、T の client の廃止と U での新規登録と同じに扱う。U の管理者の新しい同意（AR-8）と AR-4 を要し、T の同意を流用できない（CR22。CRN-39）。
+        - (3) 払出し後（実行時）: AS は、`platform_owning_tenant` を持つ client に発行する token の `tid` を登録記録の値に固定し、要求の値（resource・パラメータ・ヘッダ）から決めない。資源側テナントとの照合は、PEP が CON-06 の `tid` で別に行う（ARC-02 の検証規則）。登録時の承認だけに越境の防止を依存させないためである（CRN-40）。
+        - (4) 同意の撤回とテナントの終了: 所有テナントの管理者が同意を撤回した場合と、テナントが R 以降の状態に入った場合は、その client を AR-0 の retire と同じに扱い、grant と token を無効化する。S1・S2 の間は token の発行を止める（CRN-41）。撤回から無効化までの時間は SLI が未採番で TBD（所有者 認証・IdP チーム、期限 DEC-8 前、決め方 パイロットの実測。§9 H-21）。撤回の受け口は、所有テナントの管理画面の承認 API（§9 H-17）に置く案である。
+        - 4 点とも 2026-10-15 時点で実装も実行もない。PoC（12_poc/code）は client 登録の部品を持たず、POC-02 の 23 TC にも登録の経路はない [D]。追加の試験は §9 H-20 で申し送った。見直しトリガー: CRN-38〜CRN-41 のいずれかが立会い下の実行で受理された場合、または POC-02 の X-D が立会い下の再実行で設計の欠陥と分類された場合は、AR-8 と本節の検査点を見直す [D]。
+    - 本書が新たに置いた承認者はない。AR-1〜AR-8 は既存の区分（CP-1・CP-2、ADR-005 D7-1・D7-2、ADR-008 D8-54、K-3、INT-04 OB-2(b)、ADR-009 D09-13）への当てはめである [D]。AR-9 は承認者ではなく、DL-34（CTL-02、法務責任者）の判定記録の有無を検査する規則である（版 0.4.0）[D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
     - 申請から払出しまでの時間は SLI が未採番である（INT-04 ONB-R3）[D]。
 
     ## 6. 凍結区分（ADR-022 D-1・D-2）
@@ -251,7 +274,7 @@ info:
     | `client_id` の形式と「不透明に扱う」という契約 | 不可逆（ADR-021 D21-22） |
     | ClientMetadata の種別ごとの規則、理由コード CR01〜CR14 の意味 | GA（ARC-02 §6 の写し。DEC-8 前は draft） |
     | sandbox の登録・管理 endpoint（RFC 7591/7592 profile） | preview（ADR-022 D-2 の「非本番環境の動的登録」） |
-    | 本番の登録申請 API、承認規則 AR-1〜AR-8、所有テナントの同意の参照（tenant_consent）と理由コード CR22（版 0.3.0） | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
+    | 本番の登録申請 API、承認規則 AR-1〜AR-9、所有テナントの同意の参照（tenant_consent）と理由コード CR22（版 0.3.0）・CR23（版 0.3.1、PoC/R7反映）、データ処理の申告（data_processing）・AR-9・CR24（版 0.4.0） | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
     | workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair）、WorkloadEntry・ExchangePair のスキーマ、理由コード CR15〜CR21 | preview（版 0.2.0 で追加。ADR-022 D-2 に該当する行がない。§9 H-11） |
     | ホスト名、initial access token の寿命、登録数の上限、承認の SLI | 凍結しない |
 
@@ -292,14 +315,26 @@ info:
     | H-17 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)・ONB-R2、05_adr/ADR-022 D-2（H-5）、08_operations/operating-model.md §7.2 | （ラウンド 7）OB-2(d) の承認者に AR-8（所有テナントの管理者の同意）を加え、AR-4 を「app-only の権限の付与すべて」に改める。所有テナントの管理画面の承認 API（AR-8 の (a)）の契約の置き場所を決める（DL-120 か新しい契約）。operating-model §7.2 の CP-1 の対象に「app-only 権限の付与（単一テナントを含む）」を明記し、CP-2 の「単一テナントの設定」との境界を ADR-008 D8-54 に合わせる。H-5 の承認者の範囲は AR-1〜AR-8 に読み替える |
     | H-18 | 00_decision/05-residual-risk-register.md（DCS-05）、traceability/open-items.md（TRC-11）§4.11 | （ラウンド 7）(1) 残余リスク: AR-8 の同意があっても、悪意のあるテナント管理者（ATK-02）の同意と、欺かれた管理者の同意（T-007）による app-only の付与は防げない。検知は同意と払出しの監査記録、テナント管理者への払出しの通知、app-only の client の棚卸し（ADR-008 D8-54）による。受容者案は T-071 と同じ段 2。(2) POA&M: 本指摘（ラウンド 4 の MP-4-21 と同じ趣旨）の是正の残り（H-16・H-17、AR-8 の (a) の API、CRN-31〜CRN-37 の実行）を起票する。あわせて、OI-K01〜OI-K07 の対象はラウンド 1〜3 の Medium/Low 106 件だけなので、ラウンド 4・5 の Medium/Low 62 件の群を起票する。62 件は mock-panel-report §0 の件数（ラウンド 4 は指摘 73 件・Critical/High 42 件、ラウンド 5 は 59 件・28 件）の差 31＋31 から算出した |
     | H-19 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3 | （ラウンド 7）MK-01 の本番の申請 API のモックに AR-8 と CR22 を加え、§6.3 の登録族に CRN-31〜CRN-37 を加える（H-3 の追加分） |
+    | H-20 | 12_poc/preregistered-test-plan.md（DL-22）、11_contracts/mock-contract-test-kit.md（CON-11）§6.3 | （PoC/R7反映、版 0.3.1）CRN-31〜CRN-41 の TC-ID を採番する。PoC（POC-03）には登録の部品がないので、系統 1 の再実行（POC-02 §7.1 R-1）では実行できない。DL-120 の受入れか系統 2 で、立会い下に実行する。CRN-40 は AS と PEP をまたぐので、TC-002 の X1 の評価器（tid と資源の不一致）を流用できるかを PoC リードが判断する |
+    | H-21 | 07_slo/numeric-contracts.md（DL-20） | （PoC/R7反映、版 0.3.1）所有テナントの同意の撤回とテナントの状態遷移から、その client の token の拒否までの時間の SLI を採番する（値は TBD。CRN-41） |
+    | H-22 | 04_architecture/token-profile.md（ARC-02）、05_adr/ADR-005 | （PoC/R7反映、版 0.3.1）`platform_owning_tenant` を持つ client に発行する token の `tid` を、要求の値ではなく登録記録の値に固定する発行規則を明記する（§5 の (3)、CRN-40） |
+    | H-23 | 03_threat-model/threat-catalog.md（THR-03）、00_decision/05-residual-risk-register.md（DCS-05） | （PoC/R7反映、版 0.3.1）H-16 の起票のとき、検証欄に CRN-38〜CRN-41 を写し、POC-02 X-D と同じ類型（検査されない欄を経由する越境）として関連付ける。同意の撤回から無効化までの窓を、H-18 の残余に加える |
+    | H-24 | 02_requirements/customer-admin-responsibility.md（REQ-06）の第三者連携の行と責任分界条項 | （ラウンド 9）「テナント管理者による app-only の client への同意」の責任分界条項を加える。(1) 同意の権限の所在: 同意できるのはテナントの管理者の役割を持つ者だけで、顧客（委託元）の内部で誰に権限を与えるかは顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録するのは当社の責任。(2) 受領者の義務: 受領者（client の運用法人）は同意された利用目的・データ区分・地域・保持期間の範囲でだけ扱い、範囲を変えるときは再同意を得る。(3) 侵害時の通知の流れ: 受領者の侵害を知った当社が所有テナントの管理者へ通知する経路と期限（CTL-02 §3.7 の法定期限との関係）。あわせて IPY-SaaS-02 の行に、本契約 §5 の (i)（検証済みの受領者の表示）を対応箇所として書く。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: REQ-06 は版 0.1（2026-10-03）のままで、§11.4 の条項 1〜13 に app-only・AR-8・CON-14 の記載が 0 件）** §11.4 の表に条項 14「テナント管理者による app-only の client への同意」を、既存の列（条項案・根拠・法務の判断事項）で起案する。(i) 同意できる者と保護操作の扱い: 同意できるのはテナント管理者の役割を持つ者だけとし、同意と撤回を保護操作（再認証と記録の対象）に入れる。顧客内部での役割の付与は顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録・撤回で無効化するのは当社の責任（本契約 AR-8・§5 の (4)）。(ii) 同意が束縛するもの: 受領者（運用法人・事業ドメイン）、利用目的、データ区分（REQ-04 §3.2）、処理・保存の所在地群、保持期間の 5 項目で、範囲の変更は再同意（本契約 AR-8 (i)〜(v)・CR22）。(iii) 受領者側の義務と責任の区分: 受領者は同意の範囲内でだけ取り扱い、侵害を知ったら当社と所有テナントの管理者へ遅滞なく通知する。受領者を経た漏えいの責任は、受領者が当社の委託先か、顧客から見た第三者かで区分する（委託先なら委託元の監督義務〔個人情報保護法 25 条〕と処理者契約〔GDPR 28 条 3 項〕、処理者から管理者への遅滞ない通知〔GDPR 33 条 2 項〕。脚注 14・15）[N]。法務の判断事項欄: 受領者の法的位置づけ（委託・第三者提供・共同利用）、管理者の同意で本人同意（個人情報保護法 28 条）に代えられるか、通知の期限（CTL-02 §3.7 との関係）、責任の上限。法的十分性は OI-P02（非机上）に残す |
+    | H-25 | 06_controls/applicability.md（CTL-02）§3.5、§9 L-04・L-13 | （ラウンド 9）§3.5 の基盤への具体要件に 1 行加える:「テナント管理者の同意による app-only の client への提供（CON-14 AR-8・AR-9）を、移転・第三者提供の判定対象とする。処理地域が所有テナントの所在地群の外にあるか、受領法人が別法人の場合は、DL-34 の判定記録なしに払い出さない」。L-04・L-13 の帰結に、管理者の同意と判定記録の組で足りるかの判断を加える（OI-P02 に束ねる）。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: CTL-02 は版 0.4（ラウンド 6）のままで、CON-14・AR-9 の記載が 0 件）** §3.5 の行には、AR-9 の判定記録と CR24 の拒否の記録を、移転根拠の台帳（RS-02 §3 の「SCC 等の移転根拠台帳」、CTL-02 の H-A06 と同じ記録先）の入力にすることを加える。L-04 と L-13 の帰結にはそれぞれ「CON-14 AR-9（所在地群の外か別法人の受領者への app-only の払出しに DL-34 の判定記録を要する）」を加える。法的十分性の判断は OI-P02（非机上）に残す |
+    | H-26 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3、12_poc/preregistered-test-plan.md（DL-22） | （ラウンド 9）MK-01 の本番の申請 API のモックに AR-9・CR24 と、同意の本体の (i)〜(v) の照合（CR22）を加え、§6.3 の登録族に CRN-42〜CRN-46 を加える。TC-ID の採番は H-20 と同じ扱い |
+    | H-27 | 03_threat-model/threat-catalog.md（THR-03）T-081、00_decision/05-residual-risk-register.md（DCS-05） | （ラウンド 9）T-081（データ所在地・越境移転の違反）の予防欄に AR-9・CR24 と CRN-42・CRN-45 を写す。残余リスク: `processing_regions` は申告であり、外部で動く client が申告外の地域で処理しても登録時には検知できない。検知の案（token 要求の送信元地域と mTLS 証明書の記録）の採否を決める |
+    | H-28 | 02_requirements/data-classification.md（REQ-04）、操作の分類登録（DL-67） | （ラウンド 9）scope から REQ-04 の区分コードを導く対応表を作る（AR-8 の (iii) の下限の判定に使う）。未作成の間は、所有テナントのデータに届く scope を CUS と PII を含むものとして扱う（fail-closed）[D] |
+    | H-29 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)、ONB-R2、所有テナントの管理画面の承認 API（H-17） | （ラウンド 9）OB-2(d) の承認者案を AR-1〜AR-9 に読み替える。H-17 の承認 API の契約に、同意画面の表示項目 (i)〜(v) と同意の本体の 9 項目を加える |
+    | H-30 | traceability/open-items.md（TRC-11）§4.11.1 | （ラウンド 10）H-24・H-25 の宛先への適用を、担当と期限を持つ POA&M の行として起票する（ID は TRC-11 の所有者が採番。案は OI-G11）。項目: 「CON-14 §9 H-24・H-25 の宛先への適用（REQ-06 §11.4 条項 14 の起案、CTL-02 §3.5 の行と L-04・L-13 の帰結への CON-14 AR-9 の追加）」。区分 A。担当: REQ-06 の所有者、CTL-02 の所有者、法務責任者。期限: DEC-8 の付議前（RRG-076 を段 2 の受容に付議する前でもある）。完了条件: REQ-06 と CTL-02 の改版（H-24・H-25 の参照を本文に含む）。法的十分性は OI-P02 に残す。2026-10-15 の作業ツリーで、リポジトリの .md ファイルに CON-14 の H-24・H-25 を引く行は 0 件で、OI-G05 は H-18・H-23 の残余リスクの写像だけを扱う [D] |
+    | H-31 | 00_decision/05-residual-risk-register.md（DCS-05）RRG-076 | （ラウンド 10）RRG-076 の受容（段 2）の前提に、H-30 の行の完了（REQ-06 条項 14 と CTL-02 §3.5 の改版）を書く。完了前に付議する場合は、同意の責任分界条項がないことを受容票の残余に明記する [D] |
 
     ## 10. 誠実性
 
-    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。版 0.2.0 で加えた §4A の 5 操作と申請種別は、実装も負例 CRN-21〜CRN-30 の実行もない [D]。版 0.3.0 の AR-8・CR22・CRN-31〜CRN-37 も同じく実装・実行していない。所有テナントの管理画面の承認 API はまだどの契約にもない（§9 H-17）[D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。版 0.2.0 で加えた §4A の 5 操作と申請種別は、実装も負例 CRN-21〜CRN-30 の実行もない [D]。版 0.3.0 の AR-8・CR22・CRN-31〜CRN-37 も同じく実装・実行していない。所有テナントの管理画面の承認 API はまだどの契約にもない（§9 H-17）[D]。版 0.3.1 の CR23・CRN-38〜CRN-41 も実装・実行していない。版 0.3.1 は POC-02 の X-C・X-D からの設計推論で、PoC は client 登録の経路を試験しておらず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない（PoC/R7反映）[D]。版 0.4.0 の data_processing・AR-9・CR24・CRN-42〜CRN-46 も実装・実行していない。管理者の同意と DL-34 の判定記録で移転・第三者提供の要件を満たすかは法的判断であり、本契約は判断していない（L-04・L-13、OI-P02）[D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 
     ## 参考文献
 
-    [^1]: J. Richer (Ed.), M. Jones, J. Bradley, M. Machulak, P. Hunt / IETF『OAuth 2.0 Dynamic Client Registration Protocol』RFC 7591, Standards Track, 2015-07. https://www.rfc-editor.org/rfc/rfc7591 （参照箇所: §2 redirect_uris・token_endpoint_auth_method・grant_types・response_types・jwks_uri・jwks と未知 metadata の扱い、§2.3、§3、§3.2.1、§3.2.2、§5、確認日: 2026-10-15。§1.2・§2.3・§3 の initial access token と software statement は RS-16#20（確認日 2026-10-03）。それ以外は research ノート外で、起草者が原典を取得して照合）
+    [^1]: J. Richer (Ed.), M. Jones, J. Bradley, M. Machulak, P. Hunt / IETF『OAuth 2.0 Dynamic Client Registration Protocol』RFC 7591, Standards Track, 2015-07. https://www.rfc-editor.org/rfc/rfc7591 （参照箇所: §2 redirect_uris・token_endpoint_auth_method・grant_types・response_types・jwks_uri・jwks と未知 metadata の扱い、§2.3、§3、§3.2.1、§3.2.2、§5、確認日: 2026-10-15。§2 の client_name（認可時に利用者へ示す名前）と §5 の「すべての client metadata を自己申告として扱う（MUST）」は版 0.4.0 の是正の作成者が 2026-10-15 に RFC Editor の本文で再確認。§1.2・§2.3・§3 の initial access token と software statement は RS-16#20（確認日 2026-10-03）。それ以外は research ノート外で、起草者が原典を取得して照合）
 
     [^2]: J. Richer (Ed.), M. Jones, J. Bradley, M. Machulak / IETF『OAuth 2.0 Dynamic Client Registration Management Protocol』RFC 7592, Experimental, 2015-07. https://www.rfc-editor.org/rfc/rfc7592 （参照箇所: 冒頭の Category、§2、§2.1、§2.2、§2.3、§3、§5、確認日: 2026-10-15。research ノート外）
 
@@ -322,6 +357,14 @@ info:
     [^11]: D. Hardt (Ed.) / IETF『The OAuth 2.0 Authorization Framework』RFC 6749, Standards Track, 2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §1.3.4、§4.4 冒頭（client 自身の管理下の資源か、事前に AS と取り決めた他の資源所有者の資源に限る。取決めの方法は範囲外）、確認日: 2026-10-15。§10.4 は RS-04#70。§1.3.4・§4.4 は research ノート外で、是正の作成者が RFC Editor から取得して照合）
 
     [^12]: Microsoft『Configure the admin consent workflow』Microsoft Entra ID, Microsoft Learn, ms.date 2024-12-29. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow （参照箇所: 冒頭、Enable the admin consent workflow、確認日: 2026-10-03。RS-17#63。製品の挙動の先行例として引き、規範の根拠にはしない）
+
+    [^13]: Cloud Security Alliance『SaaS Security Capability Framework (SSCF)』v1.0.1, 2026-04-09. https://cloudsecurityalliance.org/artifacts/saas-security-capability-framework-sscf （参照箇所: IPY-SaaS-02（連携の作成者の検証と表示、must）、確認日: 2026-10-03。RS-14#50。REQ-06 の脚注 11 と同じ原典）
+
+    [^14]: e-Gov 法令検索『個人情報の保護に関する法律』（平成 15 年法律第 57 号）現行版. https://laws.e-gov.go.jp/law/415AC0000000057 （参照箇所: 第 28 条、第 25 条〔委託先の監督。版 0.4.1 の §9 H-24 で参照。RS-02#10〕、確認日: 2026-10-03。RS-02#8, #9。CTL-02 の脚注 1 と同じ原典）
+
+    [^15]: European Parliament and Council『Regulation (EU) 2016/679 (General Data Protection Regulation)』27 April 2016. https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng （参照箇所: Art. 44, Art. 46(1)、版 0.4.1 の §9 H-24 で Art. 28(3)・Art. 33(2)〔RS-14#42 と脚注 23、RS-02 §3〕、確認日: 2026-10-03。RS-02#47。CTL-02 の脚注 26 と同じ原典）
+
+    [^16]: European Parliament and Council『Regulation (EU) 2022/2554 (DORA)』14 December 2022. https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554 （参照箇所: Art. 30(2)(b)、確認日: 2026-10-03。RS-02#58。CTL-02 の脚注 37 と同じ原典）
 
     ## レビュー記録
 
@@ -360,6 +403,40 @@ info:
     | R7-1 | High・redteam | 悪意のある社内チームや侵害された consumer が、`platform_owning_tenant` に被害テナント T を書いた client_credentials の client（単一テナントの app-only scope）を本番に申請すると、AR-1（認証・IdP チームの peer review）だけで払い出される（テナント越境）。AR-4（CP-1）は複数テナントにまたがる app-only に限られ、所有テナント側の同意を求める規則がない。ADR-005 D7-2（低リスク以外はテナント管理者の同意、privileged）と ADR-008 D8-54（app-only 権限の付与は一律 CP-1）に反する。ラウンド 4 の MP-4-21（Medium）と同じ趣旨だが是正されず、open-items（OI-K01〜OI-K07 はラウンド 1〜3 の 106 件だけ）にも残余リスク台帳にも起票がない | **対応（本ファイル分）。他文書は申し送り**。(1) AR-8 を新設した。`platform_owning_tenant` が顧客テナントで、app-only の権限か、DL-67 で低リスクに分類されていない scope（未分類を含む）を含む create・update には、そのテナントの管理者の同意記録（`tenant_consent`。テナント管理画面の承認 API の記録 ID か署名付き同意票）を必須にし、検査に通るまで status は pending_review のままで払い出さない。同意はテナント・申請・scope の集合・有効期限に束縛し、他テナントの同意の流用・別の申請や狭い scope の同意・期限切れ・管理者でない者の同意を CR22 で拒否する。AR-8 の判断を基盤側の承認者は記録できない。負例 CRN-31〜CRN-37（同意なし、他テナントの同意の流用、狭い scope の同意、基盤側による AR-8 の記録、管理者でない者・期限切れの同意、update での scope の追加と旧い同意の再使用、AR-4 なしの単一テナントの app-only）を加えた。根拠は ADR-005 D7-2、RFC 6749 §1.3.4・§4.4（2026-10-15 に原典で確認。脚注 11）、Entra の admin consent workflow の先行例（RS-17#63。脚注 12）。(2) AR-4 の適用を D8-54 に合わせ「client_credentials の client が要求する app-only の権限の付与すべて（単一テナントを含む）」に広げ、CP-2 に当てはめない理由を §5 に書いた。(3) 脅威の起票（THR-03。新しい T-ID を推奨、または T-071 に写す）は H-16、OB-2(d)・ADR-022・operating-model の CP-1 の範囲は H-17、残余リスク（悪意のある・欺かれたテナント管理者の同意）と POA&M（本件の残りと、ラウンド 4・5 の Medium/Low 62 件の群）の起票は H-18、CON-11 のモックと負例は H-19 で申し送った。版は申請本文の項目・承認規則・理由コードの追加なので 0.3.0 に上げた（CON-01 CP-60 の通知の対象） | info（version、x-depends-on、x-requirements G-124、x-freeze-classes、x-open-issues、x-approval-rules、x-reason-codes、x-negative-examples、x-mock、x-lint-notes）、description 冒頭・§0 の 4・§5・§6・§9 H-16〜H-19・§10・脚注 11・12、paths（申請 API の説明・例）、components（ClientRegistrationRequest の tenant_consent、TenantConsentRef、ApprovalItem、ApprovalDecision、RegistrationRequestStatus） |
 
     - 本ラウンドで閉じられなかったもの [D]: 所有テナントの管理画面の承認 API の契約（H-17）、THR-03 への起票（H-16）、残余リスク台帳と POA&M への起票（H-18）、CON-11 への取込み（H-19）、AR-8 の確定（ONB-R2）、CRN-31〜CRN-37 の実行、作成者以外による照合。
+
+    ### PoC/R7反映（2026-10-15、版 0.3.0 → 版 0.3.1）
+
+    > 本節は、12_poc/measurement-report.md（POC-02 版 0.1）、12_poc/reproduction-log.md と、ラウンド 7 の模擬パネルの指摘（traceability/mock-panel-report.md §4.2 の MP-7-xx と、本契約の R7-1）を読んで反映した記録である。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない（POC-02 要旨 2）[D]。
+
+    | # | 出典 | 反映 | 箇所 |
+    |---|---|---|---|
+    | P-1 | POC-02 §6.2 X-D（TC-021: 関係書込 API が他テナントの role を subject として受理）、X-C（TC-002: ゲストの閉じ込めが R 段だけに依存） | 同じ類型（検査されない欄・単一の層からの越境）を client 登録に当てはめ、`platform_owning_tenant` の値そのものを受付・変更・実行時・終了の 4 点で検査する規則を §5 に加えた。理由コード CR23、負例 CRN-38〜CRN-41、x-mock の追加案を加えた | §5、§6、x-reason-codes、x-negative-examples、x-mock、submitClientRegistrationRequest の description |
+    | P-2 | R7-1（本契約）の閉じられなかったもの、MP-7-21 | 追加の試験・SLI・発行規則・脅威と残余リスクへの写しを H-20〜H-23 で申し送った | §9 |
+    | P-4 | INT-02 §9.1（ラウンド 7 の是正で起票された、edge を呼出し元とする組の登録者の問い） | §4A.3 に、ADR-009 D09-13 をそのまま当てはめた案（申請者はプラットフォームチーム、承認者は呼出し先の所有者）を書いた。確定は ADR-009 の所有者 | §4A.3 |
+    | P-3 | POC-02 §8 の 6（製品・実装の代表性）、POC-03 §2 | PoC は client 登録の部品を持たないので、本契約のどの規則も PoC で実証されていないことを §10 に書いた | §10 |
+
+    - 設計上の含意 [D]: 見直しトリガーは §5 の末尾（CRN-38〜CRN-41 の受理、X-D の設計欠陥への分類）。残余リスクは、撤回から無効化までの窓と、悪意のある・欺かれたテナント管理者の同意（H-18）。追加統制は、払出し後の `tid` の固定（H-22）と状態遷移による無効化。追加 TC は CRN-38〜CRN-41（H-20）。
+    - 版は理由コードと負例の追加（互換な追加）なので 0.3.1 とした（CON-01 CP-60 の通知の対象）[D]。
+
+    ### ラウンド 9（模擬パネル、2026-10-15、版 0.3.1 → 版 0.4.0）
+
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。並行作業の約束により、本ラウンドで編集したのは本ファイルだけである。他文書の是正は §9 の H-24〜H-29 で申し送った [D]。
+
+    | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | R9-1 | High・legal | AR-8 の同意の本体はテナント・申請・scope の集合・期限だけを束縛し、受領者（運用法人・事業ドメイン）、利用目的、データの区分、処理・保存の地域、保持期間を束縛しない。CON-14 には client の稼働地域と所有テナントの所在地群（L-04）の照合もない。所在地指定テナントの管理者が同意すれば、別法域の cell や外部で動く app-only の client に利用者全体のデータが渡り得る（個人情報保護法 28 条、GDPR 44・46 条、DORA 30 条 2 項 (b)、CTL-02 §1.4 の別法人への第三者提供）。同意画面も同意記録も受領者を特定せず、REQ-06 の IPY-SaaS-02（検証済みの作成者属性の表示）とも整合せず、責任分界の条項もない | **対応（本ファイル分）。他文書は申し送り**。(1) 申請に `data_processing`（DataProcessingDeclaration）を加え、AR-8 の同意の本体の束縛項目と同意画面の表示項目に (i) 受領者の運用法人・事業ドメイン（法人台帳・consumer 台帳で検証した表示名と識別子。RFC 7591 §5 の自己申告の扱いと SSCF IPY-SaaS-02 に拠る。脚注 1・13）、(ii) 利用目的、(iii) データの区分（REQ-04 §3.2 のコード。scope から導く区分を下限）、(iv) 処理・保存の所在地群、(v) 保持期間を加え、不一致を CR22 とした（CRN-43・CRN-44）。(2) 承認規則 AR-9 を新設し、処理地域が所有テナントの所在地群（A-062）の外にあるか、受領法人が基盤運営法人と別法人（不明なら別法人とみなす）の申請は、DL-34 の判定記録の参照がなければ新しい理由コード CR24 で拒否する（CRN-42・CRN-45・CRN-46）。relationship-model-registry の「所在地群外への送付先」の負例に倣った。根拠の条文は CTL-02 §3.5 と同じ原典（RS-02#8, #9, #47, #58。脚注 14〜16）。(3) 同意と判定記録で足りるかの法的判断は L-04・L-13・OI-P02 に委ねると明記した。(4) REQ-06 の責任分界条項（同意の権限の所在、受領者の義務、侵害時の通知の流れ）は H-24、CTL-02 §3.5 の 1 行は H-25、CON-11・DL-22 は H-26、THR-03 T-081 と残余リスク（申告された地域と実際の稼働地域の差）は H-27、scope と区分の対応表は H-28、OB-2(d) と管理画面の承認 API は H-29 で申し送った。版は申請本文の項目・承認規則・理由コードの追加なので 0.4.0 に上げた（CON-01 CP-60 の通知の対象） | info（version、x-depends-on、x-requirements G-124、x-open-issues、x-approval-rules、x-reason-codes、x-negative-examples、x-mock、x-lint-notes）、description 冒頭・§5・§6・§9 H-24〜H-29・§10・脚注 1・13〜16、paths（申請 API の説明・例）、components（ClientRegistrationRequest の data_processing、DataProcessingDeclaration、TenantConsentRef、ApprovalItem、ApprovalDecision、RegistrationRequestStatus） |
+
+    - 本ラウンドで閉じられなかったもの [D]: REQ-06 の責任分界条項（H-24）、CTL-02 §3.5 への 1 行（H-25）、法的十分性の判断（L-04・L-13・OI-P02。非机上）、scope と区分の対応表（H-28）、申告された地域と実際の稼働地域の照合手段（H-27）、法人台帳の所在と NA-8 の確定、CRN-42〜CRN-46 の実行、作成者以外による照合。
+
+    ### ラウンド 10（模擬パネル、2026-10-15、版 0.4.0 → 版 0.4.1）
+
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。並行作業の約束により、本ラウンドで編集したのは本ファイルだけである。宛先の文書（REQ-06・CTL-02・TRC-11・DCS-05）は編集していない [D]。
+
+    | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | R10-1 | High・legal | 版 0.4.0 が起こした H-24（app-only の client への管理者の同意の責任分界条項）と H-25（CTL-02 §3.5 の 1 行）が宛先に未適用である。REQ-06 は版 0.1 のままで §11.4 に app-only・AR-8・CON-14 の記載がなく、CTL-02 は版 0.4 のままで CON-14・AR-9 の記載がない。リポジトリの .md に H-24・H-25 を引く行がなく、POA&M（TRC-11）にも担当と期限を持つ行がない（OI-G05 は H-18・H-23 だけ）。RRG-076 は段 2 で受容される残余であり、責任分界の条項案がないまま受容の議題に載る。G-130 の申し送り追跡の欠落（群 g、OI-K07）の再発 | **対応（本ファイル分）。他文書は申し送り**。(1) 指摘の事実を 2026-10-15 の作業ツリーで確かめた（REQ-06 の冒頭は版 0.1・最終更新 2026-10-03、§11.4 は条項 1〜13。CTL-02 の冒頭は版 0.4。TRC-11 §4.11.1 は OI-G01〜OI-G10 で H-24・H-25 の行なし）[D]。(2) H-24 を REQ-06 §11.4 の条項 14 の起案内容に具体化した（同意できる者と保護操作、同意が束縛する 5 項目、受領者の義務と委託先・第三者による責任の区分、法務の判断事項欄）。責任の区分の根拠は個人情報保護法 25 条（RS-02#10）、GDPR 28 条 3 項（RS-14#42）・33 条 2 項（RS-02 §3）で、原典は脚注 14・15 と同じ（参照箇所を追記）。(3) H-25 に、AR-9・CR24 の記録を移転根拠の台帳の入力にすることと、L-04・L-13 の帰結への CON-14 AR-9 の追加を書いた。(4) 担当と期限を持つ POA&M の行（案 OI-G11。担当は REQ-06・CTL-02 の所有者と法務責任者、期限 DEC-8 の付議前、完了条件は両文書の改版）を H-30、RRG-076 の受容の前提への反映を H-31 で申し送った。(5) 法的十分性は OI-P02（非机上）に残した。版は申し送りと記録だけの変更（契約の項目・規則・理由コードの変更なし）なので 0.4.1 とした（CON-01 CP-60 の通知の対象）[D] | info（version）、description 冒頭・§9 H-24・H-25・H-30・H-31・脚注 14・15、x-open-issues（法的十分性の行）、本表 |
+
+    - 本ラウンドで閉じられなかったもの [D]: H-24・H-25 の宛先への適用そのもの（H-30 の行の起票と、REQ-06・CTL-02 の改版）、RRG-076 の受容の前提（H-31）、法的十分性の判断（OI-P02。非机上）、条項 14 の作成者以外による照合。
   x-lint-notes:
     - rule: Redocly CLI 2.63.0 lint（recommended 規則、設定ファイルなし）
       result: エラー 0・警告 0（起草者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置き、リポジトリには残していない）
@@ -373,9 +450,19 @@ info:
     - rule: 版 0.3.0 の再検査（Redocly CLI 2.63.0 lint、Python jsonschema 4.26.0）
       result: Redocly はエラー 0・警告 0。check_schema に合格し、examples 13 件（追加の createTenantAppOnlyClient を含む）が適合した。TenantConsentRef は form のない値と enum 外の form を拒否した。版 0.2.0 のスキーマ負例 10 件は引き続き拒否された（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた）
       reason: AR-8 の判定（同意のテナント・申請・scope の集合・期限・同意者の役割）と CRN-31〜CRN-37 は状態に依存するため、スキーマでは検査できない。tenant_consent を AR-8 に当てはまる申請で必須にする規則も、scope の分類（DL-67）に依存するのでスキーマに書かず、受付時の検査（CR22）と required_approvals で表す
+    - rule: 版 0.3.1 の再検査（PoC/R7反映。Python PyYAML と jsonschema 4.26.0 の Draft202012Validator.check_schema）
+      result: YAML として読み込め、components.schemas の 33 件が check_schema に合格した。x-reason-codes に CR23、x-negative-examples は 41 件（CRN-01〜CRN-41）になった（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた。TC-ID のない作成者の確認なので [M] は付けない。MP-7-15）
+      reason: Redocly CLI は本作業の環境に導入されておらず、版 0.3.1 では lint を再実行していない。スキーマと examples は変えていないので、版 0.3.0 の lint の結果（エラー 0・警告 0）が当てはまると推定するが、確認は CON-00 の所有者の再実行による [D]
+    - rule: 版 0.4.0 の再検査（ラウンド 9。Python PyYAML と jsonschema 4.26.0 の Draft202012Validator、FormatChecker あり）
+      result: YAML として読み込め、components.schemas の 34 件（DataProcessingDeclaration を追加）が check_schema に合格し、requestBody の examples 8 件（data_processing を加えた createTenantAppOnlyClient を含む）が適合した。DataProcessingDeclaration は、recipient の欠落、enum 外の区分コード、空の processing_regions、ISO 8601 でない retention（30d、P）、未知の項目の 6 件を拒否した。x-reason-codes に CR24、x-negative-examples は 46 件（CRN-01〜CRN-46）、x-approval-rules に AR-9（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた。TC-ID のない作成者の確認なので [M] は付けない）
+      reason: Redocly CLI は本作業の環境に導入されておらず、版 0.4.0 では lint を実行していない。スキーマを追加したので、版 0.3.0 の lint の結果は当てはまらない。再実行は CON-00 の所有者による [D]。CR22 の (i)〜(v) の照合と CR24（所在地群・法人台帳・判定記録）は状態に依存するため、スキーマでは検査できない
   x-open-issues:
     - id: ADR-022（本番の登録手段）
-      text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-8 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
+      text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-9 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
+    - id: platform_owning_tenant の検証と実行時の束縛（版 0.3.1、PoC/R7反映）
+      text: 受付時の CR23（REQ-05 の主状態 A に限る）、変更時の再同意、token の tid を登録記録に固定する発行規則、同意の撤回とテナントの終了での無効化（§5）。発行規則の正本は ARC-02・ADR-005 に置く（§9 H-22）。撤回から無効化までの SLI は TBD（§9 H-21）。所有者 認証・IdP チーム、期限 DEC-8 前
+    - id: 同意の束縛項目と AR-9（版 0.4.0、ラウンド 9 legal）
+      text: 管理者の同意と DL-34 の判定記録の組で移転・第三者提供の要件を満たすかは L-04・L-13・OI-P02（非机上）で決める。REQ-06 の責任分界条項（条項 14）と CTL-02 §3.5 の行は宛先に未適用で、POA&M の起票を §9 H-30 で申し送った（ラウンド 10）。受領者の運用法人を検証する法人台帳の置き場所、scope と REQ-04 の区分の対応表（§9 H-28）、申告された処理地域と実際の稼働地域の照合（§9 H-27）は未定。所有者 認証・IdP チーム（法務責任者と協議）、期限 DEC-8 前
     - id: ARC-02 AR-3
       text: 本番の AS で RFC 7591 の動的登録を許すか。本契約は無効を前提とする。許す場合は発行者確認（ADR-005 D7-1）を経た client に限る
     - id: G-141(c) の workload
@@ -410,7 +497,8 @@ info:
       - { id: AR-5, applies: "C3 で tls_client_certificate_bound_access_tokens の代わりに dpop_bound_access_tokens を使う", approver: "AR-1 に加え、受容票（platform_acceptance_ref）の参照が必須", basis: "ADR-005 K-3", checks: "受容票の有効期限" }
       - { id: AR-6, applies: "subject が workload で、kind が create か update", approver: "プラットフォームチームの有資格者（作成者≠承認者）", basis: "INT-04 OB-2(b)、ARC-04 W55-08、operating-model §7.2 CP-2", checks: "selector が基盤管理の属性だけで、image:digest を含むこと。namespace が申請者の consumer に割り当て済みであること。所有者・副所有者の有無（W55-11）" }
       - { id: AR-7, applies: "subject が exchange_pair で、kind が create か update", approver: "呼出し先の所有者", basis: "ADR-009 D09-13、INT-04 OB-2(c)", checks: "呼出しの必要性、max_scope の最小化" }
-      - { id: AR-8, applies: "subject が client の create・update で、platform_owning_tenant が顧客テナントであり、scope に app-only の権限（grant_types に client_credentials を含む client の scope すべて）か、操作の分類登録（DL-67）で低リスクに分類されていない scope（未分類を含む）がある。update では scope・grant_types・platform_owning_tenant を変えるとき（版 0.3.0）", approver: "所有テナント（platform_owning_tenant）の管理者。基盤側の承認者は記録できない（CRN-34）", basis: "ADR-005 D7-2、ARC-02 §6（テナント管理者の同意は privileged、F2）、RFC 6749 §1.3.4・§4.4、先行例 RS-17#63", checks: "tenant_consent（consent_ref）があり、tenant_id が platform_owning_tenant と一致し、同意が本申請（request_id か target_client_id）と要求する scope の集合を覆い、期限内で、同意の時点で同意者がそのテナントの管理者であること。満たさなければ CR22。検査に通るまで status は pending_review のままで払い出さない" }
+      - { id: AR-8, applies: "subject が client の create・update で、platform_owning_tenant が顧客テナントであり、scope に app-only の権限（grant_types に client_credentials を含む client の scope すべて）か、操作の分類登録（DL-67）で低リスクに分類されていない scope（未分類を含む）がある。update では scope・grant_types・platform_owning_tenant を変えるとき（版 0.3.0）", approver: "所有テナント（platform_owning_tenant）の管理者。基盤側の承認者は記録できない（CRN-34）。同意画面には data_processing の (i) 受領者（検証済みの運用法人・事業ドメイン）、(ii) 利用目的、(iii) データ区分、(iv) 処理・保存の所在地群、(v) 保持期間を表示する（版 0.4.0）", basis: "ADR-005 D7-2、ARC-02 §6（テナント管理者の同意は privileged、F2）、RFC 6749 §1.3.4・§4.4、先行例 RS-17#63", checks: "tenant_consent（consent_ref）があり、tenant_id が platform_owning_tenant と一致し、同意が本申請（request_id か target_client_id）と要求する scope の集合を覆い、期限内で、同意の時点で同意者がそのテナントの管理者であること。同意の本体が data_processing の (i)〜(v) と一致すること（版 0.4.0）。満たさなければ CR22。検査に通るまで status は pending_review のままで払い出さない" }
+      - { id: AR-9, applies: "AR-8 に当てはまる申請のうち、(a) data_processing.processing_regions に所有テナントの所在地群（A-062、テナント配置表）にない所在地群がある、または (b) data_processing.recipient の運用法人が基盤運営法人と別法人（不明を含む）であるもの。update では data_processing か platform_owning_tenant を変えるとき（版 0.4.0）", approver: "承認者なし。DL-34（CTL-02、法務責任者）の判定記録の参照（data_processing.transfer_assessment_ref）で満たす。基盤側の承認者は decide で記録できない（403）", basis: "個人情報保護法 28 条、GDPR 44 条・46 条 1 項、DORA 30 条 2 項 (b)（CTL-02 §3.5）、CTL-02 §1.4 (β)・L-04・L-13、relationship-model-registry の export の destination_region（ADR-018 D18-12(d)）", checks: "判定記録があり、本申請の受領法人・処理地域・データ区分・利用目的を覆い、有効であること。満たさなければ CR24。法的十分性の判断は L-04・L-13・OI-P02" }
       - { id: AR-0, applies: "kind が retire", approver: "不要（所有者だけで成立）", basis: "権限を減らす変更", checks: "払出し後、その client の grant と token を無効化する（RFC 7592 §2.3 の SHOULD を本番にも適用）" }
   x-reason-codes:
     CR01: { error: invalid_client_metadata, http: 400, meaning: token_endpoint_auth_method がない、または共有秘密の方式（client_secret_basic・client_secret_post・client_secret_jwt）、または種別と合わない方式 }
@@ -434,7 +522,9 @@ info:
     CR19: { error: invalid_exchange_pair, http: 400, meaning: "呼出し元が同じ環境の登録済みエントリでない、呼出し先が未知、max_scope が空か wildcard を含む、または同じ組が登録済み（ADR-009 D09-13。版 0.2.0、preview）" }
     CR20: { error: invalid_workload_metadata, http: 400, meaning: "sandbox の登録で、本番の trust domain の SPIFFE ID を含む（環境の分離。版 0.2.0、preview）" }
     CR21: { error: invalid_workload_selector, http: 400, meaning: "k8s:ns が申請者の consumer_id に割り当てられていない、または同じ selector の組を別の登録エントリが持つ（版 0.2.0、preview）" }
-    CR22: { error: invalid_tenant_consent, http: 400, meaning: "所有テナントの同意記録（tenant_consent）が AR-8 を満たさない。tenant_id が platform_owning_tenant と異なる（他テナントの同意の流用）、別の申請・client に対するもの、要求する scope の集合を覆わない、期限切れ、または同意の時点で同意者がそのテナントの管理者でない（ADR-005 D7-2。版 0.3.0、preview）" }
+    CR22: { error: invalid_tenant_consent, http: 400, meaning: "所有テナントの同意記録（tenant_consent）が AR-8 を満たさない。tenant_id が platform_owning_tenant と異なる（他テナントの同意の流用）、別の申請・client に対するもの、要求する scope の集合を覆わない、期限切れ、同意の時点で同意者がそのテナントの管理者でない（ADR-005 D7-2。版 0.3.0、preview）、または同意の本体が data_processing の (i) 受領者・(ii) 利用目的・(iii) データ区分・(iv) 処理地域・(v) 保持期間と一致しないか、申請に data_processing がない（版 0.4.0）" }
+    CR23: { error: invalid_owning_tenant, http: 400, meaning: "platform_owning_tenant が未知、REQ-05 §2.1 の主状態が A（有効）でない（P・S1・S2・M・N・R 以降）、または申請先と別の環境（sandbox）のテナント（版 0.3.1、PoC/R7反映、preview）" }
+    CR24: { error: transfer_assessment_required, http: 400, meaning: "AR-9 に当てはまる申請（処理地域が所有テナントの所在地群の外、または受領法人が基盤運営法人と別法人か不明）で、DL-34 の判定記録の参照（data_processing.transfer_assessment_ref）がない、無効、または本申請の受領法人・処理地域・データ区分・利用目的を覆わない（版 0.4.0、ラウンド 9 legal、preview）" }
   x-negative-examples:
     description: 登録族の負例。期待結果はすべて拒否（または払出し 0 件）と、理由コード付きの記録。CON-11 §6.3 に「登録族」として追加する（申し送り H-3）。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
     items:
@@ -475,6 +565,15 @@ info:
       - { ref: CRN-35, op: submitClientRegistrationRequest, case: "同意者が同意の時点でテナント T の管理者でない（一般利用者、または役割を外された元管理者）か、同意の期限が切れている", expect: "400 / CR22（払出しの直前の再検査で発覚した場合は status=rejected、reason_code=CR22）" }
       - { ref: CRN-36, op: submitClientRegistrationRequest, case: "払出し済みの client（T の同意あり）の update で app-only scope を追加し、旧い同意の consent_ref を再使用する", expect: "400 / CR22。新しい scope の集合を覆う同意がない限り払い出さない（AR-4・AR-8 が required_approvals に入る）" }
       - { ref: CRN-37, op: submitClientRegistrationRequest, case: "platform_owning_tenant を省略した C5 で単一テナントの app-only scope を要求し、AR-1 だけの承認で払出しを待つ", expect: "required_approvals に AR-4（cp1-dual-control）が入り、AR-1 だけでは pending_review のまま。払出し 0 件" }
+      - { ref: CRN-38, op: submitClientRegistrationRequest, case: "platform_owning_tenant に、存在しない ID、主状態が S1（一時停止）か M（移行中）のテナント、または sandbox のテナント ID を書いた C5 の申請（同意記録は形式上そろう）", expect: "400 Problem（code=invalid_owning_tenant、reason_code=CR23）。払出し 0 件。払出しの直前に状態が変わった場合は status=rejected、reason_code=CR23（版 0.3.1、PoC/R7反映）" }
+      - { ref: CRN-39, op: submitClientRegistrationRequest, case: "払出し済みの client（所有テナント T、T の同意あり）の update で platform_owning_tenant を U に変え、T の consent_ref を再使用する", expect: "400 / CR22。U の管理者の新しい同意と AR-4 がそろうまで払い出さない（版 0.3.1、PoC/R7反映）" }
+      - { ref: CRN-40, op: "（本番 AS の token endpoint と PEP）", case: "所有テナント T の C5 client が、resource やパラメータでテナント U を指して client_credentials の token を要求し、得た token を U の資源の API に提示する", expect: "token の tid は T に固定され U にならない。U の資源の PEP は tid と資源側テナントの不一致で拒否する（版 0.3.1、PoC/R7反映）" }
+      - { ref: CRN-41, op: "（所有テナントの同意の撤回、テナントの状態遷移）", case: "T の管理者が同意を撤回した後、または T が R（取得期間）に入った後に、その client が token を要求する。S1 の間の要求も含む", expect: "token は発行されない（401 invalid_client か 400 invalid_grant）。撤回・遷移の後に既発行の token が使われた場合は PEP が拒否する。撤回から拒否までの時間は記録する（SLI は TBD。版 0.3.1、PoC/R7反映）" }
+      - { ref: CRN-42, op: submitClientRegistrationRequest, case: "所在地群が EU だけのテナント T（所在地指定）を所有テナントとする C5 の申請で、data_processing.processing_regions=[us]、T の管理者の同意は (i)〜(v) を含めて形式上そろう。transfer_assessment_ref なし", expect: "400 Problem（code=transfer_assessment_required、reason_code=CR24）。払出し 0 件。relationship-model-registry の「所在地群外への送付先」と同じ判定（版 0.4.0、ラウンド 9 legal）" }
+      - { ref: CRN-43, op: submitClientRegistrationRequest, case: "T の管理者の同意の本体が受領者 X 社・利用目的「月次集計」・区分 [CUS]・地域 [jp]・保持 P30D を束縛し、申請の data_processing は受領者 Y 社、区分 [CUS, PII]、保持 P1Y を申告する。または data_processing を省略する", expect: "400 / CR22。払出し 0 件（版 0.4.0）" }
+      - { ref: CRN-44, op: submitClientRegistrationRequest, case: "払出し済みの client（T の同意あり、地域 [jp]）の update で processing_regions を [jp, eu] に、または recipient を別法人に変え、旧い consent_ref と旧い判定記録を再使用する", expect: "400 / CR22（新しい同意がない）。新しい同意がそろっても判定記録が新しい地域・受領者を覆わなければ CR24。払出し 0 件（版 0.4.0）" }
+      - { ref: CRN-45, op: submitClientRegistrationRequest, case: "処理地域は T の所在地群の内だが、recipient の運用法人がグループ内の別法人（または法人台帳で判定できない）。同意はそろい、transfer_assessment_ref なし", expect: "400 / CR24。払出し 0 件（CTL-02 §1.4 (β)、L-13。版 0.4.0）" }
+      - { ref: CRN-46, op: decideClientRegistrationRequest, case: "認証・IdP チームの有資格者が rule=AR-9 の approve を記録して判定記録の代わりにする", expect: "403。AR-9 は未充足のまま。払出し 0 件（版 0.4.0）" }
   x-mock:
     description: CON-11 の MK-01（開発用 AS・IdP）への追加案（申し送り H-3）。CON-11 の作成者が取り込むまでは本節を仕様とする
     MK-01:
@@ -486,6 +585,8 @@ info:
       - （版 0.2.0 の追加案。申し送り H-12）STS 役に registerSandboxWorkload・deleteSandboxWorkload・registerExchangePair・decideSandboxExchangePair・deleteExchangePair を実装し、CR15〜CR21 の判定を返す
       - 登録エントリに対して sandbox の trust domain の SVID を発行し、有効な組（status=active）だけを exchange の登録簿として使う（CRN-28・CRN-30）
       - （版 0.3.0 の追加案。申し送り H-19）本番の申請 API のモックは、AR-4 を client_credentials の申請に、AR-8 を platform_owning_tenant のある app-only・低リスクでない scope の申請に付け、tenant_consent の検査（CR22）を example 駆動で返す（CRN-31〜CRN-37）
+      - （版 0.3.1 の追加案。PoC/R7反映）本番の申請 API のモックは、テナントの主状態を制御 API（POST /__kit/fixtures）で登録し、CR23 を返す（CRN-38・CRN-39）。MK-01 の issuer A（本番役）は、platform_owning_tenant を持つ client の token の tid を登録値に固定する（CRN-40）。同意の撤回とテナントの状態遷移は制御 API の inject で模す（CRN-41）
+      - （版 0.4.0 の追加案。申し送り H-26）本番の申請 API のモックは、テナントの所在地群・法人台帳・DL-34 の判定記録を制御 API（POST /__kit/fixtures）で登録し、同意の本体と data_processing の照合（CR22。CRN-43・CRN-44）と AR-9（CR24。CRN-42・CRN-45）を返す。decide での AR-9 の記録は 403（CRN-46）
       - 割り当て済みの namespace と参照サービスの一覧を制御 API（POST /__kit/fixtures）で登録し、CR21 と即時有効の判定に使う
 servers:
   - url: https://sandbox-as.id-domain.example
@@ -871,8 +972,8 @@ paths:
       x-freeze-class: preview
       description: |
         `subject` で対象を選ぶ（`client` が既定。`workload`・`exchange_pair` は版 0.2.0 で追加。§4A.4）。workload には AR-6、exchange_pair には AR-7 の承認が要る。
-        client_credentials の client には AR-4（CP-1）が要る。`platform_owning_tenant` が顧客テナントで、app-only の権限か低リスクでない scope を要求する申請には、そのテナントの管理者の同意記録 `tenant_consent` が要り、検査に通るまで払い出さない（AR-8、CR22。版 0.3.0）。
-        申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ。同意記録の不備は CR22）。
+        client_credentials の client には AR-4（CP-1）が要る。`platform_owning_tenant` が顧客テナントで、app-only の権限か低リスクでない scope を要求する申請には、そのテナントの管理者の同意記録 `tenant_consent` が要り、検査に通るまで払い出さない（AR-8、CR22。版 0.3.0）。AR-8 に当てはまる申請には `data_processing`（受領者・利用目的・データ区分・処理地域・保持期間）が要り、同意の本体と一致しなければ CR22、処理地域が所有テナントの所在地群の外か受領法人が別法人で DL-34 の判定記録がなければ CR24（AR-9。版 0.4.0）。
+        申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ。同意記録の不備は CR22。所有テナントの値の不備（未知、主状態が A でない、別環境のテナント）は CR23。版 0.3.1、PoC/R7反映）。
         sandbox と同じ ClientMetadata を使えるが、`client_id` は本番で別の値が払い出される（ADR-021 D21-22）。
       security:
         - workforceOidc: []
@@ -904,11 +1005,17 @@ paths:
                     require_pushed_authorization_requests: true
                     scope: tenant.config.write
               createTenantAppOnlyClient:
-                summary: 正例。C5 で単一テナントの app-only（AR-1・AR-4・AR-8 の承認が要る。版 0.3.0）
+                summary: 正例。C5 で単一テナントの app-only（AR-1・AR-4・AR-8 の承認が要る。版 0.3.0。処理地域が所有テナントの所在地群の内で受領法人が基盤運営法人と同じなので AR-9 は不要。版 0.4.0）
                 value:
                   kind: create
                   justification: 顧客テナントの夜間の集計バッチ（利用者を介さない読取り）
                   tenant_consent: { consent_ref: tc-8kq4m2zr7xw3nv6p, tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy, form: tenant_admin_api }
+                  data_processing:
+                    recipient: { legal_entity_id: le7xk2m4qz9tr3nb5wd6pha2fc, business_domain: reporting }
+                    purpose: 顧客テナントの月次の利用状況レポートの作成
+                    data_categories: [CUS]
+                    processing_regions: [jp]
+                    retention: P30D
                   metadata:
                     platform_client_category: C5
                     platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: batch-oncall@partner-team.example }
@@ -1523,6 +1630,9 @@ components:
         tenant_consent:
           description: 所有テナントの管理者の同意記録の参照。AR-8 に当てはまる申請で必須（ないと pending_review のまま払い出さない。CRN-31）。版 0.3.0
           $ref: '#/components/schemas/TenantConsentRef'
+        data_processing:
+          description: 受領者・利用目的・データ区分・処理地域・保持期間の申告。AR-8 に当てはまる申請で必須で、同意の本体と一致しなければ CR22（CRN-43）。AR-9 の判定にも使う（版 0.4.0）。必須とする条件は scope の分類（DL-67）に依存するのでスキーマでは表さない
+          $ref: '#/components/schemas/DataProcessingDeclaration'
       anyOf:
         - properties: { subject: { const: client }, kind: { const: create } }
           required: [metadata]
@@ -1541,7 +1651,7 @@ components:
         - properties: { subject: { enum: [workload, exchange_pair] }, kind: { const: retire } }
           required: [subject, target_id]
     TenantConsentRef:
-      description: 所有テナントの管理者の同意記録の参照（AR-8、ADR-005 D7-2。版 0.3.0、preview）。同意の本体（同意者、同意の時点の役割、申請 ID、scope の集合、期限）は基盤が consent_ref から引いて検査し、本文の値を信用して判定しない（CR22）
+      description: 所有テナントの管理者の同意記録の参照（AR-8、ADR-005 D7-2。版 0.3.0、preview）。同意の本体（同意者、同意の時点の役割、申請 ID、scope の集合、期限。版 0.4.0 から受領者・利用目的・データ区分・処理地域・保持期間も）は基盤が consent_ref から引いて検査し、本文の値を信用して判定しない（CR22）
       type: object
       additionalProperties: false
       required: [consent_ref, tenant_id, form]
@@ -1556,6 +1666,55 @@ components:
         form:
           type: string
           enum: [tenant_admin_api, signed_consent_form]
+    DataProcessingDeclaration:
+      description: AR-8 の同意の本体が束縛し、同意画面に表示する (i)〜(v) の申告と、AR-9 の判定記録の参照（版 0.4.0、ラウンド 9 legal、preview）。受領者の表示名は基盤が法人台帳から引いて表示し、申請者の自己申告を表示しない（RFC 7591 §5）
+      type: object
+      additionalProperties: false
+      required: [recipient, purpose, data_categories, processing_regions, retention]
+      properties:
+        recipient:
+          description: (i) client を運用し、取得したデータを受け取る法人と事業ドメイン
+          type: object
+          additionalProperties: false
+          required: [legal_entity_id]
+          properties:
+            legal_entity_id:
+              description: 基盤の法人台帳の識別子。表示名はこの値から基盤が引く。未登録なら CR24 の判定では別法人とみなす
+              $ref: '#/components/schemas/OpaqueId'
+            business_domain:
+              description: 事業ドメイン（A-051）の識別名
+              type: string
+              maxLength: 64
+        purpose:
+          description: (ii) 同意画面に表示する利用目的（1 文）
+          type: string
+          minLength: 1
+          maxLength: 200
+        data_categories:
+          description: (iii) REQ-04 §3.2 の区分コードの集合。scope から基盤が導く区分を下限とする
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [PUB, INT, CUS, PII, SPI, PCI, MED, SEC, AUD, AZD]
+        processing_regions:
+          description: (iv) 処理・保存の所在地群（ADR-013。値の集合は relationship-model-registry の destination_region と同じ）
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 2
+            maxLength: 16
+        retention:
+          description: (v) 受領者が取得したデータを保持する期間の上限（ISO 8601 の期間）
+          type: string
+          pattern: '^P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+W)?([0-9]+D)?$'
+        transfer_assessment_ref:
+          description: AR-9 に当てはまる申請で必須の、DL-34（CTL-02）の判定記録の参照。ないか、本申請を覆わなければ CR24
+          type: string
+          maxLength: 128
     SpiffeId:
       description: SPIFFE ID（trust domain を含む完全な形で扱い、path だけで比べない。§4A.2）。値は基盤が払い出す
       type: string
@@ -1691,10 +1850,10 @@ components:
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9]
         role:
           type: string
-          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control, platform-workload-reviewer, callee-owner, tenant-admin]
+          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control, platform-workload-reviewer, callee-owner, tenant-admin, transfer-assessment]
         decision:
           type: string
           enum: [approve, reject]
@@ -1703,6 +1862,10 @@ components:
           format: date-time
         consent_ref:
           description: rule が AR-8 のときだけ。検査に通った同意記録の参照（版 0.3.0）
+          type: string
+          maxLength: 128
+        transfer_assessment_ref:
+          description: rule が AR-9 のときだけ。検査に通った DL-34 の判定記録の参照（版 0.4.0）
           type: string
           maxLength: 128
     RegistrationRequestStatus:
@@ -1743,17 +1906,17 @@ components:
           description: subject が exchange_pair で status が provisioned のときだけ
           $ref: '#/components/schemas/ExchangePairInfo'
         reason_code:
-          description: 却下・受付拒否の理由コード（CR01〜CR13、CR15〜CR22）
+          description: 却下・受付拒否の理由コード（CR01〜CR13、CR15〜CR24。CR23 は版 0.3.1、CR24 は版 0.4.0）
           type: string
           pattern: '^CR[0-9]{2}$'
     ApprovalDecision:
-      description: 基盤側の承認者の判断。AR-8 はテナント側の同意記録で満たし、本操作では記録できない（403。CRN-34。版 0.3.0）
+      description: 基盤側の承認者の判断。AR-8 はテナント側の同意記録、AR-9 は DL-34 の判定記録で満たし、本操作では記録できない（403。CRN-34・CRN-46。版 0.3.0・0.4.0）
       type: object
       required: [rule, decision]
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9]
         decision:
           type: string
           enum: [approve, reject]

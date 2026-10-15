@@ -144,7 +144,7 @@
       "minimum": 0
     },
     "opaqueId": {
-      "$comment": "sub・tid・client_id・gref・sid・jti・txn の値。ADR-021 D21-09（122 bit 以上の CSPRNG 乱数、64 文字以下の ASCII、大文字小文字を区別、解析しない。払い出す値は小文字英数字、候補は小文字 base32 26 文字または UUIDv4 小文字 36 文字）、D21-12（tid）, D21-22（client_id）, D21-36（jti・sid・txn）。時刻・テナント・リージョン・主体類型・cell 名を埋め込まない。符号化は DL-71 で決める（TBD）ので、本 schema は発行側の検査なので、CON-02（common.schema.json）の IssuedOpaqueId と同じ 2 候補（小文字 base32 26 文字、UUIDv4 正準表記の小文字 36 文字）だけを受ける。DL-71 で一方に決まったら minor 改版で絞る。受信側は CON-02 の OpaqueId（64 文字以下の印字可能 ASCII）として扱い、本 pattern で拒否しない（ARC-02 TP-08）。",
+      "$comment": "sub・tid・client_id・gref・sid・jti・txn の値。ADR-021 D21-09（122 bit 以上の CSPRNG 乱数、64 文字以下の ASCII、大文字小文字を区別、解析しない。払い出す値は小文字英数字、候補は小文字 base32 26 文字または UUIDv4 小文字 36 文字）、D21-12（tid）, D21-22（client_id）, D21-36（jti・sid・txn）。時刻・テナント・リージョン・主体類型・cell 名を埋め込まない。符号化は DL-71 で決める（TBD）ので、本 schema は発行側の検査なので、CON-02（common.schema.json）の IssuedOpaqueId と同じ 2 候補（小文字 base32 26 文字、UUIDv4 正準表記の小文字 36 文字）だけを受ける。DL-71 で一方に決まったら minor 改版で絞る。受信側は CON-02 の OpaqueId（64 文字以下の印字可能 ASCII）として扱い、本 pattern で拒否しない（ARC-02 TP-08）。PoC/R7反映: POC-02 §6.3 の TC-016 観察 F-2 で、PoC の PEP SDK が受信 token の txn を本 pattern で検査して拒否し、本注記と食い違った（立会人なしの自己実行で Gate 4 の証拠ではない）。本 schema は変えず、受信側の規則は本注記のとおりとする。SDK と契約のどちらに合わせるかの決定は ADR-022 D-8-5 の担当による（POC-02 MR-10、期限 G3）。契約試験（DL-80）に、発行側の pattern に合わない txn を受信側が拒否しない正例を加える案を CON-11 に申し送った。",
       "type": "string",
       "anyOf": [
         { "pattern": "^[a-z2-7]{26}$" },
@@ -257,7 +257,7 @@
       "pattern": "^[A-Za-z0-9_-]+$"
     },
     "issuedAlg": {
-      "$comment": "発行 alg。暗号 profile CP v1 の発行値は ES256（ADR-015 の CP 初期版（v1）案の表、ADR-005 D8-3、ADR-007 D7-10）。RFC 9068 §2.1 の RS256 MUST からの逸脱は ARC-02 §9.3 に記録済み（RS-04#60）。ML-DSA-44／ML-DSA-65（RFC 9964）は SDK に検証を実装するが、CP で許可されるまで発行しない（ADR-015 D15-14）。CP の改版で発行 alg が増えるときは本定義を minor 改版する。受理判定の allowlist は本 schema ではなく検証側の版付き CP から読む（ADR-005 V1）。",
+      "$comment": "発行 alg。暗号 profile CP v1 の発行値は ES256（ADR-015 の CP 初期版（v1）案の表、ADR-005 D8-3、ADR-007 D7-10）。RFC 9068 §2.1 の RS256 MUST からの逸脱は ARC-02 §9.3 に記録済み（RS-04#60）。ML-DSA-44／ML-DSA-65（RFC 9964）は SDK に検証を実装するが、CP で許可されるまで発行しない（ADR-015 D15-14）。CP の改版で発行 alg が増えるときは本定義を minor 改版する。受理判定の allowlist は本 schema ではなく検証側の版付き CP から読む（ADR-005 V1）。PoC/R7反映: POC-02 §6.4 の TC-015（RK-DEV-07）で、PoC の内部 token の発行 alg を ES256 以外に切り替えると本定義とずれた（立会人なしの自己実行で Gate 4 の証拠ではない）。CP の改版を経ない発行 alg の切替は本定義に反するので、本定義は変えない。鍵危殆化などの緊急時の alg 切替を CP の改版より先に行う手順を置くかは ADR-015・ADR-022 の担当が決める（POC-02 MR-10、期限 G3）。",
       "type": "string",
       "enum": ["ES256"]
     },

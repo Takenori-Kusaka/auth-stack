@@ -1,9 +1,9 @@
 # オンボーディング手順
 
-> 文書ID: INT-04 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-04 / 版: 0.4 / 状態: draft / 最終更新: 2026-10-15（0.4: 模擬パネル ラウンド 10 の devlead 指摘により、CON-14 版 0.4.0（data_processing の申告、同意の本体の (i)〜(v)、AR-9、CR24）を §3 の OB-2 行、§4.3 OB-2(d)、§5.1、ONB-R2・ONB-R3 に反映した。末尾「レビュー記録」の「ラウンド 10」。0.3: PoC/R7反映。§4.3 の本番 client の承認に AR-8（所有テナントの管理者の同意）と所有テナントの検証（CON-14 版 0.3.1）を加え、AR-4 を app-only の付与すべてに改めた。キット本体の DL 番号の誤記（DL-82→DL-120）を直した。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-140, R-179（R-requirements.md で対応成果物欄に本書のパスまたは DL-66 を含む行と、成果物計画の DL-66 行）／G-052, G-053, G-116, G-124, G-129, G-141, G-144（G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-66 を含む全行）。関連: 主張台帳 CL-0264（移管先が本書）、seed-03 C3・§7-15
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-66）, 05_adr/ADR-009, ADR-012, ADR-016, ADR-022, ADR-023, ADR-027（設計判断の正本）, 05_adr/reconciliation-notes.md, 08_operations/operating-model.md（DL-27）, 08_operations/phased-rollout.md（DL-31）, 08_operations/tco-vendor-lts.md, 10_integration/dependency-tiers.md（INT-01）, 10_integration/integration-patterns.md（INT-02）, 10_integration/authz-modeling-guide.md（INT-03）, 11_contracts/README.md（CON-00）, 11_contracts/compatibility-deprecation-policy.md（DL-70）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 04_architecture/workload-identity-delegation.md（ARC-04）, 07_slo/numeric-contracts.md（DL-20）, 01_governance/raci-governance.md（GOV-05）, 01_governance/kri.md（K-29, K-31）, 01_governance/assumptions-register.md, 02_requirements/as-is-inventory.md（REQ-07 §6.2）, research/RS-16（各 verification 記録を含む）
-> 作成方法: AI エージェント（Claude）が上記の文書を読んで起草した。判断は自己レビューであり、実在の CTO/CISO・CFO・調達・法務の決裁ではない（CONVENTIONS §8）[D]。research の外から新しく取得した原典はなく、脚注の原典はすべて research/ で独立検証済みの記録（research/verification/RS-16-verification.md）に依る [D]。版 0.2 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、CON-14 §9 の申し送り H-13 を反映し、§4.3 の sandbox の workload、本番の SVID 登録エントリ（OB-2(b)）と交換可能な組（OB-2(c)）の行を client-registration.openapi.yaml（CON-14）§4A の操作・申請種別 `workload`・`exchange_pair`・承認者案 AR-6・AR-7 に結び付けた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
+> 作成方法: AI エージェント（Claude）が上記の文書を読んで起草した。判断は自己レビューであり、実在の CTO/CISO・CFO・調達・法務の決裁ではない（CONVENTIONS §8）[D]。research の外から新しく取得した原典はなく、脚注の原典はすべて research/ で独立検証済みの記録（research/verification/RS-16-verification.md。版 0.4 で加えた脚注 10〜12 は research/verification/RS-02-verification.md）に依る [D]。版 0.2 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、CON-14 §9 の申し送り H-13 を反映し、§4.3 の sandbox の workload、本番の SVID 登録エントリ（OB-2(b)）と交換可能な組（OB-2(c)）の行を client-registration.openapi.yaml（CON-14）§4A の操作・申請種別 `workload`・`exchange_pair`・承認者案 AR-6・AR-7 に結び付けた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
 > 表記: 本書の段階は OB-0〜OB-8、決裁案は ONB-Kx、新規仮定は NA-ONB-x、残課題は ONB-Rx と書く。表のセルのうちタグのないものは設計推論 [D] であり、本注記で個別のタグに代える。
 
 ## 要旨（結論）
@@ -90,7 +90,7 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 |---|---|---|---|---|
 | OB-0 準備完了 | DoR 申告（DL-67）: Tier 仮申告、P-xx の選定、entry point ごとの操作階層の草案、BIA 票 A6、要員確約、移行見積り（C_改修） | サービスオーナー（申告）、事業責任者（要員と移行費用の確約）。Tier 1 の追加は事業責任者（ADR-023 D23-50、KD23-1） | 中央待ちなし。サービス側の所要日数を記録だけする（§5.4） | ドメイン負担（自サービスの作業）。様式・FAQ・office hours は中央負担 |
 | OB-1 登録 | consumer 台帳の行（CC-01）、サービス正規識別子（ADR-021 の名前空間台帳）、連絡先・所有組織・使用版、リリースノートの購読 | プラットフォーム（契約管理）。識別子の払い出しは不可逆なので形式検査を自動で行い、例外だけ人が見る | SLI-086（TBD） | 中央負担 |
-| OB-2 資格情報 | (a) sandbox の client・workload・テナント 2 つ以上（CON-11 §5.2）、(b) 本番の SVID 登録エントリ（ARC-04 W55-08）、(c) 交換可能な組の登録簿（ADR-009 D09-13）、(d) 本番 client の登録 | (a) セルフサービス（承認なし）。(b) プラットフォームチーム（作成者≠承認者。selector の妥当性）。(c) 申請は呼出し元の所有者、承認は呼出し先の所有者（D09-13）。(d) 案: 認証・IdP チームの有資格者（作成者≠承認者）。層 F・app-only などは承認者を加える（§4.3、ONB-R2 で確定） | (a) SLI-087（TBD）。(b)(c)(d) は SLI 未採番（DL-20 へ申し送り、ONB-R3） | (a)(b) 中央負担。(c) 承認作業は呼出し先ドメイン負担。共有秘密の置換（A-113）はドメイン負担 |
+| OB-2 資格情報 | (a) sandbox の client・workload・テナント 2 つ以上（CON-11 §5.2）、(b) 本番の SVID 登録エントリ（ARC-04 W55-08）、(c) 交換可能な組の登録簿（ADR-009 D09-13）、(d) 本番 client の登録 | (a) セルフサービス（承認なし）。(b) プラットフォームチーム（作成者≠承認者。selector の妥当性）。(c) 申請は呼出し元の所有者、承認は呼出し先の所有者（D09-13）。(d) 案: 認証・IdP チームの有資格者（作成者≠承認者）。層 F・app-only などは承認者を加える（§4.3、ONB-R2 で確定）。顧客テナントのための app-only などは所有テナントの管理者の同意（AR-8）が、処理地域が所有テナントの所在地群の外か受領法人が別法人なら法務責任者の DL-34 の判定記録（AR-9）が要る（CON-14 版 0.4.0） | (a) SLI-087（TBD）。(b)(c)(d) は SLI 未採番（DL-20 へ申し送り、ONB-R3）。(d) のうち AR-9 の判定記録の待ち（法務、中央の待ち）も未採番で、(d) のリードタイムに含めて計画する（ONB-R3） | (a)(b) 中央負担。(c) 承認作業は呼出し先ドメイン負担。共有秘密の置換（A-113）はドメイン負担 |
 | OB-3 モデル登録 | CAM モジュール、関係テスト、変更区分の申告（INT-03 §8） | M0: ドメイン内 peer review。M1: ＋プラットフォームのセキュリティレビュアー（非同期）。M2: プラットフォームが多段手順と shadow を確認。M3: プラットフォーム 2 名以上＋CISO 同意（GOV-05 §6.4） | SLI-088（TBD）、M1 の待ちは K-31(c)。SLA の決め方は GOV-05 DP-6 | 自ドメインの型はドメイン負担。審査要員と自動ゲートは中央負担 |
 | OB-4 PEP 組込み | entry point 台帳（IDL から生成）、ARC-06 §4.3 の 12 項目、SDK 導入または SDK なしの自前実装の登録、storage guardrail | CI の配備ゲート（自動。ARC-06 §6.5）。例外は例外台帳: privileged 以上とテナントデータを返す read-sensitive は CISO、それ以外はプラットフォームチーム長（ARC-06 §6.6） | 中央待ちなし。例外の承認待ちは K-31 に計上（SLI 未採番、ONB-R3） | ドメイン負担（C_改修）。SDK・静的規則・生成器は中央負担 |
 | OB-5 契約試験合格 | DL-80 の判定記録（版・ハッシュ・ベクタごとの結果・CI 署名）の契約レジストリへの登録 | 自己判定（CON-11 §10.1）。ベクタの適用除外は契約変更審査会 | SLI-089（TBD。提出から合否確定まで） | ドメイン負担（CI の実行）。キット・共有 sandbox は中央負担 |
@@ -133,10 +133,18 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 | sandbox テナント | consumer ごとに 2 つ以上払い出す（cross-tenant 試験のため） | なし | 合成データ生成器の書式以外の属性値は拒否される（CON-11 §5.2 (e)） |
 | 本番の SVID 登録エントリ（OB-2(b)） | selector を、基盤が管理し workload が書き換えられない属性の組合せで申請する（ARC-04 W55-08）。手段は CON-14 §5 の申請 API（`submitClientRegistrationRequest`）に申請種別 `subject: workload` で WorkloadEntry を送る（CON-14 §4A.4、preview）。selector は `k8s:ns`・`k8s:sa`・`image:digest`（本番は必須）に限り、SPIFFE ID は基盤が払い出す（CR15〜CR17、CR21） | プラットフォームチーム（作成者≠承認者）。CON-14 の承認者案 AR-6 はこれを写したもの（selector の妥当性、namespace の割当て、所有者・副所有者の有無を見る）。確定は ONB-R2 | 主所有者・副所有者のない主体には発行しない（W55-11）。無関係なインスタンス間で鍵を共有しない（W55-06） |
 | 交換可能な組（呼出し元 × 呼出し先 × scope 上限。OB-2(c)） | 呼出し元の所有者が申請する（ADR-009 D09-13）。手段は CON-14 §5 の申請 API に申請種別 `subject: exchange_pair` で ExchangePair（`caller_spiffe_id`・`callee_service_id`・`max_scope`・`justification`）を送る（CON-14 §4A.3・§4A.4、preview）。`max_scope` は空・wildcard 不可（CR19） | 呼出し先の所有者。CON-14 の承認者案 AR-7 はこれを写したもの。`max_scope` が privileged の scope（F1・F2）を含む組は AR-3（CISO 組織のセキュリティレビュアー）も要る。廃止は AR-0（所有者だけ）。確定は ONB-R2 | 登録簿にない exchange は STS が拒否する |
-| 本番の client（第一者・第三者・外部 RP・M2M） | client-registration.openapi.yaml（CON-14、DL-119）の登録申請 API（`submitClientRegistrationRequest`）に、sandbox で通ったのと同じ ClientMetadata を本番の値で申請する。共有 client secret は登録できず、private_key_jwt か mTLS（public client は none＋DPoP）に限る（ADR-009 D09-18、D09-19、同契約 §3）。承認がそろうと払い出され、`getClientRegistrationRequest` で sandbox と別の `client_id` を受け取る（ADR-021 D21-22） | **案**（同契約の x-approval-rules。既存の変更区分への当てはめで、新しい承認者は置かない）[D]。AR-1 全申請: 認証・IdP チームの有資格者（作成者≠承認者。operating-model §7.2 の CP-2 相当）。AR-2 第三者・外部 RP: 発行者確認を加える（ADR-005 D7-1）。AR-3 層 F・privileged scope: CISO 組織のセキュリティレビュアー（非同期）を加える（ADR-020 D20-03）。AR-4 複数テナントにまたがる app-only の権限: 別報告系統の二者（CP-1 相当、ADR-008 D8-54）。AR-5 第三者サーバー型で DPoP を使う例外: 受容票を必須にする（ADR-005 K-3）。廃止（retire）は所有者だけで成立する。確定は ONB-R2 | 本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34）。申請の時点で種別ごとの規則に反するものは 400 で返る（理由コード CR01〜CR13）。ADR-022 が本番の登録手段を定めていないので、申請 API は preview である（同契約 §6）[D] |
+| 本番の client（第一者・第三者・外部 RP・M2M） | client-registration.openapi.yaml（CON-14、DL-119）の登録申請 API（`submitClientRegistrationRequest`）に、sandbox で通ったのと同じ ClientMetadata を本番の値で申請する。共有 client secret は登録できず、private_key_jwt か mTLS（public client は none＋DPoP）に限る（ADR-009 D09-18、D09-19、同契約 §3）。承認がそろうと払い出され、`getClientRegistrationRequest` で sandbox と別の `client_id` を受け取る（ADR-021 D21-22） | **案**（同契約の x-approval-rules の AR-1〜AR-9。既存の変更区分への当てはめで、新しい承認者は置かない。AR-9 は承認者ではなく判定記録の検査規則）[D]。AR-1 全申請: 認証・IdP チームの有資格者（作成者≠承認者。operating-model §7.2 の CP-2 相当）。AR-2 第三者・外部 RP: 発行者確認を加える（ADR-005 D7-1）。AR-3 層 F・privileged scope: CISO 組織のセキュリティレビュアー（非同期）を加える（ADR-020 D20-03）。AR-4 app-only の権限の付与すべて（単一テナントを含む。client_credentials の client の scope はすべて app-only とみなす。CON-14 版 0.3.0）: 別報告系統の二者（CP-1 相当、ADR-008 D8-54）。AR-8 所有テナント（`platform_owning_tenant`）が顧客テナントで、app-only の権限か、操作の分類登録（DL-67）で低リスクに分類されていない scope（未分類を含む）を求める申請: そのテナントの管理者の同意記録（`tenant_consent`）を必須にし、基盤側の承認者は代わりに記録できない（ADR-005 D7-2。CON-14 版 0.3.0、CRN-34）。AR-9 AR-8 に当たる申請のうち、`data_processing.processing_regions` に所有テナントの所在地群（A-062）にない所在地群があるか、受領者（`data_processing.recipient`）の運用法人が基盤運営法人と別法人（法人台帳で判定できなければ別法人とみなす）のもの: 承認者ではなく、法務責任者が DL-34（CTL-02）で行った判定記録の参照（`data_processing.transfer_assessment_ref`）を必須にする。基盤側の承認者は代わりに記録できない（CON-14 版 0.4.0、CRN-46）。AR-5 第三者サーバー型で DPoP を使う例外: 受容票を必須にする（ADR-005 K-3）。廃止（retire）は所有者だけで成立する。確定は ONB-R2 | 本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34）。申請の時点で種別ごとの規則に反するものは 400 で返る（理由コード CR01〜CR13）。同意記録の不備（他テナントの同意の流用、狭い scope、期限切れ、管理者でない者の同意）は CR22、所有テナントの値の不備（未知、主状態が A（有効）でない、sandbox のテナント）は CR23 で返る（PoC/R7反映、CON-14 版 0.3.1）。AR-8 に当たる申請で `data_processing` がないか、同意の本体の (i)〜(v) と申請の `data_processing` が 1 つでも異なれば CR22、AR-9 に当たる申請で判定記録がないか本申請の受領法人・処理地域・データ区分・利用目的を覆わなければ CR24（`transfer_assessment_required`）で返る（CON-14 版 0.4.0、CRN-42〜CRN-46）。所有テナントを変える update は再同意を要し、払い出された client の token の `tid` は登録した所有テナントに固定される。ADR-022 が本番の登録手段を定めていないので、申請 API は preview である（同契約 §6）[D] |
 
 - sandbox の client 登録は、client-registration.openapi.yaml の RFC 7591/7592 profile（preview、ADR-022 D-2）で行う [D]。OB-1 を終えたチームに sandbox 専用の initial access token を発行し、チームはそれを付けて sandbox の AS に自分で登録する（承認なし。CON-11 §5.2 (c)）[D]。RFC 7591 は、AS が登録できる者を限定する場合に initial access token を使うことを定め、software statement には署名または MAC と `iss` を求める（MUST）[N][^4]（RS-16#20）。software statement は署名者の台帳がないため v0.1 では受け付けない（同契約 §4）[D]。
 - sandbox への本番 redirect URI・本番の公開鍵の登録は拒否され、sandbox の `client_id` は本番の AS で使えない（同契約の負例 CRN-01・CRN-12・CRN-13）[D]。
+- **顧客テナントを所有テナントとする本番 client（PoC/R7反映）** [D]。client_credentials の client や、低リスクでない scope を求める client を顧客テナント T のために登録するチームは、申請の前に T の管理者の同意記録を得る（AR-8）。同意は T・申請・scope の集合・期限に束縛され、scope を広げる update や所有テナントを変える update では取り直しになる（CON-14 CRN-36・CRN-39）。AR-1〜AR-4 の基盤側の承認だけでは払い出されない（CRN-31・CRN-34）。
+  - 同意を得る手段のうち、所有テナントの管理画面の承認 API（AR-8 の (a)）は 2026-10-15 時点でどの契約にもない（CON-14 §9 H-17）。それまでは署名付きの同意票（AR-8 の (b)）による [D]。
+  - **データ処理の申告と同意の束縛項目（CON-14 版 0.4.0、ラウンド 10）** [D]。AR-8 に当たる申請には `data_processing`（DataProcessingDeclaration）を付ける。申告する項目は、(i) 受領者（client を運用する法人の法人台帳の識別子 `legal_entity_id` と事業ドメイン）、(ii) 同意画面に出す利用目的（1 文）、(iii) データの区分（REQ-04 §3.2 の区分コードの集合。scope から基盤が導く区分が下限）、(iv) 処理・保存の所在地群の集合、(v) 保持期間の上限（ISO 8601 の期間）である。T の管理者の同意の本体は、テナント・申請・scope の集合・期限に加えてこの (i)〜(v) を束縛し、同意画面には基盤が法人台帳から引いた受領者の表示名を出す（申請者の自己申告の `client_name` は出さない）。チームは、同意を依頼する前に (i)〜(v) を確定させる。(i)〜(v) のどれかを変える update は、同意の取り直しと AR-9 の再評価になる（CON-14 §5、CRN-43・CRN-44）。scope と区分の対応表は未作成で、作られるまでは所有テナントのデータに届く scope を CUS と PII を含むものとして扱う（CON-14 §9 H-28）。
+  - **所在地群の外・別法人が受領する場合の判定記録（AR-9）** [D]。(iv) に T の所在地群（A-062。テナント配置表の値）にない所在地群があるか、(i) の運用法人が基盤運営法人と別法人（法人台帳で判定できない場合を含む）なら、申請の前に法務責任者から DL-34（CTL-02）の判定記録を得て、その参照を `data_processing.transfer_assessment_ref` に書く。判定記録は本申請の受領法人・処理地域・データ区分・利用目的を覆う必要がある。ないか覆わなければ CR24 で拒否され、払い出されない（CRN-42・CRN-45）。基盤側の承認者は判定記録の代わりを記録できない（CRN-46）。手順は次のとおりとする。(1) OB-0（DoR、INT-05 RD-08）の時点で (i)〜(v) を確定し、AR-9 に当たるかを自チームで判定する。(2) 当たるなら、受領者・利用目的・データ区分・処理地域・保持期間を添えて法務責任者に DL-34 の判定を依頼する。(3) 判定記録の参照を得てから T の管理者に同意を依頼し、申請する。この判定は法務の中央の待ちであり、OB-2(d) のリードタイムに含めて計画する。SLI は未採番である（§5.1、ONB-R3）。
+  - AR-9 を置いた理由は、管理者の同意がテナント管理者の判断の記録であって、移転・第三者提供の法的根拠の判定ではないためである（CON-14 §5）[D]。個人情報保護法は外国にある第三者への提供を本人の同意・基準適合体制・同等水準の国のいずれかによらせ（第 28 条）[N][^10]、GDPR は第三国への移転を Chapter V の条件を満たす場合に限り（44 条）、十分性認定がなければ適切な保護措置を求め（46 条 1 項）[N][^11]、DORA は ICT 第三者サービス提供者との契約に、データを処理・保存する場所（地域または国）と変更の事前通知の義務を含めるよう求めている（30 条 2 項 (b)）[N][^12]（いずれも CON-14 脚注 14〜16・CTL-02 §3.5 と同じ原典。RS-02#8, #9, #47, #58）。管理者の同意と判定記録の組で要件を満たすかの法的判断は、CON-14 も本書も行っていない（CTL-02 L-04・L-13、POA&M OI-P02）[D]。`processing_regions` は申請者の申告で、外部で動く client が実際にどこで処理するかは登録時に確かめられない（CON-14 §9 H-27）[D]。
+  - data_processing・AR-9・CR24・CRN-42〜CRN-46 は CON-14 版 0.4.0 の設計で、実装も負例の実行もない（CON-14 §10）。モック MK-01 での試験は CON-11 の CV-036〜CV-040 による（CON-11 版 0.11、キット本体 DL-120 は未実装、G3）[D]。
+  - 所有テナントの値そのものも検証される。主状態が A（有効）でないテナント（申込中・停止・移行中・解約予告以降）を所有テナントにした申請は CR23 で拒否され、同意の撤回やテナントの終了でその client は無効化される（CON-14 §5、版 0.3.1）[D]。オンボーディングの計画では、顧客テナントの移行（M）や解約予告（N）の期間に新しい client の払出しを予定しない [D]。
+  - これらの規則は、POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存した兆候）からの設計推論で、PoC は client 登録の経路を試験していない。POC-02 の値は立会人なしの自己実行で Gate 4 の証拠ではない [D]。規則の負例 CRN-31〜CRN-41 は未実装・未実行で、立会い下の実行は DL-120 の受入れか系統 2 による（CON-14 §9 H-20）[D]。
 - workload と交換可能な組の登録（CON-14 §4A）は、2026-10-15 時点で API とモック（キット本体 DL-120、期限 G3）が未実装である [D]（CON-14 §4A.5）。それまでは CON-14 §4A.5 の暫定手順による。(1) ローカルでは PoC（12_poc/code）を手元に複製し、`lib/topology.js` の `WORKLOADS` と `config/ledger.json` の `services`・`exchange_registry` を改変して起動し直す（コミットしない。selector の検査・承認・負例は再現できない）。(2) 共有 sandbox の提供後で API の提供前は、S1 窓口（INT-00 §8.1）に WorkloadEntry・ExchangePair と同じ項目で依頼し、プラットフォームチームが手で登録する [D]（INT-00 §6.1）。申請から払出しまでの SLI は未採番である（ONB-R3）[D]。
 - 共有 sandbox の提供時期と運用水準は K11-3（CTO、DEC-8 前）で決まり、提供時期は DL-42・DL-62 で公開される [D]。sandbox がない間は、ローカルのモック（MK-01〜MK-07）で OB-5 の準備を進める [D]（CON-11 §16.2）。
 
@@ -163,7 +171,7 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 - 判定は自己判定で、中央の審査を待たずに配備ゲートを通せる（CON-11 §10.1）[D]。判定記録を契約レジストリへ登録した時刻から合否が確定するまでを SLI-089 で測る [D]。
 - 判定不能（キットの版・ハッシュの照合失敗、モック障害、manifest の不備）は合格として扱わない [D]（CON-11 §10.1）。
 - 基盤との結合が深い consumer（edge、BFF、PEP sidecar、監査収集）は、Pact Broker への登録が上層の義務になる（ADR-022 D-6-1）[D]。
-- キット本体（DL-82）の配布は G3 の予定で、それまで負例・署名付き試験を自 CI で実行できない（CON-11 §16.3）[D]。配布前に作ったものは、DEC-8 後に DL-80 の判定で確かめ直す [D]。
+- キット本体（DL-120。PoC 基盤 DL-82 とは別の成果物。PoC/R7反映で DL 番号の誤記を直した）の配布は G3 の予定で、それまで負例・署名付き試験を自 CI で実行できない（CON-11 §16.3）[D]。配布前に作ったものは、DEC-8 後に DL-80 の判定で確かめ直す [D]。
 
 ### 4.7 OB-6 shadow 期間と OB-7 本番切替
 
@@ -202,6 +210,7 @@ G-124 の合格条件は「全段階に承認者・所要期間・費用配賦�
 | OB-6 shadow | SLI-090 | 設定上限型（下限） | shadow の最短期間と終了条件を満たすまでの期間 | 下限は §5.2 の式。値は TBD | 同上。下限は ADR-027 の段と SLI-081 から導く |
 | OB-7 本番切替 | SLI-091 | 予算型 | 切替承認から本番トラフィック受付まで | TBD | 同上 |
 | OB-2 本番 SVID・交換登録、OB-4 例外承認 | 未採番 | 予算型（案） | 申請から承認まで | TBD | DL-20 の作成者へ採番を申し送る（ONB-R3） |
+| OB-2(d) 本番 client の AR-9 の判定記録（ラウンド 10） | 未採番 | 予算型（案） | 法務責任者への DL-34 の判定の依頼から、判定記録の参照（`transfer_assessment_ref`）の受領まで。AR-9 に当たる申請だけを数える（CON-14 版 0.4.0） | TBD | DL-20 の作成者へ採番を申し送る（ONB-R3）。中央の待ちとして K-31 の対象に含める |
 
 - 目標値に外部の数値を転用しない [D]。共有認証基盤のオンボーディングの公開基準値は見つからず [D]（RS-16 §2-12、§6）、CNCF の白書も「新サービスを構築して本番に展開するまでの時間」を platform の効率指標に挙げるだけで値を示していない [V][^1]（RS-16#64）。
 
@@ -388,7 +397,7 @@ flowchart LR
   subgraph PF["基盤（プラットフォーム）"]
     direction LR
     D3["DEC-3<br/>不可逆 ADR（U-01 issuer 粒度）"] --> D8["DEC-8<br/>契約 v1 凍結"]
-    D8 --> KIT["キット配布（DL-82、G3）<br/>共有 sandbox（K11-3）"]
+    D8 --> KIT["キット配布（DL-120、G3）<br/>共有 sandbox（K11-3）"]
     KIT --> D4["DEC-4 / G4<br/>PoC 基盤・パイロット"]
     D4 --> G6["G6 段階導入<br/>P0→P1→P2→P3→P4"]
   end
@@ -426,7 +435,7 @@ flowchart LR
 |---|---|---|---|
 | M-a 今（DEC-8 前） | なし | OB-0 の全項目、契約 0.x とモックによる実装と単体試験（CON-00 §2.5、INT-01 §7.4、INT-02 §10.2、CON-11 §16.2） | 自 CI での契約試験の合否、ライフサイクル事象の配送の保証に依存する結合試験（CON-12・CON-13 は draft で受信の実装と単体試験は今できる。モックは未提供）、本番の SVID |
 | M-b DEC-8（契約 v1 凍結） | DEC-3 で U-01 が決まっている（ADR-022 D-10b） | OB-1 の登録（台帳の様式が DEC-8 前に整う。CON-01 残課題 7）、GA の契約に限った本格実装 | キットの負例・署名付き試験（DL-82 の配布待ち） |
-| M-c キット・sandbox の提供（G3 予定） | DL-82、K11-3 | OB-2(a)、OB-5 の自己判定 | 本番の判定 |
+| M-c キット・sandbox の提供（G3 予定） | DL-120（キット本体。PoC/R7反映で DL-82 から訂正）、K11-3 | OB-2(a)、OB-5 の自己判定 | 本番の判定 |
 | M-d PoC 基盤・パイロット（DEC-4、G4） | パイロットの確約（G-052） | PoC 基盤での負例の再実行（ADR-022 D-6-3）、SLI-086〜091 の実測、§5.3 の c_s・h_s の実測 | 本番の正本切替 |
 | M-e 段階導入（G6） | P0 の完了（OPS-04 §5.2） | OB-6・OB-7（段 P1〜P4 の順） | S4（F-d 解除まで） |
 
@@ -469,8 +478,8 @@ flowchart LR
 | ID | 内容 | 所有者 | 期限 |
 |---|---|---|---|
 | ONB-R1 | 新規サービス（旧判定なし）の OB-6 の扱いを ADR-027 で決める（本書 §4.7 は暫定） | CTO＋CISO（ADR-027 の改版） | G3 |
-| ONB-R2 | 本番 client の登録手段は client-registration.openapi.yaml（CON-14、DL-119、preview）の申請 API として契約にした（2026-10-15）。残りは、承認者案 AR-1〜AR-5（同契約の x-approval-rules、§4.3）の決裁と、ADR-022 D-2 の改版で申請 API の凍結区分を決めること。版 0.2.0 で同契約に加わった申請種別 `workload`・`exchange_pair` の承認者案 AR-6（プラットフォームチーム、作成者≠承認者）・AR-7（呼出し先の所有者）も同じく決裁を要する（§4.3 の OB-2(b)(c) の行。CON-14 §4A.4） | CTO（契約管理）。CISO が協議先 | DEC-8 前 |
-| ONB-R3 | 未採番の SLI（本番 SVID 登録、交換登録簿の承認、OB-4 の例外承認）を DL-20 で採番し、K-31 の対象に加える | DL-20 の作成者、プラットフォームチーム長 | G3 |
+| ONB-R2 | 本番 client の登録手段は client-registration.openapi.yaml（CON-14、DL-119、preview）の申請 API として契約にした（2026-10-15）。残りは、承認者案 AR-1〜AR-5（同契約の x-approval-rules、§4.3）の決裁と、版 0.4.0 で加わった AR-9（所在地群の外・別法人の受領での DL-34 の判定記録。承認者ではなく検査規則）と同意の本体の束縛項目 (i)〜(v)・`data_processing` の決裁（CON-14 §9 H-29。ラウンド 10）、版 0.3.0 で加わった AR-8（所有テナントの管理者の同意）と AR-4 の範囲の拡大（app-only の付与すべて）の決裁、所有テナントの管理画面の承認 API（AR-8 の (a)）の契約の置き場所の決定（CON-14 §9 H-17。PoC/R7反映）、ADR-022 D-2 の改版で申請 API の凍結区分を決めること。版 0.2.0 で同契約に加わった申請種別 `workload`・`exchange_pair` の承認者案 AR-6（プラットフォームチーム、作成者≠承認者）・AR-7（呼出し先の所有者）も同じく決裁を要する（§4.3 の OB-2(b)(c) の行。CON-14 §4A.4） | CTO（契約管理）。CISO が協議先 | DEC-8 前 |
+| ONB-R3 | 未採番の SLI（本番 SVID 登録、交換登録簿の承認、OB-4 の例外承認、OB-2(d) の AR-9 の判定記録の待ち（法務責任者への DL-34 の判定の依頼から判定記録の参照の受領まで。ラウンド 10））を DL-20 で採番し、K-31 の対象に加える | DL-20 の作成者、プラットフォームチーム長 | G3 |
 | ONB-R4 | SLI-086〜091 の目標値をパイロットで実測し決裁する（G-144） | CTO（決裁）、独立立会人（実測） | G4 |
 | ONB-R5 | ONB-K1〜ONB-K5 の決裁 | §8 の各決める人 | G3／DEC-8 前 |
 | ONB-R6 | オンボーディング記録（§5.4）を SRC-18 として実装し、KRI 集計へ接続する | プラットフォームチーム長 | パイロット開始前 |
@@ -511,6 +520,9 @@ flowchart LR
 [^7]: デジタル庁 地方業務システム基盤チーム『標準仕様書の改定・運用について（基本的な考え方）』2025-01-29. https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/c58162cb-92e5-4a43-9ad5-095b7c45100c/394352a4/20250129_policies_local_governments_outline_01.pdf （参照箇所: p.1〜p.4、確認日: 2026-10-03。RS-16#74）
 [^8]: DORA (Google Cloud)『Capabilities: Streamlining change approval』. https://dora.dev/capabilities/streamlining-change-approval/ （参照箇所: 冒頭, How to implement a change approval process, Common pitfalls、確認日: 2026-10-03。RS-16#59, #60）
 [^9]: Team Topologies『Key Concepts』. https://teamtopologies.com/key-concepts （参照箇所: Four fundamental topologies, Three team interaction modes、確認日: 2026-10-03。RS-16#67）
+[^10]: e-Gov 法令検索『個人情報の保護に関する法律』（平成 15 年法律第 57 号）現行版. https://laws.e-gov.go.jp/law/415AC0000000057 （参照箇所: 第 28 条、確認日: 2026-10-03。RS-02#8, #9。CON-14 の脚注 14・CTL-02 の脚注 1 と同じ原典）
+[^11]: European Parliament and Council『Regulation (EU) 2016/679 (General Data Protection Regulation)』27 April 2016. https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng （参照箇所: Art. 44, Art. 46(1)、確認日: 2026-10-03。RS-02#46, #47。CON-14 の脚注 15 と同じ原典）
+[^12]: European Parliament and Council『Regulation (EU) 2022/2554 (DORA)』14 December 2022. https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554 （参照箇所: Art. 30(2)(b)、確認日: 2026-10-03。RS-02#58。CON-14 の脚注 16 と同じ原典）
 
 ---
 
@@ -538,4 +550,30 @@ flowchart LR
 - 根拠として確認した箇所（2026-10-15）[D]: 11_contracts/client-registration.openapi.yaml（CON-14、確認時の `info.version` は 0.3.0。§4A は版 0.2.0 で追加）の description §4A.2〜§4A.5、§5（申請の対象 `client`・`workload`・`exchange_pair`）、§9 の H-13、`x-approval-rules` の AR-0・AR-3・AR-6・AR-7、`x-reason-codes` の CR15〜CR21、paths の operationId（`registerSandboxClient`・`registerSandboxWorkload`・`deleteSandboxWorkload`・`registerExchangePair`・`decideSandboxExchangePair`・`submitClientRegistrationRequest`）。CON-11 §5.2 (c)（SSF stream・SCIM 資格情報のセルフ登録の契約はまだない）。12_poc/code/lib/topology.js の `WORKLOADS`、config/ledger.json の `exchange_registry`。
 - 新たな外部原典は用いていない。新たに書いた事実はいずれも本リポジトリの文書とソースの照合による [D]。
 - 他文書への申し送り: なし（INT-00・INT-02・INT-05 は同じラウンドで各ファイルを是正した）[D]。
+- 対応件数: 1 件（対応済み 1）[D]。
+
+### PoC/R7反映（2026-10-15、版 0.2 → 版 0.3）
+
+> 12_poc/measurement-report.md（POC-02 版 0.1）、12_poc/reproduction-log.md と、ラウンド 7 の模擬パネルの指摘（traceability/mock-panel-report.md の MP-7-19、CON-14 の R7-1 と §9 H-17）を読んで反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない [D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| P-1 | CON-14 §9 H-17（ラウンド 7） | §4.3 の本番 client の承認に AR-8 を加え、AR-4 を「app-only の権限の付与すべて」に改めた。ONB-R2 に AR-8 と承認 API の置き場所を加えた | §4.3、ONB-R2 |
+| P-2 | CON-14 版 0.3.1（POC-02 X-C・X-D からの設計推論） | 所有テナントの値の検証（CR23）、再同意、`tid` の固定、撤回での無効化と、オンボーディング計画への含意（M・N の期間に払出しを予定しない）を書いた | §4.3 |
+| P-3 | MP-7-19（DL-82 の誤記が 4 ラウンド残る） | キット本体の DL 番号を DL-120 に直した（3 か所）| §4.6 のキットの注記、§9 の図と表 |
+
+- 閉じられなかったもの [D]: MP-7-19 のうちリードタイムの計画用の仮置き値は、前提台帳（01_governance/assumptions-register.md）への登録を要し、本書の担当範囲の外なので置いていない。全段 TBD のまま SLI-086〜SLI-091 で測る（§5）。
+- 対応件数: 3 件（対応済み 3。MP-7-19 は一部）[D]。
+
+### ラウンド 10（模擬パネル、2026-10-15、版 0.3 → 版 0.4）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。是正は同じ指摘の担当ファイル（本書、INT-05、INT-00、CON-11、CON-00、TRC-11）だけで行った [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R10-1 | High・devlead | ラウンド 9 legal の是正で CON-14 が版 0.4.0 になり、`data_processing`（受領者・目的・データ区分・処理地域・保持期間）、同意の本体が束縛する (i)〜(v)、AR-9（所在地群の外か別法人なら DL-34 の判定記録を必須）、CR24、CRN-42〜CRN-46 が加わった。しかし本書 §4.3 は AR-1〜AR-8 までで、法務の DL-34 の判定（中央の待ち）が段・承認者・リードタイムに入っていない。顧客テナント向けに app-only client を作るチームが、本番申請で初めて CR24 に当たる。ラウンド 7 で差し戻した「CON-14 の入口への未伝播」と同じ型の再発 | **対応（本書の担当分。CON-14 §9 H-29 の INT-04 の部分）**。(1) §4.3 の本番 client の行の承認に AR-9（承認者ではなく、法務責任者の DL-34 の判定記録 `transfer_assessment_ref` の検査。基盤側は代わりに記録できない）を加え、承認者案を AR-1〜AR-9 とした。禁止事項・注意に CR22 の (i)〜(v) の不一致と CR24 を加えた。(2) 表の下に「データ処理の申告と同意の束縛項目」と「所在地群の外・別法人が受領する場合の判定記録（AR-9）」の 2 項を置き、申請前に法務責任者から判定記録を得る手順 (1)〜(3)、AR-9 を置いた理由（個人情報保護法 28 条、GDPR 44 条・46 条 1 項、DORA 30 条 2 項 (b)。脚注 10〜12）、法的十分性は判断していないこと、申告の限界（H-27）、未実装・未実行であることを書いた。(3) §3 の OB-2 行の承認とリードタイムに AR-8・AR-9 と判定記録の待ちを加えた。(4) §5.1 に「OB-2(d) 本番 client の AR-9 の判定記録」の未採番 SLI の行を加え、ONB-R3 に追記した。(5) ONB-R2 に AR-9・(i)〜(v)・`data_processing` の決裁を加えた | 冒頭（版・作成方法）、§3 の OB-2 行、§4.3（本番 client の行と表の下の 4 項）、§5.1、残課題 ONB-R2・ONB-R3、脚注 10〜12 |
+
+- 根拠として確認した箇所（2026-10-15T09:34Z（UTC）、git HEAD d6af03e、未コミットの変更あり）[D]: 11_contracts/client-registration.openapi.yaml（CON-14、`info.version` 0.4.0、SHA-256 `4137faa360bf9a5a…`）の description §5（同意の本体が束縛する項目 (i)〜(v)、AR-9 の (a)(b)、限界）、§9 H-24〜H-29、§10、`x-approval-rules` の AR-8・AR-9、`x-reason-codes` の CR22・CR24、`x-negative-examples` の CRN-42〜CRN-46、`components.schemas.DataProcessingDeclaration`（required: recipient・purpose・data_categories・processing_regions・retention。`transfer_assessment_ref`）。法令の記述は CON-14 の脚注 14〜16 と同じ原典で、research/RS-02 で検証済みの記録（RS-02#8, #9, #46, #47, #58。research/verification/RS-02-verification.md）に依る。新たに取得した外部原典はない。
+- 他文書への申し送り: CON-14 §9 H-29 の残り（所有テナントの管理画面の承認 API（H-17）の契約に同意画面の表示項目 (i)〜(v) と同意の本体の 9 項目を加えること）は承認 API の契約がまだないので、TRC-11 OI-G24（ラウンド 10 で起票。H-17 の承認 API の契約は OI-G04）で追跡する [D]。SLI の採番は ONB-R3 のとおり DL-20 の作成者に申し送る [D]。
+- 閉じられなかったもの [D]: AR-9 の判定記録の待ちの SLI は未採番で、値は TBD である。法的十分性の判断（L-04・L-13・OI-P02）は非机上で、本書では行っていない。本是正の照合は改訂の担当によるもので、作成者以外の照合は TRC-11 OI-G25 で追跡する。
 - 対応件数: 1 件（対応済み 1）[D]。

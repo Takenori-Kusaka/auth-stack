@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
-  "$comment": "文書ID: CON-13 / DL-118 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15。対応要求: G-137, G-118, G-138（R-044, R-109）。正本の分担: 事象の一覧・配送の保証・受信側の義務は 11_contracts/lifecycle-events.asyncapi.yaml（CON-12 / DL-117）、本書は封筒と data の形だけを持つ。依存文書: 02_requirements/tenant-lifecycle.md §7（DL-49）、02_requirements/identity-lifecycle.md §16.3（DL-08）、04_architecture/revocation-continuous-evaluation.md（DL-56）、05_adr/ADR-021・ADR-022、11_contracts/schemas/common.schema.json（CON-02）。$id は README §4.5 I-1 の形（<id-domain> は未決のため id-domain.example）。CON-02 の $id は現状 id-domain.invalid の形で、$ref はその実値を指す（README §4.9 D-3 の是正で一括して揃える）。根拠の書式: [N] 原典の規範（CloudEvents 1.0.2 本体と Sequence・Partitioning 拡張。いずれも ce@v1.0.2 タグの原文を 2026-10-15 に取得して照合。本体は RS-16#9, #10、拡張は research 未収録）、[D] 設計推論。作成方法: AI エージェント（Claude）が模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド1指摘を受けて起草。作成者以外による独立レビューは未実施。 版 0.1.1（2026-10-15、模擬パネル ラウンド2の指摘への是正。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）: 文書ID CON-13・DL-118 を traceability/deliverables.md §4.5・§8 で確定し「（案）」を外した。CON-12 は DL-117 で確定。client 登録の契約（client-registration.openapi.yaml）が仮番として名乗っていた CON-13 は CON-14／DL-119 に移した。スキーマの検証内容は変えていない（記録: 11_contracts/README.md のレビュー記録 R2-1）。",
+  "$comment": "文書ID: CON-13 / DL-118 / 版: 0.2.1 / 状態: draft / 最終更新: 2026-10-15。対応要求: G-137, G-118, G-138（R-044, R-109）。正本の分担: 事象の一覧・配送の保証・受信側の義務は 11_contracts/lifecycle-events.asyncapi.yaml（CON-12 / DL-117）、本書は封筒と data の形だけを持つ。依存文書: 02_requirements/tenant-lifecycle.md §7（DL-49）、02_requirements/identity-lifecycle.md §16.3（DL-08）、04_architecture/revocation-continuous-evaluation.md（DL-56）、05_adr/ADR-021・ADR-022、11_contracts/schemas/common.schema.json（CON-02）。$id は README §4.5 I-1 の形（<id-domain> は未決のため id-domain.example）。CON-02 の $id は現状 id-domain.invalid の形で、$ref はその実値を指す（README §4.9 D-3 の是正で一括して揃える）。根拠の書式: [N] 原典の規範（CloudEvents 1.0.2 本体と Sequence・Partitioning 拡張。いずれも ce@v1.0.2 タグの原文を 2026-10-15 に取得して照合。本体は RS-16#9, #10、拡張は research 未収録）、[D] 設計推論。作成方法: AI エージェント（Claude）が模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド1指摘を受けて起草。作成者以外による独立レビューは未実施。 版 0.1.1（2026-10-15、模擬パネル ラウンド2の指摘への是正。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）: 文書ID CON-13・DL-118 を traceability/deliverables.md §4.5・§8 で確定し「（案）」を外した。CON-12 は DL-117 で確定。client 登録の契約（client-registration.openapi.yaml）が仮番として名乗っていた CON-13 は CON-14／DL-119 に移した。スキーマの検証内容は変えていない（記録: 11_contracts/README.md のレビュー記録 R2-1）。 版 0.2.0（2026-10-15、模擬パネル ラウンド 8 の指摘 2 件への是正。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）: CON-12 §10 H2-3 を適用した。(1) Envelope の required に拡張属性 lcsig（PO-13 の JWS Compact。pattern は CON-12 と同じ）を加えた。(2) tenant.deletion.withdrawn・user.deletion.withdrawn の data と事象の定義を加え、KnownTypes・ルートの anyOf・PublisherProfile に載せた。(3) DeletionReport の outcome に withdrawn を、failed の理由区分 failure_reason を加えた。(4) 正例のすべてに lcsig を付け（署名値はダミーで検証は通らない）、lcsig のない事象・alg none・撤回事象の data 欠落・形の誤った lcsig を負例に加えた。封筒の必須属性を増やしたので、受信側・publisher 側ともに非互換な変更である。major 0 の間は何がいつ変わってもよく（SemVer、RS-16#31）[N]、DEC-8 までは 0.x で改版し、凍結前も dataschema の URI は目標の major の v1 を使う（README §4 V-1・I-1）[D]。記録: x-review-log のラウンド 8、他文書への申し送り: x-handoffs。 版 0.2.1（2026-10-15、模擬パネル ラウンド 9 の devlead 指摘への是正。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）: スキーマの検証内容（$defs・required・pattern・examples・x-negative-examples）は変えていない。版 0.2.0 で冒頭の版の表示が 0.1.1 のまま x-version（0.2.0）と食い違っていたので揃え、メタ情報の訂正で版 0.2.0 の SHA-256（f70aaca3…）と別のファイルになるため patch を上げた（CON-01 CP-60 (4) の「版とハッシュを一覧に残す」を 1 版 1 ハッシュで保つため）[D]。x-handoffs R8-H1〜R8-H6 に適用状況（status）を記録した。記録: x-review-log のラウンド 9。",
   "title": "ライフサイクル事象（CloudEvents 1.0.2 profile v1）",
   "description": "依存サービスへ配るテナント・利用者・所属のライフサイクル事象と、受信側からの完了報告の形。ルートは受信側の検証用で、既知の type は data まで検証し、未知の type は封筒だけを検証して受理する（anyOf。README §4.4 L-3 により if/then を使わない）[D]。publisher の CI は $defs/PublisherProfile（既知の type だけ）で検証する [D]。",
   "x-document-id": "CON-13",
   "x-deliverable": "DL-118",
   "x-status": "draft",
   "x-last-updated": "2026-10-15",
-  "x-version": "0.1.1",
+  "x-version": "0.2.1",
   "x-requirements": [
     "G-137",
     "G-118",
@@ -64,6 +64,9 @@
       "$ref": "#/$defs/Event_tenant_deletion_requested"
     },
     {
+      "$ref": "#/$defs/Event_tenant_deletion_withdrawn"
+    },
+    {
       "$ref": "#/$defs/Event_tenant_deleted"
     },
     {
@@ -110,6 +113,9 @@
     },
     {
       "$ref": "#/$defs/Event_user_deletion_requested"
+    },
+    {
+      "$ref": "#/$defs/Event_user_deletion_withdrawn"
     },
     {
       "$ref": "#/$defs/Event_user_deleted"
@@ -261,6 +267,32 @@
           "type": "string",
           "const": "deletionReports",
           "description": "完了報告を送る AsyncAPI channel の ID [D]。"
+        }
+      }
+    },
+    "TenantDeletionWithdrawnData": {
+      "type": "object",
+      "description": "tenant.deletion.withdrawn の data。猶予中の削除要求（request_id）の撤回。受信側は準備した削除を戻し、DeletionReport を outcome=withdrawn で報告する（CON-12 RO-13）[D]。撤回事象の欠落・偽造に備え、猶予満了時は撤回事象の有無にかかわらず照会 API で確かめる（RO-12、CON-15 LQ02）[D]。版 0.2.0 で追加（CON-12 §10 H2-3）。 形は CON-12 の x-dataschema-note（tid・request_id・effective_at・report_to）に合わせた [D]。",
+      "required": [
+        "tid",
+        "effective_at",
+        "request_id",
+        "report_to"
+      ],
+      "properties": {
+        "tid": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/TenantId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef",
+          "description": "撤回する tenant.deletion.requested の request_id [D]。"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
         }
       }
     },
@@ -550,6 +582,32 @@
         }
       }
     },
+    "PrincipalDeletionWithdrawnData": {
+      "type": "object",
+      "description": "user.deletion.withdrawn の data。猶予中の削除要求（request_id）の撤回。受信側は準備した削除を戻し、DeletionReport を outcome=withdrawn で報告する（CON-12 RO-13）[D]。撤回事象の欠落・偽造に備え、猶予満了時は撤回事象の有無にかかわらず照会 API で確かめる（RO-12、CON-15 LQ02）[D]。版 0.2.0 で追加（CON-12 §10 H2-3）。 形は CON-12 の x-dataschema-note（sub・request_id・effective_at・report_to）に合わせた [D]。",
+      "required": [
+        "sub",
+        "effective_at",
+        "request_id",
+        "report_to"
+      ],
+      "properties": {
+        "sub": {
+          "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/PrincipalId"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueRef",
+          "description": "撤回する user.deletion.requested の request_id [D]。"
+        },
+        "report_to": {
+          "type": "string",
+          "const": "deletionReports"
+        }
+      }
+    },
     "BulkRevocationData": {
       "type": "object",
       "description": "revocation.bulk の data（preview）。失効の効力は基盤の強制点で生じ、本事象は依存サービスの独自 session とキャッシュの後始末に使う（ARC-09、ADR-006 D6-03）[D]。意味の正本は DL-56 で、本契約は形だけを置く [D]。",
@@ -603,6 +661,7 @@
         "dataschema",
         "partitionkey",
         "sequence",
+        "lcsig",
         "data"
       ],
       "properties": {
@@ -654,11 +713,19 @@
         "sequence": {
           "$ref": "#/$defs/Sequence"
         },
+        "lcsig": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+          "description": "PO-13（CON-12）のメッセージ単位の署名。JWS Compact Serialization を入れる拡張属性で、全事象に必須（版 0.2.0 で追加。CON-12 §10 H2-3 の適用）[D]。pattern は CON-12 の CloudEventEnvelope.lcsig と同じ文字列である [D]。JWS Compact Serialization は BASE64URL(UTF8(JWS Protected Header)) || '.' || BASE64URL(JWS Payload) || '.' || BASE64URL(JWS Signature) の形で [N]（RFC 7515 §7.1）、base64url は末尾の '=' を省き改行を含めない [N]（RFC 7515 §2）。いずれも 2026-10-15 に rfc-editor.org の原文で確かめた（research 未収録。RS-11#52 は alg・kid の意味だけを収録）。pattern は 3 区画がいずれも空でないことを求めるので、alg none の Unsecured JWS（署名値が空のオクテット列でなければならない [N]（RFC 7518 §3.6、2026-10-15 に原文で確認））は封筒の段階で不適合になる [D]。スキーマが確かめるのは形だけであり、署名の検証、(iss, typ, kid) と鍵の結合、alg の固定、payload と封筒の一致（source・type・id・sequence・partitionkey）は RO-11 の受信側の義務で、スキーマ適合を処理してよい根拠にしてはならない [D]。lcsig のない事象・検証できない事象は処理せず隔離する（RO-11）[D]。属性名は CloudEvents の拡張属性名の規則（小文字の英数字、20 文字以下が SHOULD）に従う（CON-12 PO-13 の根拠欄）[N]。",
+          "x-freeze-class": "irreversible",
+          "x-freeze-note": "属性名 lcsig は irreversible、署名の要件（PO-13・RO-11）は GA（CON-12 §6）[D]。"
+        },
         "data": {
           "type": "object"
         }
       },
-      "description": "全事象に共通の CloudEvents 1.0.2 封筒（JSON 形式、structured mode）。未知の拡張属性は受理して無視する [D]。"
+      "description": "全事象に共通の CloudEvents 1.0.2 封筒（JSON 形式、structured mode）。版 0.2.0 で拡張属性 lcsig（PO-13 の JWS）を必須にした [D]。未知の拡張属性は受理して無視する [D]。スキーマ適合は形の適合だけを意味し、事象の真正性は RO-11 の署名検証で判定する（CON-12 §3・§4）[D]。"
     },
     "Event_tenant_created": {
       "type": "object",
@@ -778,6 +845,30 @@
       },
       "title": "example.id-domain.lifecycle.tenant.deletion.requested",
       "description": "テナントのデータ削除の要求（期限付き、完了報告が要る）",
+      "x-freeze-class": "GA"
+    },
+    "Event_tenant_deletion_withdrawn": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.tenant.deletion.withdrawn"
+        },
+        "data": {
+          "$ref": "#/$defs/TenantDeletionWithdrawnData"
+        },
+        "partitionkey": {
+          "pattern": "^tenant:"
+        },
+        "source": {
+          "pattern": "/tenants/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.tenant.deletion.withdrawn",
+      "description": "テナントのデータ削除の要求の撤回（猶予中、報告が要る。CON-12 RO-13。版 0.2.0 で追加）",
       "x-freeze-class": "GA"
     },
     "Event_tenant_deleted": {
@@ -1166,6 +1257,30 @@
       "description": "主体の個人データ削除の要求（期限付き、完了報告が要る）",
       "x-freeze-class": "GA"
     },
+    "Event_user_deletion_withdrawn": {
+      "type": "object",
+      "required": [
+        "type",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "const": "example.id-domain.lifecycle.user.deletion.withdrawn"
+        },
+        "data": {
+          "$ref": "#/$defs/PrincipalDeletionWithdrawnData"
+        },
+        "partitionkey": {
+          "pattern": "^principal:"
+        },
+        "source": {
+          "pattern": "/principals/"
+        }
+      },
+      "title": "example.id-domain.lifecycle.user.deletion.withdrawn",
+      "description": "主体の個人データ削除の要求の撤回（猶予中、報告が要る。CON-12 RO-13。版 0.2.0 で追加）",
+      "x-freeze-class": "GA"
+    },
     "Event_user_deleted": {
       "type": "object",
       "required": [
@@ -1264,6 +1379,7 @@
         "example.id-domain.lifecycle.tenant.resumed",
         "example.id-domain.lifecycle.tenant.termination.effective",
         "example.id-domain.lifecycle.tenant.deletion.requested",
+        "example.id-domain.lifecycle.tenant.deletion.withdrawn",
         "example.id-domain.lifecycle.tenant.deleted",
         "example.id-domain.lifecycle.tenant.merge.cutover",
         "example.id-domain.lifecycle.tenant.split.cutover",
@@ -1280,13 +1396,14 @@
         "example.id-domain.lifecycle.user.suspended",
         "example.id-domain.lifecycle.user.resumed",
         "example.id-domain.lifecycle.user.deletion.requested",
+        "example.id-domain.lifecycle.user.deletion.withdrawn",
         "example.id-domain.lifecycle.user.deleted",
         "example.id-domain.lifecycle.user.legal_hold.set",
         "example.id-domain.lifecycle.user.legal_hold.released",
         "example.id-domain.lifecycle.revocation.bulk"
       ],
       "x-enum-kind": "open",
-      "description": "v1 で定義した type。受信側にとっては開いた列挙で、未知の type は受理して無視する（受信側の義務 RO-6）[D]。"
+      "description": "v1 で定義した type。受信側にとっては開いた列挙で、未知の type は受理して無視する（受信側の義務 RO-6）[D]。版 0.2.0 で tenant.deletion.withdrawn・user.deletion.withdrawn を加えた。ここに載らない type は UnknownTypeEvent として data を検証せずに受理されるため、撤回事象を本列挙に載せないと、受信側が RO-6 に従って撤回を無視し、撤回後も削除を続ける実装を作り得る（模擬パネル ラウンド 8 の指摘）[D]。"
     },
     "UnknownTypeEvent": {
       "description": "未知の type の事象。封筒の検証だけを行い、data は検証しない（前方互換）[D]。",
@@ -1301,7 +1418,7 @@
     "DeletionReport": {
       "type": "object",
       "title": "example.id-domain.lifecycle.deletion.report",
-      "description": "受信側が削除・付け替え・保全の反映を報告する事象（受信側 → 基盤）。CloudEvents の封筒を使う。source は報告するサービスの workload の URI、partitionkey は request_id [D]。",
+      "description": "受信側が削除・付け替え・保全の反映を報告する事象（受信側 → 基盤）。CloudEvents の封筒を使う。source は報告するサービスの workload の URI、partitionkey は request_id [D]。 報告そのもののメッセージ単位の署名は未規定（CON-12 LC-OI-9）で、版 0.2.0 でも lcsig を求めない [D]。",
       "required": [
         "specversion",
         "id",
@@ -1367,10 +1484,23 @@
                 "completed",
                 "partial",
                 "failed",
-                "not_applicable"
+                "not_applicable",
+                "withdrawn"
               ],
               "x-enum-kind": "closed",
-              "description": "not_applicable はデータを持たないことの申告。未報告と区別するために要る [D]。"
+              "description": "not_applicable はデータを持たないことの申告。未報告と区別するために要る [D]。withdrawn は猶予中に削除要求が撤回され、不可逆な削除を実行しなかったことの報告（CON-12 RO-13、CON-15 QC-3 の LQ02。版 0.2.0 で追加）[D]。failed のときは failure_reason を付ける [D]。"
+            },
+            "failure_reason": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,31}$",
+              "x-enum-kind": "open",
+              "x-known-values": [
+                "source_of_truth_mismatch",
+                "state_query_unavailable",
+                "processing_error",
+                "other"
+              ],
+              "description": "outcome=failed の理由の区分（版 0.2.0 で追加。CON-12 §10 H2-3）。source_of_truth_mismatch=正本不一致（CON-12 RO-12、CON-15 QC-3 の LQ01・LQ03〜LQ07・LQ09・LQ10・LQ22）、state_query_unavailable=照会不能（CON-15 QC-4、LQ11）、processing_error=受信側の処理失敗（CON-12 RO-8）[D]。開いた列挙で、基盤は未知の値を other と同じに扱う [D]。理由の詳細（特に SEC の内容）は載せない（ReasonClass と同じ方針）[D]。"
             },
             "completed_at": {
               "$ref": "#/$defs/Timestamp"
@@ -1415,7 +1545,24 @@
               },
               "description": "削除しなかったデータと根拠。削除証明（DL-49 §10.4）に写す [D]。"
             }
-          }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "outcome": {
+                  "not": {
+                    "const": "failed"
+                  }
+                }
+              }
+            },
+            {
+              "required": [
+                "failure_reason"
+              ]
+            }
+          ],
+          "description": "outcome=failed のときは failure_reason を必須とする（anyOf。README §4.4 L-3 により if/then を使わない）[D]。"
         }
       },
       "x-freeze-class": "GA",
@@ -1448,6 +1595,87 @@
               }
             ]
           }
+        },
+        {
+          "specversion": "1.0",
+          "id": "rq3vz7mk2xh5da4tn6pr2wc7be",
+          "source": "spiffe://prod.id-domain.example/billing/invoice-api",
+          "type": "example.id-domain.lifecycle.deletion.report",
+          "time": "2026-10-18T03:00:00Z",
+          "datacontenttype": "application/json",
+          "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+          "partitionkey": "r9mx2kq7vz3ha5td4pn6rc2wby",
+          "data": {
+            "request_id": "r9mx2kq7vz3ha5td4pn6rc2wby",
+            "request_type": "example.id-domain.lifecycle.tenant.deletion.requested",
+            "outcome": "withdrawn",
+            "completed_at": "2026-10-18T03:00:00Z",
+            "stores": [
+              "primary_db",
+              "search_index"
+            ]
+          }
+        }
+      ],
+      "x-negative-examples": [
+        {
+          "id": "LC-DR-NE-01",
+          "value": {
+            "specversion": "1.0",
+            "id": "rp7kq3mz2vx5ha4td6rn2cwb7y",
+            "source": "spiffe://prod.id-domain.example/billing/invoice-api",
+            "type": "example.id-domain.lifecycle.deletion.report",
+            "time": "2026-10-20T03:00:00Z",
+            "datacontenttype": "application/json",
+            "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+            "partitionkey": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+            "data": {
+              "request_id": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+              "request_type": "example.id-domain.lifecycle.user.deletion.requested",
+              "outcome": "failed",
+              "completed_at": "2026-10-20T03:00:00Z",
+              "affected_count": 1520,
+              "stores": [
+                "primary_db",
+                "search_index",
+                "export_files"
+              ]
+            }
+          },
+          "reason": "outcome=failed なのに failure_reason がない（版 0.2.0）"
+        },
+        {
+          "id": "LC-DR-NE-02",
+          "value": {
+            "specversion": "1.0",
+            "id": "rp7kq3mz2vx5ha4td6rn2cwb7y",
+            "source": "spiffe://prod.id-domain.example/billing/invoice-api",
+            "type": "example.id-domain.lifecycle.deletion.report",
+            "time": "2026-10-20T03:00:00Z",
+            "datacontenttype": "application/json",
+            "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+            "partitionkey": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+            "data": {
+              "request_id": "r4kz7qm2vx5hd3ta6pnr2bw7cy",
+              "request_type": "example.id-domain.lifecycle.user.deletion.requested",
+              "outcome": "cancelled",
+              "completed_at": "2026-10-20T03:00:00Z",
+              "affected_count": 1520,
+              "stores": [
+                "primary_db",
+                "search_index",
+                "export_files"
+              ],
+              "exceptions": [
+                {
+                  "category": "accounting_record",
+                  "basis_ref": "retention-rule:JP-tax-7y",
+                  "retain_until": "2033-10-20T00:00:00Z"
+                }
+              ]
+            }
+          },
+          "reason": "outcome が閉じた列挙の外"
         }
       ]
     },
@@ -1530,6 +1758,9 @@
           "$ref": "#/$defs/Event_tenant_deletion_requested"
         },
         {
+          "$ref": "#/$defs/Event_tenant_deletion_withdrawn"
+        },
+        {
           "$ref": "#/$defs/Event_tenant_deleted"
         },
         {
@@ -1578,6 +1809,9 @@
           "$ref": "#/$defs/Event_user_deletion_requested"
         },
         {
+          "$ref": "#/$defs/Event_user_deletion_withdrawn"
+        },
+        {
           "$ref": "#/$defs/Event_user_deleted"
         },
         {
@@ -1603,6 +1837,7 @@
       "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
       "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
       "sequence": "00000000000000000007",
+      "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LnN1c3BlbmRlZCIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAwNyIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNVQwMTowMDowMFoiLCJtb2RlIjoiZm9yY2VkIiwicmVhc29uX2NsYXNzIjoic2VjdXJpdHkifSwiaXNzIjoiaHR0cHM6Ly9saWZlY3ljbGUtcHVibGlzaGVyLmlkLWRvbWFpbi5leGFtcGxlL3AvcTh2M2syIiwiZW52IjoicHJvZCJ9.GxiZO15SHJ3NoNMGIpgUfaq96bjAXZRqalbz-nQh-2UlcbhvxiOAd1fVmZ9xz7dM3J45FhHLuc7tWDsJL47xDw",
       "data": {
         "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "effective_at": "2026-10-15T01:00:00Z",
@@ -1620,6 +1855,7 @@
       "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
       "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
       "sequence": "00000000000000000012",
+      "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImUybXo3dnE0aGszeGE1cmQ2dG4ycHdlN2J1Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvcHJpbmNpcGFscy9rM3ZxN20yeGg1ZDR0YTZwenIybmJ3N3ljdSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudXNlci5kZWxldGlvbi5yZXF1ZXN0ZWQiLCJzcGVjdmVyc2lvbiI6IjEuMCIsInNlcXVlbmNlIjoiMDAwMDAwMDAwMDAwMDAwMDAwMTIiLCJwYXJ0aXRpb25rZXkiOiJwcmluY2lwYWw6azN2cTdtMnhoNWQ0dGE2cHpyMm5idzd5Y3UiLCJ0aW1lIjoiMjAyNi0xMC0xNVQwMjowMDowMFoiLCJkYXRhc2NoZW1hIjoiaHR0cHM6Ly9jb250cmFjdHMuaWQtZG9tYWluLmV4YW1wbGUvc2NoZW1hcy9saWZlY3ljbGUtZXZlbnQvdjEvbGlmZWN5Y2xlLWV2ZW50LnNjaGVtYS5qc29uIiwiZGF0YSI6eyJzdWIiOiJrM3ZxN20yeGg1ZDR0YTZwenIybmJ3N3ljdSIsImVmZmVjdGl2ZV9hdCI6IjIwMjYtMTAtMTVUMDI6MDA6MDBaIiwicmVxdWVzdF9pZCI6InI0a3o3cW0ydng1aGQzdGE2cG5yMmJ3N2N5IiwiZGVhZGxpbmUiOiIyMDI2LTExLTE0VDAyOjAwOjAwWiIsInJlcG9ydF90byI6ImRlbGV0aW9uUmVwb3J0cyJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.ZcR-Kd8VNzE1Dcy2wzYBjqUrgzohL131WT46OVjrCgItpugN4xFSyu2-TdZTjcaDwA03o2RCoI2gcLgpTOI4gA",
       "data": {
         "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
         "effective_at": "2026-10-15T02:00:00Z",
@@ -1638,11 +1874,30 @@
       "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
       "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
       "sequence": "00000000000000000008",
+      "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU1cnoya3E3dm0zeGE0aGQ2dG4ycHdjN2JlIiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUubWVtYmVyc2hpcC5zdXNwZW5kZWQiLCJzcGVjdmVyc2lvbiI6IjEuMCIsInNlcXVlbmNlIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDgiLCJwYXJ0aXRpb25rZXkiOiJ0ZW5hbnQ6dDV3cTJoenI3bm1jNGthM3ZkNnB4ZTJiZnkiLCJ0aW1lIjoiMjAyNi0xMC0xNVQwMjowMDowMVoiLCJkYXRhc2NoZW1hIjoiaHR0cHM6Ly9jb250cmFjdHMuaWQtZG9tYWluLmV4YW1wbGUvc2NoZW1hcy9saWZlY3ljbGUtZXZlbnQvdjEvbGlmZWN5Y2xlLWV2ZW50LnNjaGVtYS5qc29uIiwiZGF0YSI6eyJ0aWQiOiJ0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInN1YiI6ImszdnE3bTJ4aDVkNHRhNnB6cjJuYnc3eWN1IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNVQwMjowMDowMFoiLCJyZWFzb25fY2xhc3MiOiJwcmluY2lwYWxfc3VzcGVuZGVkIn0sImlzcyI6Imh0dHBzOi8vbGlmZWN5Y2xlLXB1Ymxpc2hlci5pZC1kb21haW4uZXhhbXBsZS9wL3E4djNrMiIsImVudiI6InByb2QifQ.sr9d5bbXgIPe3ZPETvkoCP4XQSHwEtM4qr_dlsl3gWuKVE54o2ajQ6DkU6toYpdwOIwdXEFg2ei86_jkGS50pw",
       "data": {
         "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
         "effective_at": "2026-10-15T02:00:00Z",
         "reason_class": "principal_suspended"
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "e4tq7mz2kv3xa5hd6rn2pwc7by",
+      "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "type": "example.id-domain.lifecycle.tenant.deletion.withdrawn",
+      "time": "2026-10-16T05:00:00Z",
+      "datacontenttype": "application/json",
+      "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+      "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+      "sequence": "00000000000000000011",
+      "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU0dHE3bXoya3YzeGE1aGQ2cm4ycHdjN2J5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LmRlbGV0aW9uLndpdGhkcmF3biIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAxMSIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI2LTEwLTE2VDA1OjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNlQwNTowMDowMFoiLCJyZXF1ZXN0X2lkIjoicjlteDJrcTd2ejNoYTV0ZDRwbjZyYzJ3YnkiLCJyZXBvcnRfdG8iOiJkZWxldGlvblJlcG9ydHMifSwiaXNzIjoiaHR0cHM6Ly9saWZlY3ljbGUtcHVibGlzaGVyLmlkLWRvbWFpbi5leGFtcGxlL3AvcTh2M2syIiwiZW52IjoicHJvZCJ9.Gw5UUtXy-Yaj4OVWA3ETuZaJr1A89UNPOAkuEnRHPplOMfrnZne2bKd7AFYXOtkdBQ_RwQOhVSm3yGDim8UnvQ",
+      "data": {
+        "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "effective_at": "2026-10-16T05:00:00Z",
+        "request_id": "r9mx2kq7vz3ha5td4pn6rc2wby",
+        "report_to": "deletionReports"
       }
     },
     {
@@ -1655,6 +1910,7 @@
       "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
       "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
       "sequence": "00000000000000000009",
+      "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU5aG4zcWs3em0ydmE0eHI1ZHQycHdjN3llIiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LmZ1dHVyZV9ldmVudCIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAwOSIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI3LTA0LTAxVDAwOjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwibmV3X2ZpZWxkIjoxfSwiaXNzIjoiaHR0cHM6Ly9saWZlY3ljbGUtcHVibGlzaGVyLmlkLWRvbWFpbi5leGFtcGxlL3AvcTh2M2syIiwiZW52IjoicHJvZCJ9.1ertSxaJ0MESWhxOKzkLDAXOJajjfYkNGq1SGmtFuV16hlW6hyesiefEBryVhdbNy9CArV57FzPLuXF_azLcaw",
       "data": {
         "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "new_field": 1
@@ -1674,6 +1930,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sequence": "7",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LnN1c3BlbmRlZCIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiI3IiwicGFydGl0aW9ua2V5IjoidGVuYW50OnQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidGltZSI6IjIwMjYtMTAtMTVUMDE6MDA6MDBaIiwiZGF0YXNjaGVtYSI6Imh0dHBzOi8vY29udHJhY3RzLmlkLWRvbWFpbi5leGFtcGxlL3NjaGVtYXMvbGlmZWN5Y2xlLWV2ZW50L3YxL2xpZmVjeWNsZS1ldmVudC5zY2hlbWEuanNvbiIsImRhdGEiOnsidGlkIjoidDV3cTJoenI3bm1jNGthM3ZkNnB4ZTJiZnkiLCJlZmZlY3RpdmVfYXQiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsIm1vZGUiOiJmb3JjZWQiLCJyZWFzb25fY2xhc3MiOiJzZWN1cml0eSJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.-yCoMt_nXy7ElIFohvxEghgG6keAu___ms5EXLOVzKBUEEKi1HY-muzJuMTDtkdQMXwY9nb1b_eYhckIjoXhEw",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "effective_at": "2026-10-15T01:00:00Z",
@@ -1694,6 +1951,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJzb3VyY2UiOiJodHRwczovL2xpZmVjeWNsZS5pZC1kb21haW4uZXhhbXBsZS90ZW5hbnRzL3Q1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidHlwZSI6ImV4YW1wbGUuaWQtZG9tYWluLmxpZmVjeWNsZS50ZW5hbnQuc3VzcGVuZGVkIiwic3BlY3ZlcnNpb24iOiIxLjAiLCJzZXF1ZW5jZSI6IjAwMDAwMDAwMDAwMDAwMDAwMDA3IiwicGFydGl0aW9ua2V5IjoidGVuYW50OnQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidGltZSI6IjIwMjYtMTAtMTVUMDE6MDA6MDBaIiwiZGF0YXNjaGVtYSI6Imh0dHBzOi8vY29udHJhY3RzLmlkLWRvbWFpbi5leGFtcGxlL3NjaGVtYXMvbGlmZWN5Y2xlLWV2ZW50L3YxL2xpZmVjeWNsZS1ldmVudC5zY2hlbWEuanNvbiIsImRhdGEiOnsidGlkIjoidDV3cTJoenI3bm1jNGthM3ZkNnB4ZTJiZnkiLCJlZmZlY3RpdmVfYXQiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsIm1vZGUiOiJmb3JjZWQiLCJyZWFzb25fY2xhc3MiOiJzZWN1cml0eSJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.h1_RhJC7hq4triVGeUGzAfU8fDo0AWngw03ul-miM3Wqkk68q6NNjkOBhulVzTRge-ZBdlHL2oD5fOTLokXqmg",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "effective_at": "2026-10-15T01:00:00Z",
@@ -1715,6 +1973,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LnN1c3BlbmRlZCIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAwNyIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNVQwMTowMDowMFoiLCJtb2RlIjoibWFpbnRlbmFuY2UiLCJyZWFzb25fY2xhc3MiOiJzZWN1cml0eSJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.IYT9EJM0-BalXIMUeH0pugrBkJbscGvQvkhmMA15ho_DoV_NBM64NCVWV8G0ZkGo0x6HEv_Q8jzW1dwVL4xlyw",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "effective_at": "2026-10-15T01:00:00Z",
@@ -1736,6 +1995,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LnN1c3BlbmRlZCIsInNwZWN2ZXJzaW9uIjoiMS4wLjIiLCJzZXF1ZW5jZSI6IjAwMDAwMDAwMDAwMDAwMDAwMDA3IiwicGFydGl0aW9ua2V5IjoidGVuYW50OnQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidGltZSI6IjIwMjYtMTAtMTVUMDE6MDA6MDBaIiwiZGF0YXNjaGVtYSI6Imh0dHBzOi8vY29udHJhY3RzLmlkLWRvbWFpbi5leGFtcGxlL3NjaGVtYXMvbGlmZWN5Y2xlLWV2ZW50L3YxL2xpZmVjeWNsZS1ldmVudC5zY2hlbWEuanNvbiIsImRhdGEiOnsidGlkIjoidDV3cTJoenI3bm1jNGthM3ZkNnB4ZTJiZnkiLCJlZmZlY3RpdmVfYXQiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsIm1vZGUiOiJmb3JjZWQiLCJyZWFzb25fY2xhc3MiOiJzZWN1cml0eSJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.SwGmtK_TBzWb42NAvk3em9xWY05-HdrY0VLEtao_D4YbsKFLkB7OpDVvrtKDJMvvg_DIPjcrBCbTe1J8vSywEQ",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "effective_at": "2026-10-15T01:00:00Z",
@@ -1757,6 +2017,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
         "sequence": "00000000000000000012",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImUybXo3dnE0aGszeGE1cmQ2dG4ycHdlN2J1Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvcHJpbmNpcGFscy9rM3ZxN20yeGg1ZDR0YTZwenIybmJ3N3ljdSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudXNlci5kZWxldGlvbi5yZXF1ZXN0ZWQiLCJzcGVjdmVyc2lvbiI6IjEuMCIsInNlcXVlbmNlIjoiMDAwMDAwMDAwMDAwMDAwMDAwMTIiLCJwYXJ0aXRpb25rZXkiOiJwcmluY2lwYWw6azN2cTdtMnhoNWQ0dGE2cHpyMm5idzd5Y3UiLCJ0aW1lIjoiMjAyNi0xMC0xNVQwMjowMDowMFoiLCJkYXRhc2NoZW1hIjoiaHR0cHM6Ly9jb250cmFjdHMuaWQtZG9tYWluLmV4YW1wbGUvc2NoZW1hcy9saWZlY3ljbGUtZXZlbnQvdjEvbGlmZWN5Y2xlLWV2ZW50LnNjaGVtYS5qc29uIiwiZGF0YSI6eyJzdWIiOiJrM3ZxN20yeGg1ZDR0YTZwenIybmJ3N3ljdSIsImVmZmVjdGl2ZV9hdCI6IjIwMjYtMTAtMTVUMDI6MDA6MDBaIiwicmVxdWVzdF9pZCI6InI0a3o3cW0ydng1aGQzdGE2cG5yMmJ3N2N5IiwicmVwb3J0X3RvIjoiZGVsZXRpb25SZXBvcnRzIn0sImlzcyI6Imh0dHBzOi8vbGlmZWN5Y2xlLXB1Ymxpc2hlci5pZC1kb21haW4uZXhhbXBsZS9wL3E4djNrMiIsImVudiI6InByb2QifQ.TAp5d0wkf2MEBk6YQ172TiIeZlSOvzOPKa7fA02VsPKoO9t52oMwGjamxh7ZQN5Bxaiz2gvy6BVaDxp8Ys3Y_w",
         "data": {
           "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
           "effective_at": "2026-10-15T02:00:00Z",
@@ -1778,6 +2039,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "principal:k3vq7m2xh5d4ta6pzr2nbw7ycu",
         "sequence": "00000000000000000008",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU1cnoya3E3dm0zeGE0aGQ2dG4ycHdjN2JlIiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUubWVtYmVyc2hpcC5zdXNwZW5kZWQiLCJzcGVjdmVyc2lvbiI6IjEuMCIsInNlcXVlbmNlIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDgiLCJwYXJ0aXRpb25rZXkiOiJwcmluY2lwYWw6azN2cTdtMnhoNWQ0dGE2cHpyMm5idzd5Y3UiLCJ0aW1lIjoiMjAyNi0xMC0xNVQwMjowMDowMVoiLCJkYXRhc2NoZW1hIjoiaHR0cHM6Ly9jb250cmFjdHMuaWQtZG9tYWluLmV4YW1wbGUvc2NoZW1hcy9saWZlY3ljbGUtZXZlbnQvdjEvbGlmZWN5Y2xlLWV2ZW50LnNjaGVtYS5qc29uIiwiZGF0YSI6eyJ0aWQiOiJ0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInN1YiI6ImszdnE3bTJ4aDVkNHRhNnB6cjJuYnc3eWN1IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNVQwMjowMDowMFoiLCJyZWFzb25fY2xhc3MiOiJwcmluY2lwYWxfc3VzcGVuZGVkIn0sImlzcyI6Imh0dHBzOi8vbGlmZWN5Y2xlLXB1Ymxpc2hlci5pZC1kb21haW4uZXhhbXBsZS9wL3E4djNrMiIsImVudiI6InByb2QifQ.ZSnbvWQrTPIB3kyhsxN8Nj7Tq9MgbsbeVLwTol25Y3oAOM5-14-Ut35i0ofhEESXl8qCqy0ynHTCC_7P5UwkQw",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
@@ -1799,6 +2061,7 @@
         "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
         "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
         "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvY2VsbHMvanAxLWMwMy90ZW5hbnRzL3Q1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidHlwZSI6ImV4YW1wbGUuaWQtZG9tYWluLmxpZmVjeWNsZS50ZW5hbnQuc3VzcGVuZGVkIiwic3BlY3ZlcnNpb24iOiIxLjAiLCJzZXF1ZW5jZSI6IjAwMDAwMDAwMDAwMDAwMDAwMDA3IiwicGFydGl0aW9ua2V5IjoidGVuYW50OnQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwidGltZSI6IjIwMjYtMTAtMTVUMDE6MDA6MDBaIiwiZGF0YXNjaGVtYSI6Imh0dHBzOi8vY29udHJhY3RzLmlkLWRvbWFpbi5leGFtcGxlL3NjaGVtYXMvbGlmZWN5Y2xlLWV2ZW50L3YxL2xpZmVjeWNsZS1ldmVudC5zY2hlbWEuanNvbiIsImRhdGEiOnsidGlkIjoidDV3cTJoenI3bm1jNGthM3ZkNnB4ZTJiZnkiLCJlZmZlY3RpdmVfYXQiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsIm1vZGUiOiJmb3JjZWQiLCJyZWFzb25fY2xhc3MiOiJzZWN1cml0eSJ9LCJpc3MiOiJodHRwczovL2xpZmVjeWNsZS1wdWJsaXNoZXIuaWQtZG9tYWluLmV4YW1wbGUvcC9xOHYzazIiLCJlbnYiOiJwcm9kIn0.1X3S16f6saAtLAu0MoyiMbkd38gKtEPEorJqtTUiYvfEOvRnMZKCt5t8CPWd42vz15wbpvokNBufZedh3lDw7A",
         "data": {
           "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
           "effective_at": "2026-10-15T01:00:00Z",
@@ -1807,6 +2070,92 @@
         }
       },
       "reason": "source に cell を含む"
+    },
+    {
+      "id": "LC-NE-08",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "lcsig がない（PO-13・RO-11。CON-12 LC-CV-11 (a)）。版 0.1.1 ではスキーマ適合と判定されていた"
+    },
+    {
+      "id": "LC-NE-09",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJub25lIiwia2lkIjoiazdtMnF4NHZkOSIsInR5cCI6ImxpZmVjeWNsZS1ldmVudCtqd3MifQ.eyJpZCI6ImU3a3EzbXoydng1aGE0dGQ2cm4yY3diN3B5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LnN1c3BlbmRlZCIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAwNyIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI2LTEwLTE1VDAxOjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNVQwMTowMDowMFoiLCJtb2RlIjoiZm9yY2VkIiwicmVhc29uX2NsYXNzIjoic2VjdXJpdHkifSwiaXNzIjoiaHR0cHM6Ly9saWZlY3ljbGUtcHVibGlzaGVyLmlkLWRvbWFpbi5leGFtcGxlL3AvcTh2M2syIiwiZW52IjoicHJvZCJ9.",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "alg none の Unsecured JWS（protected header が {\"alg\":\"none\",...}、署名値が空）。署名区画が空なので pattern に不適合（RFC 7518 §3.6、CON-12 LC-CV-11 (b)、ADR-007 D7-22）。署名区画が空でない alg none は形では検出できず、RO-11 (b) で拒否する"
+    },
+    {
+      "id": "LC-NE-10",
+      "value": {
+        "specversion": "1.0",
+        "id": "e4tq7mz2kv3xa5hd6rn2pwc7by",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.deletion.withdrawn",
+        "time": "2026-10-16T05:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000011",
+        "lcsig": "eyJhbGciOiJFUzI1NiIsImtpZCI6Ims3bTJxeDR2ZDkiLCJ0eXAiOiJsaWZlY3ljbGUtZXZlbnQrandzIn0.eyJpZCI6ImU0dHE3bXoya3YzeGE1aGQ2cm4ycHdjN2J5Iiwic291cmNlIjoiaHR0cHM6Ly9saWZlY3ljbGUuaWQtZG9tYWluLmV4YW1wbGUvdGVuYW50cy90NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInR5cGUiOiJleGFtcGxlLmlkLWRvbWFpbi5saWZlY3ljbGUudGVuYW50LmRlbGV0aW9uLndpdGhkcmF3biIsInNwZWN2ZXJzaW9uIjoiMS4wIiwic2VxdWVuY2UiOiIwMDAwMDAwMDAwMDAwMDAwMDAxMSIsInBhcnRpdGlvbmtleSI6InRlbmFudDp0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSIsInRpbWUiOiIyMDI2LTEwLTE2VDA1OjAwOjAwWiIsImRhdGFzY2hlbWEiOiJodHRwczovL2NvbnRyYWN0cy5pZC1kb21haW4uZXhhbXBsZS9zY2hlbWFzL2xpZmVjeWNsZS1ldmVudC92MS9saWZlY3ljbGUtZXZlbnQuc2NoZW1hLmpzb24iLCJkYXRhIjp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5IiwiZWZmZWN0aXZlX2F0IjoiMjAyNi0xMC0xNlQwNTowMDowMFoiLCJyZXBvcnRfdG8iOiJkZWxldGlvblJlcG9ydHMifSwiaXNzIjoiaHR0cHM6Ly9saWZlY3ljbGUtcHVibGlzaGVyLmlkLWRvbWFpbi5leGFtcGxlL3AvcTh2M2syIiwiZW52IjoicHJvZCJ9.pU_Pr4CHTzllAhq9lmjEGkJ_2sltX1f8RF1pa7DNFCxI0Dy9hrYYHnuvdVSOVs2cuNJghwnx86yO-bw4YKBCNg",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-16T05:00:00Z",
+          "report_to": "deletionReports"
+        }
+      },
+      "reason": "tenant.deletion.withdrawn に request_id がない。KnownTypes に載ったので UnknownTypeEvent では受理されない（版 0.1.1 では未知の type として受理されていた）"
+    },
+    {
+      "id": "LC-NE-11",
+      "value": {
+        "specversion": "1.0",
+        "id": "e7kq3mz2vx5ha4td6rn2cwb7py",
+        "source": "https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "type": "example.id-domain.lifecycle.tenant.suspended",
+        "time": "2026-10-15T01:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://contracts.id-domain.example/schemas/lifecycle-event/v1/lifecycle-event.schema.json",
+        "partitionkey": "tenant:t5wq2hzr7nmc4ka3vd6pxe2bfy",
+        "sequence": "00000000000000000007",
+        "lcsig": "eyJhbGciOiJFUzI1NiJ9",
+        "data": {
+          "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+          "effective_at": "2026-10-15T01:00:00Z",
+          "mode": "forced",
+          "reason_class": "security"
+        }
+      },
+      "reason": "lcsig が JWS Compact の 3 区画の形でない（RFC 7515 §7.1）"
     }
   ],
   "x-open-issues": [
@@ -1830,6 +2179,94 @@
       "state": "未作成",
       "owner": "DL-49 の所有者＋プラットフォームチーム長",
       "due": "G3"
+    }
+  ],
+  "x-schema-limits": [
+    "スキーマは lcsig の形（JWS Compact の 3 区画、署名区画が空でない）だけを確かめる。署名の検証、鍵と issuer の結合、alg の固定、alg none（署名区画が空でないもの）の拒否、封筒と JWS payload の一致（CON-12 LC-CV-10、LC-CV-11 (b) の一部・(c)）はスキーマでは検出できず、受信側の RO-11 と CON-11 のモックキットの試験（LC-CV-09〜LC-CV-11）で確かめる [D]。",
+    "examples と x-negative-examples の lcsig は形を示すためのダミーで、署名値は実鍵による署名ではない。受信処理の試験でこれらを『検証に通る事象』として扱ってはならない [D]。"
+  ],
+  "x-handoffs": [
+    {
+      "id": "R8-H1",
+      "to": "11_contracts/README.md（CON-00）",
+      "item": "§2.1 の CON-13 の版を 0.2.0 に、SHA-256 を本版の値に更新し、§2.3 の検査（check_schema、ルートの examples 5 件、x-negative-examples 11 件）を再実行する。§0 の『条件付きで始められる』（ライフサイクル事象の受信）に『CON-13 版 0.2.0 以降の examples・負例を使う。版 0.1.1 では受信処理を始めない』を加える。レビュー記録の『範囲外で扱っていない』を本是正で更新する",
+      "basis": "ラウンド 8 の指摘 1（ciso）・2（devlead）",
+      "status": "適用済み（ラウンド 9。11_contracts/README.md 版 0.8 の §0 要旨 4・§2.1・§2.3・§2.5・§2.6.1。§2.3 は版 0.2.1 で再実行）"
+    },
+    {
+      "id": "R8-H2",
+      "to": "11_contracts/lifecycle-events.asyncapi.yaml（CON-12）",
+      "item": "§10 H2-3 を『CON-13 版 0.2.0 で適用済み』に更新し、TenantDeletionWithdrawn・UserDeletionWithdrawn の x-dataschema-note と CloudEventEnvelope.lcsig の『CON-13 への追加は申し送り』の記述を外す。§2 の表の『CON-13 への追加を申し送り』も同様。CloudEventEnvelope の lcsig の pattern は本書と同じ文字列のまま保つ（変える場合は両方を同時に改版する）",
+      "basis": "CON-12 §10 H2-3、x-dataschema-note",
+      "status": "適用済み（ラウンド 9。CON-12 版 0.5.0 の §2 の表、RO-8・RO-12・RO-14、§10 H2-3、x-dataschema-note、CloudEventEnvelope.lcsig、LC-CV-07。lcsig の pattern は本書と同じ文字列であることを確認）"
+    },
+    {
+      "id": "R8-H3",
+      "to": "11_contracts/mock-contract-test-kit.md（CON-11）",
+      "item": "LC-CV-11 の (a)・(b) の試験データに本書の LC-NE-08・LC-NE-09 を使い、(c)（封筒の改変）と署名区画が空でない alg none は RO-11 の実装で検出することを試験手順に明記する。正例の lcsig はダミーなので、モックが配る事象はキットの試験鍵で署名し直す",
+      "basis": "x-schema-limits",
+      "status": "適用済み（ラウンド 9。CON-11 版 0.10 の §4.11 の注入表・LC-CV-11、§6.3、§9.1 P-7 の試行結果、§14.2 の CON-13 行）"
+    },
+    {
+      "id": "R8-H4",
+      "to": "10_integration/README.md（INT-00）§6.1、10_integration/integration-patterns.md（INT-02）§10.1",
+      "item": "『CON-13 版 0.1.1 の examples には lcsig と withdrawn がない。RO-11・RO-13 は CON-12 を正とし、試験データは CON-13 版 0.2.0 以降を使う』を注記する。撤回事象を『未知の type として無視』してはならないことを明記する",
+      "basis": "ラウンド 8 の指摘 2 (3)",
+      "status": "一部適用（ラウンド 9。INT-00 版 0.6 の §0 の 3・§6.1 は適用済み。INT-02 §10.1 は担当外のため INT-00 の他文書への申し送り S-8 で申し送り、未適用）"
+    },
+    {
+      "id": "R8-H5",
+      "to": "traceability/open-items.md（TRC-11、POA&M）",
+      "item": "独立した行を起票する。内容: CON-13 版 0.2.0 の作成者以外による独立レビュー、CON-00 §2.1・§2.3 の照合、CON-11 LC-CV-11 との照合、INT-00・INT-02 の注記。所有者は CON-12・CON-13 の所有者（K-CON-3）、期限は DEC-8 第 1 段の付議前",
+      "basis": "ラウンド 8 の指摘 1・2 (4)",
+      "status": "適用済み（ラウンド 9。TRC-11 版 0.13 の OI-G10 として起票。OI-G09 の状態も改めた）"
+    },
+    {
+      "id": "R8-H6",
+      "to": "02_requirements/tenant-lifecycle.md（DL-49）§7、02_requirements/identity-lifecycle.md（DL-08）§16.3",
+      "item": "deletion.withdrawn の 2 type と DeletionReport の outcome=withdrawn・failure_reason を事象一覧と完了報告の規定に加える（CON-12 §2 で既に申し送り済みの事項の再掲）",
+      "basis": "CON-12 §2 の注記",
+      "status": "未適用（DL-49・DL-08 は担当外。CON-12 §10 H2-4・H9-2 で申し送り）"
+    }
+  ],
+  "x-review-log": [
+    {
+      "round": 8,
+      "date": "2026-10-15",
+      "note": "模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない。作成者以外による独立レビューは未実施。",
+      "findings": [
+        {
+          "id": "R8-1",
+          "severity": "High",
+          "by": "ciso",
+          "issue": "Envelope に lcsig がなく、deletion.withdrawn 系の type もない。署名のない事象・封筒を改変した事象がスキーマ適合と判定され、CON-00 §0 の『条件付きで始められる』に従う受信チームが T-093 を通す受信処理を作り得る。MP-7-16・CON-12 H2-3 が未是正で POA&M にも起票がない",
+          "response": "対応。Envelope の required に lcsig（CON-12 と同じ pattern）を加え、tenant/user.deletion.withdrawn の data・事象・KnownTypes を加えた。lcsig のない事象（LC-NE-08）と alg none（LC-NE-09）を負例に加え、版を 0.2.0 に上げた。封筒の改変はスキーマで検出できないことを x-schema-limits に明記した。CON-00 §0・§2.1・§2.3、CON-11 LC-CV-11 の照合、POA&M の起票は担当外のため x-handoffs R8-H1・R8-H3・R8-H5 に申し送った"
+        },
+        {
+          "id": "R8-2",
+          "severity": "High",
+          "by": "devlead",
+          "issue": "CON-13 に lcsig・withdrawn 系の type・DeletionReport の outcome=withdrawn がない。INT-00 §6.1・INT-02 §10.1 に従うと、(i) 署名のない事象を正常として処理し、(ii) deletion.withdrawn を未知の type として無視して撤回後も削除を続ける受信処理を作り得る（RRG-073 の前提が崩れる）",
+          "response": "対応。(1) CON-12 §10 H2-3 を適用した: lcsig を必須、Event_tenant_deletion_withdrawn・Event_user_deletion_withdrawn を KnownTypes・anyOf・PublisherProfile に追加、DeletionReport の outcome に withdrawn、failed の理由区分 failure_reason（正本不一致・照会不能ほか、failed のとき必須）を追加、正例すべてに lcsig を付与、負例 LC-NE-08〜LC-NE-11 と DeletionReport の負例 LC-DR-NE-01・02 を追加、版 0.2.0。(2)〜(4)（CON-00 の更新と再検査、INT-00・INT-02 の注記、POA&M の行）は担当外のため x-handoffs R8-H1・R8-H4・R8-H5 に申し送った"
+        }
+      ],
+      "verification": "本書の作成者が Python jsonschema 4.26.0（Draft202012Validator、CON-02 を registry に登録）で check_schema、ルートの examples、ルートの x-negative-examples、DeletionReport の examples・x-negative-examples を実行した（結果は x-review-log.verification-result）[M]。外部原典は RFC 7515 §2・§7.1 と RFC 7518 §3.6 を 2026-10-15 に rfc-editor.org で取得して確かめた（research 未収録。standards-status SS-A25 は RFC 7518 を収録済み）。",
+      "verification-result": "2026-10-15 に実行 [M]。check_schema 合格。ルートの examples 5 件すべて適合（PublisherProfile では既知の type の 4 件が適合し、未知の type の 1 件は想定どおり不適合）。ルートの x-negative-examples 11 件すべて不適合。DeletionReport の examples 2 件適合、負例 2 件不適合。追加した負例 LC-NE-08〜LC-NE-11 は版 0.1.1 のスキーマではすべて適合と判定されることを確かめ、指摘の欠陥を再現した。版 0.2.0 の SHA-256 は CON-00 §2.1 の更新時に取得する（R8-H1）。生データは作成者の一時作業領域にだけ置いた。"
+    },
+    {
+      "round": 9,
+      "date": "2026-10-15",
+      "note": "模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない。作成者以外による独立レビューは未実施（TRC-11 OI-G10）。",
+      "findings": [
+        {
+          "id": "R9-1",
+          "severity": "High",
+          "by": "devlead",
+          "issue": "版 0.2.0 は封筒の required に lcsig を加え、withdrawn 系の type と failure_reason を加えた非互換な改版だが、x-handoffs R8-H1〜R8-H6 が全件未適用で、CON-00 §2.1（版 0.1.1・SHA-256 2f05ec03…）・§2.3（examples 4 件・負例 7 件）、CON-12 §2・§10 H2-3・RO-8・x-dataschema-note、CON-11 の申し送り表・LC-CV-11、INT-00 §6.1・§0 の 3、POA&M（R8-H5 の行がなく OI-G09 は改版前の状態）が追随していない。本書の中でも $comment の版（0.1.1）と x-version（0.2.0）が食い違う",
+          "response": "対応。(1) 本書: $comment の版の表示を x-version に揃え、メタ情報の訂正なので版を 0.2.1 に上げた（検証内容は 0.2.0 と同じ）。x-handoffs の各項目に status を加えた。(2) R8-H1〜R8-H5 は、同じ是正の担当ファイル（CON-00、CON-12、CON-11、INT-00、TRC-11）に適用した（各 status）。(3) INT-02 §10.1（R8-H4 の後半）と DL-49・DL-08（R8-H6）は担当外のため未適用で、申し送り先は各 status のとおり"
+        }
+      ],
+      "verification": "本書の作成者が 2026-10-15 に Python jsonschema 4.26.0（Draft202012Validator、FormatChecker あり、CON-02 を registry に登録）で check_schema、ルートの examples、ルートの x-negative-examples、DeletionReport の examples・x-negative-examples を版 0.2.1 に対して再実行した（結果は CON-00 §2.3）[M]。新しい外部原典は用いていない（版 0.2.0 の RFC 7515・7518 の確認に依る）。"
     }
   ]
 }

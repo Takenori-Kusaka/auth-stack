@@ -1,6 +1,6 @@
 # 連携パターン集（P-01〜P-27）
 
-> 文書ID: INT-02 / 版: 0.3（模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-02 / 版: 0.5（ラウンド 8: P-08 に ADR-017 D17-07 (a)〜(c) の実行単位分離・tid 一致検査・配備禁止と負例 NP08-7〜NP08-9（TC-017-15）を反映。版 0.4 は PoC/R7反映: P-16・P-22 と §5.1 I-01 に POC-02 と CON-14 版 0.3.0・0.3.1 を反映。版 0.3 は模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
 > 対応要求: G-098, G-099, G-100, G-106, G-135, G-136, G-138, G-139, R-059, R-100, R-163, R-206（DL-64 の主な対応要求）、R-058（G-135・G-136 経由）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-64、§6.3）, 05_adr/README.md, 05_adr/ADR-001〜ADR-029, 05_adr/reconciliation-notes.md, 04_architecture/（token-profile.md, pep-contract.md, authorization-model.md, revocation-continuous-evaluation.md, workload-identity-delegation.md, data-outside-pep.md, claims-catalog.md, fail-mode-matrix.md, audit-privacy.md, reference-architecture-v2.md, cell-blast-radius.md）, 11_contracts/（authorization-api.openapi.yaml, relationship-model-registry.openapi.yaml, token-exchange.openapi.yaml, scim.openapi.yaml, ssf-caep.openapi.yaml, schemas/*.json, README.md（CON-00、DL-69）, mock-contract-test-kit.md（CON-11、DL-80））, 10_integration/dependency-tiers.md（INT-01、DL-63）, 10_integration/authz-modeling-guide.md（INT-03、DL-65）, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/identity-lifecycle.md, 02_requirements/principal-catalog.md, 03_threat-model/threat-catalog.md, 03_threat-model/fraud-abuse-controls.md, 06_controls/applicability.md, 07_slo/numeric-contracts.md, 01_governance/assumptions-register.md, research/RS-17-integration-patterns-modeling.md, research/RS-06-workload-identity-delegation-agents.md, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・契約・調査ノートを読み、連携パターンの正式定義（P-ID の定義場所。deliverables.md §8）として起草した。本書は ADR の決定を決め直さない。食い違いがあれば ADR を正とし、本書を直す [D]。版 0.2 は、作成者と別の AI エージェント（Claude）が ADR・上流文書・RS-17 等の調査ノートと照合し、RFC 9421 の原典を再取得して独立レビューした版である（末尾「レビュー記録」）。人による照合と実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、CON-14 §9 の申し送り H-9 を反映し、§5.1 に I-16（workload の登録エントリ）・I-17（交換可能な組）を、§5.2 にその列を加え、P-03 のチェックリストを登録手段の契約（CON-14 §4A）に結び付けた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
@@ -605,21 +605,21 @@ sequenceDiagram
 | 項目 | 内容 |
 |---|---|
 | 適用条件 | 自社・顧客側・第三者のエージェントが API・tool を呼ぶ。自サービスが tool サーバー（MCP server を含む）になる（G-135 の 18） |
-| 主体・認証 | エージェントは 1 主体 1 SPIFFE ID 1 テナント（NC-1）。委任動作は C8（委任元の種別）、自律動作は別 client_id・別 scope 集合（write を上限、privileged・break-glass を含めない。D17-10） |
+| 主体・認証 | エージェントは 1 主体 1 SPIFFE ID 1 テナント（NC-1）。委任動作は C8（委任元の種別）、自律動作は別 client_id・別 scope 集合（write を上限、privileged・break-glass を含めない。D17-10）。**実行単位の分離（MUST、ADR-017 D17-07 (a)）**: 第一者のエージェント製品の実行単位（プロセス・sandbox・コンテナ）はテナント主体ごとに分け、実行するタスクのテナントで割り当てる。割当てはモデルの出力や tool 応答で変えられないようにする。1 つの実行単位のメモリ・一時領域・キャッシュに、他テナントのエージェント主体の SVID・秘密鍵・委任 token・承認 grant を載せない。複数テナントにサービスする製品は、エージェント定義を 1 つにし、主体はテナントごとに登録する（D17-07、NA-017-2）。理由: 間接 prompt injection（ATK-16）はモデルの出力を誘導するため、実行環境から到達できる資格情報はすべて攻撃者に使われ得るものとして扱う（D17-07）。テナント A の文書に埋め込んだ指示で、同居するテナント B の主体の資格情報を使わせる経路が T-094（案）である（ADR-017 §1.3）（ラウンド 8） |
 | token・grant・委任 | tool サーバーごとに `resource` を指定した token（D17-15）。RFC 8707 は AS が `resource` の示す資源に audience を絞るべき（SHOULD）とする [N][^40]（RS-17#67）。下流は exchange で取り直し、`act` を入れ子にする（D17-18）。委任 grant はタスク単位で縮小し絶対寿命を付ける（D17-17・D17-43）。impersonation と利用者の秘密の受渡しは禁止（D17-11）。ID-JAG による企業管理の認可は v1 の契約に入れない（D17-30） |
-| テナント文脈 | エージェント主体は 1 テナント。+AGT の要求には操作階層によらず Txn-Token を発行（D17-19） |
+| テナント文脈 | エージェント主体は 1 テナント。tool 呼出しの token にはタスクのテナントの `tid` を載せる（1 token に 1 tid。D17-07 (b)）。+AGT の要求には操作階層によらず Txn-Token を発行（D17-19） |
 | 契約 API | OIDC/OAuth profile（authorize・token、RFC 8707・RFC 9728）／exchangeToken／evaluateAccess／監査 |
-| PEP 配置 | PP-6（tool サーバー内 PEP）。判定はエージェント・LLM の実行環境の外で行う（D17-35） |
+| PEP 配置 | PP-6（tool サーバー内 PEP）。判定はエージェント・LLM の実行環境の外で行う（D17-35）。**tid 一致検査（ADR-017 D17-07 (b)、D17-35）**: tool 側 PEP は、実行中タスクのテナント（edge が利用者の session から作る Txn-Token の `tctx` のテナント欄。ADR-009 D09-29。欄名は DL-115 で確定）と、資格情報のテナント（token の `tid`、および提示された SVID の主体が登録されているテナント）の 3 つの一致を検査し、不一致は拒否して監査に記録する。token は提示元主体の鍵に束縛する（sender-constrained）。他主体の token を自主体の鍵で提示しても通らない。この検査は (a) が破れた場合の多層防御である（D17-07 (b)）（ラウンド 8） |
 | 認可モデル例 | tool 目録に tool ごとの「操作種別×資源型×作用範囲」、操作階層、修飾子（+FIN・+XT・+SEC）を登録（D17-14）。許可は利用者の権限 ∧ grant ∧ 自律度区分 ∧ tool の要件の論理積 |
 | 整合性 | write 以上は呼出しごとに `fully_consistent`。read-sensitive の取得は P-09 の一覧ヘルパ経由 |
 | キャッシュ | token をエージェントのコンテキスト（プロンプト）に入れない（data-outside-pep §7）。判定の cache なし（write 以上） |
 | 失効の反映 | 停止の単位はエージェント主体・定義・所有者・tool サーバー・委任元の 5 種（D17-37）。委任元の停止で全委任を失効 |
 | 失敗時挙動 | 承認 grant の発行・検証に届かなければ、承認を要する tool 呼出しを拒否（D17-25）。grant の scope が足りない呼出しは拒否し、エージェントは委任の同意（AS 画面）からやり直す。tool サーバー側で scope を補ったり、別の token に切り替えたりしない（RS-17 §5.1 の P-08 行、D17-15）。PDP 不達は §3.3 |
 | 監査 | 相関 8 欄に加え起点エージェント主体（`tctx`。欄名は **未決（ADR-017 L17-2）**）。Txn-Token・access token・承認 grant の全文は残さない（D17-48） |
-| 契約試験・負例 | NP08-1 他 audience の token の拒否（tool サーバーと下流の両方）／NP08-2 上流 token の中継の検出・拒否（MCP Security Best Practices は token passthrough を anti-pattern とする [N][^26]（RS-17#69））／NP08-3 状態ハンドルだけでのアクセスの拒否（同文書の MUST NOT [N][^26]）／NP08-4 エージェント UI の確認だけで +FIN が実行されないこと（T-074）／NP08-5 自律 client による privileged scope の要求の拒否／NP08-6 量の上限超過で停止すること（D17-36） |
-| アンチパターン | エージェント内 UI の確認を承認とみなす（D17-23）／外部内容を読む tool と +XT・+FIN の tool を同じ grant に入れる（D17-38）／基盤契約を MCP の版に依存させる（D17-26） |
-| チェックリスト | ① tool 目録を登録 ② tool サーバーを RS として登録し RFC 9728 を実装 ③ 下流は exchange ④ 承認 grant を AS 画面で取得 ⑤ リトリーブは P-09 |
-| 関連 | ADR-017、ADR-009、ADR-006 D6-22／T-072、T-073、T-074、T-075／S-14／K-16 |
+| 契約試験・負例 | NP08-1 他 audience の token の拒否（tool サーバーと下流の両方）／NP08-2 上流 token の中継の検出・拒否（MCP Security Best Practices は token passthrough を anti-pattern とする [N][^26]（RS-17#69））／NP08-3 状態ハンドルだけでのアクセスの拒否（同文書の MUST NOT [N][^26]）／NP08-4 エージェント UI の確認だけで +FIN が実行されないこと（T-074）／NP08-5 自律 client による privileged scope の要求の拒否／NP08-6 量の上限超過で停止すること（D17-36）／NP08-7 他テナントの `tid` を持つ token を自タスク（`tctx` のテナントが異なる）で提示した要求の拒否と拒否の監査記録（TC-017-15 (2)、D17-07 (b)）／NP08-8 他主体の token を自主体の鍵で提示した要求の拒否（sender-constrained の束縛。TC-017-15 (3)、D17-07 (b)）／NP08-9 テナント A の文書・tool 応答にテナント B の主体の資格情報の使用を促す指示を埋め込んでも、A の実行単位から B の SVID・委任 token・鍵が読めず、B の主体での tool 実行が 0 件であること（TC-017-15 (1)、D17-07 (a)）。NP08-7〜NP08-9 の合格基準は規則（他テナント主体での tool 実行 0 件、(2)(3) の拒否率 100%。ADR-017 §7.1 TC-017-15）。TC-017-15 は 2026-10-15 時点で POC-01 に未登録（ADR-017 H17-3）（ラウンド 8） |
+| アンチパターン | エージェント内 UI の確認を承認とみなす（D17-23）／外部内容を読む tool と +XT・+FIN の tool を同じ grant に入れる（D17-38）／基盤契約を MCP の版に依存させる（D17-26）／**テナントをまたいで共有する実行単位**（複数テナントの主体の資格情報を同じプロセス・sandbox・コンテナに載せる形態）。(a)(b) を満たせない実行形態は本番に配備しない。テナント間漏えい（U1）は受容票の対象外なので、例外票では受容できない（D17-07 (c)、GOV-02 §2.3、DCS-05 X-01）。PoC・検証環境で使う場合も本番テナントの資格情報を載せない（D17-07 (c)）（ラウンド 8） |
+| チェックリスト | ① tool 目録を登録 ② tool サーバーを RS として登録し RFC 9728 を実装 ③ 下流は exchange ④ 承認 grant を AS 画面で取得 ⑤ リトリーブは P-09 ⑥ （第一者のエージェント製品）実行単位をテナント主体ごとに分け、タスクのテナントで割り当てる（D17-07 (a)） ⑦ （tool サーバー）`tid`・`tctx` のテナント・SVID の登録テナントの一致検査と拒否の監査を実装し、NP08-7〜NP08-9 を CI と PoC 基盤で流す（D17-07 (b)、TC-017-15） |
+| 関連 | ADR-017（D17-07 (a)〜(c)、TC-017-15、RR17-08）、ADR-009、ADR-006 D6-22／T-072、T-073、T-074、T-075、T-094（案。THR-03 に未起票、ADR-017 H17-1）、ATK-16／S-14／K-16 |
 
 ### P-09 一覧・検索
 
@@ -924,7 +924,7 @@ sequenceDiagram
 | 失効の反映 | 取消しの契機（付与者の取消し、期限、home 側の停止、ポリシー変更）ごとの経路は D24-21 |
 | 失敗時挙動 | home 側 AS 停止中はゲストの新規 login 不可。既存 session は H_g の範囲 |
 | 監査 | 共有の変更は 100% 記録（D24-20、E6）。外部付与ごとに資源側と home 側の法域を記録（D24-23） |
-| 契約試験・負例 | NP16-1 home 側 token（tid＝home）を資源側で提示した要求の拒否／NP16-2 期限切れの外部付与での拒否／NP16-3 外部主体への管理者ロール付与の拒否／NP16-4 home 側の停止後のゲスト session の失効（TC-24-05）／NP16-5 匿名リンクで要配慮データにアクセスできないこと |
+| 契約試験・負例 | NP16-1 home 側 token（tid＝home）を資源側で提示した要求の拒否／NP16-2 期限切れの外部付与での拒否／NP16-3 外部主体への管理者ロール付与の拒否／NP16-4 home 側の停止後のゲスト session の失効（TC-24-05）／NP16-5 匿名リンクで要配慮データにアクセスできないこと／NP16-6 外部付与のない資源へのゲストの allow が 0 件であること（R 段のモデルに誤りがある構成でも、G 段で止まるかを記録する）／NP16-7 他テナントの role・group の userset を主体とする関係書込みの拒否（CON-04 §3 版 0.3.1）。PoC/R7反映: POC-02 の TC-002 では、全域 permit にした誤りモデルの構成で、外部ゲストが付与されていない資源に allow を得た（X-C。ADR-024 D24-08 は G 段で付与範囲を見ないため、ゲストの閉じ込めは R 段だけに依存する）。TC-021 では PoC の façade が他テナントの role の userset を受理した（X-D）。いずれも立会人なしの自己実行で Gate 4 の証拠ではないが、ADR-024 §8 の再検討トリガーに当たる（POC-02 §6.2）。本パターンを使うサービスは、DEC-3 論点 5 の D24-08 の改訂が決まるまで、外部付与の範囲を自サービスの R 段のモデルに頼って閉じていることを前提に、NP16-6 を自 CI に入れる [D] |
 | アンチパターン | 越境のために三者一致を外す／テナント・グループ単位への付与／中立の共有領域（D24-05） |
 | チェックリスト | ① outbound と inbound の両方の許可（D24-17）② 付与に期限 ③ 棚卸し機能（D24-22）④ 法域をまたぐ場合は D24-24 の既定 |
 | 関連 | ADR-024、ADR-011、ADR-013／T-080、T-081／S-01、S-17／K-02 |
@@ -1144,7 +1144,7 @@ sequenceDiagram
 | 適用条件 | 外部の組織のシステムが利用者を伴わずに自社 API を呼ぶ（G-135 の 7） |
 | 主体・認証 | パートナー主体（PC-15）。private_key_jwt（`typ` 明示）か mTLS（`tls_client_auth`）。新規の client_secret 不可 |
 | token・grant・委任 | 外部 AT は opaque、refresh なし（RFC 6749 は client credentials の応答に refresh token を含めるべきでない（SHOULD NOT）とする [N][^6]（RS-17#18））。sender constraint は mTLS 既定 |
-| テナント文脈 | 1 token 1 テナント。複数テナントに提供するパートナーはテナントごとに client を分けるか、テナントごとに token を取り直す |
+| テナント文脈 | 1 token 1 テナント。複数テナントに提供するパートナーはテナントごとに client を分けるか、テナントごとに token を取り直す。PoC/R7反映: 顧客テナント T のための client は `platform_owning_tenant`＝T で登録し、T の管理者の同意（CON-14 AR-8）を得る。払い出された client の token の `tid` は T に固定され、要求の値では変わらない（CON-14 §5、版 0.3.1）[D] |
 | 契約 API | OIDC/OAuth profile（token endpoint、client 登録）／業務 API 側の evaluateAccess／監査 |
 | PEP 配置 | edge（E1）＋業務 API の PP-1／PP-2 |
 | 認可モデル例 | `core/client` を subject とする `logistics/shipment#partner_reader`。範囲はテナント管理者が付与 |
@@ -1153,9 +1153,9 @@ sequenceDiagram
 | 失効の反映 | client の停止・鍵の失効を E1 で毎要求反映。mTLS 証明書の更新で束縛 token は無効になる [N][^9]（RS-17#22） |
 | 失敗時挙動 | §3.3。quota（SLI-037）超過は 429＋Retry-After |
 | 監査 | E4（発行）、E1・E2（client_id、主体種別） |
-| 契約試験・負例 | NP22-1 `aud` に token endpoint URL を入れた client assertion の拒否（RFC 7523bis の MUST NOT [N][^8]）／NP22-2 他 RS 宛て token の拒否／NP22-3 束縛証明書と異なる証明書での要求の拒否／NP22-4 client_secret による認証の拒否（新規登録） |
+| 契約試験・負例 | NP22-1 `aud` に token endpoint URL を入れた client assertion の拒否（RFC 7523bis の MUST NOT [N][^8]）／NP22-2 他 RS 宛て token の拒否／NP22-3 束縛証明書と異なる証明書での要求の拒否／NP22-4 client_secret による認証の拒否（新規登録）／NP22-5 所有テナントの管理者の同意なし・他テナントの同意の流用・主体状態が有効でない所有テナントでの本番申請が払い出されないこと（CON-14 CRN-31・CRN-32・CRN-38。PoC/R7反映）／NP22-6 所有テナント T の client が U を指して得た token が U の資源で拒否されること（CRN-40。PoC/R7反映）。NP22-5・NP22-6 は未実装・未実行で、PoC は client 登録を試験していない |
 | アンチパターン | 静的 API key の発行／1 つの client で全テナントを扱う／refresh token の発行 |
-| チェックリスト | ① 公開鍵の登録と rotation 手順 ② テナントごとの付与 ③ quota の合意 |
+| チェックリスト | ① 公開鍵の登録と rotation 手順 ② テナントごとの付与 ③ quota の合意 ④ 顧客テナントごとの所有テナントの管理者の同意記録（AR-8。管理画面の承認 API の契約ができるまでは署名付き同意票。PoC/R7反映） |
 | 関連 | ADR-005 D5、ADR-009 D09-18〜D09-21、ADR-020／T-014、T-015／S-15／K-08 |
 
 ### P-23 デバイス・IoT・共有端末・入力制約端末
@@ -1352,7 +1352,7 @@ sequenceDiagram
 
 | ID | 外部インタフェース（G-138 の列挙） | 定義している契約・版付き profile | 状態 |
 |---|---|---|---|
-| I-01 | client 登録（grant・認証方式・redirect URI） | 登録する内容: OIDC/OAuth profile（token-profile §6・§9）、RFC 9700・FAPI 2.0 SP を、11_contracts/client-registration.openapi.yaml（CON-14、DL-119。OpenAPI 3.1.2、draft）の ClientMetadata として機械可読にした（GA）。登録の手段: sandbox は `/v1/register`・`/v1/register/{client_id}`（RFC 7591/7592 profile のセルフ登録、preview）、本番は `/v1/client-registration-requests` 系の承認付き申請 API（preview） | **定義あり（draft、登録の手段は preview）**。CON-00 §3 も「対応」と判定。未了は、承認者 AR-1〜AR-5 の決裁（INT-04 ONB-R2）、ADR-022 の改版による本番の登録手段の凍結区分、作成者以外の独立レビュー。C7（内部 workload）は I-01 ではなく I-16・I-17 で登録する（CON-14 §3・§4A.1） |
+| I-01 | client 登録（grant・認証方式・redirect URI） | 登録する内容: OIDC/OAuth profile（token-profile §6・§9）、RFC 9700・FAPI 2.0 SP を、11_contracts/client-registration.openapi.yaml（CON-14、DL-119。OpenAPI 3.1.2、draft）の ClientMetadata として機械可読にした（GA）。登録の手段: sandbox は `/v1/register`・`/v1/register/{client_id}`（RFC 7591/7592 profile のセルフ登録、preview）、本番は `/v1/client-registration-requests` 系の承認付き申請 API（preview） | **定義あり（draft、登録の手段は preview）**。CON-00 §3 も「対応」と判定。未了は、承認者 AR-1〜AR-8 の決裁（INT-04 ONB-R2。AR-8 は所有テナントの管理者の同意で、CON-14 版 0.3.0。PoC/R7反映）、所有テナントの値の検証 CR23 と負例 CRN-31〜CRN-41 の実装・実行（CON-14 版 0.3.1、§9 H-20）、ADR-022 の改版による本番の登録手段の凍結区分、作成者以外の独立レビュー。C7（内部 workload）は I-01 ではなく I-16・I-17 で登録する（CON-14 §3・§4A.1） |
 | I-02 | discovery・JWKS | RFC 8414・OIDC Discovery（token-profile §11）／`GET /.well-known/authzen-configuration`（getPdpMetadata、CON-03）／`GET /.well-known/ssf-configuration`（getTransmitterConfiguration、CON-09） | 定義あり |
 | I-03 | token の取得・更新 | OIDC/OAuth profile（token-profile §6・§8、RFC 9126・RFC 9700・RFC 9449） | 版付き profile あり |
 | I-04 | token の検証 | token-profile §4（V1〜V14、NV-01〜NV-58）、CON-06 access-token-claims.schema.json | 定義あり |
@@ -1536,7 +1536,13 @@ sequenceDiagram
 - client-registration.openapi.yaml の仮番「CON-13」とライフサイクル事象の CON-13 の衝突は、CON-00 版 0.4 で client 登録を CON-14（DL-119）として解消された（deliverables.md §8）[D]。
 - 他文書が draft 済みと判定した契約を「未作成」と書く箇所を機械検出する規則を DL-111 に加えること（INT-00「他文書への申し送り」S-1 と同件。統括者へ）[D]。
 - I-16・I-17 を本書 §5.1・§5.2 に加えた（ラウンド 7、CON-14 §9 H-9）。CON-00 §3 の対応表に I-16・I-17 の行を加えること（CON-14 §9 H-11 と同件。CON-00 の所有者へ）[D]。
-- edge を呼出し元とする交換可能な組（P-01・P-22 などで edge が業務 API 宛ての内部 JWT に交換する経路）を、呼出し先のチームが I-17 で登録するのか、基盤が登録するのかを CON-14 §4A.3 に書くこと（CON-14 の所有者へ。ADR-009 D09-13 と照合）[D]。
+- edge を呼出し元とする交換可能な組（P-01・P-22 などで edge が業務 API 宛ての内部 JWT に交換する経路）を、呼出し先のチームが I-17 で登録するのか、基盤が登録するのかを CON-14 §4A.3 に書くこと（CON-14 の所有者へ。ADR-009 D09-13 と照合）[D]。PoC/R7反映: CON-14 版 0.3.1 §4A.3 に案（申請者は edge の所有者であるプラットフォームチーム、承認者は呼出し先の所有者 AR-7）が書かれた。確定は ADR-009 の所有者による [D]。
+- ラウンド 8（ADR-017 D17-07 (a)〜(c) の連携入口への反映）: 本書 P-08 に反映したが、次の文書は本書の担当外なので申し送る [D]。
+  - CON-11（11_contracts/mock-contract-test-kit.md）§6.3: D17-07 (b) の負例ベクタ（他テナントの `tid` の token を別テナントのタスクで提示、他主体の token を自主体の鍵で提示、いずれも拒否と監査記録）を加える。CON-11 §6.3 に「PEP 族」という名の族はないため、置き場所は P-08 を含む「パターン族」（TC-028）か新しい族かを CON-11 の所有者が決める。出典は INT-02 P-08 の NP08-7〜NP08-9 と ADR-017 TC-017-15（CON-11 の所有者へ）[D]。
+  - INT-05（10_integration/definition-of-ready.md）DD-14: 「+AGT は P-08 の負例」に、第一者のエージェント製品の実行単位のテナント主体ごとの分離（D17-07 (a)）の確認と NP08-7〜NP08-9 の合格を 1 行加える。越境に当たるので DD-04 と同じく受容不可（D17-07 (c)）とする（INT-05 の所有者へ）[D]。
+  - INT-06（10_integration/developer-faq.md）FQ-60: エージェント製品の実行単位をテナント主体ごとに分けること、テナントをまたぐ共有実行単位は本番に配備できないことを 1 行加える（INT-06 の所有者へ）[D]。
+  - INT-00（10_integration/README.md）§6.3: 「PoC の結果から連携実装に持ち帰る点」の並びに、エージェント製品の実行単位分離と tool 側 PEP の `tid` 一致検査（D17-07 (a)(b)、TC-017-15）を 1 行加える。PoC の観察ではなく ADR の決定であることを明記する（INT-00 の所有者へ）[D]。
+  - ADR-017 H17-1・H17-3 の未反映（THR-03 に T-094（案）なし、POC-01 に TC-017-15 なし。2026-10-15 に文字列検索で各 0 件）は ADR-017 H17-5 で open-items に起票を求めている。本書は状態を P-08 に記しただけである [D]。
 - CON-00 §3 の I-14 の記載は CON-03・CON-04・CON-07 だけを挙げるが、CON-09（ssf-caep.openapi.yaml）にも 429 の定義がある（2026-10-15 に grep で確認）[M]。CON-00 の所有者へ申し送る [D]。
 
 ---
@@ -1572,7 +1578,7 @@ sequenceDiagram
 | P-04・P-05・P-24 | メッセージを参照だけにする設計と静的検査（NP04-3、NP24-1）、型 A1〜A4 の宣言、デッドレターと通知、outbox | requestTxnToken（preview、draft 依存）、内部開始の `tctx` の意味（ADR-026 L26-1・L26-2）、ライフサイクル事象のモック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）・期限 T_* の値（受信の実装と単体試験は CON-12・CON-13 に対して今できる） |
 | P-06 | 送信元の PC-15 登録の設計、受信の edge 経由化、payload の参照化、配信直前の再 Check | **Webhook 署名 profile（I-15、KD64-1）**。決裁までは署名方式を固定した実装をしない |
 | P-07・P-22・P-23 | private_key_jwt（`aud`＝issuer 単独）か mTLS の client 実装、scope の最小化、テナントごとの client・grant の設計 | client 登録の承認者の決裁（INT-04 ONB-R2。契約は client-registration.openapi.yaml、preview）、共有 sandbox（CON-11 §5、K11-3）、device grant の例外（KD64-3） |
-| P-08 | tool 目録の草案、RFC 9728 の metadata、tool ごとの `resource` 指定、下流の exchange | 起点エージェント主体の欄名（ADR-017 L17-2）、承認 grant の画面（AS） |
+| P-08 | tool 目録の草案、RFC 9728 の metadata、tool ごとの `resource` 指定、下流の exchange、実行単位のテナント主体ごとの分離（D17-07 (a)）、`tid` 一致検査と拒否監査の実装と単体試験（NP08-7〜NP08-9） | 起点エージェント主体の欄名（ADR-017 L17-2）、`tctx` のテナント欄の名前（ADR-009 D09-29 が DL-115 に委ねる。claims-catalog の草案は `tid`）、承認 grant の画面（AS） |
 | P-11・P-17 | 操作集合の定義と二者レビュー、break-glass/P の依存台帳の作成と演習計画 | 昇格系・特権 grant ストアの提供時期（DL-42）。break-glass/P は本基盤を待たずに整備できる（本基盤に依存しないことが要件） |
 | P-12・P-13 | 依存サービス側の義務（顧客 IdP の token を受けない、email で識別しない、主体状態を複製しない）の実装。CON-12 RO-6 による独自 session の無効化の受信処理と単体試験（観点は CON-12 の LC-CV-08） | 独自 session の無効化の結合試験に使うモック MK-08（CON-11 版 0.3 で仕様化。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）、期限 T_user_susp ほかの値（DL-20） |
 | P-14 | 期限切断・失効購読・メッセージ単位の再認可の 3 点の SDK 組込み設計、WSS と Origin 許可リスト | 終端を E4 に寄せるか（revocation KA9-2）、Δ_conn・L_conn の値（DL-20） |
@@ -1789,3 +1795,30 @@ sequenceDiagram
 - 新たな外部原典は用いていない。新たに書いた事実はいずれも本リポジトリの文書の照合による [D]。
 - 他文書への申し送り: §9.1 に 2 項目（CON-00 §3 への I-16・I-17 の行の追加、edge を呼出し元とする組の登録者の CON-14 への明記）を加えた [D]。
 - 対応件数: 1 件（対応済み 1。指摘の修正案のうち P-22 の I-17 は ○ とした）[D]。
+
+### PoC/R7反映（2026-10-15、版 0.3 → 版 0.4）
+
+> 12_poc/measurement-report.md（POC-02 版 0.1）、12_poc/reproduction-log.md と、ラウンド 7 の模擬パネルの指摘（traceability/mock-panel-report.md、CON-14 の R7-1）を読んで反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない [D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| P-1 | CON-14 版 0.3.0（AR-8）・版 0.3.1（所有テナントの値の検証） | P-22 のテナント文脈・負例（NP22-5・NP22-6）・チェックリスト ④ に、所有テナントの同意と `tid` の固定を加えた。§5.1 I-01 の未了に AR-8・CR23・CRN-31〜CRN-41 を加えた | P-22、§5.1 I-01 |
+| P-2 | POC-02 §6.2 X-C・X-D、CON-04 版 0.3.1 | P-16 に負例 NP16-6・NP16-7 と、ADR-024 §8 の再検討トリガーに当たることを加えた | P-16 |
+| P-3 | INT-02 §9.1（edge を呼出し元とする組の登録者）、CON-14 版 0.3.1 §4A.3 | §9.1 の項目に CON-14 の案を追記した | §9.1 |
+
+- 設計上の含意 [D]: 見直しトリガーは ADR-024 §8（X-C）と CON-14 §5 の末尾（CRN-38〜CRN-41 の受理、X-D の設計欠陥への分類）。残余リスクは、DEC-3 論点 5 の決定までゲストの閉じ込めが R 段だけに依存すること（RRG-072 の判断材料）。追加 TC は NP16-6・NP16-7・NP22-5・NP22-6（CON-11 の CV-025〜CV-035 と Registry 族の追加ベクタに対応）。
+- §9.1 の edge を呼出し元とする交換可能な組の登録者は、CON-14 版 0.3.1 §4A.3 に案が書かれたので、§9.1 の当該項目に追記した（確定は ADR-009 の所有者）[D]。
+- 対応件数: 3 件（対応済み 3）[D]。
+
+### ラウンド 8（模擬パネル、2026-10-15、版 0.4 → 版 0.5）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R8-1 | High・devlead | ADR-017 D17-07 の (a) 実行単位のテナント主体ごとの分離（MUST）、(b) tool 側 PEP での `tid` と `tctx` のテナントの一致検査、(c) (a)(b) を満たせない実行形態の本番配備禁止、検証 TC-017-15、越境経路 T-094（案）・RR17-08(i) が、10_integration・11_contracts に 1 件も現れない。P-08 の負例 NP08-1〜6 にテナント不一致の拒否も実行単位からの他主体の資格情報への到達もなく、G-135 の種別 18 や第一者のエージェント製品のチームが U1 の越境経路を塞ぐ義務を知らずに実装する | **対応（本書の担当分）**。(1) P-08「主体・認証」に D17-07 (a)（タスクのテナントでの割当て、他テナント主体の SVID・秘密鍵・委任 token・承認 grant を載せない、T-094（案）の経路）を加えた。(2)「テナント文脈」に token の `tid`（1 token 1 tid）、「PEP 配置」に D17-07 (b)（`tid`・`tctx` のテナント・SVID の登録テナントの一致検査、不一致の拒否と監査、sender-constrained）を加えた。(3) 負例に NP08-7（他テナントの `tid`、TC-017-15 (2)）・NP08-8（他主体の token を自主体の鍵で提示、同 (3)）を加えた。指摘にある「実行単位からの他主体の資格情報への到達」を扱うため NP08-9（注入、同 (1)）も加えた。合格基準は TC-017-15 の規則（0 件・100%）を写し、POC-01 に未登録であることを記した。(4) アンチパターンにテナントをまたぐ共有実行単位（D17-07 (c)。例外票で受容できない）を加えた。(5) チェックリストに ⑥⑦、関連に T-094（案）・ATK-16・TC-017-15・RR17-08 を加えた。(6) §10.3 の P-08 行の「待つもの」に `tctx` のテナント欄の名前（ADR-009 D09-29 が DL-115 に委ねる）を、「今できる」に (a)(b) の実装を加えた。(7) 指摘の修正案 (2)〜(4)（CON-11、INT-05 DD、INT-06、INT-00 §6.3）は本書の担当外なので §9.1 に申し送った。CON-11 §6.3 に「PEP 族」の名の族がないことを確認したので、置き場所の判断を CON-11 の所有者に委ねた | 冒頭（版）、P-08（主体・認証、テナント文脈、PEP 配置、契約試験・負例、アンチパターン、チェックリスト、関連）、§9.1、§10.3 の P-08 行 |
+
+- 根拠として確認した箇所（2026-10-15）[D]: 05_adr/ADR-017（§1.3 の T-094（案）の行、§2.2 D17-07 本文と (a)〜(c)、D17-35、§6.3 RR17-08、§7.1 TC-017-15、§9 H17-1・H17-3・H17-5）、05_adr/ADR-009 D09-29（`tctx` の項目と名前を DL-115 で決めること）、04_architecture/claims-catalog.md（DL-115。`tid` の行の Txn-Token 列「必（`tctx` 内）」）、10_integration/definition-of-ready.md DD-04・DD-14、11_contracts/mock-contract-test-kit.md §6.3 の族の一覧。THR-03 の T-094 と POC-01 の TC-017-15 が 0 件であることを文字列検索で確認した。
+- 新たな外部原典は用いていない。D17-07 が引く外部原典（NIST SP 800-53 SC-4、RFC 9700、AIMS 草案、X.509-SVID）は ADR-017 の脚注で検証済みであり、本書では ADR-017 の決定として引いた（本書は ADR の決定を決め直さない）[D]。
+- 他文書への申し送り: §9.1 に 5 項目（CON-11 §6.3、INT-05 DD-14、INT-06 FQ-60、INT-00 §6.3、ADR-017 H17-1・H17-3 の未反映の状態）を加えた [D]。
+- 対応件数: 1 件（対応済み 1。本書の担当分は反映し、他文書分 4 件は申し送り）[D]。

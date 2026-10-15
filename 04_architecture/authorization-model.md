@@ -1,6 +1,6 @@
 # 認可モデル・整合性・剥奪仕様
 
-> 文書ID: ARC-05 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: ARC-05 / 版: 0.4 / 状態: review / 最終更新: 2026-10-15（0.4（PoC/R7反映）: PoC 実測レポート POC-02 と独立再現ログ、模擬パネル ラウンド 7 の指摘により、§3.6.3 に group の循環・深さの書込時拒否、§5 に関係書込の subject のテナント検査、§9.4 に TC-008 の観測、§11.1 に K-4 の PoC 未実装、§15 に TC-ARC05-16・17 と PoC 結果、§17・レビュー記録を加えた。PoC の値は自己実行の参考値で Gate 4 の証拠ではない）
 > 対応要求: R-142〜R-149, R-191.3, R-205, R-250, R-252, R-253, R-271, G-107, G-108, G-109, G-110, G-112, G-113（本書を対応成果物に含む全行。閉じ方は末尾の対応表）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-17）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-024・ADR-025（設計判断の正本）, 05_adr/ADR-006・ADR-013・ADR-017・ADR-021・ADR-026・ADR-027・ADR-029, 05_adr/reconciliation-notes.md（U-03, U-04）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-027〜T-034, T-080）, research/RS-07, RS-08, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし。§3.6 の注記）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md（DS-15, DS-16）
 > 改版: v0.3（RS-18反映（2026-10-15））で、テナント配下の階層モデル（§3.6）、core 型の追加案（§3.1）、containment の命名規則 X-11〜X-13（§3.3）、深度と祖先閉包の関係（§3.4）、§8.3・§8.4 の例の書換え、決裁案 K05-6〜K05-8、残課題 15〜19 を加えた。RS-18 は独立検証（research/README.md の P3）を経ていないため、本書は RS-18 を設計の入力として引き、事実の根拠には本反映で再取得した原典だけを使った[^37] [D]。
@@ -205,6 +205,7 @@ permission catalog は CAM の一部で、各 permission に次の印を付け�
 - 認可エンジンに循環の検出を任せない [D]。SpiceDB は権限グラフが木であることを前提にし、専用の循環検出器を持たず、循環は最大深さ（既定 50 hops）に達したエラーとしてだけ現れる [V][^38]。OpenFGA が tuple 上の循環をどう扱うかは公式文書で確認できていない（未確認、残課題 17）[D]。
 - 循環を防ぐ責任は、`core/unit` と葉ノードの containment の正本を持つ**階層サービス**（基盤所有。新設案）が負う [D]。`parent` の付け替え要求では、(1) 移動先がその節点自身の部分木に含まれないこと、(2) 移動後の深さが上限以内であること、(3) 移動先の型が直接型の宣言に合うことを、親の付け替えと同じ DB トランザクションの中で検査し、満たさなければ拒否する [D][^37]。
 - 正本は隣接リスト（`parent_id`）と closure table を併せて持つ [D][^37]。定期照合では再帰 CTE で循環と深さ超過を検出し、K-4（差分照合）の対象に含める [D]。
+- **PoC/R7反映（版 0.4）: membership（`core/group#member` の入れ子）にも書込時の検査を置く** [D]。group は DAG（§3.6.2）なので親の付け替えの検査では止まらず、関係書込 API（façade）が (1) 入れ子の循環、(2) 入れ子の深さ上限（§3.4）の超過を、書込と同じトランザクションで拒否する [D]。PoC 系統 1 の TC-002 では、関係書込 API がこれを拒否せず、生成器が作った group の循環で Cedar 構成の判定が評価不能（`input graph has a cycle`）になり、正例の失敗が上限を超えて TC が中止した（OB-TI-01。fail-closed で越境 allow はない。自己実行の参考値）[D][^43]。OpenFGA 構成は同じ循環で判定を続けたので、エンジンごとに循環の扱いが違うことも、検査をエンジンに任せない理由になる（残課題 17）[D]。
 - unit の深さ上限は 5 を初期案とする（NA-ARC05-1、前提台帳へ追加要）[D]。AWS（5 段）[V][^39] と Azure（6 段）[V][^40] の上限を参考にした値で、TC-ARC05-08 の実測で確定する（K05-8）[D]。
 
 #### 3.6.4 祖先閉包の事前計算と設計値 8（決裁案 K05-8）
@@ -307,6 +308,7 @@ flowchart TD
 | 新しい種類の permission を role に開放 | 資源の relation の直接型に `core/role#assignee` がなければ、その relation は role 経由で付与できない。開放するときは、当該 relation の直接型に `core/role#assignee` を加えるモデル変更を §12 の 6 段で出す [D]。これはモデル構造からの推論で、OpenFGA の Custom Roles 文書はこの点を記述していない [V][^27] | ADR-011 D4-1 [D] |
 | 変更の階層 | role の定義（作成・変更）と、利用者・グループへの role の付与（`assignee` の書込）は privileged/T（REQ-03 §6.2「一般ロールの付与」）。role を個々の資源の relation に結ぶ書込は資源単位の関係の変更なので write（REQ-03 §6.1）。保護操作の permission を role に加える変更はそれ自体を保護操作とする | ADR-011 D4-4、REQ-03 §6.1・§6.2 |
 | 保守責任 | テナントの custom role はテナント管理者が保守する。基盤は catalog の変更を通知する | RS-17#96 項 6 [D] |
+| 割当ての経路とテナント検査（PoC/R7反映、版 0.4） | role を資源の relation に結ぶ書込（`core/role:<id>#assignee` を subject とする tuple）は、role サービスの API だけでなく façade の関係書込 API からも行えるので、両方の経路で「role の所属テナント＝資源の所属テナント＝要求のテナント文脈」を検査し、一致しなければ拒否する。subject 側の検査はドメインの CAM から導かず、基盤が正本で引く。外部付与の作成 API だけを例外とする | ADR-010 D-28 の注記、ADR-011 D1-2 の注記、ADR-024 D24-08a（案）。PoC 系統 1 の TC-021 で、façade の関係書込 API が他テナントの role を subject として、ドメイン writer の資格情報で受理した（昇格の成立 1 件。role サービスは拒否。自己実行の参考値）[D][^43] |
 
 ---
 
@@ -589,6 +591,7 @@ G-108 の認可要件カタログの全件判定は DL-65 と PoC（TC-ARC05-11�
 | 剥奪から拒否までの上限 | 公式の保証なし | 公式の保証なし | 構成値と実測値の和で書く（§10）[D] |
 | 複数 tuple 書込の原子性 | 1 要求の書込・削除を transactionally に適用し、前提条件の不成立で全体を戻す [V][^35] | 1 要求の書込と削除はともに成功するか、ともに失敗する [V][^34] | 1 要求の上限は §3.4 [D] |
 | グローバルな external consistency | 対象外（cell ごとの store。cell 間で tuple を複製しない） | 同左 | 本基盤は global store を置かない（ADR-010 D-23）[D] |
+| エンジン cache 起因の stale（PoC/R7反映、版 0.4） | 未試験 | PoC 系統 1 の TC-008 で Check cache（TTL 2 s・10 s）を有効にしても stale allow 0 件、整合性トークンなしの経路でも例 A・B の漏洩 0 件（単一ホスト・単一ノード。自己実行の参考値）[D][^43][^44] | 再現できなかったことは安全の証拠にならない。窓 W の実在と大きさは系統 2 の TC-103 で測る。フェンス（ADR-010 D-18）の効果は PEP SDK cache の層でしか示せていない [D] |
 
 - Zanzibar 論文は new enemy の防止に external consistency と bounded staleness 付きの snapshot read の 2 性質が要るとし [V][^1]（RS-07#4）、Spanner のもとでこれを全域で提供している [V][^1]。本基盤は cell ごとの単一 primary の store で、cell 間の因果順序を扱わず、Leopard 相当の事前計算も v1 で持たない（ADR-025 D25-10）[D]。したがって Zanzibar 論文との同等性は主張せず、保証は上表の構成単位でだけ述べる [D]（CL-0160 の処置、R-142）。
 
@@ -672,7 +675,7 @@ sequenceDiagram
 | K-1 剥奪先行 | 権限を狭める relation の変更（削除、共有解除、親の付け替えで外れる側）は、façade への同期書込で確定させ、得たトークンを受け取ってから内容を変更する | 例 B（剥奪後の追記）と例 A（外した後の移動）[D] |
 | K-2 付与の非同期可 | 権限を広げる relation の変更（作成時の親付け、共有の追加）は transactional outbox で非同期に反映してよい。未反映の間は deny（資源が見えない）に倒れる | 付与の遅れは漏えいにならない [D] |
 | K-3 content-change check | 内容の変更（作成・更新・移動）の直前に、最新スナップショットで write の判定を行い、返されたトークンを内容と同じ DB トランザクションで保存する | 例 B。zookie の方式 [V][^1]（RS-07#5） |
-| K-4 差分照合 | 内容 DB の親子・所有と relationship store の tuple を定期的に照合し、差分（孤児 tuple、欠落 tuple）を検出して是正する | outbox の取りこぼし、手作業の修正 [D] |
+| K-4 差分照合 | 内容 DB の親子・所有と relationship store の tuple を定期的に照合し、差分（孤児 tuple、欠落 tuple）を検出して是正する | outbox の取りこぼし、手作業の修正 [D]。PoC/R7反映（版 0.4）: PoC 系統 1 の TC-009 は、トランザクション途中の停止で親を失ったファイルが構成ごとに 5 件でき、試験ハーネスが K-4 を模して修復したうえで合格した。PoC 基盤に K-4 の実装はない（自己実行の参考値）[D][^43]。K-4 を PoC 基盤に実装し、ハーネスの修復なしで再実行する（TC-ARC05-17、POC-02 MR-9）[D] |
 
 ### 11.2 代表的な変更の手順
 
@@ -809,6 +812,10 @@ flowchart LR
 | TC-ARC05-13 | 段階展開の所要時間、既知良好版への復帰時間、復帰後の剥奪の非復活 | ADR-010 H-18、ADR-016 TC-016-07 | E5 | 剥奪の復活 0 件。時間は事前登録 |
 | TC-ARC05-14 | SpiceDB での model pin 方式（§16 K05-5 の候補）の実現性と費用 | ADR-010 D-22 | E5 | 候補ごとに記録し Gate 3 の判断材料にする |
 | TC-ARC05-15（RS-18反映（2026-10-15）） | 階層サービスの検査と祖先閉包: (1) 自分の部分木への移動・深さ超過・型違いの親の書込が全件拒否される、(2) unit の移動中に旧祖先経由の stale allow が起きない（剥奪先行）、(3) 閉包と正本の差分照合で注入した不一致を全件検出する、(4) `owner_unit` を使った分割演習で境界をまたぐ参照の列挙漏れが 0 件 | K05-6・K05-8、ADR-028 D28-40 | E4・E5 | (1)(2)(4) は 0 件、(3) は検出率 100%。移動の所要時間と一時 deny の件数は記録 |
+| TC-ARC05-16（PoC/R7反映） | 関係書込 API が、(1) 他テナントの user・role・group を subject とする書込、(2) group の入れ子の循環、(3) 入れ子の深さ上限の超過を、直接・batch の両方で拒否する（§3.6.3・§5 の追記） | ADR-010 D-28、ADR-011 TC-011-23、ADR-024 TC-24-12 | E4・E5 | 受理 0 件。外部付与の作成 API 経由の正規の付与は成功。Cedar・OpenFGA の両構成で循環による評価不能 0 件 |
+| TC-ARC05-17（PoC/R7反映） | K-4 の差分照合が、トランザクション途中の停止で生じた孤児・欠落を、試験ハーネスの補助なしに検出・是正する | ADR-010 H-13、POC-01 TC-009 | E5 | 注入した差分の全件を検出し、是正までの時間を記録する（照合周期は W-3 の TBD）|
+
+- **PoC 系統 1 の結果（PoC/R7反映、版 0.4）**: 以下の値はすべて PoC 系統 1 の自己実行（実施者は AI エージェント、立会人なし、凍結タグなし、`git_dirty`）の参考値であり、POC-01 §2.2.1 の W-1〜W-4 を満たさないため Gate 4 の証拠ではない。原因区分は実施者の記録で、作成者以外は確かめていない。独立再現（reproduction-log）も同じ機械で別の AI エージェントが行ったもので、立会人による再実行ではない [D][^43][^44]。本書に関わる観測は、(a) TC-002 の group の循環による Cedar の評価不能と中止（§3.6.3）、(b) TC-021 の他テナント role の受理（§5）、(c) TC-008 でエンジン cache の stale を再現できなかったこと（§9.4）、(d) TC-009 の合格が K-4 の模擬に依存したこと（§11.1）である。(a)〜(d) は TC-ARC05-01・04・05・15〜17 の事前登録に反映し、立会い下の再実行と系統 2 で確かめる [D]。
 
 - 合否の数値は A-ID・BIA・DL-20 に結び付け、決まっていないものは TBD とする [D]。独立立会人が TC-ARC05-01・04・05・13 の実施と生データを確認する（ADR-010 §7.2 と同じ）[D]。
 
@@ -854,6 +861,7 @@ ADR で既に決裁案になっている点（ADR-010 決裁案 2・4・5、reco
 | 17 | RS-18反映: OpenFGA が tuple 上の循環をどう扱うか（モデル上の循環とは別）は公式文書で未確認 | C | 認可・PDP チーム。TC-ARC05-15 |
 | 18 | RS-18反映: テナント分割の公式手順の前例がなく、`owner_unit` による境界の列挙が機能するかは分割演習でしか確かめられない。階層サービス（正本・closure table・循環/深さ検査）の所有チームと SLO が未定 | C・B | CTO（所有）、認可・PDP チーム（演習）。TC-ARC05-15、G4 |
 | 19 | RS-18反映: 新規仮定 NA-ARC05-1（unit の深さ上限 5、テナントあたりの unit 数は TBD）を前提台帳へ追加要。K05-6〜K05-8 の決裁 | A・B | 前提台帳の所有者、CTO。G3〜G4 |
+| 20 | PoC/R7反映（版 0.4）: 関係書込 API の subject のテナント検査と group の循環・深さの書込時拒否の実装（TC-ARC05-16）、K-4 の PoC 基盤への実装と TC-009 の再実行（TC-ARC05-17）、エンジン cache 起因の stale の系統 2 での測定（TC-103）| C | 認可・PDP チーム、PoC リード。G4 入場前（書込検査）、系統 1 の再実行前（K-4）、G4（TC-103） |
 
 ---
 
@@ -956,6 +964,9 @@ R 14 件、G 6 件、計 20 件 [D]。
 [^40]: Microsoft『Organize your resources with management groups』Azure Governance, ms.date 2024-07-18. https://learn.microsoft.com/en-us/azure/governance/management-groups/overview （参照箇所: Important facts about management groups（"up to six levels of depth. This limit doesn't include the root level or the subscription level.", "Each management group and subscription can support only one parent."）, Moving management groups and subscriptions（子・移動先の親・現在の親への書込権限、最大 30 分のキャッシュ）、確認日: 2026-10-15。同上の再取得・照合）
 [^41]: Google Cloud『Create and manage folders』Resource Manager 文書. https://docs.cloud.google.com/resource-manager/docs/creating-managing-folders （参照箇所: "You can nest folders up to 10 (ten) levels deep.", "a given folder or resource can have exactly one parent."、確認日: 2026-10-15。同上の再取得・照合）
 [^42]: Microsoft『Administrative units in Microsoft Entra ID』Microsoft Entra 文書, ms.date 2024-10-29. https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/administrative-units （参照箇所: 冒頭（"Users can be members of multiple administrative units."）, Constraints（"Administrative units can't be nested."）, Currently supported scenarios（"Administrative units apply scope only to management permissions."）、確認日: 2026-10-15。同上の再取得・照合）
+[^43]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-002・008・009・021 行、§6.2 X-D、§6.3 の TC-002 行、§6.4 の TC-008・TC-009・TC-021 行、§9 MR-4・MR-9、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^44]: 本リポジトリ『高保証 PoC 系統 1 独立再現ログ』POC-04（仮）版 0.1（draft）. 12_poc/reproduction-log.md （参照箇所: §3 の TC-002・TC-008・TC-009・TC-021 行、確認日: 2026-10-15。実装者と別の AI エージェントが同じ機械で再実行した記録で、独立立会人による再実行ではない。Gate 4 の証拠ではない）
+[^45]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
 
 ---
 
@@ -1012,3 +1023,15 @@ R 14 件、G 6 件、計 20 件 [D]。
 - ADR への指摘 AF-1〜AF-3 は ADR 所有者の判断待ち。
 - 新規 KRI 候補 3 件は kri.md への追加が要る（本レビューでは他ファイルを編集していない）。
 - §10.1 の「フェンス反映後は min(F, E_t＋L_rep) に近い」は設計推論で、TC-ARC05-05 の実測まで予算に使わない。
+
+### PoC/R7反映（版 0.4）
+
+> PoC 実測レポート POC-02（§6.2 X-D、§6.3 の TC-002 行、§6.4 の TC-008・TC-009・TC-021 行、§9 MR-4・MR-9）、独立再現ログ（§3）、模擬パネル ラウンド 7 の「POC-02 の不利な結果が設計文書に未反映」という指摘（cto・ciso・sre）の反映 [D][^45]。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない。PoC の値は自己実行の参考値で、Gate 4 の証拠にしていない [D]。
+
+| # | 箇所 | 内容 |
+|---|---|---|
+| PR7-1 | §3.6.3 | group の入れ子の循環・深さを関係書込 API が書込時に拒否することを加えた（OB-TI-01）|
+| PR7-2 | §5 | role を資源に結ぶ書込の両経路で、role・資源・要求のテナントの一致を検査することを加えた（TC-021 の X-D）|
+| PR7-3 | §9.4 | エンジン cache 起因の stale を系統 1 で再現できなかったことと、その扱い（安全の証拠にしない）を加えた |
+| PR7-4 | §11.1 K-4 | TC-009 の合格が K-4 の模擬に依存したことと、PoC 基盤への実装を加えた |
+| PR7-5 | §15・§17 | TC-ARC05-16・17、PoC 結果の要約、残課題 20 を加えた |

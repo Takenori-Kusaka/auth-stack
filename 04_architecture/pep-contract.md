@@ -1,6 +1,6 @@
 # PEP 契約・coverage・storage guardrail 検証仕様
 
-> 文書ID: ARC-06 / 版: 0.2 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: ARC-06 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15（0.3（PoC/R7反映）: PoC 実測レポート POC-02 §6.2 X-A・MR-3 と独立再現ログにより、§3.6 の timeout を接続確立を含む要求全体の締切 D(t) と定義し、遅れて届いた応答の破棄を義務に加え、§6.6 に層ごとの検出力の測り方の課題、§9 に TC-06-07・TC-06-08、§12・残課題・レビュー記録に追記した。PoC の値は自己実行の参考値で Gate 4 の証拠ではない）
 > 対応要求: R-059, R-060, R-061, R-062, R-250, R-254, R-262, R-269, G-072, G-082（R-requirements.md・G-goal-criteria.md で本書を対応成果物に含む全行）。関連: R-058, R-164, R-172, R-011, R-143, R-283, R-065, R-071, R-242, G-083, G-105, G-114, G-136, G-140, G-121, G-122
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-15）, 05_adr/ADR-012, ADR-011, ADR-005, ADR-014, ADR-023, ADR-024, ADR-013, ADR-006, ADR-021, ADR-022, ADR-025, ADR-026, ADR-029, 05_adr/reconciliation-notes.md, 01_governance/assumptions-register.md, 01_governance/kri.md（K-01, K-03, K-05, K-06, K-21）, 01_governance/loss-scenarios.md（S-01, S-09）, 01_governance/business-impact-analysis.md（B13）, 01_governance/stop-authority.md（S1, S3）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03 J1〜J11）, 03_threat-model/attacker-model.md, 03_threat-model/threat-catalog.md, 06_controls/applicability.md（X-11）, traceability/claims-ledger.md（CL-0110, CL-0155, CL-0233）, traceability/rejected-hypotheses.md（RH-011, RH-104, RH-116〜RH-119）, research/RS-08, RS-17, RS-07, RS-10, RS-04, research/standards-status.md（SS-B04, SS-C13）
 > 作成方法: AI エージェント（Claude）が上記を読み、ADR-012 の決定（D12-xx）を実装仕様に落として単独で起草した。その後、作成者以外の AI エージェント（Claude）が独立レビューを行い本書を修正した（末尾「レビュー記録」）。実在の CTO/CISO の判定ではない（CONVENTIONS §8）[D]。research ノートにない原典として PostgreSQL 18 の `pg_class`・`pg_roles`、Envoy ext_authz、Redis ACL の文書を、起草者とレビュー者がそれぞれ 2026-10-15 に取得して確認した（照合ログへの追記は未了）[D]。
@@ -257,10 +257,11 @@ flowchart TD
 | `profile_version`（同下） | DL-72 の版 | façade は未対応 major で `unsupported_profile` を返す |
 | `consistency.mode`・`consistency.token`（`context` 内の名前空間付きキー。名前は ADR-021 で確定） | mode は階層ごとの既定（§3.11 の表と DL-17）。write 以上は `fully_consistent`。token は façade が発行した不透明値をそのまま渡す | mode が欠ければ階層の既定。token を façade が解釈できなければ `fully_consistent` に格上げ（ADR-011 D6-1） |
 | `model.pin`（同上） | テナントの現行固定版 | 欠ければ現行固定版。最新版にはしない（ADR-011 D6-1） |
-| timeout・retry | DL-19・DL-20 の操作階層ごとの設定値。SDK に埋め込まない | ADR-022 D-4-2 |
+| timeout・retry | DL-19・DL-20 の操作階層ごとの設定値。SDK に埋め込まない。**PoC/R7反映（版 0.3）: timeout は ARC-08 §4 の D(t) で、要求の開始から応答の受信完了までの全体の締切とする。名前解決・接続確立・TLS・送信・待機・受信と、同じ要求の再試行のすべてをこの締切の内側に入れる。D(t) を過ぎて届いた応答は、allow でも判定として使わず破棄し、「判定が得られない」（§3.5）として扱う** | ADR-022 D-4-2。締切を過ぎた応答は OB-05 の「判定が得られない」に当たる（ARC-08 §6.1）|
 
 - 複数資源の判定は evaluations を使い、「全て必要」は `deny_on_first_deny`、「いずれか」は `permit_on_first_permit` に固定し、後者は privileged 以上で使わない [D]（ADR-011 D3-7）。
 - 一覧・検索は SDK の一覧ヘルパ（ADR-025）だけを使い、返す各資源を evaluations（`execute_all`）で後段 Check する [D]（ADR-025 D25-03・D25-04）。engine の ListObjects 等や AuthZEN search を直接呼ぶ実装は SR-04 で拒否する [D]。
+- **PoC/R7反映（版 0.3）**: PoC 系統 1 の TC-010（OpenFGA 構成、正式な実行 `5418a7`）では、PEP→façade の接続確立を 5,000 ms 遅らせた注入（D(t)=3,000 ms）で、PEP が待って判定を得て、write 以上を 12 件、read-sensitive を 24 件許可した [D][^48]。実施者は HTTP クライアントの timeout が接続確立に効かなかったこと（PoC 実装の欠陥）を原因とし、修正後の再実行では W1 由来の許可は 0 件だった [D][^48][^49]。正式な実行のコードは失われ、原因区分は作成者以外が確かめていない [D][^49]。立会人なしの自己実行で Gate 4 の証拠ではない [D]。設計の決定は変えないが、締切の定義が曖昧なままだと約 300 サービスの SDK・自前実装の一部が同じ欠陥を持ち得るため、上の表の定義と TC-06-07 を契約に加える [D]。
 
 ### 3.7 decision_id と enforcement 記録（OB-08）
 
@@ -514,6 +515,7 @@ flowchart LR
 ### 6.6 検出力の測定と例外台帳
 
 - 静的規則の検出率と誤検知率は、PEP 呼出しを除去した変異体、テナント scope を外した変異体、判定結果を握りつぶす変異体を各言語のサンプルに埋め込んで測る [D]（TC-012-03、RS-08 M-02）。G-072 の「意図的に混入させた違反をすべて検出する」は、混入させる違反の集合を事前登録したうえで判定する [D]（ADR-012 D12-16）。K-06(c) の限度は 100% である（kri.md §5）[D]。誤検知率の上限は TBD（所有者 CISO、期限 G4、決め方: TC-012-03 の初回実測）[D]。
+- **PoC/R7反映（版 0.3）**: PoC 系統 1 の TC-002 では、層を 1 つずつ外した変異体 9 件のうち外部の entry point から検出できたのは 3 件（P 層 3/3）で、T 層・D 層の 6 件は上下の層が拒否するため外から見えなかった [D][^48]。外部からの試験だけでは、多層防御の各層が独立に効いているか（K-03(b)）を測れない [D]。層ごとの検出力は、他の層を試験用に無効化した構成で層単体の負例を流す方法で測る（TC-06-08）。この規則はデータを見る前に事前登録する（POC-02 MR-5、ADR-012 §7 の担当）[D]。
 - 例外台帳に登録して初めて検査から外せるのは、public、PP-3 の sidecar、未観測の稀な経路（S∖O）、guardrail を持たない DB（§7.4 の評価待ち）に限る [D]（ADR-012 D12-40）。各例外は所有者・期限・補償統制・承認者を持ち、承認者は privileged 以上とテナントデータを返す read-sensitive では CISO、それ以外はプラットフォームチーム長とする [D]。期限切れの例外は違反として K-01 に戻し、受容は DL-05 の受容票に従う [D]。
 
 ---
@@ -617,6 +619,8 @@ ADR-012 §7.1 の TC-012-01〜TC-012-15 をそのまま採り、本書固有の�
 | TC-06-04 | 共有キャッシュのキー規約と ACL が他テナント・他サービスのキーに到達させない | 誤った区画キー、他サービス接頭辞、FLUSHALL を注入 | すべて拒否・検出 | RR12-05 |
 | TC-06-05 | 他テナントの資源と存在しない資源への応答が区別できない | 状態コード・本文・ヘッダの一致と、応答時間分布の差を測る | 状態コード・本文・ヘッダは一致。時間差の許容は TBD（所有者 CISO、期限 G4、決め方: 初回実測と REQ-03 J4） | OB-10 |
 | TC-06-06 | known-good の判定 cache がキー構成（§3.9）の欠けで他主体・他テナントに再利用されない | キー要素を 1 つずつ変えた要求を流し、cache hit を数える | 誤 hit 0 件 | OB-11 |
+| TC-06-07（PoC/R7反映） | PEP SDK と自前実装の PEP が、D(t) を要求全体の締切として守り、締切後の応答を判定に使わない | 名前解決・接続確立・TLS・応答本文の各段だけを D(t) を超えて遅らせる。締切の直後に allow を返す応答も注入する | 締切後の応答を判定に使った件数 0。write 以上の allow 0 件。SDK の版 N・N−1・N−2 と DL-80 の参照実装の全部で判定 | OB-05・OB-06、ARC-08 §8 FM-01、POC-02 X-A |
+| TC-06-08（PoC/R7反映） | L0・G 段・R 段・storage guardrail の各層が、他の層を無効化しても単独で越境を拒否する（層ごとの検出力） | 試験用の構成で 1 層だけを残し、層ごとの負例（他テナントの資源 ID・tid・subject）を流す。外部 entry point からの変異体試験（TC-002 型）と併せて行う | 各層の単独の拒否率 100%。層ごとの検出力の測り方は事前登録する（POC-02 MR-5）| K-03(b)、ADR-012、POC-02 §6.3 の TC-002 行 |
 
 ---
 
@@ -672,6 +676,7 @@ ADR-012 §6.3 の RR12-01〜RR12-08 を引き継ぐ [D]。本書に関係の深�
 | RR12-05 | 共有キャッシュのテナント分離はキー規約に依存 | §3.9 のキー構成、SR-15、TC-06-04 |
 | RR12-06 | 資源のテナント属性そのものの誤記録では三者一致も RLS も通る | 正本の書込経路の統制（ADR-010、DL-73）、ADR-028 の差分検査 |
 | RR12-07 | RLS 自体の不具合と参照整合性の covert channel | SET ROLE 方式の不採用、パッチ SLA、複合一意制約 |
+| PoC/R7反映 | PEP の締切が実装ごとに接続確立を含まない場合、PDP 側の遅延・接続妨害の間に、D(t) を超えて得た allow が使われる（PoC 系統 1 の TC-010 の型。自己実行の参考値）| §3.6 の D(t) の定義と締切後の応答の破棄、TC-06-07、DL-80 の適合試験 |
 
 - テナント間漏えい許容ゼロ（R-011）は、文書でも有限回の試験でも証明できない [D]（RS-08 §2-15、ADR-012 D12-42）。本書の検査は「既知の未緩和経路 0 件」を測る手段にとどまる [D]。
 
@@ -723,6 +728,7 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 - §10 の決裁案 4 件は未決裁である [D]。
 - 合否基準の TBD（TC-06-03・TC-06-05、TC-012 系）は DL-22 の事前登録で確定する [D]。
 - 実測（C）と第三者評価（D）はすべて未達であり、達成済みとは扱わない（CONVENTIONS §8）[D]。
+- PoC/R7反映（版 0.3）: TC-06-07・TC-06-08 の DL-22 での採番と事前登録、DL-80（契約試験キット）への段ごとの遅延注入の追加、TC-010 の立会い下の再実行（POC-02 §7.1 R-1）は未了である（所有者 PoC リード・SDK チーム、期限 G4）[D]。
 
 ## レビュー記録
 
@@ -760,6 +766,8 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 - NA-06-1 と NA-012-1〜NA-012-7 の前提台帳への登録は未了。
 - §4.3 の段階導入の既定順は ADR-012 §6.4 の案であり、DL-31 での確定は未了。
 - 実測（C）と第三者評価（D）はすべて未達。
+
+**PoC/R7反映（版 0.3）** [D]: PoC 実測レポート POC-02（§6.2 X-A、§6.3 の TC-002 行、§9 MR-3・MR-5）と独立再現ログ（§3 の TC-010 行）を読み、模擬パネル ラウンド 7 の「POC-02 の不利な結果が設計文書に未反映」という指摘（cto・ciso・sre）に対応した [D][^50]。変更は §3.6 の timeout の定義と注記、§6.6 の注記、§9 の TC-06-07・TC-06-08、§12 の 1 行、残課題の 1 項目である。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない。PoC の値は自己実行の参考値で、Gate 4 の証拠にしていない [D]。
 
 ## 参考文献
 
@@ -808,3 +816,6 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 [^44]: OWASP『LLM08:2025 Vector and Embedding Weaknesses』OWASP Top 10 for LLM Applications 2025. https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM08_VectorAndEmbeddingWeaknesses.md （参照箇所: Prevention and Mitigation Strategies 1、確認日: 2026-10-03。RS-08#74）
 [^46]: CNCF CloudEvents『Auth Context』拡張（main ブランチ、1.0.3-wip）. https://github.com/cloudevents/spec/blob/main/cloudevents/extensions/authcontext.md （参照箇所: 冒頭, authclaims、確認日: 2026-10-03。RS-17#33）
 [^47]: Google Cloud『Introduction to BigQuery row-level security』最終更新 2026-09-30. https://cloud.google.com/bigquery/docs/row-level-security-intro （参照箇所: Comparison of authorized views, row-level security, and separate tables、side-channel の記述、確認日: 2026-10-03。RS-08#69）
+[^48]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §6.2 X-A、§6.3 の TC-002 行（変異体の検出力 3/9）、§9 MR-3・MR-5、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^49]: 本リポジトリ『高保証 PoC 系統 1 独立再現ログ』POC-04（仮）版 0.1（draft）. 12_poc/reproduction-log.md （参照箇所: §3 の TC-010 行、§4 RL-P1、確認日: 2026-10-15。実装者と別の AI エージェントが同じ機械で再実行した記録で、独立立会人による再実行ではない。Gate 4 の証拠ではない）
+[^50]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）

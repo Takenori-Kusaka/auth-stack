@@ -1,6 +1,6 @@
 # ADR-020 FAPI 2.0 の適用範囲（必須 API 範囲・sender constraint・PAR・client 認証・RFC 9068 との衝突・適合試験・非 FAPI の最低基準）
 
-> 文書ID: ADR-020 / 版: 0.1 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-15
+> 文書ID: ADR-020 / 版: 0.2 / 状態: draft（ADR 状態: proposed＝決裁前）/ 最終更新: 2026-10-15（0.2（PoC/R7反映）: PoC 実測レポート POC-02 §6.5（TC-004〜007 の未実施）と模擬パネル ラウンド 7 の指摘により、§7.1 の注記、§8 TR-09、レビュー記録を加えた）
 > 可逆性: 可逆（非対称）。FAPI 必須範囲を狭める変更と、範囲内の方式の選択肢を増やす変更（DPoP 構成の追加など）は、連携開発者の改修なしに行える。範囲を広げる変更と、範囲内の方式を減らす変更（mTLS 以外の sender constraint の廃止、alg の削除など）は、該当する外部 client に PAR・証明書・鍵の改修を強いるため、移行期間と告知を要する（ADR-016、DL-70）。外部に写し取られて戻せないもの（issuer、client_id、claim 名）は本書では決めず、ADR-021・ADR-022 に従う
 > DEC-3 対象: いいえ（traceability/deliverables.md §5 の ADR 表で DEC-3 列は「—」）。依存先の ADR-001・ADR-007・ADR-013・ADR-021・ADR-022 は DEC-3 対象である
 > 対応要求: R-096, R-160, R-270（本書を対応成果物に含む行）／G-087, G-020（同）。関連: R-026, R-046, R-064, R-158, R-159, R-161, R-162, R-163, R-166, R-173, R-239, R-240, R-273／G-012, G-034, G-077, G-088, G-089（全件と閉じ方は末尾の対応表）
@@ -439,6 +439,8 @@ ADR-007・ADR-010・ADR-011・ADR-013・ADR-021・ADR-022 の決定とは矛盾�
 | TC-20-08 | 代表的な第三者 client（参照 SDK）で、層 F への登録から本番相当の呼出しまでの所要時間と問合せ件数を測る | TBD（所有者 プロダクト責任者、期限 G2）。NA20-01 と組み合わせて連携開発者の負担を決める | K20-1、E3 |
 | TC-20-09 | 内部 RS の SDK で、層 F の経路では設定を変えても RS256 の検証を有効にできない | 有効化の成功 0 件 | D20-08-2 |
 
+- **PoC/R7反映（版 0.2）**: TC-20-03・TC-20-04 の負例に近い POC-01 の TC-005（issuer mix-up・redirect URI・PKCE の負例）と TC-007（DPoP replay・盗まれた refresh token）は、PoC 系統 1 で**未実施**である。担当の試験群（token-misuse）が作業を中断し成果物を作らなかったためで、中止基準による中止ではない（POC-02 DEV-19 候補。系統 1 の実行体制・環境の制約による未実施）[D][^26]。層 F の負例には系統 1 の証拠が何もない。本書の決定は変えないが、TC-20-03・04 の負例ベクタを POC-01 TC-005・TC-007 の事前登録と共通にし、立会い下の系統 1 の再実行（POC-02 §7.1 R-2）で初めて実行する [D]。系統 1 は FAPI の適合試験の代わりにならない（適合は TC-20-01・02 と §7.2 の OIDF 試験で確かめる）[D]。
+
 ### 7.2 第三者評価で確かめること
 
 - 採用版の OIDF 適合試験ログの独立確認と、層 F の deployment での OIDF 認定の取得（K20-4、G-089）[D]。
@@ -459,6 +461,7 @@ ADR-007・ADR-010・ADR-011・ADR-013・ADR-021・ADR-022 の決定とは矛盾�
 | TR-06 | 標準 | FAPI 2.0 Security Profile・Attacker Model の改版、FAPI HTTP Signatures の Final 化、新しい BCP 195 の公表（12 か月以内の追随）、OIDF 適合試験の構成の変更 | D20-05、D20-07、D20-10 |
 | TR-07 | 暗号 | NIST IR 8547 の final 化、FAPI が PQ 署名の alg を許す改版、RFC 9068 の改版（errata 8802 の処理を含む） | D20-08 |
 | TR-08 | 事故 | 層 F・層 H の経路での token 濫用、または FAPI 準拠の他社実装での重大な事故の一次報告 | 範囲と方式の全体 |
+| TR-09（PoC/R7反映） | 実測 | POC-01 TC-005・TC-007 の立会い下の初回実行で、mix-up・PKCE downgrade・DPoP replay・盗まれた refresh token の負例が 1 件でも受理された | D20-05、層 F の負例の検証手順、ADR-005 D4・D5 |
 
 - 定期の見直しは、G2（範囲の確定）、G3（RS256 逸脱の受容と K-4）、本番前（認定）、以後は年次と再決裁周期（3〜5 年、A-101）とする [D]。
 
@@ -550,6 +553,8 @@ ADR-007・ADR-010・ADR-011・ADR-013・ADR-021・ADR-022 の決定とは矛盾�
 [^23]: IETF『RFC 10027: Best Current Practice for Security of Cross-Device Flows』BCP 247, 2026-08. https://www.rfc-editor.org/rfc/rfc10027 （参照箇所: §2, §6.2.1.5、確認日: 2026-10-03。RS-13#57）
 [^24]: IETF (T. Lodderstedt, J. Richer, B. Campbell)『RFC 9396: OAuth 2.0 Rich Authorization Requests』2023-05. https://www.rfc-editor.org/rfc/rfc9396 （参照箇所: §2, §5, §9, §12、確認日: 2026-10-03。RS-04#64）
 [^25]: OpenID Foundation FAPI WG (D. Tonge, D. Fett, J. Heenan)『FAPI 2.0 Http Signatures (Draft)』working copy, Published 2026-06-26. https://openid.bitbucket.io/fapi/fapi-2_0-http-signatures.html （参照箇所: 題名と Published 表示、確認日: 2026-10-03。RS-04#40）
+[^26]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-005・TC-007 行、§5.6 DEV-19、§6.5、§7.1 R-2、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^27]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
 
 ---
 
@@ -601,3 +606,11 @@ ADR-007・ADR-010・ADR-011・ADR-013・ADR-021・ADR-022 の決定とは矛盾�
 | RU-04 | 新規仮定 NA20-01〜NA20-05 は前提台帳に未登録 | 前提台帳の所有者へ申し送る |
 | RU-05 | 起草者・レビュー者が取得した research 外の原典（[^13]〜[^15]、[^17]）の照合ログを traceability/ に追記していない | 照合ログの所有者へ申し送る（本レビューは指示外のファイルを編集していない） |
 | RU-06 | 英国 RTS・英国 Open Banking 標準・米国業界規制で FAPI を求めるものの有無は未確認のまま（D20-04a） | DL-34 の法務判定で確認する |
+
+### PoC/R7反映（版 0.2）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| 指摘・入力 | 対応 |
+|---|---|
+| 模擬パネル ラウンド 7（cto・ciso・sre）: POC-02 の結果が設計文書に入っていない [D][^27]。POC-02 §6.5（TC-004〜007 の未実施） | §7.1 に未実施の扱いと TC-20-03・04 との共通化の注記、§8 に TR-09 を加えた |

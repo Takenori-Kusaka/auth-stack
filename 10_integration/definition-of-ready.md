@@ -1,6 +1,6 @@
 # Definition of Ready（連携開始の条件）と Definition of Done（本番切替の条件）
 
-> 文書ID: INT-05 / 版: 0.4 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-05 / 版: 0.6 / 状態: draft / 最終更新: 2026-10-15（0.6: 模擬パネル ラウンド 10 の devlead 指摘により、DD-14 の +AGT の条件に ADR-017 D17-07 (a) の実行単位の割当て記録と INT-02 NP08-7〜NP08-9 の合格を加え、不合格を DD-04 と同じく受容不可とした（D17-07 (c)）。§5.2 の注記、§9.3 の T-094（案）の行、末尾「レビュー記録」の「ラウンド 10」。同じラウンドの devlead の 2 件目（R10-2）により、RD-08 に CON-14 版 0.4.0 の `data_processing` の申告、同意の本体の (i)〜(v)、AR-9（DL-34 の判定記録）と CR24 を加えた。0.5: PoC/R7反映。RD-08 に所有テナントの同意と値の検証（CON-14 版 0.3.0・0.3.1）を加えた。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: G-125, G-129, R-233（R/G 台帳の対応成果物欄に本書のパスまたは DL-67 を含む全行）、R-058, R-059, R-164（deliverables.md の DL-67 行が挙げるもの）。全件と閉じ方は末尾「対応表」
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-67 行、§8 G-129 の申し送り）, traceability/R-requirements.md, traceability/G-goal-criteria.md, 02_requirements/operation-risk-tiers-assurance.md（REQ-03 §2.2 J10・J11、§2.4）, 03_threat-model/dfd-entry-points.md（THR-01 §6・§7）, 01_governance/assumptions-register.md（A-050, A-052, A-054, A-055, A-110, A-112）, 01_governance/business-impact-analysis.md（GOV-04 §2.3）, 01_governance/stop-authority.md（GOV-06 S1 の M3）, 01_governance/exception-risk-acceptance.md（GOV-07 §3）, 01_governance/kri.md（K-01, K-25, K-29, K-31）, 04_architecture/pep-contract.md（ARC-06 §4.3）, 04_architecture/audit-privacy.md（ARC-10 §5.4 DV-1〜DV-9）, 04_architecture/fail-mode-matrix.md（DL-19 §3.6）, 04_architecture/reference-architecture-v2.md（ARC-01 §9.1 J01〜J16）, 05_adr/ADR-012, ADR-014, ADR-020, ADR-022, ADR-023, ADR-027, 06_controls/control-mapping-ledger.md（C-046, C-078, C-015）, 06_controls/applicability.md（CTL-02 §1.2・§3.6〜§3.8・L-06）, 06_controls/mappings/regulations.md（CTL-06 RGM-04〜RGM-06・RGM-15・RGM-35・RGM-63）, 08_operations/compromise-runbooks.md（OPS-01 §2.8）, 10_integration/onboarding.md（付録 A）, research/RS-02, RS-10, RS-14, 07_slo/numeric-contracts.md（SLI-086〜SLI-091）, 08_operations/phased-rollout.md（OPS-04 §6.2）, 10_integration/dependency-tiers.md（INT-01 §8）, 10_integration/integration-patterns.md（INT-02 §3.1・§10）, 10_integration/authz-modeling-guide.md（INT-03 §1.3・§8）, 11_contracts/mock-contract-test-kit.md（CON-11 §8・§10）, research/RS-05, RS-16, research/standards-status.md, 00_decision/03-decision-items.md（DCS-03 §4.8・申し送り 8-3。版 0.3 で追加）, 00_decision/05-residual-risk-register.md（DCS-05 RRG-070。版 0.3 で追加）, 00_decision/06-gate-plan-and-plan-b.md（DCS-06 §5.3.1 CP-3。版 0.3 で追加）, 11_contracts/compatibility-deprecation-policy.md（CON-01 §13。版 0.3 で追加）
 > 作成方法: AI エージェント（Claude）が上記文書を通読して起草した。判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。SSDF 1.1 の PO.1.3・PW.1.1・PW.7.2・PW.8.2・RV.1.1・RV.2.2・RV.3.3・RV.3.4 の task 文は research に収載がないため、本書の作成時に NIST の原典 PDF を取得して確認した（確認日 2026-10-15）。版 0.4 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、RD-08 に workload ID と交換可能な組の登録手段（client-registration.openapi.yaml（CON-14）§4A、申請種別 `workload`・`exchange_pair`、承認者案 AR-6・AR-7）と、API 提供前の暫定手順への参照を加えた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）。
@@ -111,7 +111,7 @@ flowchart LR
 | RD | 条件 | 充足の基準（確認方法） | 正本 | 未充足の区分 |
 |---|---|---|---|---|
 | RD-07 | **依存 Tier の申告**: INT-01 §2.3 の設問に答えて Tier を申告し、BIA 票 A6（依存する基盤機能と止まる障害形態）と、基盤を重要依存とする entry point の割合を登録する | INT-01 §8.1 CK-01〜CK-06 が記入済み。Tier の引下げと Tier 1 の新規追加は承認記録がある | ADR-023 D23-04・D23-50、INT-01 §8.1、DL-19 §3.6 #2 | U-B（申告のないサービスは本番に接続しない。ADR-023 D23-04） |
-| RD-08 | **主体と資格情報**: workload ID の発行申請、外部 client の登録計画、STS で交換する組（呼出し元→呼出し先）の事前登録を行う。新規の client・workload 間認証で共有秘密（client_secret_*・静的 API key）を使わない。登録の手段は client-registration.openapi.yaml（CON-14、preview）による。client は sandbox が `registerSandboxClient`、本番が申請 API（承認者案 AR-1〜AR-5・AR-8）。workload ID（SVID 登録エントリ、INT-02 I-16）は sandbox が CON-14 §4A.2 の `registerSandboxWorkload`、本番が申請種別 `subject: workload`（承認者案 AR-6）。交換する組（I-17）は sandbox が §4A.3 の `registerExchangePair`（呼出し先が他の consumer なら呼出し先の所有者の承認）、本番が申請種別 `subject: exchange_pair`（承認者案 AR-7）。§4A の API とモック（キット本体 DL-120、G3）の提供前は、CON-14 §4A.5 の暫定手順（PoC の手元改変か S1 経由の手動登録。INT-00 §6.1）で登録した記録を代わりに置く | 登録申請の記録（機械。sandbox の応答の `client_id`・`workload_entry_id`・`pair_id`、本番の申請の `request_id`。API 提供前は S1 への依頼記録）。共有秘密の新規使用 0 件（静的検査） | INT-02 IC-04・IC-12・§5.1 I-01・I-16・I-17、INT-04 §4.3 OB-2(b)(c)、CON-14 §4・§4A・§5、ARC-01 J08、ADR-009 D09-13 | U-B（共有秘密の新規使用）。登録の待ちは U-C |
+| RD-08 | **主体と資格情報**: workload ID の発行申請、外部 client の登録計画、STS で交換する組（呼出し元→呼出し先）の事前登録を行う。新規の client・workload 間認証で共有秘密（client_secret_*・静的 API key）を使わない。登録の手段は client-registration.openapi.yaml（CON-14、preview）による。client は sandbox が `registerSandboxClient`、本番が申請 API（承認者案 AR-1〜AR-5・AR-8、検査規則 AR-9。CON-14 版 0.4.0）。workload ID（SVID 登録エントリ、INT-02 I-16）は sandbox が CON-14 §4A.2 の `registerSandboxWorkload`、本番が申請種別 `subject: workload`（承認者案 AR-6）。交換する組（I-17）は sandbox が §4A.3 の `registerExchangePair`（呼出し先が他の consumer なら呼出し先の所有者の承認）、本番が申請種別 `subject: exchange_pair`（承認者案 AR-7）。§4A の API とモック（キット本体 DL-120、G3）の提供前は、CON-14 §4A.5 の暫定手順（PoC の手元改変か S1 経由の手動登録。INT-00 §6.1）で登録した記録を代わりに置く。**顧客テナントのための本番 client（PoC/R7反映）**: client_credentials の client か、低リスクでない scope を求める client を顧客テナント T のために登録する計画では、`platform_owning_tenant` に T を書き、T の管理者の同意記録（AR-8。管理画面の承認 API の契約ができるまでは署名付き同意票）を得る段取りを DoR の時点で決める。T の主状態が A（有効）でなければ申請は CR23 で拒否され、所有テナントを変える・scope を広げる変更は同意の取り直しになる。払い出された client の token の `tid` は T に固定されるので、複数テナントの資源に届く設計を 1 つの client で組まない（CON-14 §5、CRN-31〜CRN-41。これらは未実装・未実行で、PoC は client 登録を試験していない）。**データ処理の申告と判定記録（ラウンド 10、CON-14 版 0.4.0）**: AR-8 に当たる client の計画では、申請に付ける `data_processing` の (i) 受領者（client を運用する法人の法人台帳の識別子と事業ドメイン）、(ii) 利用目的（同意画面に出す 1 文）、(iii) データの区分（REQ-04 §3.2 の区分コード。scope から導く区分が下限で、対応表ができるまでは CUS と PII を含むものとして扱う）、(iv) 処理・保存の所在地群、(v) 保持期間（ISO 8601 の期間）を DoR の時点で確定する。T の管理者の同意の本体はこの (i)〜(v) を束縛し、申請と 1 つでも異なれば CR22、変えれば同意の取り直しになる（CRN-43・CRN-44）。(iv) に T の所在地群（A-062）にない所在地群があるか、(i) の運用法人が基盤運営法人と別法人（法人台帳で判定できない場合を含む）なら AR-9 に当たり、法務責任者の DL-34（CTL-02）の判定記録の参照（`transfer_assessment_ref`）がなければ CR24（`transfer_assessment_required`）で払い出されない（CRN-42・CRN-45。基盤側の承認者は代わりに記録できない、CRN-46）。判定の依頼から受領までは法務の中央の待ちで SLI は未採番（INT-04 §4.3・§5.1、ONB-R3）。data_processing・AR-9・CR24・CRN-42〜CRN-46 も未実装・未実行で、法的十分性の判断（CTL-02 L-04・L-13）は CON-14 も本書もしていない | 登録申請の記録（機械。sandbox の応答の `client_id`・`workload_entry_id`・`pair_id`、本番の申請の `request_id`。API 提供前は S1 への依頼記録）。顧客テナントのための client では、所有テナントと同意記録の参照（`tenant_consent.consent_ref`）を計画に書いたこと（PoC/R7反映）。あわせて `data_processing` の (i)〜(v) を計画に書き、AR-9 に当たるかの自己判定と、当たる場合は DL-34 の判定の依頼記録か判定記録の参照（`transfer_assessment_ref`）を置いたこと（ラウンド 10）。共有秘密の新規使用 0 件（静的検査） | INT-02 IC-04・IC-12・§5.1 I-01・I-16・I-17、INT-04 §4.3 OB-2(b)(c)(d)、CON-14 §4・§4A・§5（AR-8・AR-9、版 0.4.0）、ARC-01 J08、ADR-009 D09-13、CTL-02（DL-34） | U-B（共有秘密の新規使用）。登録の待ち（同意・DL-34 の判定を含む）は U-C |
 | RD-09 | **SDK の選択**: PEP SDK を使うか、契約からの自前実装にするかを決め、言語・フレームワーク・SDK の版を記録する。自前実装の場合は ARC-06 §4.2 の 11 関数と同じ外形の記録・応答・計数を出す設計にする | 選択と版の記録（自己）。自前実装は基盤チームの照合対象（§4.3） | ARC-06 §4.2、ADR-022 D-4-3、ADR-012 D12-14 | U-C。SDK を使わない場合の扱いの細部は **未決（ADR-012 L-01）** |
 | RD-10 | **PEP の外を通るデータ経路**: export・署名付き URL・ETL・CDC・DWH 抽出・バックアップ取得・DB 直接接続・ファイル連携・検索インデックスへの持出しを届け出る。テナント表に RLS の 4 条件を満たす計画を持つ | 届出が台帳にある（`db_role` 必須の類型を含む）。RLS の計画（自己） | THR-01 EPT-10・12・13・18、ADR-012 D12-21・D12-30、ARC-11 | U-B（届出）。RLS の後付けは既存サービスに限り U-C（ADR-012 D12-23 の後付け順） |
 | RD-11 | **修飾子が付く操作の追加条件**: +XT（テナント越境共有・ゲスト）は ADR-024 の規則、+AGT（AI エージェントの実行）は ADR-017 と P-08、+REG（規制プロファイル）は P-26 と applicability の該当を確認する。support tool・break-glass の経路を持つ場合は P-11・P-17 の依存台帳を作る | 該当パターンの「適用条件」と「アンチパターン」に当たらないことを設計レビューの記録に書ける（自己）。+REG と break-glass は基盤とセキュリティの照合 | INT-02 P-08・P-11・P-16・P-17・P-26、ADR-017、ADR-024、ADR-029 | 該当があれば U-B。break-glass/P の台帳上の配置は **未決（ADR-012／ADR-029）** |
@@ -199,8 +199,9 @@ flowchart TB
 |---|---|---|---|
 | DD-12 | 既存サービスの移行（RD-13 の該当） | MU ごとに OPS-04 §6.2 の C1〜C10（未登録の allow 拡大差分 0 件、誤 deny 率 ≤ B13 の予算、評価不能率 ≤ DL-20 の予算、経路網羅 100%、n ≥ 3/p、越境否定試験、rollback 演習、剥奪同期、未解決 Critical/High 0 件、allow cache 除去と告知）を bake 時間の間満たす | ADR-027 D27-22・D27-25、OPS-04 §6.2・§6.3 |
 | DD-13 | 新規サービス（旧判定がない） | 本番相当環境での合成トラフィックによる観測（THR-01 AC-05 の未観測入口の解消）と、DD-07 のモデル shadow を終える。shadow の最短期間は SLI-090 の下限で決める | INT-03 §8、SLI-090、THR-01 §7.5 |
-| DD-14 | 修飾子・高リスクの操作を持つ | +REG は P-26 とプロファイル要件の充足（コンプライアンス責任者の確認）。+AGT は P-08 の負例。break-glass/P は P-17 の演習。privileged/P は二者承認と JIT の動作確認 | INT-02 P-08・P-17・P-26、REQ-03 §3.1、ADR-029 |
+| DD-14 | 修飾子・高リスクの操作を持つ | +REG は P-26 とプロファイル要件の充足（コンプライアンス責任者の確認）。+AGT は P-08 の負例（NP08-1〜NP08-9）。加えて、第一者のエージェント製品は D17-07 (a) の実行単位の割当て記録（実行単位をテナント主体ごとに分け、タスクのテナントで割り当て、モデルの出力や tool 応答で変えられないこと）を、tool サーバーは D17-07 (b) の `tid`・`tctx` のテナント・SVID の登録テナントの一致検査と拒否の監査を示し、NP08-7〜NP08-9（キットでは CON-11 CV-036〜CV-038）に合格する。**この +AGT の条件の不合格は DD-04 と同じく受容不可**（越境に当たる。D17-07 (c) により (a)(b) を満たさない形態は本番に配備しない）。break-glass/P は P-17 の演習。privileged/P は二者承認と JIT の動作確認 | INT-02 P-08・P-17・P-26、ADR-017 D17-07 (a)〜(c)・TC-017-15、CON-11 §6.3、REQ-03 §3.1、ADR-029 |
 
+- DD-14 の +AGT の条件を受容不可にするのは、ADR-017 D17-07 (c) が (a)(b) を満たせない実行形態を本番に配備しないと決め、受容票による例外の道を設けていないからである [D][^25]。この形態では、テナント A の文書に埋め込んだ間接 prompt injection で同居するテナント B の主体の資格情報を使わせる経路（ADR-017 §1.3 の T-094（案））が既知の具体経路として残り、テナント間漏えい（U1）に当たる [D][^25]。これは PoC の観察からの推論ではなく ADR の決定である。NP08-9 の本体（実行単位から他テナント主体の資格情報が読めないこと）はモックで観測できないので、割当て記録と PoC の TC-017-15 (1)（POC-01 に未登録。TRC-11 OI-G02）で確かめる [D]。
 - 新規サービスに ADR-027 の判定差分を適用しないのは、比較する旧判定がないからである [D]。代わりに、合成トラフィックで全 entry point の観測を作り（THR-01 の D3 の解消）、モデルの shadow で permission 経路を評価する [D]。
 - 既存サービスでは、本番切替は MU の S1→S2（新が正本）への前進に当たり、自動で行ってよいのは後退だけである（ADR-027 D27-03）[D]。DD-12 はその前進条件を写したもので、値（p、B13 の予算、bake 時間）は OPS-04 §6.2・§6.3 の TBD のままである [D]。
 - DD-13 の shadow の最短期間と、切替後の監視期間は置かない [D]。TBD（所有者: CTO、期限: G4、決め方: パイロットの実測と ADR-027 の段（P1〜P4）、SLI-090 の決め方（numeric-contracts.md）に揃える）とする [D]。
@@ -382,6 +383,7 @@ SSDF 1.1 は、ソフトウェアがよく保護されるようにするため�
 | T-018（宣言と実在の入口の差分、gateway の迂回） | RD-02、DD-03 |
 | T-022（PEP の欠落、mesh を PEP と数える経路） | RD-01、DD-03 |
 | T-020・T-021（BOLA、tenant confusion） | RD-03、DD-04（受容不可） |
+| T-094（案。THR-03 に未起票、TRC-11 OI-G01）・ATK-16（共有エージェント実行環境での主体間の資格情報流用） | DD-14 の +AGT の条件（D17-07 (a)(b)、NP08-7〜NP08-9。受容不可） |
 | ATK-17（内部不正の開発者） | RD-12、DD-11、VC-06（SSDF の開発統制）。二者がともに見落とす変更と共謀は残る（attacker-model の残余） |
 | ATK-06（侵害された microservice） | RD-08（共有秘密の禁止、交換組の登録）、RD-10（PEP 外の経路の届出） |
 | ATK-19（自社の変更と自動化の誤り） | DD-07（モデルの shadow と canary）、DD-12（ADR-027 の自動 rollback） |
@@ -501,6 +503,7 @@ SSDF 1.1 は、ソフトウェアがよく保護されるようにするため�
 [^22]: 本リポジトリ『ゲート計画と Plan B』DCS-06. 00_decision/06-gate-plan-and-plan-b.md （参照箇所: §5.3.1 CP-3、確認日: 2026-10-15）
 [^23]: 本リポジトリ『残余リスク台帳』DCS-05 版 0.3. 00_decision/05-residual-risk-register.md （参照箇所: §4.13 RRG-070, §10 DP41-5、確認日: 2026-10-15）
 [^24]: 本リポジトリ『モック・契約試験キット仕様』（CON-11、版 0.4 draft）2026-10-15. 11_contracts/mock-contract-test-kit.md （参照箇所: 要旨 7, §11 冒頭, §14.2 の 10_integration・11_contracts 行、確認日: 2026-10-15）。DL-120 の定義は本リポジトリ『成果物計画』（TRC-03、版 0.3）traceability/deliverables.md §4.6・§8（確認日: 2026-10-15）
+[^25]: 本リポジトリ『ADR-017 非人間 ID と AI エージェントの主体モデル』版 0.1（proposed）. 05_adr/ADR-017-non-human-ai-agent-identity.md （参照箇所: §1.3 の T-094（案）の行、§2.2 D17-07 (a)〜(c)、§7.1 TC-017-15、確認日: 2026-10-15T09:33Z（UTC）、SHA-256 先頭 16 桁 64722a33d33f6c44）。および『連携パターン集』INT-02 版 0.5. 10_integration/integration-patterns.md （参照箇所: P-08 の「主体・認証」「PEP 配置」「契約試験・負例」「チェックリスト」⑥⑦、§9.1 の INT-05 宛ての申し送り、確認日: 同日）
 
 ---
 
@@ -556,4 +559,40 @@ SSDF 1.1 は、ソフトウェアがよく保護されるようにするため�
 
 - 新たな外部原典は用いていない。新たに書いた事実はいずれも本リポジトリの文書の照合による [D]。
 - 他文書への申し送り: なし [D]。
+- 対応件数: 1 件（対応済み 1）[D]。
+
+### PoC/R7反映（2026-10-15、版 0.4 → 版 0.5）
+
+> 12_poc/measurement-report.md（POC-02 版 0.1）、12_poc/reproduction-log.md と、ラウンド 7 の模擬パネルの指摘（traceability/mock-panel-report.md、CON-14 の R7-1・§9 H-17）を読んで反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない [D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| P-1 | CON-14 版 0.3.0（AR-8、CR22）・版 0.3.1（CR23、`tid` の固定。POC-02 X-C・X-D からの設計推論） | RD-08 に、顧客テナントのための本番 client の所有テナントと同意の段取り、所有テナントの状態、`tid` の固定による設計上の制約と、確認方法（同意記録の参照）を加えた | §3.2 RD-08 |
+
+- 設計上の含意 [D]: 見直しトリガー・追加 TC は CON-14 §5・§9 H-20 に置いた。DoR は、所有テナントの同意を連携の開始前に段取りすることで、払出しの待ち（U-C）が中央の承認ではなく顧客テナント側の同意で生じ得ることを開発チームに先に見せる。
+- 対応件数: 1 件（対応済み 1）[D]。
+
+### ラウンド 10（模擬パネル、2026-10-15、版 0.5 → 版 0.6）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・観点 | 指摘（要旨） | 対応 | 修正箇所 | 根拠 |
+|---|---|---|---|---|---|
+| R10-1 | High・devlead | INT-02 版 0.5（R8-1）は P-08 に ADR-017 D17-07 (a)〜(c) と負例 NP08-7〜9（TC-017-15）を反映し、§9.1 で DD-14 への 1 行を申し送ったが、DD-14 は「+AGT は P-08 の負例」のままで、実行単位の分離の確認も NP08-7〜9 の合格もなく、越境に当たるので受容不可とする旨もない。第一者のエージェント製品のチーム（G-135 種別 18）が DoD を通過しても `tid` 一致検査を実装していない可能性が残る | **対応**。DD-14 の +AGT に、D17-07 (a) の実行単位の割当て記録、(b) の一致検査と拒否の監査、NP08-7〜NP08-9（CON-11 CV-036〜CV-038）の合格を加え、不合格を DD-04 と同じく受容不可とした（D17-07 (c)）。§5.2 に理由（ADR の決定であって PoC の観察ではないこと、NP08-9 の本体は割当て記録と PoC で確かめること）を書き、§9.3 に T-094（案）の行を加えた | 冒頭、§5.2 DD-14 と注記、§9.3、脚注 25 | ADR-017 §1.3・§2.2 D17-07 (a)〜(c)・§7.1 TC-017-15、INT-02 P-08・§9.1、G-goal-criteria G-135 の種別 (18)（2026-10-15 に本リポジトリで確認）[D][^25] |
+
+- 新たな外部原典は用いていない。本書に「D17-07」「NP08」「TC-017-15」が 0 件であることを 2026-10-15T09:33Z（UTC）の作業ツリーで確かめた [D]。
+- 閉じられなかったもの [D]: (1) §0 の 3・§7.1 の VC 条項（委託契約）に +AGT の条件を写すかは本ラウンドで判断していない。(2) 割当て記録の様式（§5.4）は未定である。(3) TC-017-15 は POC-01 に未登録である（TRC-11 OI-G02）。作成者以外の照合は TRC-11 OI-G13 で追跡する。
+- 他文書への申し送り: なし（CON-11 の CV 化は同じラウンドで同ファイルを是正した）[D]。
+- 対応件数: 1 件（対応済み 1）[D]。
+
+### ラウンド 10 の 2 件目（模擬パネル、2026-10-15、版 0.6 のまま。devlead）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。是正は同じ指摘の担当ファイル（本書、INT-04、INT-00、CON-11、CON-00、TRC-11）だけで行った。R10-1 と同じラウンドの是正なので版は 0.6 のままとした [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R10-2 | High・devlead | CON-14 版 0.4.0（ラウンド 9 legal）の `data_processing`、同意の本体の (i)〜(v)、AR-9、CR24、CRN-42〜CRN-46 が 10_integration に 0 件。RD-08 は AR-8 までで、顧客テナント向けの app-only client の計画で DL-34 の判定（法務の中央の待ち）を DoR の時点で段取りできず、本番申請で初めて CR24 に当たる | **対応**。RD-08 の本文に、`data_processing` の (i)〜(v) を DoR の時点で確定すること、同意の本体が (i)〜(v) を束縛し不一致は CR22 であること、AR-9 の条件（所在地群の外、別法人・判定不能）と DL-34 の判定記録がなければ CR24 で払い出されないこと、判定の待ちが未採番の中央の待ちであること、未実装・未実行で法的十分性は判断していないことを加えた。確認方法に (i)〜(v) と AR-9 の自己判定・判定記録の参照（または依頼記録）を、参照に INT-04 OB-2(d)・CON-14 AR-9・CTL-02（DL-34）を加えた | 冒頭、§3.2 RD-08（本文・確認方法・参照・未充足の区分） |
+
+- 根拠として確認した箇所（2026-10-15T09:34Z（UTC））[D]: 11_contracts/client-registration.openapi.yaml（CON-14 版 0.4.0）の description §5、`x-approval-rules` の AR-8・AR-9、`x-reason-codes` の CR22・CR24、`x-negative-examples` の CRN-42〜CRN-46、`components.schemas.DataProcessingDeclaration`、§9 H-28（scope と区分の対応表は未作成で、作られるまでは CUS と PII を含むものとして扱う）。
+- 新たな外部原典は用いていない。法令の根拠は INT-04 §4.3（脚注 10〜12）と CON-14 §5 に置いた [D]。
 - 対応件数: 1 件（対応済み 1）[D]。

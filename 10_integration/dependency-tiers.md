@@ -1,6 +1,6 @@
 # 依存階層（Tier）
 
-> 文書ID: INT-01 / 版: 0.2（独立レビュー反映。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-01 / 版: 0.3（PoC/R7反映: §7.1 M-06 に POC-02 TC-010 X-A の含意。版 0.2 は独立レビュー反映。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-192.5, R-207, G-042, G-048, G-049, G-098, G-104, G-135（R-requirements.md・G-goal-criteria.md で本書のパスまたは DL-63 を対応成果物に含む全行）／R-210（deliverables.md の DL-63 行）／関連: G-057, G-059, G-106, R-154, R-219（全件と閉じ方は末尾の対応表）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-63 行）, 05_adr/ADR-023-dependency-tiers.md（設計判断の正本）, 05_adr/ADR-013-cell-partitioning-fail-mode.md, 05_adr/ADR-005, ADR-006, ADR-008, ADR-009, ADR-016, ADR-022, ADR-026, ADR-029, 05_adr/reconciliation-notes.md, 04_architecture/fail-mode-matrix.md (ARC-08), 04_architecture/cell-blast-radius.md (ARC-07), 07_slo/numeric-contracts.md, 12_poc/preregistered-test-plan.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md (GOV-04), 01_governance/stop-authority.md (GOV-06), 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md (REQ-03), 03_threat-model/threat-catalog.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/rejected-hypotheses.md（RH-019, RH-182〜RH-184）, research/RS-09, RS-12, RS-16（各 research/verification/ の検証記録を含む）
 > 作成方法: AI エージェント（Claude）が ADR-023 の決定（proposed）を連携開発者向けに展開した。本書は ADR-023 に反する設計を書かず、ADR で未決の点は「未決（ADR-0xx）」と書く。判断は自己レビューであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。起草では新たな原典を取得していない。脚注はすべて research の検証済み項目（RS-xx#n）、または research ノート外の 1 件（[^20]）を経由している。[^20] は本書の独立レビューで原典 PDF を再取得し、引用箇所を照合した [D]。
@@ -427,7 +427,7 @@ sequenceDiagram
 | M-03 | 認可の allow は SDK・検証器の最大齢付き cache だけを使う | allow を SDK の外で cache する。基盤不達時に正本ストアへの直接照会・独自のバックアップ認証・独自の allow list で迂回する | ADR-006、ADR-005 D1-3、ADR-013 D13-15、ADR-023 D23-10 の 3。分散 fallback は障害を悪化させることが多い [V][^4]（RS-09#14） | ARC-08 の FM-02・FM-04 の合否（迂回の問合せ 0 件）、TC-105 |
 | M-04 | サービス間の認証は workload identity（ADR-009 の SPIFFE ID と X.509-SVID の mTLS）で行い、AS が止まっていても起動できるようにする。受け付ける token の audience を自サービスに限定する。外部 API 用の M2M token は初回利用時に取得する（client credentials は private_key_jwt か mTLS、共有 client secret は新規禁止、ADR-009 要旨） | 起動時に AS からの token 取得を必須にする。共通 aud の token を受け付ける | ADR-023 D23-10 の 4、ADR-009、ARC-07 DV-9 | 起動時依存の検査（TC-106）、aud 誤りの負例ベクタ（ADR-022 D-6-2） |
 | M-05 | discovery・JWKS は discovery を経由して取得し、失敗したら前回の値（last known good）を J_max まで使い続け、J_max/2 で警報を出す。J_max を超えたら read-sensitive 以上を拒否する（SDK の既定に任せる）。静的安定な設計は取得に失敗したら前回の cache 値を使い警報を出す [V][^5]（RS-09#15） | JWKS を固定値で埋め込む。取得失敗で即時に全拒否・全許可に切り替える。J_max を超えて前回値を使う | ADR-022 D-3-2、ADR-023 D23-10 の 5、ARC-08 FM-08・§3.6 の 7 | TC-13-22（TC-105） |
-| M-06 | 再試行は SDK 既定（ランダム化した指数 backoff、要求単位の回数上限、deadline の伝播）だけを使い、Retry-After があれば守る。fail-mode・timeout・再試行回数は SDK の配布設定（DL-19・DL-20 由来）に任せる。再試行にはランダム化した指数 backoff を使う [V][^25]（RS-09#38） | 独自の再試行ループを重ねる。503・`deny_unavailable` を即時に再送する。fail-mode・timeout・再試行回数を自サービスで上書きする | ADR-013 D13-19、ADR-023 D23-10 の 6、ARC-07 DV-2、ARC-08 §3.6 の 3 | TC-13-07（TC-105） |
+| M-06 | 再試行は SDK 既定（ランダム化した指数 backoff、要求単位の回数上限、deadline の伝播）だけを使い、Retry-After があれば守る。fail-mode・timeout・再試行回数は SDK の配布設定（DL-19・DL-20 由来）に任せる。再試行にはランダム化した指数 backoff を使う [V][^25]（RS-09#38） | 独自の再試行ループを重ねる。503・`deny_unavailable` を即時に再送する。fail-mode・timeout・再試行回数を自サービスで上書きする | ADR-013 D13-19、ADR-023 D23-10 の 6、ARC-07 DV-2、ARC-08 §3.6 の 3。PoC/R7反映: 判定の締切 D(t) は接続確立を含む要求全体にかかる。POC-02 の TC-010（X-A）で、PoC の PEP は HTTP クライアントの timeout が接続確立に効かず、PDP の接続遅延の下で判定を待って write 以上を許可した（立会人なしの自己実行で Gate 4 の証拠ではなく、原因区分は作成者以外が確かめていない。POC-02 §6.2、MR-3）。SDK を使わず自前で PEP を書くサービスは、接続確立・TLS・応答受信の全体に 1 つの締切をかける [D] | TC-13-07（TC-105。PoC/R7反映: TC-010 の X-A を立会い下で再実行し、系統 2 の TC-105 で本番相当の SDK と構成で確かめる） |
 | M-07 | entry point ごとに操作階層を台帳に宣言し、要求に（操作階層, Tier）を criticality として載せて下流へ伝播させる。criticality の欄は DL-72 の現行版にまだない（ADR-023 L23-2 で未決）ため、欄が定まるまでは台帳への宣言だけを行い、伝播は SDK の更新で入る | 宣言を省く（privileged 扱いになり障害時に最も早く拒否される）。独自の header で criticality を送る | ADR-013 D13-19, D13-28、ADR-023 L23-2（欄の名前と値は未決（DL-72）） | entry point 台帳と CI 検査（ADR-012） |
 | M-08 | PEP SDK の cell ごとの接続プール・circuit breaker・deadline（bulkhead）を無効にしない。他 cell・他テナントの状態を同期呼出しで取りに行かない。複数テナントに所属する利用者は、作用中のテナントごとに token を取り直す | bulkhead を外す。cell 間の同期呼出し。1 つの token で複数テナントを操作する | ADR-013 D13-13, D13-18、ARC-07 DV-1, DV-7 | TC-13-15（TC-105） |
 | M-09 | `deny_unavailable`／503 と通常の deny を UI・ログで区別し、§5.1 の Tier ごとの振舞いを実装する。監査 SDK のローカル spool の容量を実行環境に確保する | deny を「障害」と表示する。監査記録を捨てて処理を続ける | ARC-08 §3.6 の 4・8 | 障害注入（§4.2 の頻度）、TC-105 |
@@ -810,3 +810,14 @@ sequenceDiagram
 - 照合して一致した点: TC の対応（preregistered-test-plan.md の ADR-023 行と一致）、§9.2 の計算（43,200 分 × 0.0005 = 21.6 分、E = 0.5%／0.1%）、事故の一次報告の脚注と RS-09 の項目番号の対応、禁止表現（該当なし）、ADR-023 の D23-xx・NX・KD との整合（上記を除く）。
 - 未解決: 「ADR・契約への指摘」1〜4、G-098 の代表例の作成者以外による選定（G-098 は代表例の選定を求めており、本レビューでは行っていない）、KD・未決値の決裁、TC の実測。
 
+
+### PoC/R7反映（2026-10-15、版 0.2 → 版 0.3）
+
+> 12_poc/measurement-report.md（POC-02 版 0.1）と 12_poc/reproduction-log.md を読んで反映した。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない [D]。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| P-1 | POC-02 §6.2 X-A（TC-010 W1）、MR-3 | M-06 に、判定の締切 D(t) を接続確立を含む要求全体にかけることと、追加の確認（TC-010 の立会い下の再実行、TC-105）を加えた。正本の明記は pep-contract・fail-mode-matrix の改版による（MR-3） | §7.1 M-06 |
+
+- 設計上の含意 [D]: 見直しトリガーは、立会い下の再実行で X-A が再現し、原因が SDK の仕様の欠落と分類された場合（ARC-08 §6.1 FM-01 の見直し）。残余リスクは、SDK を使わない PEP 実装が締切を部分的にしかかけない場合の fail-open で、M-06 と CON-11 の負例で検出する。
+- 対応件数: 1 件（対応済み 1）[D]。

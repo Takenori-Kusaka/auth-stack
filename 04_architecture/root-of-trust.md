@@ -1,6 +1,6 @@
 # root of trust・鍵管理設計と鍵 ceremony 手順
 
-> 文書ID: ARC-03 / 版: 0.2 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: ARC-03 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15（0.3（PoC/R7反映）: PoC 実測レポート POC-02（TC-014 の誤撤去の未検知、MR-8）と独立再現ログ、模擬パネル ラウンド 7 の sre 指摘により、§5.4 の撤去 3 条件の強制点、§7.3 の欠落の読み方、§13 の TC-07-04・TC-07-17、§14 RRT-05、残課題、レビュー記録を加えた。PoC の値は自己実行の参考値で Gate 4 の証拠ではない）
 > 対応要求: R-049, R-050, R-051, R-052, R-053, R-054, R-055, R-056, R-189.3, R-189.4, R-268（本書を対応成果物に名指し）, G-084, G-085, G-091（DL-14 を名指し）／関連: R-038, R-113, R-161, R-162, R-168, R-189.5, R-189.6, R-195.4, G-042, G-049, G-055, G-058
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-14）, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, 05_adr/ADR-008-control-plane-cicd-protection.md, 05_adr/ADR-013-cell-partitioning-fail-mode.md, 05_adr/ADR-015-crypto-agility-pqc.md, 05_adr/ADR-019-compromise-response.md, 05_adr/reconciliation-notes.md, 01_governance/assumptions-register.md, 01_governance/stop-authority.md（GOV-06）, 01_governance/raci-governance.md, 01_governance/kri.md, 01_governance/loss-scenarios.md, 01_governance/business-impact-analysis.md, 02_requirements/operation-risk-tiers-assurance.md（REQ-03）, 03_threat-model/attacker-model.md, 03_threat-model/threat-catalog.md, 06_controls/applicability.md, research/RS-05, RS-11, RS-12（各 research/verification/ の検証記録を含む）, research/standards-status.md
 > 位置付け: 本書は ADR-007（鍵階層の原則。DEC-3 対象）と ADR-008（管理面）を実装可能な粒度へ展開する設計書であり、ADR が委ねた「鍵台帳スキーマ、ceremony 手順、k/n の根拠、global 部品の障害時影響範囲」（ADR-007 §9.1 の DL-14 行）を定める。ADR の決定と異なる設計は置かない。ADR で未決の点は「未決（ADR-0xx）」と書く。
@@ -258,6 +258,7 @@ sequenceDiagram
 ```
 
 - **撤去の 3 条件**（ADR-007 D7-35）[D]: (1) 鍵台帳の状態が「退役」で retain の印がない。(2) 発行台帳で、その kid による過去 P_post の署名が 0 件、かつ未失効・未期限切れの token が 0 件。(3) canary cell で撤去し、24 時間、検証失敗率が基線を超えない。超えた場合は自動で再掲載する。
+- **撤去 3 条件の強制点（PoC/R7反映、版 0.3）**: 3 条件の照合は、JWKS・鍵マニフェストの公開処理（L1 署名サービスへのマニフェスト更新要求の受付）の側で常に行い、rotation orchestrator・手動操作・緊急操作のどの経路からも省略できない形にする [D]。PoC 系統 1 では、使用中の鍵の撤去拒否が呼出し側の指定（`check_in_use`）があるときだけ有効で、誤撤去の経路では指定されず、誤撤去が検知されないまま使用中 token 1,980 件中 1,566 件が拒否された（自己実行の参考値。独立再現でも同型）[D][^42][^43]。条件 (3) の「検証失敗率」と「基線」は SLO-01 SLI-029 で読み、24 時間の観測窓とは別に、検知・自動再掲載の上限 T_rk と窓内の誤 deny の上限 X_rk を置く（ARC-08 §4、ADR-007 D7-35 の注記）[D]。
 - 撤去は canary の後に cell ごとの wave で待機時間を置いて進め、警報で自動 rollback する [V][^37]（RS-09#33）[D]。Azure AD 2021 では、段階展開の保護が鍵の追加までで削除に及んでいなかった [I][^13]（RS-09#55）。
 - 鍵 metadata の変更は binary と同じ cell 単位の wave で配る [D]（ADR-013 要旨「変更の安全」）。緊急 freeze（GOV-06 S2）中は鍵 metadata の計画的変更を止めるが、剥奪・失効の配布と next 鍵への切替は止めない [D]（01_governance/stop-authority.md S2 行）。
 - rotation の停止には、期限付きリスク受容（受容者は事業責任者。CTO・CISO の単独受容は不可、G-032）を要する。期限は最長 30 日、更新 1 回まで（初期案）[D]（ADR-007 D7-33）。Storm-0558 では障害後の rotation 停止が無期限になった [I][^10]（RS-05#20）。
@@ -376,6 +377,7 @@ sequenceDiagram
 ### 7.3 欠落と失効の区別
 
 - 共通 SDK は、JWKS・マニフェストから kid が「欠落」した場合と、署名付き失効リストで明示的に「失効」した場合を区別する [D]（ADR-007 D7-36）。欠落は last known good を上限時間（R-189.6／H）まで使い続け、失効は即時に拒否する [D]。前者は Azure AD 2021 の可用性の教訓 [I][^13]（RS-09#54）、後者は SP 800-152 §6.8.1 の must not [N][^5] に対応する [D]。
+- **欠落の読み方（PoC/R7反映、版 0.3。ADR-007 D7-36 の改訂案に従う）**: 取得に成功した JWKS・マニフェストの版で、直前の last known good にあった kid が消えた場合（誤撤去）も「欠落」として扱い、上限時間まで受理を続ける [D]。意図した撤去は撤去 3 条件（未失効 token 0 件）を満たした後なので、この扱いで受理が残っても使われる token はない [D]。侵害時の無効化は失効リスト（§5.5）だけで行う [D]。PoC の SDK がこの区別を実装していたかは区分していない（ADR-007 残課題）[D][^42]。
 
 ---
 
@@ -549,7 +551,8 @@ ADR-007 の KD7-1〜KD7-8 は ADR-007 §2.13 を正本とし、本書は繰り�
 | TC-07-01, TC-07-16 | スコープ結合の負例、JWKS・マニフェストの差替え | 受理 0 件 | §9 |
 | TC-07-02 | 30 日周期の rotation を早回しで 12 回以上連続 | 検証失敗 0 件。所要時間を記録 | §5.4, R-051, R-189.4 |
 | TC-07-03 | 緊急失効の宣言から全内部検証点の拒否まで | TBD（BIA）以内。値を記録 | §5.5, R-052 |
-| TC-07-04 | retain 印・使用実績のある鍵の削除阻止と自動再掲載 | 阻止されない削除 0 件、canary 外への波及 0 件 | §5.4 |
+| TC-07-04 | retain 印・使用実績のある鍵の削除阻止と自動再掲載 | 阻止されない削除 0 件、canary 外への波及 0 件。PoC/R7反映: 誤撤去から検知・自動再掲載まで ≦ T_rk、窓内の誤 deny ≦ X_rk（ARC-08 §4。TBD、決裁前は分布を記録）、検知 0 件は不合格 | §5.4 |
+| TC-07-17（PoC/R7反映、ADR-007 で追加） | SDK の欠落と失効の区別、撤去 3 条件の照合の省略不可 | 誤撤去の注入での拒否 ≦ X_rk。失効 kid の受理 0 件。照合を省略した撤去の公開 0 件 | §5.4, §7.3 |
 | TC-07-05 | 退出訓練（backend を事業者 A→B） | RP の設定変更 0 件 | §5.7 |
 | TC-07-07 | KMS の実効クォータと失効直後の p99 署名遅延 | 1 cell 1,241/秒を throttle なし | §4.3 |
 | TC-07-09 | L0 quorum（2 名、同一系統 3 名で起動不可） | 起動成功 0 件 | §6.2, R-054 |
@@ -578,6 +581,7 @@ ADR-007 §6.3 の RR7-01〜RR7-08 を引き継ぐ [D]。本書で追加するも
 | RRT-02 | 鍵緊急失効の同時二者を夜間・休日に揃えられず、5b が遅れる（NRT-4） | 5a は単独宣言（L19-1 の決裁次第）、当番の拡充 | CISO＋事業責任者 |
 | RRT-03 | KRT-1 で 1 拠点を選んだ場合、拠点喪失で L0 の主・予備を同時に失う | 全 SDK の pin 更新手順（ADR-016） | CTO |
 | RRT-04 | 外部 RP の JWKS cache が本基盤の送る max-age を守らない | 連携契約（ADR-022）、RP 向け既定値、短命 token | 事業責任者＋CISO（RR7-02 と同じ） |
+| RRT-05（PoC/R7反映） | 鍵の誤撤去の窓（T_rk）の間、未失効・未期限切れの token が拒否される（ADR-007 RR7-09 と同じ）。外部 issuer の JWKS は 1 つの公開文書で、cell 単位の canary では影響を閉じ込められない | 撤去 3 条件の公開処理側での強制（§5.4）、欠落の読み方（§7.3）、SLI-029 の検知と RB-A08、外部 issuer の撤去前の観測期間 | SRE 責任者＋事業責任者 |
 
 ---
 
@@ -768,6 +772,7 @@ ADR-007 §6.3 の RR7-01〜RR7-08 を引き継ぐ [D]。本書で追加するも
 | K-07 の閾値（所要期間）、台帳差分・Signer 以外の Sign 呼出しの KRI 化 | CISO（01_governance/kri.md） | G3 |
 | 作成者以外による原典照合（脚注 35 の OpenID Federation §5.2.1 は本書のレビュアーが 2026-10-15 に原典で照合済み。他の脚注は research の検証記録に依拠） | レビュアー | Phase 4 |
 | GOV-05 §7 への追記: L1・L2 鍵の生成・無効化・鍵ポリシー変更と鍵破棄の二者の組合せ（§6.1 (c)） | GOV-05 の起草者 | G3 |
+| PoC/R7反映（版 0.3）: §5.4 の強制点と §7.3 の欠落の読み方を ADR-007 D7-35・D7-36 の改訂案と同時に決めること、TC-014 で拒否が起きた原因の区分、T_rk・X_rk の値 | CTO＋CISO（改訂案）、PoC リード（原因区分）、SRE 責任者＋CTO（値） | DEC-3 の付議前（改訂案・原因区分）、G4（値） |
 
 ---
 
@@ -814,6 +819,9 @@ ADR-007 §6.3 の RR7-01〜RR7-08 を引き継ぐ [D]。本書で追加するも
 [^39]: European Parliament and Council『Regulation (EU) 2022/2554 (DORA)』2022-12-14. https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554 （参照箇所: Art. 9(4)(d)、Art. 30(2)(b)、確認日: 2026-10-03。RS-02#57, #58）
 [^40]: AWS『AWS KMS API Reference: Sign』（版日付の記載なし）. https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html （参照箇所: Message の長さ制限、MessageType EXTERNAL_MU、確認日: 2026-10-03。RS-05#47）
 [^41]: Google Cloud『Cloud HSM』最終更新 2026-09-30. https://docs.cloud.google.com/kms/docs/hsm （参照箇所: What is Cloud HSM?、確認日: 2026-10-03。RS-05#57）
+[^42]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-014 行、§5.6 DEV-16、§6.4 の TC-014 行、§9 MR-8、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^43]: 本リポジトリ『高保証 PoC 系統 1 独立再現ログ』POC-04（仮）版 0.1（draft）. 12_poc/reproduction-log.md （参照箇所: §3 の TC-014 行、確認日: 2026-10-15。実装者と別の AI エージェントが同じ機械で再実行した記録で、独立立会人による再実行ではない。Gate 4 の証拠ではない）
+[^44]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
 
 ---
 
@@ -856,3 +864,10 @@ ADR-007 §6.3 の RR7-01〜RR7-08 を引き継ぐ [D]。本書で追加するも
 - NRT-1〜NRT-4 の前提台帳への登録。
 - 脚注の原典照合は、脚注 35 以外は research の検証記録に依拠しており、本レビューで原典を再取得していない。
 
+### PoC/R7反映（版 0.3）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| 指摘・入力 | 対応 |
+|---|---|
+| 模擬パネル ラウンド 7（sre・cto・ciso）: POC-02 の TC-014（誤撤去の未検知、Azure AD 2021 型）の受け皿が設計文書にない [D][^44]。POC-02 §6.4 の TC-014 行と MR-8、独立再現ログ §3 の TC-014 行 | §5.4 に撤去 3 条件の強制点、§7.3 に欠落の読み方、§13 に TC-07-04 の基準と TC-07-17、§14 に RRT-05、残課題に 1 行を加えた。PoC の値は自己実行の参考値で、Gate 4 の証拠にしていない |

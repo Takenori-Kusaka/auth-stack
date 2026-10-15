@@ -1,6 +1,6 @@
 # OAuth/OIDC セキュリティ profile（token profile）
 
-> 文書ID: ARC-02 / 版: 0.2 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: ARC-02 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15（0.3（PoC/R7反映）: PoC 実測レポート POC-02（§6.5 TC-004〜007 の未実施、§6.3 の TC-016 行、§6.4 の TC-015 行）と模擬パネル ラウンド 7 の指摘により、§14 の注記、残課題、レビュー記録を加えた）
 > 対応要求: R-046, R-158, R-159, R-160, R-161, R-162, R-163, R-189（R-189.1, R-189.2, R-189.6）, R-239, R-240, R-249, R-251, R-259, R-270, R-283／G-087, G-088, G-138（全件と閉じ方は末尾の対応表）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-16 行）, 05_adr/ADR-005-token-profile.md（正本）, 05_adr/ADR-020-fapi2-applicability.md, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, 05_adr/ADR-015-crypto-agility-pqc.md, 05_adr/ADR-021-irreversible-identifiers.md, 05_adr/ADR-004-b2b-federation-linking-scim.md, 05_adr/ADR-006-revocation-continuous-evaluation.md, 05_adr/ADR-009-workload-identity-token-exchange.md, 05_adr/ADR-022-integration-contract-standards.md, 05_adr/reconciliation-notes.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md, 03_threat-model/threat-catalog.md, 03_threat-model/attacker-model.md, 06_controls/applicability.md, 04_architecture/claims-catalog.md（ARC-15、並行作成）, research/RS-03, RS-04, RS-06, RS-11, RS-13, RS-17, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が、上記 ADR の決定を実装可能な profile に展開して起草した。決定の正本は ADR であり、本書は ADR に反する設計を置かない。ADR で未決の点は「未決（ADR-0xx）」と記す。research ノートにない原典（OIDC Back-Channel Logout 1.0、RFC 8417 §2.2・§2.3・§4、RFC 8725 §2・§3.2〜§3.4・§3.10〜§3.12、OIDC Core §3.1.3.7）は起草者が 2026-10-15 に取得して照合した。このうち RFC 8725 §2.1・§3.2・§3.4・§3.10〜§3.12、RFC 8417 §2.2・§2.3・§4.1〜§4.3、OIDC Back-Channel Logout 1.0 §2.4・§2.6・§4 は、作成者以外のレビュアー（AI エージェント）が同日に原典を再取得して照合した（末尾「レビュー記録」）。OIDC Core §3.1.3.7 の作成者以外による照合は未了である。本書の判断は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -672,6 +672,8 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | pentest | edge 迂回、token scanning、exchange の濫用、transaction token の replay・付け替え、BFF の CSRF、主体種別の偽装、SAML XSW | 指摘の重大度別件数（基準は DL-59） | E5、DL-59 |
 
 - いずれも未実施である。G-088 と R-161・R-162・R-163 は実測で閉じ、G-087 は独立確認と決裁で閉じる [D]。
+- **PoC/R7反映（版 0.3）**: 負例 NV-01〜NV-58 に当たる POC-01 の TC-004〜007（aud 取違え・token exchange、mix-up・redirect URI・PKCE、JWT 負例ベクタ、DPoP replay・盗まれた refresh token）は、PoC 系統 1 で**未実施**である。担当の試験群（token-misuse）が作業を中断し成果物を作らなかったためで、中止基準による中止ではない（POC-02 DEV-19 候補。系統 1 の実行体制・環境の制約による未実施）[D][^47]。G-088 と R-161〜R-163 の系統 1 の証拠は何もない [D]。立会い下の系統 1 の再実行（POC-02 §7.1 R-2）で初めて実行し、その前に NV-01〜NV-58 から TC-004〜007 に入れる負例を事前登録する [D]。
+- **PoC/R7反映（版 0.3）**: 系統 1 で実行された TC のうち本書に関わる観測は 2 件ある（自己実行の参考値で Gate 4 の証拠ではない）[D][^47]。(1) TC-015: 内部 token の発行 alg を ES256 以外にすると、契約 schema の `issuedAlg`（ES256 のみ）とずれる。H-19 の「利用側の改修 0 件」は契約の側で崩れ得る。(2) TC-016: PEP SDK が受信 token の `txn` を発行側の pattern で検査して拒否した（F-2）。TP-08 と契約 schema の `opaqueId` の注記（受信側はこの pattern で拒否しない）と食い違う。どちらも契約の所有者と ADR-022 の担当に渡されている（POC-02 MR-10）[D]。
 
 ---
 
@@ -735,6 +737,7 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | 「ADR への指摘」AR-1〜AR-4 の ADR 側での解消 | ADR-005・ADR-007・ADR-022 の所有者 | G3 |
 | 外部 JWKS の取り直し頻度の上限（TP-02）の値 | CTO | G3（DL-20） |
 | OIDC Core §3.1.3.7・Back-Channel Logout §4.1・RFC 8725 §2.7〜§2.9・§3.3 の作成者以外による照合 | 照合ログの所有者 | G3 |
+| PoC/R7反映（版 0.3）: POC-01 TC-004〜007 に入れる負例の事前登録と初回実行、契約 schema の `issuedAlg`・`opaqueId` と実装のずれの解消 | PoC リード（TC）、契約の所有者（schema） | 事前登録は DEC-4 第 1 段の付議前、実行は G4 |
 | 本書の判断は自己レビューであり、実在の CTO/CISO の決裁は未達 | CTO・CISO | G3 |
 
 ---
@@ -787,6 +790,8 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 [^44]: IETF OAuth WG『Token Status List』draft-ietf-oauth-status-list-21, 2026-06-21（Internet-Draft、RFC Ed Queue、状態: draft）. https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/ （参照箇所: Abstract, §1.1、確認日: 2026-10-03）RS-04#80、SS-B03
 [^45]: Dirk-jan Mollema『One Token to rule them all - obtaining Global Admin in every Entra ID tenant via Actor tokens』2025-09-17. https://dirkjanm.io/obtaining-global-admin-in-every-entra-id-tenant-with-actor-tokens/ （参照箇所: 「The fatal flaw leading to cross-tenant compromise」、確認日: 2026-10-03）RS-12#53（発見者による一次開示）
 [^46]: OpenID Foundation Shared Signals WG (A. Tulshibagwale ほか)『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所: RS-04 [^30] と同じ Abstract, §4.1.1, §4.1.5, §6.1.1, §6.1.2 のうち SET の明示的な型付け（typ: secevent+jwt、MUST）を述べる箇所、確認日: 2026-10-03）RS-04#77、SS-C09。レビューで追加
+[^47]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-004〜007・TC-015・TC-016 行、§5.6 DEV-19、§6.3 の TC-016 行、§6.4 の TC-015 行、§6.5、§7.1 R-2、§9 MR-10、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
+[^48]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
 
 ---
 
@@ -836,3 +841,11 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 - OIDC Core §3.1.3.7、Back-Channel Logout §4.1、RFC 8725 §2.7〜§2.9・§3.3 は作成者以外の照合が未了である。
 - SSF 1.0 の typ の MUST がどの節にあるかは RS-04#77 の記述に依拠し、本レビューで原典の節番号までは再確認していない。
 - 前提台帳への NA-TP-1〜NA-TP-4 の追加は未了である（本書からは台帳を編集しない）。
+
+### PoC/R7反映（版 0.3）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| 指摘・入力 | 対応 |
+|---|---|
+| 模擬パネル ラウンド 7（cto・ciso・sre）: POC-02 の結果が設計文書に入っていない [D][^48]。POC-02 §6.5、§6.3 の TC-016 行、§6.4 の TC-015 行、§9 MR-10 | §14 に TC-004〜007 の未実施の扱いと TC-015・TC-016 の観測、残課題に 1 行を加えた |
