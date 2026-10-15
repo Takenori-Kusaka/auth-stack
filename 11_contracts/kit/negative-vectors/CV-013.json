@@ -1,0 +1,95 @@
+{
+  "id": "CV-013",
+  "title": "未知 claim の注入（必須互換試験。期待は受理して続行）",
+  "source": [
+    "ADR-022 D-6-2 (13)",
+    "XR-17",
+    "CON-06 NE-07",
+    "CON-06 NE-09"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required-compat",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-013a",
+      "description": "目録にない claim（オブジェクト値）を加えた正規署名 token",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "x_kit_future_claim": {
+              "a": 1
+            }
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "response_profile": "success"
+      }
+    },
+    {
+      "case_id": "CV-013b",
+      "description": "発行側では禁止の claim（roles・email）を加えた正規署名 token。受理し、認可判定に使わない（PDP への要求に値が現れない）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "roles": [
+              "admin"
+            ],
+            "email": "user@example.invalid"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "response_profile": "success",
+        "audit": {
+          "must_not_contain": [
+            "admin",
+            "user@example.invalid"
+          ]
+        },
+        "notes": "PDP への要求（kit_record）にも roles・email の値が現れないこと（DEV-2）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "kit_record",
+    "mk07_audit"
+  ],
+  "strength": "N: RFC 7519 §4（別の要求がなければ理解できない claim は無視しなければならない MUST）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

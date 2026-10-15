@@ -1,0 +1,155 @@
+{
+  "id": "CV-004",
+  "title": "alg=none と allowlist 外の alg",
+  "source": [
+    "ADR-022 D-6-2 (4)",
+    "ARC-02 NV-01",
+    "ARC-02 NV-02",
+    "ARC-02 NV-04",
+    "CON-06 NE-02〜NE-04"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-004a",
+      "description": "alg=none（署名部は空）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "unsigned",
+          "header": {
+            "alg": "none"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-004b",
+      "description": "HS256。issuer A の公開鍵の表現を HMAC 鍵に使う（alg の取違え）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "hmac_with_A_public_key",
+          "header": {
+            "alg": "HS256",
+            "kid": "{{key.A.current.kid}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-004c",
+      "description": "header の alg=ES384 で、kid は P-256 の鍵（alg と鍵種別の不一致）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "header": {
+            "alg": "ES384"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-004d",
+      "description": "alg=RS256（検証側の allowlist にない。allowlist は SUT の検証設定から読む。CON-11 §11.4）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "header": {
+            "alg": "RS256"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response"
+  ],
+  "strength": "N: OWASP API2:2023（未署名・弱い署名の JWT の受理を脆弱とする）。allowlist は自社規範（ADR-005 V1、CON-06 issuedAlg）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

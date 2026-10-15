@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.id-domain.example/kit/negative-vectors/vector.schema.json",
+  "title": "CON-11 試験ベクタ（CV-xxx）の統一形式",
+  "$comment": "文書: CON-11（11_contracts/mock-contract-test-kit.md）§6.1 の機械可読版。v1.1（I-11、P-14）で新設した。CV-001〜CV-014 の先行配布（本ディレクトリ）と、各契約の x-negative-examples・x-conformance-vectors の取込み先の形式を 1 つにする。正本は CON-11 §6.1。キット本体（DL-120）の凍結前の先行配布で、DEC-8 までは minor の範囲で項目を追加し得る（既存項目の意味は変えない）。置換子 {{...}} の語彙は kit/README.md §4。作成: AI エージェント（Claude）。人による照合は未実施。",
+  "type": "object",
+  "required": ["id", "title", "source", "roles", "status", "cases", "strength", "since", "deprecated"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^CV-[0-9]{3}$", "description": "キット内で一意。廃止した ID は再利用しない（CON-11 §6.1）。" },
+    "title": { "type": "string", "minLength": 1 },
+    "source": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "description": "出所（ADR-022 D-6-2 の番号、ARC-02 NV-xx、契約の負例 ID、ADR の決定 ID）。" },
+    "roles": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["role"], "additionalProperties": false,
+        "properties": {
+          "role": { "type": "string", "pattern": "^CR-(10|[1-9])$" },
+          "applies_when": { "type": "string", "description": "適用条件。manifest（CON-11 §7.2）の options の式で書く（例: options.sender_constrained == true）。" }
+        }
+      }
+    },
+    "status": { "enum": ["required", "required-compat", "conditional", "preview"], "description": "required: 必須。required-compat: 必須の互換試験（期待は受理。CV-013）。conditional: applies_when を満たす SUT に必須。preview: 不合格を記録だけする（CON-11 L11-10）。" },
+    "distinguish_from": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "how"], "additionalProperties": false,
+        "properties": { "id": { "type": "string", "pattern": "^CV-[0-9]{3}$" }, "how": { "type": "string", "minLength": 1 } }
+      },
+      "description": "v1.1（P-23）: 似たベクタと何で区別するか。区別できない実行は合否に数えない。"
+    },
+    "stub_requirements": {
+      "type": "array", "items": { "type": "string", "minLength": 1 },
+      "description": "v1.1: MK-01〜MK-08（DL-120）の配布前に自前スタブで流す場合に、スタブが満たすべき最小の条件（kit/README.md §5）。"
+    },
+    "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/case" } },
+    "observe": { "type": "array", "items": { "$ref": "#/$defs/observationPoint" } },
+    "strength": { "type": "string", "minLength": 1, "description": "期待結果の根拠の強度（外部規範の MUST 等、または自社規範）。" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "since": { "type": "string", "minLength": 1 },
+    "deprecated": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "placeholder": { "type": "string", "pattern": "^\\{\\{[a-z0-9_.\\[\\]-]+\\}\\}$" },
+    "case": {
+      "type": "object", "required": ["case_id", "stimulus", "expect"], "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string", "pattern": "^CV-[0-9]{3}[a-z]$" },
+        "description": { "type": "string" },
+        "applies_when": { "type": "string" },
+        "stimulus": { "$ref": "#/$defs/stimulus" },
+        "expect": { "$ref": "#/$defs/expect" }
+      }
+    },
+    "stimulus": {
+      "type": "object", "minProperties": 1, "additionalProperties": false,
+      "properties": {
+        "setup": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "刺激の前に行う準備（鍵の公開の遅延、注入、fixture）。" },
+        "mint": { "$ref": "#/$defs/mint" },
+        "present": { "$ref": "#/$defs/present" },
+        "request": { "$ref": "#/$defs/request" },
+        "inject": { "$ref": "#/$defs/inject" },
+        "after": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "刺激の後に行う操作（JWKS への鍵の追加など）。" }
+      }
+    },
+    "action": {
+      "type": "object", "required": ["op"], "additionalProperties": true,
+      "properties": { "op": { "enum": ["keys.add", "keys.remove", "keys.publish_after", "inject", "revoke", "fixtures", "wait"] } }
+    },
+    "mint": {
+      "type": "object", "additionalProperties": false,
+      "description": "token の鋳造（CON-11 §4.9 mint）。base の正規 token（CON-06 の必須 claim を fixture で埋めたもの）に差分を当てる。",
+      "properties": {
+        "base": { "enum": ["access_token", "txn_token", "id_token", "logout_token", "set", "none"] },
+        "claimed_issuer": { "enum": ["A", "B", "other", "absent"], "description": "iss に入れる issuer の役。A=本番役、B=sandbox 役、other=どの discovery にもない issuer。" },
+        "signer": { "enum": ["A.current", "A.next_unpublished", "A.unknown_never_published", "B.current", "unsigned", "hmac_with_A_public_key", "fixed_test_key"], "description": "署名に使う鍵。kid は署名鍵の kid（header で上書きできる）。" },
+        "header": { "type": "object", "description": "JOSE header の上書き（null で削除）。" },
+        "claims": { "type": "object", "description": "claim の上書き（null で削除）。値に置換子を使える。" }
+      }
+    },
+    "present": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "as": { "enum": ["authorization_bearer", "authorization_dpop", "txn_token_header", "none"] },
+        "dpop_proof": { "enum": ["fresh", "replay_same_jti", "none"] }
+      }
+    },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "description": "SUT への業務要求の雛形。operation と resource は manifest と fixture adapter（CON-11 §6.4）から埋める。",
+      "properties": {
+        "operation": { "type": "string" },
+        "tier": { "enum": ["public", "read-sensitive", "write", "privileged", "break-glass"] },
+        "resource": { "type": "string" },
+        "route_tenant": { "type": "string" },
+        "rp_authorization_response": { "type": "object", "description": "CR-4（RP）向け。認可応答の上書き（例: iss）。" }
+      }
+    },
+    "inject": {
+      "type": "object", "required": ["target", "kind"], "additionalProperties": false,
+      "properties": {
+        "target": { "enum": ["MK-01", "MK-02", "MK-03", "MK-04", "MK-05", "MK-06", "MK-07", "MK-08"] },
+        "kind": { "type": "string", "description": "注入の種類。MK-03 は CON-11 §4.4 の表の行の名前。" },
+        "params": { "type": "object" }
+      }
+    },
+    "expect": {
+      "type": "object", "required": ["outcome"], "additionalProperties": false,
+      "properties": {
+        "outcome": { "enum": ["reject", "accept", "no_decision"], "description": "拒否／受理して続行／判定が得られない扱い（CON-11 §6.1）。" },
+        "response_profile": { "enum": ["auth_failure", "missing_credentials", "resource_denied", "no_decision", "success"], "description": "応答の形の型。定義は CON-11 §6.1 の応答の型（v1.1、P-25）と kit/README.md §3。" },
+        "same_as_group": { "type": "string", "description": "同じ群の全ケースの応答が、比較から除く要素（request_id・instance・Date・trace 系ヘッダ）を除いて一致すること。" },
+        "side_effects": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "business_execution": { "type": "integer", "minimum": 0, "description": "業務処理（状態の変更・資源の返却）の件数の上限。拒否のケースは 0。" },
+            "pdp_calls_max": { "type": "integer", "minimum": 0 },
+            "fetches": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 }, "description": "取得の回数の上限（例: issuer_B.discovery: 0）。" },
+            "allow_used_after_deadline": { "type": "integer", "const": 0 },
+            "write_allow_during_injection": { "type": "integer", "const": 0 }
+          }
+        },
+        "audit": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "events_min": { "type": "integer", "minimum": 0 },
+            "must_not_contain": { "type": "array", "items": { "type": "string" } },
+            "fields": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "observationPoint": { "enum": ["sut_response", "mk07_audit", "kit_record", "probe", "stub_access_log", "sut_timing"] }
+  }
+}

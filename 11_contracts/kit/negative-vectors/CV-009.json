@@ -1,0 +1,64 @@
+{
+  "id": "CV-009",
+  "title": "DPoP replay（同じ jti の proof の再送）",
+  "source": [
+    "ADR-022 D-6-2 (9)",
+    "ARC-02 NV-54"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "options.sender_constrained == true"
+    }
+  ],
+  "status": "conditional",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）",
+    "cnf.jkt を持つ token と DPoP proof を作れる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-009a",
+      "description": "1 回目は受理、受理窓内に同じ jti の proof で再送",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "cnf": {
+              "jkt": "{{dpop.key.jkt}}"
+            }
+          }
+        },
+        "present": {
+          "as": "authorization_dpop",
+          "dpop_proof": "replay_same_jti"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "notes": "WWW-Authenticate の auth-scheme は DPoP（RFC 9449 §7.1）。それ以外は auth_failure の型に従う"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response"
+  ],
+  "strength": "ARC-02 §10（RFC 9449 §11.1）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

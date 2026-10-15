@@ -2,7 +2,7 @@ openapi: 3.1.0
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Relationship/Model Registry API
-  version: 0.3.1
+  version: 0.4.1
   summary: relation tuple の書込み・削除・読取りと、正規認可モデル（CAM）の版管理・名前空間審査を扱う基盤所有の契約
   license:
     name: 社内限定（未公開。公開範囲は DL-69 で決める）
@@ -106,7 +106,9 @@ info:
       citation: "J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02（Internet-Draft）, 2026-07-06. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5（認可ポリシーが trust domain と trust anchor を考慮せずに識別子の path 部分だけを評価する MUST NOT）、確認日: 2026-10-03）"
       research: RS-06#25（ラウンド2 是正で追加。CON-03 [^12] と同じ原典）
   description: |
-    文書ID: CON-04 / 版: 0.3.1 / 状態: draft / 最終更新: 2026-10-15
+    文書ID: CON-04 / 版: 0.4.1 / 状態: draft / 最終更新: 2026-10-15
+    改版: v0.4.1（v1.1 の同期。AI エージェントによる同期で、独立レビューは未実施）で、他文書の v1.1 改訂が本書に宛てた申し送りのうち決裁を要する 2 件（INT-03 §16.4 HO-V11-1 の所属の読取り、CON-16 IE-4 の core 型の公開宣言）を §8 に未決として加えた。operation・スキーマ・例は変えていない [D]。
+    改版: v0.4.0（v1.1 改訂。13_integration-trial/report.md の P-09・P-21 への対応。I-7 と I-14 の base_revision 部分）で、(1) tid と操作階層の表記を CON-02 に一本化して参照に替え（`TenantId` を CON-02 `TenantIdSegment` へ、`CamPermission.tier` を CON-02 `OperationTier` へ、shadow の `sampling` のキーと `ShadowStratum.tier` を CON-02 `OperationTierClass` へ。値の表記は `read_sensitive`→`read-sensitive`、`privileged`→`privileged/T`・`privileged/P`、`break_glass`→`break-glass/B`・`break-glass/P`）、(2) `base_revision` の初回値と取得方法（`registerModel`・`listModels`・`ModelChangeRequest`・`ModelRevision`）、409 `base_revision_conflict` の応答例と `latest_revision` 拡張メンバを定めた。変更はモデル管理（preview）の要素と、GA の path 変数 `tenant_id` の参照先の付け替え（受理する値の集合は v0.3.1 と同じ）に限る [D]。改訂は AI エージェント（Claude）が行い、独立レビュー・人による照合は未実施（CONVENTIONS §8）。他文書への申し送りは §11 の「他文書への申し送り（v1.1）」。
     改版: v0.3.1（PoC/R7反映）で、§3 のテナント境界の判定を userset の主体（role・group の object 側）にも明示し、`writeRelationships` に負例 1 件を加えた（POC-02 §6.2 X-D。§11 の HO-P-1〜HO-P-3）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない。
     改版: v0.3.0（模擬パネル ラウンド2 の High 指摘 1 件（redteam: tuple 操作・階層操作のテナント結合の欠落）への対応）で、§6.1〜§6.4（G 段規則 `tenant_binding`、
     テナント横断の実行者、宣言の SPIFFE ID 全体照合、必須化の切替え）、`Txn-Token`・`Subject-Access-Token`・`Cross-Tenant-Execution-Id` ヘッダの欄の予約、
@@ -237,6 +239,9 @@ info:
     | 内部 access token を façade に渡す形（`Subject-Access-Token` ヘッダの名前、CON-03 の本文方式との統一）と ARC-15 DEV-5 との関係 | 未決（ADR-011・ADR-005。CON-03 §9 と同じ論点） |
     | テナント横断の実行記録を登録する operation（§6.2） | 未定義（v0.3.0）。定義までは `Cross-Tenant-Execution-Id` 付きの要求を拒否し、テナント横断の実行者は bulk import だけを使う |
     | 変更購読（`listRelationshipChanges`）のテナント結合 | 本規則の対象外（購読者は索引・同期のサービスで、起点要求を持たない）。購読者の登録（`subscriber_not_registered`）で縛る。購読者登録にも §6.3 の SPIFFE ID 全体照合と対象テナント集合を課すかは未決（§11 HO-R2-8） |
+    | withdrawn・shadow_failed の revision の内容の取り消し方（v1.1（I-14、P-21）） | 未決（ADR-016 D16-30・D16-31。§11 HO-V11-3）。暫定: 系列は registry 全体で 1 本で、取り消しは取り消す内容の変更を新しい revision として登録する（`registerModel` の description） |
+    | 依存サービスが `core/unit#member`（subject を指定した filter）・`core/unit#parent` を読取宣言（§6.3）に入れてよいかと、その条件（v1.1 の同期。INT-03 §16.4 HO-V11-1） | 未決（認可・PDP チーム、ARC-05 K05-6。DL-73 凍結前）。所属の読取りは関係 graph の読取り（T-034）なので無条件の宣言にはしない。条件の案は「`subject_id` を要求の起点主体に限る」「件数上限」。代案として「主体の直接所属 unit の一覧」を返す hierarchy の照会（例 `listSubjectUnits`、preview）を置く案を併せて検討する。`readAncestors` の応答の並び（根から親）を例で示すことも同じ改版で行う。決まるまで、INT-03 §9.7 の M-1・M-4 は INT-03 の暫定形による [D] |
+    | core 型の relation・permission のうち、ドメインが参照してよいもの（CON-16 §3.2 の「公開」）を Registry に宣言する形（v1.1 の同期。CON-16 IE-4） | 未決（認可・PDP チーム、ARC-05 X-4。DL-73 凍結前）。X-4 は「所有ドメインの公開宣言」を前提にするが、core 型の公開宣言がない。決まるまで、ドメインが arrow の右辺に使ってよい core の permission は CON-16 §3.2 と INT-03 §9.7 の表（`manage`・`view_directory`）に限り、`member`・`parent` は読取りだけに使う [D] |
 
     ## 9. CAM 式 v0（permission 式の文法。preview）
     `CamPermission.expression` の文法を次に定める。ARC-05 §8.1・INT-03 §1.2 の擬似表記と同じ記号を使い、CAM・設計文書・例で表記を 1 つにする [D]。
@@ -284,7 +289,7 @@ info:
     |---|---|
     | M3 | `core` モジュールの変更、または自動ゲート規則・条件カタログの変更 |
     | M2 | check `breaking_change` の検出、公開 relation の取りやめ、他ドメイン型の拡張、`semantic_change.declared=true` |
-    | M1 | check `permission_expansion_diff` の検出、または `tier` が privileged・break_glass の permission（REQ-03。高リスク階層の範囲は DL-09 の確定に従う）の追加・式の変更、`marks` への `external_grantable` の追加 |
+    | M1 | check `permission_expansion_diff` の検出、または `tier` が `privileged/T`・`privileged/P`・`break-glass/B`・`break-glass/P` の permission（REQ-03。高リスク階層の範囲は DL-09 の確定に従う。v1.1（I-7）で表記を CON-02 `OperationTier` に統一）の追加・式の変更、`marks` への `external_grantable` の追加 |
     | M0 | 上のいずれにも当たらない追加的変更 |
     - 意味の変更（スキーマ差分で検出できない変更）は検査で見つけられないため、申告（`semantic_change`）を必須欄にし、申告があれば M2 に回す（ADR-016 D16-08）[D]。申告の真偽は審査と shadow で確かめる [D]。
 
@@ -320,6 +325,19 @@ info:
     | HO-P-1 | 11_contracts/mock-contract-test-kit.md（CON-11）§6.3 | 「テナント越えの userset 主体」の負例を関係書込族のベクタに加え、モック（MK-04）と PoC 基盤の両方に流す（TC-026 の P-5 の対象）|
     | HO-P-2 | 04_architecture/authorization-model.md の書込の不変条件、05_adr/ADR-011（G 段）| subject 側のテナント検査をどの層の決定にするかを決める（POC-02 MR-4）。本契約は façade の書込検査として §3 に置いたが、G 段にも置くかは ADR-011 の担当が決める |
     | HO-P-3 | 12_poc/preregistered-test-plan.md（DL-22）| TC-021 の立会い下の再実行（POC-02 §7.1 R-1）で、userset 主体の越境を独立の基準（昇格の成立 0 件）として凍結する。PoC の façade の修正の要否は PoC リードが決める |
+
+    - v0.4.0 は v1.1 改訂で、13_integration-trial/report.md（AI による模擬連携検証。実在の依存サービスの開発ではない）の P-09（tid 形式と tier 表記の不一致）と P-21（base_revision 初回値不明）への対応である。改善提案 I-7（tid・tier 表記を CON-02 に一本化）と I-14 の base_revision 初回値の部分を反映した。
+
+    #### 他文書への申し送り（v1.1）
+    本書と CON-02 以外は並行作業のため編集していない [D]。
+
+    | # | 宛先 | 申し送り内容 |
+    |---|---|---|
+    | HO-V11-1 | 11_contracts/mock-contract-test-kit.md（CON-11） | (1) 本書は v0.4.0 で `./schemas/common.schema.json` を外部参照する。Prism・ajv に渡す配布物は `redocly bundle` で 1 ファイルにした版にする。(2) registry の状態付きスタブを用意し、初期 revision 1 件（`core` だけ）を `listModels` で返し、`base_revision` が直近でない登録に 409 `base_revision_conflict`（`latest_revision` 付き）を返す。(3) 負例ベクタに `registerModel` の base_revision の省略・古い値・未採番の値、`CamPermission.tier` の `read_sensitive`・`privileged`（副区分なし）を加える |
+    | HO-V11-2 | 10_integration/authz-modeling-guide.md（INT-03）、04_architecture/authorization-model.md（ARC-05 §12） | 登録手順に「`base_revision` は registry 全体の直近の revision を `listModels` で取る。名前空間の初回登録でも同じ」「registry の初期化で `core` だけの revision（`sequence`=1）を登録する」を加える。permission の `tier` の記入例を `read-sensitive`・`privileged/T` 等の表記に改める |
+    | HO-V11-3 | 05_adr/ADR-016-versioning-deprecation.md（D16-30・D16-31） | revision の系列が registry 全体で 1 本であること、withdrawn・shadow_failed の revision も系列に残り次の登録が内容を引き継ぐこと（取り消しは新しい revision で行う）を確認し、取り消し専用の操作の要否を決める |
+    | HO-V11-4 | 11_contracts/authorization-api.openapi.yaml（CON-03） | facade が `operation_tier` を本書の `CamPermission.tier` から引く経路で、両者が同じ CON-02 `OperationTier` になったため写像が不要になった旨を `operation_tier` の説明に書く。tid の写しと例の値の是正は CON-02 の申し送り HO-I7-1 |
+    | HO-V11-5 | 13_integration-trial/expense-service | `model/expense.model-change-request.json` の `base_revision: mr_TRIALBASE` と tier の表記は v1.0 固定の記録として残し、v1.1 での再試験時に `listModels` から取る形と CON-02 の表記に改める |
 
     ## 12. レビュー記録
     > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。ラウンド1 の記録は INT-03 §16.1 にある。
@@ -1037,6 +1055,15 @@ paths:
           OpenFGA も認可モデルを不変とし、書込みのたびに新しい版を作る [V][^3]（RS-07#18）。
         - 検証に 1 件でも不合格のある変更は登録しない（authorization-model.md §12.1「無効なモデルの拒否」、CL-0104）[D]。
         - `base_revision` は直近の登録済み revision と一致しなければならない（条件付き登録。一致しなければ 409 `base_revision_conflict`）[D]。
+        - v1.1（I-14、P-21）`base_revision` の値の決め方 [D]:
+          - 「直近の登録済み revision」は、registry 全体（全名前空間で 1 本の系列）で `sequence` が最大の revision で、`state` を問わない。名前空間ごとの系列はない。
+            このため、名前空間の最初のモジュールを登録する場合（新規サービスの初回登録）も、`base_revision` は「自分の名前空間の前の版」ではなく registry 全体の直近の revision である。
+          - 取得方法: `listModels`（`state` を指定しない）の応答の `revisions[0].model_revision`。`listModels` は `sequence` の降順で返す。
+            CI は登録の直前に取得し、同じ値で `validateModel` と `registerModel` を呼ぶ。409 のときは応答の `latest_revision`（拡張メンバ。ヒントであり、無い場合は `listModels` で取り直す）を使い、`validateModel` からやり直す。自動の再試行は 1 回までとし、2 回続けて 409 なら人の判断に回すことを推奨する。
+          - registry の初期化時に基盤チームが `core` モジュールだけの revision（`sequence`=1、`base_revision` なし）を登録する。依存サービスが登録を始める時点で revision は必ず 1 件以上あり、`base_revision` を省略・空にする初回登録の形はない。
+          - revision ID の値は不透明で、`mr_000001` のような連番を仮定して組み立ててはならない（`ModelRevisionId`）。
+          - モック（Prism）は `base_revision` を照合しないので、409 の経路は CON-11 の状態付きスタブで試す。自前スタブでは初期 revision を 1 件持ち、その ID を `listModels` で返す（模擬連携では `mr_TRIALBASE` を固定値で書いていた。P-21）。
+          - withdrawn・shadow_failed の revision も系列に残り、次の登録はその内容を引き継ぐ。取り消すには、取り消す内容の変更を新しい revision として登録する（取り消し専用の操作の要否は §8 の未決）。
         - 権限が広がる差分を含む変更は、`approvals` に追加承認を含めないと登録しない（ADR-016 D16-31 段 2）[D]。
         - `change_class`（§9.4）に応じた承認記録を `approvals` に求める。M0 はドメイン内 peer review、M1 は加えてプラットフォームチームのセキュリティレビュアー、M2 は移行手順の確認、M3 は 2 名以上の合意と CISO 同意（GOV-05 §6.4）。不足は 403 `approval_required` [D]。
         - モジュール単位で所有ドメインを確かめる。他ドメインの名前空間のモジュールは変更できない（X-1、X-4）。`core` は基盤チームだけが変更できる（authorization-model.md §3.1）[D]。
@@ -1045,7 +1072,16 @@ paths:
       x-negative-examples:
         - name: base_revision の競合
           request: 他チームの登録後に古い base_revision で登録
+          expected: 409 `base_revision_conflict`（`latest_revision` に直近の revision）
+        - name: base_revision の省略（v1.1（I-14、P-21））
+          request: 名前空間の初回登録だからとして base_revision を省略する
+          expected: 400 `invalid_request`（`base_revision` は必須。初回登録でも registry 全体の直近の revision を入れる）
+        - name: 自分の名前空間の前の版を base にする（v1.1（I-14、P-21））
+          request: 自分の名前空間の最後の revision（registry 全体では直近でない）を base_revision にする
           expected: 409 `base_revision_conflict`
+        - name: 存在しない revision（v1.1（I-14、P-21））
+          request: base_revision に採番されていない値（例 mr_TRIALBASE）を入れる
+          expected: 409 `base_revision_conflict`（pattern には合うため 400 ではない）
         - name: 他ドメインのモジュール変更
           request: namespace `hrm` の所有チームが `dms` のモジュールを含めて登録
           expected: 403 `namespace_not_owned`
@@ -1086,7 +1122,14 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '409':
-          $ref: '#/components/responses/Conflict'
+          description: 状態の競合。`base_revision` が直近の登録済み revision と一致しない（`base_revision_conflict`）など
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                baseRevisionConflict:
+                  $ref: '#/components/examples/BaseRevisionConflictExample'
         '422':
           $ref: '#/components/responses/ValidationFailed'
     get:
@@ -1099,6 +1142,8 @@ paths:
         G: [G-112]
       description: |
         revision は削除しない。判定記録が参照する revision は、その判定記録の保持期間が終わるまで残す（ADR-016 D16-04）[D]。
+        v1.1（I-14、P-21）: `sequence` の降順で返す。`state` を指定しない応答の `revisions[0].model_revision` が、`registerModel`・`validateModel` の `base_revision` に入れる値（registry 全体の直近の revision）である。
+        registry の初期化で登録される `core` だけの revision（`sequence`=1）があるため、空の一覧は返らない [D]。
       parameters:
         - $ref: '#/components/parameters/RequestId'
         - name: state
@@ -1226,7 +1271,7 @@ paths:
                   sampling:
                     privileged: 1.0
                     write: 1.0
-                    read_sensitive: 0.05
+                    read-sensitive: 0.05
                   min_duration_seconds: 86400
                   min_evaluations_per_stratum: 30000
                   approvals:
@@ -1308,7 +1353,7 @@ paths:
                         deny_expansion: 10
                         indeterminate_or_unavailable: 0
                         temporal: 0
-                      - tier: read_sensitive
+                      - tier: read-sensitive
                         evaluated: 96000
                         agreed: 95998
                         allow_expansion_unexplained: 0
@@ -2171,7 +2216,7 @@ components:
       name: tenant_id
       in: path
       required: true
-      description: テナントの不透明 ID（ADR-021。DL-71 確定後に共通定義へ置換）
+      description: テナントの不透明 ID（ADR-021）。値は token の `tid`・`tctx.tid` と同一の文字列（変換しない）。形は CON-02 `TenantIdSegment`（v1.1（I-7）で共通定義へ置換）
       schema:
         $ref: '#/components/schemas/TenantId'
     RequestId:
@@ -2328,7 +2373,7 @@ components:
                   permissions:
                     - name: read
                       expression: viewer | parent->read
-                      tier: read_sensitive
+                      tier: read-sensitive
                       marks: [tenant_delegable]
                   list_method: L3
               write_declarations:
@@ -2382,6 +2427,15 @@ components:
           - {name: engine_differential, status: pass}
           - {name: dsl_roundtrip, status: pass}
           - {name: depth_fanout_budget, status: pass}
+    BaseRevisionConflictExample:
+      summary: v1.1（I-14、P-21）base_revision が直近の revision と一致しない
+      value:
+        type: https://problems.authz-registry.example.invalid/base-revision-conflict
+        title: base_revision が直近の登録済み revision と一致しない
+        status: 409
+        code: base_revision_conflict
+        detail: base_revision mr_000042 is not the latest registered revision
+        latest_revision: mr_000043
     ModelRevisionExample:
       value:
         model_revision: mr_000043
@@ -2455,9 +2509,10 @@ components:
     TenantId:
       description: |
         テナントの不透明 ID（ADR-021 D21-12。D21-09 と同じ規則で払い出し、64 文字以下の ASCII、大文字小文字を区別して比較、払い出す値は小文字英数字、時刻を含めない）。
-        `core/tenant` の object ID としても tuple に現れるため、文字種は ObjectId と揃える [D]。符号化の候補（小文字 base32 26 文字か UUIDv4 36 文字）は DL-71 で確定する（未決（ADR-021 D21-09））
-      type: string
-      pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$'
+        `core/tenant` の object ID としても tuple に現れるため、文字種は ObjectId と揃える [D]。符号化の候補（小文字 base32 26 文字か UUIDv4 36 文字）は DL-71 で確定する（未決（ADR-021 D21-09））。
+        v1.1（I-7、P-09）: 表記の正本を CON-02 に一本化し、pattern の写しをやめて CON-02 `TenantIdSegment`（v0.3.1 の本定義と同じ pattern）を参照する。受理する値の集合は変わらない。
+        基盤が払い出す tid（CON-02 `IssuedTenantId`）は、CON-02 `TenantId`（CON-03 などの受信側の形）と本定義の両方で受理される [D]
+      $ref: './schemas/common.schema.json#/$defs/TenantIdSegment'
     CellId:
       description: cell の識別名（ADR-013。仮置き）
       type: string
@@ -3063,9 +3118,10 @@ components:
           pattern: '^[a-z0-9_ ()|&>-]+$'
           examples: ['viewer | parent->read', '(member | ancestor->manage) & parent->view']
         tier:
-          description: 操作階層（REQ-03 の 5 分類。operation-risk-tiers-assurance.md が正本）
-          type: string
-          enum: [public, read_sensitive, write, privileged, break_glass]
+          description: |
+            操作階層（REQ-03 の 5 分類と副区分。operation-risk-tiers-assurance.md が正本）。CON-03 の `operation_tier`（facade が registry から引く値）と同じ値を使う。
+            v1.1（I-7、P-09）: v0.3.1 の `[public, read_sensitive, write, privileged, break_glass]` をやめ、表記の正本 CON-02 `OperationTier`（`read-sensitive`、`privileged/T`・`privileged/P`、`break-glass/B`・`break-glass/P`）を参照する（preview の範囲の変更）[D]
+          $ref: './schemas/common.schema.json#/$defs/OperationTier'
         marks:
           description: permission catalog の印（authorization-model.md §3.2）
           type: array
@@ -3133,7 +3189,11 @@ components:
       required: [base_revision, modules, change_request_ref, tests, semantic_change]
       properties:
         base_revision:
-          $ref: '#/components/schemas/ModelRevisionId'
+          description: |
+            v1.1（I-14、P-21）: registry 全体で直近の登録済み revision（`listModels` を `state` なしで呼んだ応答の `revisions[0].model_revision`）。
+            名前空間の初回登録でも省略しない。registry の初期化で `core` だけの revision が登録されるため、値は常に存在する（`registerModel` の description）[D]
+          allOf:
+            - $ref: '#/components/schemas/ModelRevisionId'
         modules:
           type: array
           minItems: 1
@@ -3371,7 +3431,9 @@ components:
           type: integer
           minimum: 1
         base_revision:
-          $ref: '#/components/schemas/ModelRevisionId'
+          description: 登録時に基にした revision。v1.1（I-14、P-21）registry の初期化で登録される `sequence`=1 の revision（`core` だけ）にだけ無く、それ以外の revision には必ずある [D]
+          allOf:
+            - $ref: '#/components/schemas/ModelRevisionId'
         state:
           $ref: '#/components/schemas/ModelRevisionState'
         known_good:
@@ -3411,7 +3473,9 @@ components:
         sampling:
           type: object
           additionalProperties: false
-          required: [privileged, write, read_sensitive]
+          description: |
+            操作階層ごとの抽出率。キーは CON-02 `OperationTierClass` の値（副区分なし）。v1.1（I-7、P-09）で `read_sensitive` を `read-sensitive` に改めた（preview の範囲の変更）[D]
+          required: [privileged, write, read-sensitive]
           properties:
             privileged:
               type: number
@@ -3421,7 +3485,7 @@ components:
               type: number
               minimum: 0
               maximum: 1
-            read_sensitive:
+            read-sensitive:
               type: number
               minimum: 0
               maximum: 1
@@ -3440,8 +3504,10 @@ components:
       required: [tier, evaluated, agreed, allow_expansion_unexplained, deny_expansion, indeterminate_or_unavailable]
       properties:
         tier:
-          type: string
-          enum: [read_sensitive, write, privileged]
+          description: 層の操作階層。CON-02 `OperationTierClass` のうち shadow の対象の 3 値（v1.1（I-7、P-09）で表記を統一）
+          allOf:
+            - $ref: './schemas/common.schema.json#/$defs/OperationTierClass'
+          enum: [read-sensitive, write, privileged]
         evaluated:
           type: integer
           minimum: 0

@@ -1,0 +1,13 @@
+{
+  "$comment": "entry point 台帳（INT-00 入口の手順 1、INT-02 §2.1・§2.3）。主パターンは entry point ごとに 1 つ、付加パターンは要件の和。tier は CON-02 OperationTier の表記。permission は model/rsv.cam.json の catalog 対象の動詞（INT-02 AN-1〜AN-5）。",
+  "service": "rsv（会議室予約。名前空間コードは候補で、台帳の払い出し前。INT-03 S-2）",
+  "entry_points": [
+    { "id": "EP-RSV-01", "route": "POST /v1/rooms/{room_id}/bookings", "primary": "P-01", "additional": ["P-08（AI アシスタントの代理予約。act あり）"], "tier": "write", "resource_kind": "CREATE_CHILD", "resource_type": "rsv/room", "action": "book", "decision_question": "Q10（人がブラウザで使う）。代理予約は Q6 → P-08 だが同一 entry point なので主は P-01、P-08 の義務を重ねる" },
+    { "id": "EP-RSV-02", "route": "GET /v1/bookings/{booking_id}", "primary": "P-01", "additional": ["P-16（他テナントのゲストが閲覧）", "P-08"], "tier": "read-sensitive", "resource_kind": "EXISTING", "resource_type": "rsv/booking", "action": "view" },
+    { "id": "EP-RSV-03", "route": "DELETE /v1/bookings/{booking_id}", "primary": "P-01", "additional": ["P-08"], "tier": "write", "resource_kind": "EXISTING", "resource_type": "rsv/booking", "action": "cancel" },
+    { "id": "EP-RSV-04", "route": "GET /v1/rooms/{room_id}/bookings", "primary": "P-01", "additional": ["P-09（一覧。PP-2 の自前一覧、候補生成は方式 L2、post-check は evaluations execute_all）"], "tier": "read-sensitive", "resource_kind": "COLLECTION", "resource_type": "rsv/booking", "action": "view", "container": { "resource_type": "rsv/room", "action": "view" } },
+    { "id": "EP-RSV-05", "route": "POST /v1/bookings/{booking_id}/guests", "primary": "P-16", "additional": ["P-01"], "tier": "write", "resource_kind": "EXISTING", "resource_type": "rsv/booking", "action": "invite_guest", "status": "外部付与（core/external_grant）を作る契約 API がないため、判定の後に 501 を返す（report.md 重大 C-1）" },
+    { "id": "EP-RSV-06", "route": "consumer: rsv.reminder（予約リマインドの送信）", "primary": "P-04", "additional": ["P-24（outbox で発行）", "INT-02 §3.9 業務通知 BN-1〜BN-9"], "tier": "read-sensitive", "async_type": "A1（受付時に registerAcceptanceRecord、実行時に内部開始の Txn-Token）", "job_definition_id": "rsv.reminder.v1", "resource_kind": "EXISTING", "resource_type": "rsv/room", "action": "book", "recheck": "BN-3: 起点主体（予約者）の権限で、通知を起こした操作の動詞（book）を親の room に対して再 Check" }
+  ],
+  "tier_declaration": { "$comment": "INT-01 §2.3 の Tier 仮申告は未実施（10_integration と 11_contracts の範囲で設問 Q-01〜Q-09 を読んでいない）", "tier": "未申告" }
+}

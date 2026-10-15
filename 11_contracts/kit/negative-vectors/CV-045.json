@@ -1,0 +1,122 @@
+{
+  "id": "CV-045",
+  "title": "Txn-Token の検証と access token との照合（write 以上）",
+  "source": [
+    "CON-16 §1.6・§1.10 EN-3・IE-3",
+    "ADR-005 V1〜V14（CON-16 §1.3 の抜粋）",
+    "CON-06 txnTokenClaims"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "manifest に tier が write 以上の entry point がある"
+    }
+  ],
+  "status": "conditional",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を配る",
+    "TTS 役の JWK Set（CON-05 の TTS の検証鍵）を配る",
+    "access token と Txn-Token を自前の鍵で鋳造できる。claim を個別に上書きできる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-045a",
+      "description": "正規の access token（tid=t1）と、正規に署名されているが tctx.tid が t2 の Txn-Token を、write の entry point に提示する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "access_token": {
+              "claimed_issuer": "A",
+              "signer": "A.current",
+              "claims": {
+                "tid": "{{tenant.1}}"
+              }
+            },
+            "present_access_token_as": "authorization_bearer"
+          }
+        ],
+        "mint": {
+          "base": "txn_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "tctx": {
+              "tid": "{{tenant.2}}"
+            }
+          }
+        },
+        "present": {
+          "as": "txn_token_header"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "audit": {
+          "events_min": 1
+        },
+        "notes": "照合は bind_tenant の最初（CON-16 §2.4）。拒否の理由は l0_mismatch（CON-08 deny_l0:mismatch）"
+      }
+    },
+    {
+      "case_id": "CV-045b",
+      "description": "正規の access token と、署名区画を 1 バイト改変した Txn-Token を write の entry point に提示する（署名検証せずに payload を読む実装を検出する）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "access_token": {
+              "claimed_issuer": "A",
+              "signer": "A.current"
+            },
+            "present_access_token_as": "authorization_bearer"
+          },
+          {
+            "op": "fixtures",
+            "txn_token_tamper": "signature_byte_flip"
+          }
+        ],
+        "mint": {
+          "base": "txn_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "txn_token_header"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit"
+  ],
+  "strength": "D: ADR-005 V 規則と ADR-009（Txn-Token の検証は自社 profile txn-v1）。Transaction Tokens は Internet-Draft で規範根拠にしない",
+  "notes": [
+    "v1.1 の同期で新設（CON-16 IE-3）。CON-11 §6.8 に登録",
+    "access token とのテナントの照合は CON-11 §6.2 CV-001（cross-tenant）と別の観点（Txn-Token 側の改ざん・食い違い）である"
+  ],
+  "since": "0.2.0（v1.1 の同期。CON-16 IE-3）",
+  "deprecated": null
+}

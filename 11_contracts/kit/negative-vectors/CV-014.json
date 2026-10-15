@@ -1,0 +1,95 @@
+{
+  "id": "CV-014",
+  "title": "版の downgrade（凍結版より古い major の profile 版）",
+  "source": [
+    "ADR-016 §9.2",
+    "ADR-016 D16-08",
+    "ADR-016 D16-11"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    },
+    {
+      "role": "CR-2"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）",
+    "PDP スタブは unsupported_profile を返せる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-014a",
+      "description": "token の ver が最低受理版より古い major（例 0.9）。最低受理版は SUT の検証設定から読む（token の値から読まない。ADR-016 D16-11）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "ver": "{{profile.below_min}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-014b",
+      "description": "PDP が unsupported_profile を返す（CR-2）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "unsupported_profile"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response"
+  ],
+  "strength": "自社規範（ADR-016 D16-08・D16-11）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

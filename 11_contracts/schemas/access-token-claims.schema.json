@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://id-domain.example/contracts/schemas/access-token-claims/0.1.0/access-token-claims.schema.json",
-  "$comment": "文書ID: CON-06 / DL: DL-75 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15。対応要求: R-161, R-162, R-249, R-250, R-283／G-088, G-138, G-068, G-101, G-102（閉じ方: R-161・R-162・G-088 は区分 C で、本 schema は発行側検査と契約試験 DL-80 の入力までを担い、拒否率 100% の実測は未達。R-249 は区分 A で claim の封筒化を本 schema で機械検査可能にした。R-250・R-283 は 1 token 1 tid を型で表したが、資源側テナントとの照合は PEP の実測 ADR-005 H-10 が要る）。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-75 行、§2.3）, 05_adr/ADR-005-token-profile.md（claim の意味と発行条件の正本: D2, D9-3, D9-4, D9-5, V1〜V14）, 05_adr/ADR-021-irreversible-identifiers.md（名前の規則 D21-38、識別子の形式 D21-09〜D21-12, D21-22, D21-36、CI 検査 D21-42）, 05_adr/ADR-015-crypto-agility-pqc.md（暗号 profile CP、D15-14, D15-40）, 05_adr/ADR-016（版の運用 D16-02, D16-11, D16-45）, 05_adr/ADR-009（txn-v1: D09-09, D09-16, D09-29〜D09-32）, 05_adr/ADR-002（acr 区分 D2-22、U2-02）, 05_adr/reconciliation-notes.md §3.3, 04_architecture/claims-catalog.md（ARC-15。採用区分の正本）, 04_architecture/token-profile.md（ARC-02。検証規則 TP-xx と負例 NV-xx）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-04-oauth-oidc-profile.md（RS-04#60, #61, #66, #67, #68）, research/RS-06（RS-06#29〜#45）, research/standards-status.md（SS-A07 RFC 9068 final、SS-A09 RFC 8693 final、SS-B04 Transaction Tokens draft-11）。正本の分担: claim の名前は本 schema と ARC-15、名前の規則は ADR-021 D21-38、意味と発行条件は ADR-005、版の運用は ADR-016、凍結区分は ADR-022（reconciliation-notes §3.3）。本 schema は AS・TTS の発行側検査（ADR-021 D21-42 (c) の CI）と契約試験の正本であり、受信側は RFC 7519 §4 に従い理解できない claim を無視しなければならない（MUST）ため、受信側の SDK は未知 claim を理由に拒否しない（ARC-02 TP-08）。署名・鍵と issuer の結合・時刻比較・aud とサービスの一致・tid と資源テナントの照合は JSON Schema で表せないので ARC-02 §4 の SDK 規則で検査する。作成方法: AI エージェント（Claude）が上記 ADR・ARC-02・ARC-15・research を通読して起草した。作成者以外の AI エージェントによる独立レビューを 2026-10-15 に実施し、記録は 11_contracts/review-notes/CON-06.md にある。いずれも AI によるレビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。",
+  "$comment": "文書ID: CON-06 / DL: DL-75 / 版: 0.2.0 / 状態: draft / 最終更新: 2026-10-15。改版 v0.2.0（v1.1 の同期。v1.1（I-5・I-7・I-9）の他文書への申し送りの反映。AI エージェントによる同期で、独立レビュー・人による照合は未実施）: (1) principalType の $comment の「subject.type へ変換表なしで写す」を CON-02 x-subject-type-map で写す形に改めた（CON-08 x-handoff-v1.1 の 4、INT-02 HO11-2、CON-03 §12 N-5）。(2) operationTier を CON-02 OperationTier から public を除いた形の参照に、internalAccessTokenClaims・txnContext の tid を CON-02 IssuedTenantId への参照にした（CON-02 HO-I7-3。値の集合は同じ）。(3) txnTokenClaims に内部開始の Txn-Token の正例（ptxn あり、sid なし。CON-05 の internalStart の例と同じ値）を加えた（CON-05 §9 HO-03）。(4) x-open-issues に STS の検証鍵の配布（CON-05 §9 HO-05）と 401 の形（CON-11 §14.3 H11-5）を加えた。追加と同値の書換えのみのため minor [D]。対応要求: R-161, R-162, R-249, R-250, R-283／G-088, G-138, G-068, G-101, G-102（閉じ方: R-161・R-162・G-088 は区分 C で、本 schema は発行側検査と契約試験 DL-80 の入力までを担い、拒否率 100% の実測は未達。R-249 は区分 A で claim の封筒化を本 schema で機械検査可能にした。R-250・R-283 は 1 token 1 tid を型で表したが、資源側テナントとの照合は PEP の実測 ADR-005 H-10 が要る）。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-75 行、§2.3）, 05_adr/ADR-005-token-profile.md（claim の意味と発行条件の正本: D2, D9-3, D9-4, D9-5, V1〜V14）, 05_adr/ADR-021-irreversible-identifiers.md（名前の規則 D21-38、識別子の形式 D21-09〜D21-12, D21-22, D21-36、CI 検査 D21-42）, 05_adr/ADR-015-crypto-agility-pqc.md（暗号 profile CP、D15-14, D15-40）, 05_adr/ADR-016（版の運用 D16-02, D16-11, D16-45）, 05_adr/ADR-009（txn-v1: D09-09, D09-16, D09-29〜D09-32）, 05_adr/ADR-002（acr 区分 D2-22、U2-02）, 05_adr/reconciliation-notes.md §3.3, 04_architecture/claims-catalog.md（ARC-15。採用区分の正本）, 04_architecture/token-profile.md（ARC-02。検証規則 TP-xx と負例 NV-xx）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-04-oauth-oidc-profile.md（RS-04#60, #61, #66, #67, #68）, research/RS-06（RS-06#29〜#45）, research/standards-status.md（SS-A07 RFC 9068 final、SS-A09 RFC 8693 final、SS-B04 Transaction Tokens draft-11）。正本の分担: claim の名前は本 schema と ARC-15、名前の規則は ADR-021 D21-38、意味と発行条件は ADR-005、版の運用は ADR-016、凍結区分は ADR-022（reconciliation-notes §3.3）。本 schema は AS・TTS の発行側検査（ADR-021 D21-42 (c) の CI）と契約試験の正本であり、受信側は RFC 7519 §4 に従い理解できない claim を無視しなければならない（MUST）ため、受信側の SDK は未知 claim を理由に拒否しない（ARC-02 TP-08）。署名・鍵と issuer の結合・時刻比較・aud とサービスの一致・tid と資源テナントの照合は JSON Schema で表せないので ARC-02 §4 の SDK 規則で検査する。作成方法: AI エージェント（Claude）が上記 ADR・ARC-02・ARC-15・research を通読して起草した。作成者以外の AI エージェントによる独立レビューを 2026-10-15 に実施し、記録は 11_contracts/review-notes/CON-06.md にある。いずれも AI によるレビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。",
   "title": "内部 access token（at+jwt）の claim セット（CON-06）",
   "description": "ルートは内部 access token（ARC-02 の K3、JOSE typ=at+jwt、RFC 9068 準拠の社内 profile）の JWT Claims Set を検証する。$defs に JOSE header、introspection 応答（外部 opaque access token を edge が照会した結果、K2）、外部 RP 向け ID Token の基盤固有 claim の名前（衝突耐性名）、Transaction Token（社内 profile txn-v1、K5）の header と claim を別定義として置く。外部 opaque access token と refresh token は claim を持たない（ADR-005 D2）ので本 schema の対象外である。",
   "$ref": "#/$defs/internalAccessTokenClaims",
@@ -47,7 +47,9 @@
     "TBD（DL-71、ADR-021 D21-09）: sub・tid・client_id 等の符号化（小文字 base32 26 文字か UUIDv4 36 文字）。本 schema は CON-02 の IssuedOpaqueId と同じ 2 候補を受ける形にし（$id の基底が異なり相対 $ref で解決できないため、同じ pattern を写して持つ）、DL-71 確定時に一方へ絞る。前提台帳への追加要: 本 schema の識別子 pattern は DL-71 確定までの暫定（新規仮定、A-ID 未採番）。",
     "未決（契約間の不整合、独立レビュー CON-06 R-07）: act.sub の値の形。本 schema は ADR-021 D21-10（全類型共通の単一名前空間の sub）に従い不透明 ID とするが、11_contracts/token-exchange.openapi.yaml の内部 access token の payload 例は act.sub に SPIFFE ID を入れている。ADR-009 D09-14 は actor の身元を SVID の SAN URI から取るとするが、act.sub に書く値（SPIFFE ID か、それに対応付けた sub か）は ADR に明記がない。DL-74 で決め、両契約を揃える。",
     "上流文書間の差（独立レビュー CON-06 R-08）: 内部 access token の scope は ARC-15 §3.3 で「条」、ARC-02 §4.3 の判別表では「必須」。本 schema は採用区分の正本 ARC-15 に従い条件付きとする。sid は ADR-005 D9-4 が利用者主体で必須とし、ARC-15 §3.4 は「条（利用者 session 由来）」とする。本 schema は ADR-005 に従い利用者主体で必須とする。ARC-02・ARC-15 の所有者が表記を揃える。",
-    "前提台帳へ追加要: act の入れ子の深さ上限 N_act の初期案 3（ADR-009 D09-16 の NA09-2）を schema で固定している。値は DL-74 で決める。"
+    "前提台帳へ追加要: act の入れ子の深さ上限 N_act の初期案 3（ADR-009 D09-16 の NA09-2）を schema で固定している。値は DL-74 で決める。",
+    "未決（v1.1 の同期。CON-05 §9 HO-05）: STS が発行する内部 access token の検証鍵の配布（JWK Set の所在と形）が契約にない。CON-05 v1.1（I-9）は TTS の JWK Set だけを定めた。STS 分は本 schema の次版か CON-05 の次版で同じ形で定める。所有者は DL-74・DL-75 の所有者、期限は DEC-8 第 1 段の前 [D]。",
+    "未決（v1.1 の同期。CON-11 §14.3 H11-5）: token の検証に失敗した要求への 401 の形（WWW-Authenticate の auth-scheme と error=\"invalid_token\"、本文に理由を書かない、拒否の理由で応答を変えない）の正本は ARC-06（04_architecture/pep-contract.md）に置く予定で、未作成である。それまでは CON-11 §6.1.2 のキットの期待結果を参照する。ARC-06 に置かれたら本 schema の description から当該節を参照する [D]。"
   ],
   "examples": [
     {
@@ -184,7 +186,7 @@
       "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$"
     },
     "principalType": {
-      "$comment": "主体種別（claim 名案 ptype、KC-1）。v1 の値は人・service account・workload・AI エージェントの 4 つ（ADR-005 D9-4）。値の文字列は本 schema の名前案（KC-1 と同時に決裁）。AuthZEN 1.0（Final）の subject.type へ変換表なしで写す（ARC-15 §3.6、RS-07#63）。sub の文字列から種別を推論しない（ADR-021 D21-10）。デバイスの追加は未決（ADR-017 L17-4）で、追加は ver の版変更になる。",
+      "$comment": "主体種別（claim 名案 ptype、KC-1）。v1 の値は人・service account・workload・AI エージェントの 4 つ（ADR-005 D9-4）。値の文字列は本 schema の名前案（KC-1 と同時に決裁）。AuthZEN 1.0（Final）の subject.type へは、CON-02（common.schema.json）の x-subject-type-map の表で写す（human→core/user など。v1.1（I-5）の同期で「変換表なしで写す」から改めた。v1.0 の記述は CON-03 の EntityType と食い違っていた）。監査（CON-08）の subject.type へは値のまま写す（CON-08 x-subject-type-map）。写像が未決の値（ai_agent）や未知の値を受けた PEP は PDP を呼ばずに拒否する（INT-02 SM-3）（ARC-15 §3.6、RS-07#63）。sub の文字列から種別を推論しない（ADR-021 D21-10）。デバイスの追加は未決（ADR-017 L17-4）で、追加は ver の版変更になる。",
       "type": "string",
       "enum": ["human", "service_account", "workload", "ai_agent"]
     },
@@ -296,7 +298,7 @@
         "jti": { "$ref": "#/$defs/opaqueId", "description": "JWT の一意 ID（RFC 7519 §4.1.7）。grant・session の ID ではない（ADR-005 D13-1）。privileged の RS は発行台帳と毎要求照合（D1-6）。" },
         "client_id": { "$ref": "#/$defs/opaqueId", "description": "RFC 8693 §4.3 [^2]。RFC 9068 §2.2 REQUIRED。AI エージェントの委任では client_id がエージェントを表す（ADR-017 D17-08）。" },
         "scope": { "$ref": "#/$defs/scopeString", "description": "条件付き（scope 要求時）。RFC 9068 の scope は aud の資源で意味を持つ（MUST）[^1]。" },
-        "tid": { "$ref": "#/$defs/opaqueId", "description": "作用中テナント 1 値（ADR-005 V9、ADR-021 D21-12）。所属一覧は入れない（R-283）。PEP が資源から導いたテナントと照合（R-250）。" },
+        "tid": { "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/IssuedTenantId", "$comment": "v1.1 の同期（CON-02 HO-I7-3）: opaqueId の写しから CON-02 IssuedTenantId（同じ 2 候補）への参照に改めた [D]。", "description": "作用中テナント 1 値（ADR-005 V9、ADR-021 D21-12）。所属一覧は入れない（R-283）。PEP が資源から導いたテナントと照合（R-250）。" },
         "ptype": { "$ref": "#/$defs/principalType", "description": "主体種別（名前案、KC-1）。" },
         "act": { "$ref": "#/$defs/actor", "description": "条件付き（委任・exchange 時）。" },
         "cnf": { "$ref": "#/$defs/confirmation", "description": "条件付き（束縛時）。内部は I1 で x5t#S256（ADR-005 K-6 未決）。" },
@@ -459,9 +461,11 @@
       "maxLength": 2048
     },
     "operationTier": {
-      "$comment": "起点の操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md §2（5 分類と副区分 /T・/B・/P）。public は token 不要なので含めない。txn の現行の発行範囲は write 以上（未決 U-02）。",
-      "type": "string",
-      "enum": ["read-sensitive", "write", "privileged/T", "privileged/P", "break-glass/B", "break-glass/P"]
+      "$comment": "起点の操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md §2（5 分類と副区分 /T・/B・/P）。public は token 不要なので含めない。txn の現行の発行範囲は write 以上（未決 U-02）。v1.1 の同期（CON-02 HO-I7-3、v1.1（I-7））: 値の写し（read-sensitive, write, privileged/T, privileged/P, break-glass/B, break-glass/P）をやめ、表記の正本 CON-02 OperationTier から public を除いた形にした。値の集合は変えていない。外部参照を解けない道具には 1 ファイル化した版を渡す（CON-11 kit/README.md §2.3）[D]。",
+      "allOf": [
+        { "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/OperationTier" },
+        { "not": { "const": "public" } }
+      ]
     },
     "txnTokenJwsHeader": {
       "$comment": "K5 Transaction Token の JOSE header。typ=txntoken+jwt は draft-11 §9.1 の MUST [^11] だが draft であり規範根拠ではない（社内 profile txn-v1 として固定）。鍵族 3b、ES256（ADR-007 D7-10）。内部 access token と鍵族・typ・受理ヘッダの 3 軸で分ける（ARC-02 §4.3）。",
@@ -479,7 +483,7 @@
       "$comment": "tctx（連鎖で不変の値。draft-11 では RECOMMENDED [^11]、txn-v1 で必須）。項目は ADR-009 D09-29 に限る。項目名 root_jti・tier・ptxn・gref・ver は名前案（KC-1、ARC-15 §4.2）。取引の業務パラメータ（金額・対象 ID）、個人識別属性、権限は入れない。sid・gref は利用者主体で必須だが、Txn-Token は主体種別を持たないので schema では条件化できず、TTS の発行規則（起点の内部 access token の ptype）で検査する。起点エージェントの項目は未決（ADR-017 L17-2）。",
       "type": "object",
       "properties": {
-        "tid": { "$ref": "#/$defs/opaqueId", "description": "作用中テナント。PEP の資源側テナント照合（T-021）と期待 aud（cell）の引当て（ADR-009 D09-09）。" },
+        "tid": { "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/IssuedTenantId", "$comment": "v1.1 の同期（CON-02 HO-I7-3、HO-I7-5）[D]。", "description": "作用中テナント。PEP の資源側テナント照合（T-021）と期待 aud（cell）の引当て（ADR-009 D09-09）。" },
         "root_jti": { "$ref": "#/$defs/opaqueId", "description": "edge の最初の exchange で出した内部 access token の jti。内部開始の取引の例外は未決（ADR-026 L26-1）。" },
         "gref": { "$ref": "#/$defs/opaqueId" },
         "sid": { "$ref": "#/$defs/opaqueId" },
@@ -491,7 +495,7 @@
       "additionalProperties": false
     },
     "txnTokenClaims": {
-      "$comment": "K5 Transaction Token（社内 profile txn-v1）の claim セット。draft-11 の REQUIRED（iat, exp, aud, txn, sub, scope, req_wl）に、草案で OPTIONAL の iss と RECOMMENDED の tctx を txn-v1 で必須にして加える（ARC-15 §3.5）[^11]。txn の名前と意味は RFC 8417 §2.2 で固定（IANA 登録済み）[^12]。Txn-Token は access token として使ってはならず（MUST NOT）、Authorization ヘッダでは受理しない（ARC-02 NV-19）。全体をログに残さない（MUST NOT）。rctx は発行しない（ADR-009 D09-30）。purp は draft-07 で scope に改名されたので発行しない（ADR-009 D09-31）。受信側は rctx・purp を含む未知 claim を無視する（草案の MUST）。JSON Schema で表せない規則: 同じ要求の内部 access token と sub・tid・root_jti が整合すること（ADR-009 D09-32）、aud が tid の収容 cell の値であること、scope が subject_token の scope 以下であること（MUST）。",
+      "$comment": "v1.1 の同期（CON-05 §9 HO-03、v1.1（I-9））: examples の 2 件目は内部開始の Txn-Token の正例で、CON-05 の internalStart の payload と同じ値である。tctx に親取引 ptxn（起点要求の txn）を持ち、sid を持たず、root_jti は起点要求のもの（root_jti の例外は未決 ADR-026 L26-1。決まれば本例も直す）[D]。K5 Transaction Token（社内 profile txn-v1）の claim セット。draft-11 の REQUIRED（iat, exp, aud, txn, sub, scope, req_wl）に、草案で OPTIONAL の iss と RECOMMENDED の tctx を txn-v1 で必須にして加える（ARC-15 §3.5）[^11]。txn の名前と意味は RFC 8417 §2.2 で固定（IANA 登録済み）[^12]。Txn-Token は access token として使ってはならず（MUST NOT）、Authorization ヘッダでは受理しない（ARC-02 NV-19）。全体をログに残さない（MUST NOT）。rctx は発行しない（ADR-009 D09-30）。purp は draft-07 で scope に改名されたので発行しない（ADR-009 D09-31）。受信側は rctx・purp を含む未知 claim を無視する（草案の MUST）。JSON Schema で表せない規則: 同じ要求の内部 access token と sub・tid・root_jti が整合すること（ADR-009 D09-32）、aud が tid の収容 cell の値であること、scope が subject_token の scope 以下であること（MUST）。",
       "type": "object",
       "properties": {
         "iss": { "$ref": "#/$defs/issuerId", "description": "cell の TTS。" },
@@ -534,6 +538,24 @@
             "gref": "onsxe5tjmnswg33oonsw45dhoj",
             "sid": "mnxw24dmmvzgk3djmruxg2lonv",
             "tier": "write",
+            "ver": "1.0"
+          }
+        },
+        {
+          "iss": "https://tts.cell-opaque-code.id-domain.example",
+          "aud": "txn-td-c07",
+          "iat": 1792051200,
+          "exp": 1792051260,
+          "txn": "m2wq7hz3kr5na4tv6dp2xce7fy",
+          "sub": "k3vq7m2xh5d4ta6pzr2nbw7ycu",
+          "scope": "op.report.generate",
+          "req_wl": "spiffe://jp.id-domain.example/w/report-job",
+          "tctx": {
+            "tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy",
+            "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42",
+            "gref": "g5rz2kq7vm3xa4hd6tn2pwc7be",
+            "tier": "read-sensitive",
+            "ptxn": "x7pq3mz2kv5ha4td6rn2cwe7by",
             "ver": "1.0"
           }
         }

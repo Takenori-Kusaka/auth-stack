@@ -1,0 +1,65 @@
+{
+  "types": [
+    {
+      "name": "rsv/site",
+      "relations": [
+        { "name": "parent", "directly_related": ["core/tenant"], "max_direct": 1 },
+        { "name": "facility_admin", "directly_related": ["core/user", "core/group#member"] },
+        { "name": "booker", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/tenant#member"] }
+      ],
+      "permissions": [
+        { "name": "administrators", "expression": "facility_admin | parent->manage", "tier": "read-sensitive" },
+        { "name": "bookers", "expression": "booker | administrators", "tier": "read-sensitive" },
+        { "name": "configure", "expression": "administrators", "tier": "privileged/T" }
+      ],
+      "list_method": "L2"
+    },
+    {
+      "name": "rsv/floor",
+      "relations": [
+        { "name": "parent", "directly_related": ["rsv/site"], "max_direct": 1 },
+        { "name": "booker", "directly_related": ["core/user", "core/group#member", "core/role#assignee"] }
+      ],
+      "permissions": [
+        { "name": "administrators", "expression": "parent->administrators", "tier": "read-sensitive" },
+        { "name": "bookers", "expression": "booker | parent->bookers", "tier": "read-sensitive" }
+      ],
+      "list_method": "L2"
+    },
+    {
+      "name": "rsv/room",
+      "relations": [
+        { "name": "parent", "directly_related": ["rsv/floor"], "max_direct": 1 }
+      ],
+      "permissions": [
+        { "name": "administrators", "expression": "parent->administrators", "tier": "read-sensitive" },
+        { "name": "bookers", "expression": "parent->bookers", "tier": "read-sensitive" },
+        { "name": "book", "expression": "bookers", "tier": "write", "marks": ["tenant_delegable"] },
+        { "name": "view", "expression": "bookers | administrators", "tier": "read-sensitive", "marks": ["tenant_delegable"] },
+        { "name": "configure", "expression": "administrators", "tier": "privileged/T" }
+      ],
+      "list_method": "L2"
+    },
+    {
+      "name": "rsv/booking",
+      "relations": [
+        { "name": "parent", "directly_related": ["rsv/room"], "max_direct": 1 },
+        { "name": "organizer", "directly_related": ["core/user"], "max_direct": 1 },
+        { "name": "attendee", "directly_related": ["core/user", "core/group#member"], "max_direct": 200 },
+        { "name": "guest", "directly_related": ["core/external_grant#grantee"], "max_direct": 50 }
+      ],
+      "permissions": [
+        { "name": "view", "expression": "organizer | attendee | guest | parent->administrators", "tier": "read-sensitive", "marks": ["external_grantable"] },
+        { "name": "cancel", "expression": "organizer | parent->administrators", "tier": "write" },
+        { "name": "invite_guest", "expression": "organizer", "tier": "write" }
+      ],
+      "list_method": "L2"
+    }
+  ],
+  "write_declarations": [
+    {
+      "workload": "spiffe://stub.test.invalid/rsv/api",
+      "relations": ["rsv/site#parent", "rsv/site#facility_admin", "rsv/site#booker", "rsv/floor#parent", "rsv/floor#booker", "rsv/room#parent", "rsv/booking#parent", "rsv/booking#organizer", "rsv/booking#attendee"]
+    }
+  ]
+}

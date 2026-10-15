@@ -1,0 +1,124 @@
+{
+  "id": "CV-011",
+  "title": "sandbox token の本番提示（issuer B の正規署名 token を本番役の検証点へ）",
+  "source": [
+    "ADR-022 D-6-2 (11)",
+    "ADR-022 D-6-4",
+    "ADR-008 D8-51",
+    "XR-17"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    },
+    {
+      "role": "CR-10"
+    }
+  ],
+  "status": "required",
+  "distinguish_from": [
+    {
+      "id": "CV-003",
+      "how": "v1.1（P-23）: CV-011 は issuer B が実在する前提で流す。B の discovery と JWKS は SUT から到達できる場所で配り、token は B の現行鍵で正しく署名する。SUT の設定（AUTH_OIDC_DISCOVERY_URL）には issuer A だけを入れる。合格の条件は拒否に加え、SUT が B の discovery・JWKS を 1 回も取得しないこと（stub_access_log で確かめる）。B を到達不能にしたまま流した実行や、B の鍵を JWKS に載せずに流した実行は CV-003・CV-005 と区別できないので、CV-011 の合否に数えない"
+    }
+  ],
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）",
+    "issuer B（sandbox 役）を、A と別の origin で discovery・JWKS ごと実際に起動する",
+    "B の鍵の kid は A の kid と別の値にする。CV-011b では A の kid と同じ値の kid を B の鍵に付ける",
+    "A と B の両方の取得記録を残す"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-011a",
+      "description": "iss=B、B の現行鍵で正規署名。B の discovery・JWKS は到達可能",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "B",
+          "signer": "B.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "fetches": {
+            "issuer_B.discovery": 0,
+            "issuer_B.jwks": 0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "CV-011b",
+      "description": "iss=A を名乗り、B の鍵で署名し、kid を A の現行鍵と同じ値にする（kid の名前だけで鍵を選び、鍵の出所を確かめない実装の検出）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "B.current",
+          "header": {
+            "kid": "{{key.A.current.kid}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "fetches": {
+            "issuer_B.discovery": 0,
+            "issuer_B.jwks": 0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "CV-011c",
+      "applies_when": "roles contains CR-10",
+      "description": "issuer B で登録した client_id を issuer A の token endpoint で使う（CON-14 CRN-12）",
+      "stimulus": {
+        "request": {
+          "operation": "{{issuer.A.token_endpoint}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "notes": "invalid_client を受けて登録済みとして続行しない（CON-11 §3 CR-10）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "stub_access_log",
+    "kit_record"
+  ],
+  "strength": "自社規範（ADR-022 D-6-4、ADR-008 D8-51）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

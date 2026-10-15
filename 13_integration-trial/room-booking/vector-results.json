@@ -1,0 +1,252 @@
+[
+  {
+    "id": "CV-001a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 12ms"
+  },
+  {
+    "id": "CV-001b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 12ms"
+  },
+  {
+    "id": "CV-002a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 30ms"
+  },
+  {
+    "id": "CV-002b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 15ms"
+  },
+  {
+    "id": "CV-002c",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 16ms"
+  },
+  {
+    "id": "CV-002d",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 31ms"
+  },
+  {
+    "id": "CV-003a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 14ms"
+  },
+  {
+    "id": "CV-003b",
+    "result": "n/a",
+    "note": "CR-4（RP）の役割を持たない。本サービスは RP ではない"
+  },
+  {
+    "id": "CV-003c",
+    "result": "pass",
+    "note": "startup refused: discovery issuer https://other.stub.test.invalid != configured http://127.0.0.1:58033"
+  },
+  {
+    "id": "CV-004a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 18ms"
+  },
+  {
+    "id": "CV-004b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 16ms"
+  },
+  {
+    "id": "CV-004c",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 14ms"
+  },
+  {
+    "id": "CV-004d",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 15ms"
+  },
+  {
+    "id": "CV-005a",
+    "result": "pass",
+    "note": "[read-sensitive] status=200 pdp=1 62ms"
+  },
+  {
+    "id": "CV-005b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 31ms"
+  },
+  {
+    "id": "CV-006a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 13ms"
+  },
+  {
+    "id": "CV-007a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 2ms"
+  },
+  {
+    "id": "CV-007b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 27ms"
+  },
+  {
+    "id": "CV-007c",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 31ms"
+  },
+  {
+    "id": "CV-007d",
+    "result": "pass",
+    "note": "[read-sensitive] status=200 pdp=1 30ms"
+  },
+  {
+    "id": "CV-008a",
+    "result": "pass",
+    "note": "[read-sensitive] status=404 pdp=0 15ms"
+  },
+  {
+    "id": "CV-008b",
+    "result": "pass",
+    "note": "[read-sensitive] status=404 pdp=0 15ms"
+  },
+  {
+    "id": "CV-008c",
+    "result": "pass",
+    "note": "[read-sensitive] status=404 pdp=0 16ms"
+  },
+  {
+    "id": "CV-009a",
+    "result": "n/a",
+    "note": "conditional（sender_constrained=false。DPoP を使わない）"
+  },
+  {
+    "id": "CV-010a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 31ms"
+  },
+  {
+    "id": "CV-011a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 30ms"
+  },
+  {
+    "id": "CV-011b",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 32ms"
+  },
+  {
+    "id": "CV-011c",
+    "result": "n/a",
+    "note": "CR-10（client 登録）の役割を持たない"
+  },
+  {
+    "id": "CV-012a",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 325ms [read-sensitive] status=503 pdp=1 326ms"
+  },
+  {
+    "id": "CV-012b",
+    "result": "pass",
+    "note": "connect: non-routable address (Windows returns unreachable at once, so this is NOT a true connect delay); [write] status=503 pdp=0 28ms connect: non-routable address (Windows returns unreachable at once, so this is NOT a true connect delay); [read-sensitive] status=503 pdp=0 31ms"
+  },
+  {
+    "id": "CV-012c",
+    "result": "n/a",
+    "note": "TLS を使わない試験構成（mTLS・TLS のスタブなし。CON-16 §4.4）"
+  },
+  {
+    "id": "CV-012d",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 329ms [read-sensitive] status=503 pdp=1 340ms"
+  },
+  {
+    "id": "CV-012e",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 331ms [read-sensitive] status=503 pdp=1 323ms"
+  },
+  {
+    "id": "CV-012f",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 29ms [read-sensitive] status=503 pdp=1 46ms"
+  },
+  {
+    "id": "CV-012g",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 31ms [read-sensitive] status=503 pdp=1 47ms"
+  },
+  {
+    "id": "CV-012h",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 46ms [read-sensitive] status=503 pdp=1 45ms"
+  },
+  {
+    "id": "CV-012i",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 35ms [read-sensitive] status=503 pdp=1 7ms"
+  },
+  {
+    "id": "CV-012j",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 34ms [read-sensitive] status=503 pdp=1 49ms"
+  },
+  {
+    "id": "CV-012k",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 48ms [read-sensitive] status=503 pdp=1 46ms"
+  },
+  {
+    "id": "CV-012l",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 47ms [read-sensitive] status=503 pdp=1 47ms"
+  },
+  {
+    "id": "CV-012m",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 31ms [read-sensitive] status=503 pdp=1 46ms"
+  },
+  {
+    "id": "CV-012n",
+    "result": "pass",
+    "note": "[write] status=404 pdp=1 45ms"
+  },
+  {
+    "id": "CV-012o",
+    "result": "pass",
+    "note": "[read-sensitive] status=404 pdp=1 46ms"
+  },
+  {
+    "id": "CV-013a",
+    "result": "pass",
+    "note": "[read-sensitive] status=200 pdp=1 46ms"
+  },
+  {
+    "id": "CV-013b",
+    "result": "pass",
+    "note": "[read-sensitive] status=200 pdp=1 30ms"
+  },
+  {
+    "id": "CV-014a",
+    "result": "pass",
+    "note": "[read-sensitive] status=401 pdp=0 16ms"
+  },
+  {
+    "id": "CV-014b",
+    "result": "pass",
+    "note": "[write] status=503 pdp=1 31ms"
+  },
+  {
+    "id": "CV-045a",
+    "result": "pass",
+    "note": "[write] status=401 pdp=0 30ms audit.reason=deny_token"
+  },
+  {
+    "id": "CV-045b",
+    "result": "pass",
+    "note": "[write] status=401 pdp=0 29ms audit.reason=deny_token"
+  },
+  {
+    "id": "CV-045a-own",
+    "result": "pass",
+    "note": "status=404 reason=deny_l0:mismatch"
+  }
+]

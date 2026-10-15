@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.example/auth-stack/schemas/audit-event/1/audit-event.schema.json",
-  "$comment": "文書ID: CON-08 / DL-77 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15（作成者以外による独立レビュー RV-01〜RV-14 を反映。記録は 11_contracts/review-notes/CON-08.md）。対応要求: R-118, R-119, R-127, R-128, R-232, R-257（R-requirements.md で本ファイルを対応成果物に含む行は R-119, R-127, R-232, R-257。R-118・R-127 は deliverables.md の DL-77 行）、関連 R-102, R-109, R-134, R-193.1〜R-193.6; G-118, G-063, G-064, G-095, G-134。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-77 行・§2.3）, 05_adr/ADR-014-audit-data.md（正本。D14-06〜D14-27・D14-43〜D14-45・D14-54）, 05_adr/ADR-009-workload-identity-token-exchange.md（D09-16・D09-35・D09-36）, 05_adr/ADR-011（D6-1 の reason・consistency・model_revision）, 05_adr/ADR-013（D13-26 の判定記録項目）, 05_adr/ADR-021（D21-09・D21-26・D21-36 の識別子・正規名の形式）, 05_adr/ADR-005（D9-3 の要求 context の範囲）, 11_contracts/schemas/common.schema.json（CON-02。値の形式を揃える）, 05_adr/ADR-022（監査イベント行・記述形式）, 05_adr/reconciliation-notes.md（§3.2 の相関 8 欄、C-34）, 04_architecture/audit-privacy.md（ARC-10 §2・§3・§5.4）, 04_architecture/claims-catalog.md（ARC-15 §3.7・§2.5）, 02_requirements/data-classification.md（§3 の基本区分・加重ラベル）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-10（#1〜#16, #22, #33, #42）, RS-06（#41, #45, #73）, RS-07（#66, #68）, research/standards-status.md（SS-I17, SS-I24, SS-C13, SS-A09, SS-B04）。作成方法: AI エージェント（Claude）が ADR-014 を正本として起草した。自己レビューであり、実在の CTO/CISO・契約変更審査会の承認ではない（CONVENTIONS §8）。凍結（DEC-8）前の draft であり、欄名・列挙値は変わり得る。 機械利用: x- で始まる欄は JSON Schema 2020-12 の未知 keyword（注釈）であり検証に影響しない。Ajv（ajv/dist/2020）は strict:false で使うか、x- の keyword を addKeyword で登録する（既定の strict モードは未知 keyword で compile を止める）。if/then 内の properties・required に type を重ねていないため、Ajv の strictTypes は警告を出す（検証結果は変わらない）。モックは examples（E1・E7・E2・E4・E10 の 5 族）を起点に作る。",
+  "$comment": "文書ID: CON-08 / DL-77 / 版: 0.3.1（v1.1 改訂と同期）/ 状態: draft / 最終更新: 2026-10-15（v1.1 の同期（版 0.3.1）: CON-03 §12 N-4 の action.name の例 can_read → read、CON-02 HO-I7-2 の tier の表記の参照化、x-subject-type-map の正本を CON-02 x-subject-type-map に移したことの反映、CON-11 §14.3 H11-6 の負例への id の付与。変更は x-changes-v1.1 の末尾。v1.1（I-3・I-5）: 13_integration-trial/report.md の P-03・P-06 を解消するため、decision_id が無い enforcement 記録、Txn-Token の無い write の txn、prev_fp の初期値と連鎖の単位、参照値（subj_ref・res_ref・jti_ref）の求め方と鍵の取得経路、subject.type の値と ptype からの写像を定めた。変更一覧は x-changes-v1.1、他文書への申し送りは x-handoff-v1.1。v1.0（タグ v1.0-submission）時点の記録: 作成者以外による独立レビュー RV-01〜RV-14 を反映。記録は 11_contracts/review-notes/CON-08.md）。対応要求: R-118, R-119, R-127, R-128, R-232, R-257（R-requirements.md で本ファイルを対応成果物に含む行は R-119, R-127, R-232, R-257。R-118・R-127 は deliverables.md の DL-77 行）、関連 R-102, R-109, R-134, R-193.1〜R-193.6; G-118, G-063, G-064, G-095, G-134。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-77 行・§2.3）, 05_adr/ADR-014-audit-data.md（正本。D14-06〜D14-27・D14-43〜D14-45・D14-54）, 05_adr/ADR-009-workload-identity-token-exchange.md（D09-16・D09-35・D09-36）, 05_adr/ADR-011（D6-1 の reason・consistency・model_revision）, 05_adr/ADR-013（D13-26 の判定記録項目）, 05_adr/ADR-021（D21-09・D21-26・D21-36 の識別子・正規名の形式）, 05_adr/ADR-005（D9-3 の要求 context の範囲）, 11_contracts/schemas/common.schema.json（CON-02。値の形式を揃える）, 05_adr/ADR-022（監査イベント行・記述形式）, 05_adr/reconciliation-notes.md（§3.2 の相関 8 欄、C-34）, 04_architecture/audit-privacy.md（ARC-10 §2・§3・§5.4）, 04_architecture/claims-catalog.md（ARC-15 §3.7・§2.5）, 02_requirements/data-classification.md（§3 の基本区分・加重ラベル）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-10（#1〜#16, #22, #33, #42）, RS-06（#41, #45, #73）, RS-07（#66, #68）, research/standards-status.md（SS-I17, SS-I24, SS-C13, SS-A09, SS-B04）。作成方法: AI エージェント（Claude）が ADR-014 を正本として起草した。自己レビューであり、実在の CTO/CISO・契約変更審査会の承認ではない（CONVENTIONS §8）。凍結（DEC-8）前の draft であり、欄名・列挙値は変わり得る。 機械利用: x- で始まる欄は JSON Schema 2020-12 の未知 keyword（注釈）であり検証に影響しない。Ajv（ajv/dist/2020）は strict:false で使うか、x- の keyword を addKeyword で登録する（既定の strict モードは未知 keyword で compile を止める）。if/then 内の properties・required に type を重ねていないため、Ajv の strictTypes は警告を出す（検証結果は変わらない）。モックは examples（E1・E7・E2・E4・E10 の 5 族）を起点に作る。v1.1（I-3）: examples[5]〜[7] に判定の無い E2（L0 拒否・PDP 不達かつ Txn-Token なし・token 検証失敗）を加えた。",
   "title": "監査イベント（正準スキーマ v1）",
   "description": "本基盤の監査の正本である正準スキーマ（ADR-014 D14-06）。1 インスタンスが 1 件の監査レコードを表す。族は E1 判定〜E10 集約の 10 族（D14-08）。各欄には x-field-class（structural=構造欄・平文、correlation=相関欄・不透明値、pseudonymous=仮名欄、protected=保護欄・暗号文）を付け、CI で WORM 層の形を検査する（D14-09、TC-014-13）。OCSF は正準ではなく版固定の写像先（OCSF 1.9.0、x-ocsf-mapping）であり、CADF 1.0.0 は任意の写像先である（D14-07）。最小化: 全階層で unevaluatedProperties=false とし、未定義の欄を受理しない。token・session cookie・Txn-Token の全文・資格情報・password・OTP・回復コードを置く欄は定義しない（D14-10）。自然人の識別子・IP・資源 ID の原文は平文で置かず、仮名欄（subj_ref・res_ref・ip_ref）と保護欄（prot）に置く（D14-43〜D14-45、AP-01、AP-02）。",
   "type": "object",
@@ -42,7 +42,7 @@
   ],
   "properties": {
     "schema_ver": {
-      "description": "正準スキーマの版（SemVer）。同一 major 内は欄の追加だけを許し、欄の削除・意味の変更は major 改訂（D14-13、ADR-016）。凍結前は pre-release 付き。",
+      "description": "正準スキーマの版（SemVer）。同一 major 内は欄の追加だけを許し、欄の削除・意味の変更は major 改訂（D14-13、ADR-016）。凍結前は pre-release 付き。 v1.1（I-3）: v1.1 で追加した欄（corr.txn_absence、detail.decision_source・no_decision_cause、integrity.chain_id）を使う記録は 1.1.0-draft.1 以降を書く [D]。v1.0 の記録（1.0.0-draft.1）は v1.1 でも受理する（欄の追加だけ。ただし producer_seq=1 で prev_fp に digest を置く記録は v1.1 で拒否する。§x-integrity-chain）[D]。",
       "type": "string",
       "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.]+)?$",
       "x-field-class": "structural"
@@ -154,14 +154,9 @@
     },
     "tier": {
       "description": "操作階層（正本: 02_requirements/operation-risk-tiers-assurance.md §2 の操作 5 分類）。",
-      "enum": [
-        "public",
-        "read-sensitive",
-        "write",
-        "privileged",
-        "break-glass"
-      ],
-      "x-field-class": "structural"
+      "x-field-class": "structural",
+      "$ref": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json#/$defs/OperationTierClass",
+      "$comment": "v1.1 の同期（CON-02 x-handover-v1.1 HO-I7-2、v1.1（I-7））: 値の集合（public / read-sensitive / write / privileged / break-glass）の写しをやめ、CON-02 OperationTierClass への参照にした。値の集合は変えていない。外部参照を解けない道具には CON-11 kit/README.md §2.3 の 1 ファイル化した版を渡す [D]。"
     },
     "tier_sub": {
       "description": "操作階層の副区分（正本: 02_requirements/operation-risk-tiers-assurance.md §2.1 の副区分欄と判定規則 J1・J2）。privileged は T（作用範囲が 1 テナント内）か P（テナント横断または基盤）、break-glass は B（テナント内の業務データへの例外アクセス）か P（基盤の緊急経路）。public・read-sensitive・write では置かない。CON-02 OperationTier の privileged/T 等は tier と本欄の組で表す。修飾子（+SEC・+FIN・+XT・+AGT・+REG、同 §2.3）の記録欄は未決（x-open-issues）。",
@@ -194,7 +189,7 @@
     },
     "subject": {
       "$ref": "#/$defs/Principal",
-      "description": "権限の主体（token の sub に当たる主体）。AuthZEN 1.0 の subject に対応する。ただし本欄の type は主体類型（PrincipalType）であり、AuthZEN の Subject.type（core/user 等の正規名、ADR-021 D21-26）とは値域が異なる。自然人の識別子は subj_ref（仮名）で置き、AuthZEN の subject.id の値は記録しない。",
+      "description": "権限の主体（token の sub に当たる主体）。AuthZEN 1.0 の subject に対応する。ただし本欄の type は主体類型（PrincipalType）であり、AuthZEN の Subject.type（core/user 等の正規名、ADR-021 D21-26）とは値域が異なる。自然人の識別子は subj_ref（仮名）で置き、AuthZEN の subject.id の値は記録しない。 v1.1（I-5）: type には検証済み access token の ptype を写す（core/user ではなく human）。写像は x-subject-type-map [D]（P-06）。",
       "x-field-class": "structural"
     },
     "actor": {
@@ -360,18 +355,16 @@
           },
           "corr": {
             "required": [
-              "decision_id",
               "request_id"
             ]
           }
         },
         "required": [
-          "subject",
-          "actor",
           "resource",
           "action"
         ]
-      }
+      },
+      "$comment": "v1.1（I-3）: decision_id・subject・actor の必須は判定の出所に応じて後続の規則で検査する（v1.0 では無条件に必須）。"
     },
     {
       "if": {
@@ -700,12 +693,22 @@
       "then": {
         "properties": {
           "corr": {
-            "required": [
-              "txn"
+            "anyOf": [
+              {
+                "required": [
+                  "txn"
+                ]
+              },
+              {
+                "required": [
+                  "txn_absence"
+                ]
+              }
             ]
           }
         }
-      }
+      },
+      "$comment": "v1.1（I-3）: txn か、書けない理由 txn_absence のどちらかを必須にする。"
     },
     {
       "if": {
@@ -917,7 +920,7 @@
       }
     },
     {
-      "$comment": "ADR-005 D9-3: 要求 context（txn）は write・privileged・break-glass/B で発行する。write・privileged は前出の条件で検査する。",
+      "$comment": "ADR-005 D9-3: 要求 context（txn）は write・privileged・break-glass/B で発行する。write・privileged は前出の条件で検査する。 v1.1（I-3）: txn か、書けない理由 txn_absence のどちらかを必須にする。",
       "if": {
         "properties": {
           "family": {
@@ -942,8 +945,17 @@
       "then": {
         "properties": {
           "corr": {
-            "required": [
-              "txn"
+            "anyOf": [
+              {
+                "required": [
+                  "txn"
+                ]
+              },
+              {
+                "required": [
+                  "txn_absence"
+                ]
+              }
             ]
           }
         }
@@ -1049,6 +1061,254 @@
           }
         }
       }
+    },
+    {
+      "$comment": "v1.1（I-3、P-03）: 判定を適用した E2（decision_source が pdp・known_good、または省略）は decision_id を必須にし、reason_code は façade の reason（ADR-011 D6-1）をそのまま写すか、応答を PEP が棄却した場合の deny_failmode にする。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "not": {
+          "properties": {
+            "detail": {
+              "properties": {
+                "decision_source": {
+                  "const": "none"
+                }
+              },
+              "required": [
+                "decision_source"
+              ]
+            }
+          },
+          "required": [
+            "detail"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "required": [
+              "decision_id"
+            ]
+          },
+          "reason_code": {
+            "pattern": "^(allow|deny_guardrail:[a-z0-9][a-z0-9._-]{0,63}|deny_no_relation|deny_indeterminate|deny_unavailable|unsupported_profile|deny_failmode)$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.1（I-3、P-03）: 判定の無い E2（decision_source=none）は decision_id を書かない（推測・代用の値を入れない）。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "allOf": [
+          {
+            "properties": {
+              "detail": {
+                "properties": {
+                  "decision_source": {
+                    "const": "none"
+                  }
+                },
+                "required": [
+                  "decision_source"
+                ]
+              }
+            },
+            "required": [
+              "detail"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "not": {
+              "required": [
+                "decision_id"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.1（I-3）: no_decision_cause=token_invalid の reason_code。pep-contract §3.7 の deny_token。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          },
+          "detail": {
+            "properties": {
+              "no_decision_cause": {
+                "const": "token_invalid"
+              }
+            },
+            "required": [
+              "no_decision_cause"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "pattern": "^deny_token$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.1（I-3）: no_decision_cause=l0_reject の reason_code。pep-contract §3.7 の暫定値（ADR-012 L-05 未決）。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          },
+          "detail": {
+            "properties": {
+              "no_decision_cause": {
+                "const": "l0_reject"
+              }
+            },
+            "required": [
+              "no_decision_cause"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "pattern": "^deny_l0:(missing|mismatch|not_found|indeterminate)$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.1（I-3）: no_decision_cause=['pdp_unreachable', 'pdp_timeout', 'pdp_response_invalid'] の reason_code。pep-contract §3.7 の deny_failmode。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          },
+          "detail": {
+            "properties": {
+              "no_decision_cause": {
+                "enum": [
+                  "pdp_unreachable",
+                  "pdp_timeout",
+                  "pdp_response_invalid"
+                ]
+              }
+            },
+            "required": [
+              "no_decision_cause"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "pattern": "^deny_failmode$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.1（I-3）: token 検証失敗の E2 は主体が未検証のため subject・actor を書かない（未検証の claim を監査に入れない。D14-10 の最小化）。それ以外の E2 は v1.0 どおり subject・actor を必須にする。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "allOf": [
+          {
+            "properties": {
+              "detail": {
+                "properties": {
+                  "no_decision_cause": {
+                    "const": "token_invalid"
+                  }
+                },
+                "required": [
+                  "no_decision_cause"
+                ]
+              }
+            },
+            "required": [
+              "detail"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "subject"
+              ]
+            },
+            {
+              "required": [
+                "actor"
+              ]
+            }
+          ]
+        }
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "family": {
+              "const": "enforcement"
+            }
+          },
+          "required": [
+            "family"
+          ]
+        },
+        "then": {
+          "required": [
+            "subject",
+            "actor"
+          ]
+        }
+      }
     }
   ],
   "unevaluatedProperties": false,
@@ -1061,7 +1321,8 @@
     "TenantId": {
       "description": "テナント ID（tid、ADR-021 D21-12・D21-38）。テナント外の基盤操作は予約値 ~platform（予約値の表記は DL-71 と突合要。未決）。",
       "type": "string",
-      "pattern": "^([a-z0-9][a-z0-9-]{15,63}|~platform)$"
+      "pattern": "^([a-z0-9][a-z0-9-]{15,63}|~platform)$",
+      "$comment": "v1.1 の同期（CON-02 HO-I7-2）: HO-I7-2 は本定義を CON-02 TenantId への参照に置き換えるとするが、値の集合が同じでない。本定義は小文字英数字・ハイフン 16〜64 文字と予約値 ~platform に限り、CON-02 TenantId（印字可能 ASCII 1〜64 文字）より狭い。CON-02 IssuedTenantId の値（base32 26 文字・UUID）はどちらでも受理される。置き換えは監査記録の検証を緩める変更になるため本同期では行わず、~platform の表記（x-open-issues の DL-71 行）と合わせて CON-08・CON-02 の所有者が決める（未決）[D]。"
     },
     "UtcTime": {
       "description": "UTC の RFC 3339 時刻。ミリ秒以上の精度を必須にし（小数 3〜9 桁）、末尾は Z に限る（D14-27）。",
@@ -1075,12 +1336,12 @@
       "pattern": "^(sha-256|sha-384|sha-512|sha3-256|sha3-384):[A-Za-z0-9_-]{43,88}$"
     },
     "KeyedRef": {
-      "description": "鍵版付きの鍵付きハッシュ（HMAC-SHA-256、base64url 43 文字）。先頭の k<版> で鍵 rotation 後も旧版で結合できる（D14-21）。",
+      "description": "鍵版付きの鍵付きハッシュ（HMAC-SHA-256、base64url 43 文字）。先頭の k<版> で鍵 rotation 後も旧版で結合できる（D14-21）。 v1.1（I-3）: 入力の組み立てと鍵の取得経路は x-ref-derivation。",
       "type": "string",
       "pattern": "^k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$"
     },
     "SubjRef": {
-      "description": "自然人主体の仮名 ID（subj_ref）。(tid, sub) ごとに払い出す乱数で、対応表は K 層に置く（D14-44）。接頭辞 sr_ で sub と区別し、sub の誤記録を CI で検知できるようにする（本スキーマの設計）。",
+      "description": "自然人主体の仮名 ID（subj_ref）。(tid, sub) ごとに払い出す乱数で、対応表は K 層に置く（D14-44）。接頭辞 sr_ で sub と区別し、sub の誤記録を CI で検知できるようにする（本スキーマの設計）。 v1.1（I-3、P-03）: 依存サービスは subj_ref を自ら計算しない（鍵付きハッシュではなく K 層が払い出す乱数のため、計算では求まらない）[D]。取得経路は x-ref-derivation。",
       "type": "string",
       "pattern": "^sr_[a-z0-9]{26,40}$"
     },
@@ -1102,7 +1363,7 @@
       ]
     },
     "PrincipalType": {
-      "description": "主体類型。v1 は human・service_account・workload・ai_agent（ADR-005 D9-4、claims-catalog の ptype）と、基盤部品自身を表す system。device の追加は未決（ADR-017 L17-4）で、追加時は minor 版。",
+      "description": "主体類型。v1 は human・service_account・workload・ai_agent（ADR-005 D9-4、claims-catalog の ptype）と、基盤部品自身を表す system。device の追加は未決（ADR-017 L17-4）で、追加時は minor 版。 v1.1（I-5）: 値は access token の ptype（CON-06）の値をそのまま写す [D]。AuthZEN の Subject.type（core/user・core/workload・core/client。CON-02・CON-03）の値は本欄に書かない（`core/user` は enum で拒否する）[D]。対応は x-subject-type-map。",
       "enum": [
         "human",
         "service_account",
@@ -1309,7 +1570,8 @@
         "res_ref": {
           "type": "string",
           "pattern": "^rr_k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$",
-          "x-field-class": "pseudonymous"
+          "x-field-class": "pseudonymous",
+          "description": "資源 ID のテナント鍵による鍵付きハッシュ（等価検索用。D14-09）。v1.1（I-3、P-03）: 入力の組み立てと鍵の取得経路は x-ref-derivation。依存サービスは鍵を保持しない [D]。"
         }
       },
       "required": [
@@ -1325,7 +1587,7 @@
           "type": "string",
           "pattern": "^[a-z][a-z0-9_.:-]{0,63}$",
           "x-field-class": "structural",
-          "description": "AuthZEN の action.name（CON-02 ActionName、例 can_read）か、E6〜E9 の管理操作名。CON-02 ActionName より広い値域を受理する。"
+          "description": "AuthZEN の action.name（CON-02 ActionName、例 read。v1.1（I-5）で動詞の permission 名に統一（CON-03 §12 N-4））か、E6〜E9 の管理操作名。CON-02 ActionName より広い値域を受理する。"
         }
       },
       "required": [
@@ -1392,11 +1654,11 @@
         },
         "txn": {
           "$ref": "#/$defs/OpaqueId",
-          "description": "取引の一意 ID（Transaction Tokens の txn、意味は RFC 8417 の登録で固定。draft-11 は SS-B04 で draft・IESG 未提出）。write 以上で必須（ADR-005 D9-3）。read-sensitive への拡大は未決（U-02）で、どちらの結論でも本欄の形は変えない。"
+          "description": "取引の一意 ID（Transaction Tokens の txn、意味は RFC 8417 の登録で固定。draft-11 は SS-B04 で draft・IESG 未提出）。write 以上で必須（ADR-005 D9-3）。read-sensitive への拡大は未決（U-02）で、どちらの結論でも本欄の形は変えない。 v1.1（I-3、P-03）: 値は署名・aud・exp を検証できた Txn-Token の txn claim だけを写す（未検証の値は書かない）[D]。write 以上で Txn-Token が無い・検証できない場合は txn を書かず、理由を txn_absence に書く（txn と txn_absence はどちらか一方だけ）[D]。"
         },
         "decision_id": {
           "$ref": "#/$defs/OpaqueId",
-          "description": "PDP façade が採番する判定 ID（ADR-011 D6-1）。E1・E2 の突合キー。"
+          "description": "PDP façade が採番する判定 ID（ADR-011 D6-1）。E1・E2 の突合キー。 v1.1（I-3、P-03）: E2 では façade の応答に形式どおりの decision_id があったときだけ書く（PEP は採番しない。pep-contract §3.7）。PDP 不達・L0 拒否・token 検証失敗で判定が無い場合は書かず、detail.decision_source=none と detail.no_decision_cause で表す [D]。応答を PEP が棄却した場合（整合性の格下げ・未知の reason 等）も decision_id があれば書く [D]。"
         },
         "request_id": {
           "$ref": "#/$defs/OpaqueId",
@@ -1418,9 +1680,29 @@
         "auth_event_id": {
           "$ref": "#/$defs/OpaqueId",
           "description": "認証イベント ID。E3・E4 だけ。token に載せない（claims-catalog §3.6）。"
+        },
+        "txn_absence": {
+          "enum": [
+            "not_presented",
+            "unverified",
+            "issuance_failed"
+          ],
+          "x-field-class": "structural",
+          "description": "v1.1（I-3、P-03）: txn を書けない理由。not_presented=要求に Txn-Token が無い、unverified=Txn-Token はあるが署名・aud・exp を検証できない（TTS の JWKS 未取得を含む。値は記録しない）、issuance_failed=自らが入口として TTS に Txn-Token を求めて得られなかった [D]。write・privileged・break-glass/B の E1・E2 は txn か txn_absence のどちらかを必須とする [D]。記録の欠落（監査欠損）を避けるため、Txn-Token の欠落で記録自体を拒否しない [D]（ADR-014 D14-02 の 100% 記録）。Txn-Token の無い write 要求を業務として許すかは本スキーマの範囲外（x-handoff-v1.1 の申し送り 2）。欠落の件数は K-21 と同様に照合で計上する [D]。"
         }
       },
-      "unevaluatedProperties": false
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$comment": "v1.1（I-3）: txn と txn_absence は排他。",
+          "not": {
+            "required": [
+              "txn",
+              "txn_absence"
+            ]
+          }
+        }
+      ]
     },
     "Purpose": {
       "description": "人によるアクセスの目的。E7 と、人による閲覧・検索・export・再識別・再構成（E9）で必須（D14-11、Pankki S: RS-10#60）。目的は token の claim ではなく JIT・support case の手続から記録する。自由記述は保護欄に置く。",
@@ -1528,7 +1810,7 @@
       "unevaluatedProperties": false
     },
     "Integrity": {
-      "description": "改ざん検知の L1（producer 連鎖）と L2（封印）の欄（D14-29）。prev_fp は直前レコードの fingerprint で、OCSF record_integrity の prev_event と同じ考え方（RS-10#42）。fingerprint の正準化規則（canonical serialization）は未決（DL-77 付属文書で TC-014-13 の前に決める）。",
+      "description": "改ざん検知の L1（producer 連鎖）と L2（封印）の欄（D14-29）。prev_fp は直前レコードの fingerprint で、OCSF record_integrity の prev_event と同じ考え方（RS-10#42）。fingerprint の正準化規則（canonical serialization）は未決（DL-77 付属文書で TC-014-13 の前に決める）。 v1.1（I-3、P-03）: 連鎖の単位・初期値・fingerprint の暫定計算方法を x-integrity-chain に定めた。",
       "type": "object",
       "properties": {
         "producer_id": {
@@ -1538,7 +1820,7 @@
         "producer_seq": {
           "type": "integer",
           "minimum": 1,
-          "description": "producer ごとの連番（照合 C1）。"
+          "description": "producer ごとの連番（照合 C1）。 v1.1（I-3）: 連鎖（producer_id と chain_id の組）ごとに 1 から始める [D]。"
         },
         "prev_fp": {
           "anyOf": [
@@ -1549,7 +1831,7 @@
               "type": "null"
             }
           ],
-          "description": "直前レコードの fingerprint。producer_seq=1 のときだけ null。"
+          "description": "直前レコードの fingerprint。v1.1（I-3、P-03）: 連鎖の最初のレコード（producer_seq=1）は null だけを書く（空文字列のハッシュ等の値を作らない）。producer_seq が 2 以上は Digest を必須とする [D]。fingerprint の暫定計算方法は x-integrity-chain。"
         },
         "producer_sdk_ver": {
           "type": "string",
@@ -1572,6 +1854,10 @@
             "leaf_index"
           ],
           "unevaluatedProperties": false
+        },
+        "chain_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "v1.1（I-3、P-03）: 連鎖の ID。producer の実体（process・replica）が起動して連鎖を始めるたびに乱数で払い出す [D]。同じ producer_id（SPIFFE ID）を複数の replica が共有する場合、または再起動時に producer_seq と直前の fingerprint を永続化しない場合は必須とする（スキーマでは検査できないため照合 C1 で検査）[D]。省略時の連鎖の単位は producer_id 単独（v1.0 と同じ）。"
         }
       },
       "required": [
@@ -1594,7 +1880,15 @@
                 "$ref": "#/$defs/Digest"
               }
             }
-          }
+          },
+          "then": {
+            "properties": {
+              "prev_fp": {
+                "type": "null"
+              }
+            }
+          },
+          "$comment": "v1.1（I-3）: producer_seq=1 は prev_fp=null だけ（v1.0 は digest も受理していた）。"
         }
       ],
       "unevaluatedProperties": false
@@ -1777,7 +2071,7 @@
       "unevaluatedProperties": false
     },
     "DetailEnforcement": {
-      "description": "E2 enforcement（PEP SDK）。PEP は自分の層で見えたものだけを記録し、decision_id で E1 と相関させる（CADF の observer モデル: RS-10#13、D14-22）。",
+      "description": "E2 enforcement（PEP SDK）。PEP は自分の層で見えたものだけを記録し、decision_id で E1 と相関させる（CADF の observer モデル: RS-10#13、D14-22）。 v1.1（I-3、P-03）: 判定の出所を decision_source で、判定が無い理由を no_decision_cause で表す。decision_source を省いた記録は v1.0 と同じく pdp とみなす（decision_id 必須）[D]。",
       "type": "object",
       "properties": {
         "entry_point_id": {
@@ -1791,7 +2085,7 @@
             "denied",
             "degraded"
           ],
-          "description": "適用結果。degraded は操作階層別 fail-mode（DL-19）を適用した場合。"
+          "description": "適用結果。degraded は操作階層別 fail-mode（DL-19）を適用した場合。 v1.1（I-3）: decision_source=none のときは denied だけ。known_good のときは degraded だけ [D]。"
         },
         "fail_mode": {
           "enum": [
@@ -1799,7 +2093,7 @@
             "deny",
             "spool_reject"
           ],
-          "description": "result=degraded または fail-mode による拒否のときの適用方式。"
+          "description": "result=degraded または fail-mode による拒否のときの適用方式。 v1.1（I-3）: no_decision_cause が pdp_unreachable・pdp_timeout・pdp_response_invalid のときは必須で、deny か spool_reject [D]。"
         },
         "pep_id": {
           "$ref": "#/$defs/NhiId"
@@ -1807,6 +2101,24 @@
         "pep_sdk_version": {
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+        },
+        "decision_source": {
+          "enum": [
+            "pdp",
+            "known_good",
+            "none"
+          ],
+          "description": "v1.1（I-3、P-03）: 適用した判定の出所。pdp=今回の façade 応答（corr.decision_id 必須）、known_good=操作階層別 fail-mode で既知の良い判定を再利用（元の判定の decision_id を必須。ADR-012 D12-14、pep-contract §3.7）、none=判定が無い（corr.decision_id を書かない）[D]。"
+        },
+        "no_decision_cause": {
+          "enum": [
+            "token_invalid",
+            "l0_reject",
+            "pdp_unreachable",
+            "pdp_timeout",
+            "pdp_response_invalid"
+          ],
+          "description": "v1.1（I-3、P-03）: decision_source=none の理由。token_invalid=OB-02 の token 検証失敗（主体が未検証のため subject・actor を書かない）、l0_reject=L0（PEP SDK のテナント照合 OB-04）で拒否し PDP を呼ばなかった、pdp_unreachable=façade に接続できない、pdp_timeout=締切（DL-19）までに応答が無い、pdp_response_invalid=応答に形式どおりの decision_id が無い・応答が解釈できない [D]（pep-contract §3.7 の内部理由表に対応）。reason_code との対応は x-enforcement-without-decision。"
         }
       },
       "required": [
@@ -1831,6 +2143,92 @@
             "required": [
               "fail_mode"
             ]
+          }
+        },
+        {
+          "$comment": "v1.1（I-3）: 判定が無い記録は理由が必須で、適用結果は拒否だけ。",
+          "if": {
+            "properties": {
+              "decision_source": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "decision_source"
+            ]
+          },
+          "then": {
+            "required": [
+              "no_decision_cause"
+            ],
+            "properties": {
+              "result": {
+                "const": "denied"
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "no_decision_cause"
+              ]
+            }
+          }
+        },
+        {
+          "$comment": "v1.1（I-3）: known_good の適用は degraded・fail_mode=known_good。",
+          "if": {
+            "properties": {
+              "decision_source": {
+                "const": "known_good"
+              }
+            },
+            "required": [
+              "decision_source"
+            ]
+          },
+          "then": {
+            "required": [
+              "fail_mode"
+            ],
+            "properties": {
+              "result": {
+                "const": "degraded"
+              },
+              "fail_mode": {
+                "const": "known_good"
+              }
+            }
+          }
+        },
+        {
+          "$comment": "v1.1（I-3）: PDP 不達系は fail-mode による拒否として fail_mode を必須にする。",
+          "if": {
+            "properties": {
+              "no_decision_cause": {
+                "enum": [
+                  "pdp_unreachable",
+                  "pdp_timeout",
+                  "pdp_response_invalid"
+                ]
+              }
+            },
+            "required": [
+              "no_decision_cause"
+            ]
+          },
+          "then": {
+            "required": [
+              "fail_mode"
+            ],
+            "properties": {
+              "fail_mode": {
+                "enum": [
+                  "deny",
+                  "spool_reject"
+                ]
+              }
+            }
           }
         }
       ],
@@ -3042,11 +3440,193 @@
           "e2kq7zm3vx5hd4ta6pn2bwe7cy"
         ]
       }
+    },
+    {
+      "schema_ver": "1.1.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "produced",
+      "event_id": "l0rej5k2m9q4x8v1b5n3p6r0t2",
+      "family": "enforcement",
+      "event_type": "pep.enforce",
+      "event_time": "2026-10-15T03:12:45.131Z",
+      "observed_time": "2026-10-15T03:12:45.131Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "producer_seq": 120045,
+        "prev_fp": "sha-256:Ai4Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb8Wc1Ds5Fe0Gh2J",
+        "producer_sdk_ver": "2.3.0",
+        "chain_id": "ch7k2m9q4x8v1b5n3p6r0t2w4y"
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "write",
+      "outcome": "success",
+      "reason_code": "deny_l0:mismatch",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "subject": {
+        "type": "human",
+        "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+      },
+      "actor": {
+        "mode": "delegated",
+        "chain": [
+          {
+            "type": "workload",
+            "nhi_id": "spiffe://jp1.id-domain.example/svc/orders"
+          }
+        ],
+        "on_behalf_of": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      },
+      "resource": {
+        "type": "commerce/order",
+        "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
+      },
+      "action": {
+        "name": "can_update"
+      },
+      "corr": {
+        "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
+        "request_id": "r6f7g8h9j0k1m2n3p4q5r6s7t8",
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "detail": {
+        "entry_point_id": "orders:patch:/orders/id",
+        "result": "denied",
+        "decision_source": "none",
+        "no_decision_cause": "l0_reject",
+        "pep_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "pep_sdk_version": "2.3.0"
+      }
+    },
+    {
+      "schema_ver": "1.1.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "produced",
+      "event_id": "pdpto6k2m9q4x8v1b5n3p6r0t2",
+      "family": "enforcement",
+      "event_type": "pep.enforce",
+      "event_time": "2026-10-15T03:12:45.131Z",
+      "observed_time": "2026-10-15T03:12:45.131Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/svc/expense",
+        "producer_seq": 1,
+        "prev_fp": null,
+        "producer_sdk_ver": "0.1.0",
+        "chain_id": "ch3n8p1r5t9v2x6z0b4d7f1h5k"
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "write",
+      "outcome": "success",
+      "reason_code": "deny_failmode",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "subject": {
+        "type": "human",
+        "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+      },
+      "actor": {
+        "mode": "delegated",
+        "chain": [
+          {
+            "type": "workload",
+            "nhi_id": "spiffe://jp1.id-domain.example/svc/expense"
+          }
+        ],
+        "on_behalf_of": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      },
+      "resource": {
+        "type": "expense/report",
+        "res_ref": "rr_k1.Wc1Ds5Fe0Gh2Ji4Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb"
+      },
+      "action": {
+        "name": "can_submit"
+      },
+      "corr": {
+        "txn_absence": "not_presented",
+        "request_id": "r7g8h9j0k1m2n3p4q5r6s7t8u9",
+        "trace_id": "0af7651916cd43dd8448eb211c80319c"
+      },
+      "detail": {
+        "entry_point_id": "expense:post:/reports/id/submit",
+        "result": "denied",
+        "fail_mode": "deny",
+        "decision_source": "none",
+        "no_decision_cause": "pdp_timeout",
+        "pep_id": "spiffe://jp1.id-domain.example/svc/expense",
+        "pep_sdk_version": "0.1.0"
+      }
+    },
+    {
+      "schema_ver": "1.1.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "produced",
+      "event_id": "tokinv7k2m9q4x8v1b5n3p6r0t",
+      "family": "enforcement",
+      "event_type": "pep.enforce",
+      "event_time": "2026-10-15T03:12:45.131Z",
+      "observed_time": "2026-10-15T03:12:45.131Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "producer_seq": 120046,
+        "prev_fp": "sha-256:Rt6Yb8Wc1Ds5Fe0Gh2Ji4Ku6Lw8MHn3vQk7Zp2Lm9Xa4",
+        "producer_sdk_ver": "2.3.0",
+        "chain_id": "ch7k2m9q4x8v1b5n3p6r0t2w4y"
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "read-sensitive",
+      "outcome": "success",
+      "reason_code": "deny_token",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "resource": {
+        "type": "commerce/order",
+        "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
+      },
+      "action": {
+        "name": "read"
+      },
+      "corr": {
+        "request_id": "r8h9j0k1m2n3p4q5r6s7t8u9v0",
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "detail": {
+        "entry_point_id": "orders:get:/orders/id",
+        "result": "denied",
+        "decision_source": "none",
+        "no_decision_cause": "token_invalid",
+        "pep_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "pep_sdk_version": "2.3.0"
+      }
     }
   ],
   "x-negative-examples-semantics": "各負例は examples[base] に patch を RFC 7396（JSON Merge Patch）で適用し（null は欄の削除、配列は置換。[10] §2）、続いて patch_remove の各 RFC 6901（JSON Pointer。[11] §3）が指す欄を削除したインスタンスである。CI は負例が全件不合格、examples が全件合格であることを検査する（violates は主な拒否理由で、他の理由が併発してもよい）。レビュー時の確認: jsonschema 4.26.0 Draft202012Validator（format 検査あり）。",
   "x-negative-examples": [
     {
+      "id": "AEN-01",
       "description": "生の jti を記録している（corr.jti を定義していないため unevaluatedProperties で拒否）。jti は jti_ref で記録する（D14-21）。",
       "base": 0,
       "violates": "corr.unevaluatedProperties",
@@ -3057,6 +3637,7 @@
       }
     },
     {
+      "id": "AEN-02",
       "description": "access token の全文を corr.sid に入れている（OpaqueId の pattern に一致せず拒否）。D14-10。",
       "base": 0,
       "violates": "$defs/OpaqueId.pattern",
@@ -3067,6 +3648,7 @@
       }
     },
     {
+      "id": "AEN-03",
       "description": "自然人の主体を subj_ref ではなく nhi_id（平文）で記録している。Principal の条件で拒否（D14-44）。",
       "base": 0,
       "violates": "$defs/Principal.allOf",
@@ -3078,6 +3660,7 @@
       }
     },
     {
+      "id": "AEN-04",
       "description": "write 階層の E1 に txn がない（ADR-005 D9-3）。",
       "base": 0,
       "violates": "allOf（write 以上の txn 必須）",
@@ -3086,6 +3669,7 @@
       ]
     },
     {
+      "id": "AEN-05",
       "description": "時刻がローカル時刻で秒精度（+09:00、小数なし）。UtcTime の pattern で拒否（D14-27）。",
       "base": 0,
       "violates": "$defs/UtcTime.pattern",
@@ -3094,6 +3678,7 @@
       }
     },
     {
+      "id": "AEN-06",
       "description": "E1 で decision=true なのに reason が deny_no_relation。DetailDecision の条件で拒否。",
       "base": 0,
       "violates": "$defs/DetailDecision.allOf",
@@ -3104,6 +3689,7 @@
       }
     },
     {
+      "id": "AEN-07",
       "description": "public 階層の判定記録（E1 は public で生じない。D14-17）。",
       "base": 0,
       "violates": "allOf（decision の tier）",
@@ -3112,6 +3698,7 @@
       }
     },
     {
+      "id": "AEN-08",
       "description": "送信元 IP を平文で src_ip 欄に置いている（未定義欄。IP は prot の暗号文と ip_ref だけ。AP-01・AP-02）。",
       "base": 0,
       "violates": "unevaluatedProperties",
@@ -3120,6 +3707,7 @@
       }
     },
     {
+      "id": "AEN-09",
       "description": "E7（特権・support）で purpose（目的と ticket 参照）がない（D14-11）。",
       "base": 1,
       "violates": "allOf（privileged_access の purpose 必須）",
@@ -3128,6 +3716,7 @@
       ]
     },
     {
+      "id": "AEN-10",
       "description": "sealed なのに integrity.seal と tenant_seq がない（D14-54）。",
       "base": 0,
       "violates": "allOf（record_stage=sealed）",
@@ -3137,6 +3726,7 @@
       ]
     },
     {
+      "id": "AEN-11",
       "description": "producer_seq が 2 以上なのに prev_fp が null（L1 連鎖の断絶。D14-29）。基底の例 1 は producer_seq=1・prev_fp=null。",
       "base": 1,
       "violates": "$defs/Integrity.allOf",
@@ -3147,6 +3737,7 @@
       }
     },
     {
+      "id": "AEN-12",
       "description": "E10 集約に subject を記録している（集約は主体単位の記録を持たない。D14-16）。",
       "base": 4,
       "violates": "allOf（aggregate の not anyOf）",
@@ -3158,6 +3749,7 @@
       }
     },
     {
+      "id": "AEN-13",
       "description": "resource.type が名前空間なしの型名（ADR-021 D21-26 の正規名 <名前空間コード>/<型名> でない）。",
       "base": 0,
       "violates": "$defs/Resource.properties.type.pattern",
@@ -3168,6 +3760,7 @@
       }
     },
     {
+      "id": "AEN-14",
       "description": "privileged なのに副区分（T/P）がない（REQ-03 §2.1・J2）。",
       "base": 1,
       "violates": "allOf（privileged の tier_sub 必須）",
@@ -3176,6 +3769,7 @@
       ]
     },
     {
+      "id": "AEN-15",
       "description": "break-glass/B の判定記録に txn がない（ADR-005 D9-3）。",
       "base": 0,
       "violates": "allOf（break-glass/B の txn 必須）",
@@ -3188,6 +3782,7 @@
       ]
     },
     {
+      "id": "AEN-16",
       "description": "AI エージェントが actor なのに委任元主体（on_behalf_of）がない（D14-12、T-075）。",
       "base": 0,
       "violates": "$defs/Actor.allOf（ai_agent の on_behalf_of 必須）",
@@ -3205,6 +3800,7 @@
       }
     },
     {
+      "id": "AEN-17",
       "description": "TTS の発行記録（E4）に txn がない（ADR-009 D09-35、D14-20）。",
       "base": 3,
       "violates": "allOf（issuance・tts の txn 必須）",
@@ -3213,6 +3809,7 @@
       ]
     },
     {
+      "id": "AEN-18",
       "description": "自然人主体の判定記録に acr がない（REQ-03 §3.7 AU-2）。",
       "base": 0,
       "violates": "allOf（E1 自然人の acr・auth_time 必須）",
@@ -3221,6 +3818,7 @@
       ]
     },
     {
+      "id": "AEN-19",
       "description": "write 階層の記録に副区分を付けている（副区分は privileged・break-glass だけ。REQ-03 §2.1）。",
       "base": 0,
       "violates": "allOf（public・read-sensitive・write の tier_sub 禁止）",
@@ -3229,12 +3827,134 @@
       }
     },
     {
+      "id": "AEN-20",
       "description": "trace_id が全ゼロ（W3C Trace Context の無効値）。",
       "base": 0,
       "violates": "$defs/Correlation.properties.trace_id.not",
       "patch": {
         "corr": {
           "trace_id": "00000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "id": "AEN-21",
+      "description": "v1.1（I-3）: 判定の出所を省いた（pdp とみなす）E2 に decision_id がない。PDP 不達・L0 拒否は decision_source=none で表す。",
+      "base": 2,
+      "violates": "allOf（E2 判定ありの decision_id 必須）",
+      "patch_remove": [
+        "/corr/decision_id"
+      ]
+    },
+    {
+      "id": "AEN-22",
+      "description": "v1.1（I-3）: decision_source=none なのに decision_id を書いている（request_id 等の代用値を入れた場合を含む）。",
+      "base": 5,
+      "violates": "allOf（E2 判定なしの decision_id 禁止）",
+      "patch": {
+        "corr": {
+          "decision_id": "r6f7g8h9j0k1m2n3p4q5r6s7t8"
+        }
+      }
+    },
+    {
+      "id": "AEN-23",
+      "description": "v1.1（I-3）: decision_source=none なのに no_decision_cause がない。",
+      "base": 5,
+      "violates": "$defs/DetailEnforcement.allOf",
+      "patch_remove": [
+        "/detail/no_decision_cause"
+      ]
+    },
+    {
+      "id": "AEN-24",
+      "description": "v1.1（I-3）: L0 拒否なのに reason_code が PDP の reason（deny_indeterminate）。L0 拒否は deny_l0:<理由>。",
+      "base": 5,
+      "violates": "allOf（l0_reject の reason_code）",
+      "patch": {
+        "reason_code": "deny_indeterminate"
+      }
+    },
+    {
+      "id": "AEN-25",
+      "description": "v1.1（I-3）: 判定が無いのに適用結果が permitted。",
+      "base": 5,
+      "violates": "$defs/DetailEnforcement.allOf",
+      "patch": {
+        "detail": {
+          "result": "permitted"
+        }
+      }
+    },
+    {
+      "id": "AEN-26",
+      "description": "v1.1（I-3）: PDP 締切超過の E2 に fail_mode がない。",
+      "base": 6,
+      "violates": "$defs/DetailEnforcement.allOf",
+      "patch_remove": [
+        "/detail/fail_mode"
+      ]
+    },
+    {
+      "id": "AEN-27",
+      "description": "v1.1（I-3）: write の E2 に txn も txn_absence もない。",
+      "base": 6,
+      "violates": "allOf（write 以上の txn 必須）",
+      "patch_remove": [
+        "/corr/txn_absence"
+      ]
+    },
+    {
+      "id": "AEN-28",
+      "description": "v1.1（I-3）: txn と txn_absence を両方書いている。",
+      "base": 6,
+      "violates": "$defs/Correlation.allOf",
+      "patch": {
+        "corr": {
+          "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id"
+        }
+      }
+    },
+    {
+      "id": "AEN-29",
+      "description": "v1.1（I-3）: 連鎖の最初のレコード（producer_seq=1）の prev_fp に空文字列の SHA-256 を置いている。初期値は null。",
+      "base": 6,
+      "violates": "$defs/Integrity.allOf",
+      "patch": {
+        "integrity": {
+          "prev_fp": "sha-256:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"
+        }
+      }
+    },
+    {
+      "id": "AEN-30",
+      "description": "v1.1（I-3）: token 検証失敗の E2 に未検証の主体を書いている。",
+      "base": 7,
+      "violates": "allOf（token_invalid の subject・actor 禁止）",
+      "patch": {
+        "subject": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      }
+    },
+    {
+      "id": "AEN-31",
+      "description": "v1.1（I-3）: token 検証失敗以外の E2 に subject がない。",
+      "base": 5,
+      "violates": "allOf（E2 の subject・actor 必須）",
+      "patch_remove": [
+        "/subject"
+      ]
+    },
+    {
+      "id": "AEN-32",
+      "description": "v1.1（I-5）: subject.type に AuthZEN の Subject.type（core/user）を書いている。監査は ptype の値（human）を書く。",
+      "base": 2,
+      "violates": "$defs/PrincipalType.enum",
+      "patch": {
+        "subject": {
+          "type": "core/user"
         }
       }
     }
@@ -3252,7 +3972,11 @@
     "TBD（DL-19・DL-20）: 欠損検知時間（R-193.2）、時刻同期精度（R-193.6）の目標値。本スキーマは欄だけを定める",
     "未決（DL-71・DL-77）: corr.request_id の値域。CON-02 RequestId は AuthZEN の任意文字列を受ける ASCII 1〜128 文字、本書は PEP SDK が払い出す OpaqueId。PEP SDK 以外が採番した要求 ID を記録する経路の有無を DL-72 と突合する（不一致の記録が検証で拒否されると監査欠損になる）",
     "未決（REQ-03 §2.3）: 修飾子（+SEC・+FIN・+XT・+AGT・+REG）の記録欄。照会に要るが、付与の正本（permission 登録の registry）と欄名が未定",
-    "未決（CON-04 scim.openapi.yaml・DL-08 §15.1）: x-audit-events の名前（scim.received・scim.bound 等）を family・event_type・detail.operation に写す表。現状の E6 の event_type は admin.change だけである"
+    "未決（CON-04 scim.openapi.yaml・DL-08 §15.1）: x-audit-events の名前（scim.received・scim.bound 等）を family・event_type・detail.operation に写す表。現状の E6 の event_type は admin.change だけである",
+    "未決（v1.1・I-3、ADR-012 L-05）: L0 拒否の reason_code（deny_l0:<missing|mismatch|not_found|indeterminate>）は pep-contract §3.7 の暫定値。確定時に本スキーマの規則を合わせる",
+    "暫定（v1.1・I-3、DL-77 付属）: fingerprint の正準化（RFC 8785 JCS）と 0x1F 区切りの参照値入力。確定時に minor 版で改める",
+    "未作成（v1.1・I-3）: 参照値 API と監査送信 API（cell 内の耐久ジャーナルへの送信）の契約。x-handoff-v1.1 の申し送り 3",
+    "未決（v1.1・I-5、ADR-017 D17-16）: ai_agent の AuthZEN Subject.type。監査側は ai_agent を書く"
   ],
   "x-references": [
     "[1] Open Cybersecurity Schema Framework『ocsf-schema Release 1.9.0』2026-08-03. https://github.com/ocsf/ocsf-schema/releases/tag/1.9.0 （確認日 2026-10-03）RS-10#1, #9",
@@ -3277,5 +4001,189 @@
     "target.res_type, target.res_ref": "resource.type, resource.res_ref",
     "purpose_code, basis_ref": "purpose.code, purpose.basis_ref",
     "prot.ciphertext, prot.dek_ref, prot.ip_ref": "prot.ciphertext, prot.dek_ref, prot.ip_ref"
+  },
+  "x-subject-type-map": {
+    "$comment": "v1.1（I-5、P-06）: 主体類型の値の対応表。監査（本スキーマ）の subject.type・actor.chain[].type・actor.on_behalf_of.type は ptype の値をそのまま書き、AuthZEN の Subject.type は認可モデルの主体の型（正規名）を書く。両者は値域が異なる別の欄であり、片方の値をもう片方に入れない [D]（claims-catalog §3.9・ARC-05 §3.1・ADR-021 D21-26）。本表は監査側から見た写しであり、ptype→AuthZEN Subject.type の対応の正本は CON-02 の x-subject-type-map である（v1.1 の同期で設置。x-handoff-v1.1 の申し送り 4）。本表の AuthZEN の列は CON-02 の写しで、食い違えば CON-02 を正とする [D]。",
+    "rows": [
+      {
+        "ptype（CON-06）": "human",
+        "監査 type（CON-08）": "human",
+        "AuthZEN Subject.type（CON-02・CON-03）": "core/user",
+        "状態": "確定（ARC-05 §3.1）[D]"
+      },
+      {
+        "ptype（CON-06）": "service_account",
+        "監査 type（CON-08）": "service_account",
+        "AuthZEN Subject.type（CON-02・CON-03）": "core/client",
+        "状態": "暫定（CON-02 x-subject-type-map の写し。確定は DL-75・CAM 生成器の対応表、claims-catalog §3.9）[D]"
+      },
+      {
+        "ptype（CON-06）": "workload",
+        "監査 type（CON-08）": "workload",
+        "AuthZEN Subject.type（CON-02・CON-03）": "core/workload",
+        "状態": "確定（ARC-05 §3.1）[D]"
+      },
+      {
+        "ptype（CON-06）": "ai_agent",
+        "監査 type（CON-08）": "ai_agent",
+        "AuthZEN Subject.type（CON-02・CON-03）": "未決（ADR-017 D17-16。独立の型か属性か）",
+        "状態": "未決。監査側は ai_agent を書く [D]"
+      },
+      {
+        "ptype（CON-06）": "（token に載らない）",
+        "監査 type（CON-08）": "system",
+        "AuthZEN Subject.type（CON-02・CON-03）": "対象外（基盤部品自身。AuthZEN の主体にならない）",
+        "状態": "確定（本スキーマ PrincipalType）[D]"
+      }
+    ],
+    "rules": [
+      "値の取り方: subject.type は検証済み access token の最上位 ptype、actor.chain[0].type は最外の act の ptype、actor.on_behalf_of.type は委任元（最上位 sub）の ptype を写す [D]（ADR-009 D09-16、CON-06 act の $comment）。",
+      "AuthZEN の Subject.type（core/*）から監査の type を逆算しない。ptype が token に無い場合（ptype 未発行の旧 token 等）は記録を作らず、token 検証失敗として扱う [D]（ADR-021 D21-10: sub の文字列から種別を推論しない）。",
+      "依存サービスのデータモデル・API は subject_id と subject_type の 2 欄で持つ（authorization-model §3.6.5）。subject_type に ptype の値を持てば、監査へはそのまま、AuthZEN へは本表（正本は CON-02）で写せる [D]。"
+    ]
+  },
+  "x-enforcement-without-decision": {
+    "$comment": "v1.1（I-3、P-03）: decision_id が得られない enforcement 記録（E2）の書き方。v1.0 は E2 で decision_id を無条件に必須としており、PDP 不達・L0 拒否の記録が検証で拒否され監査欠損になった（13_integration-trial P-03）[M]（13_integration-trial/report.md §7）。",
+    "rows": [
+      {
+        "場面": "façade が応答し decision_id がある（拒否・許可）",
+        "decision_source": "pdp",
+        "no_decision_cause": "（書かない）",
+        "corr.decision_id": "応答の値",
+        "reason_code": "応答の reason をそのまま（deny_pdp: 等の接頭辞を付けない）",
+        "detail.result / fail_mode": "permitted か denied"
+      },
+      {
+        "場面": "応答はあるが PEP が棄却（整合性の格下げ、未知の reason、allow なのに reason が allow 以外 等）",
+        "decision_source": "pdp",
+        "no_decision_cause": "（書かない）",
+        "corr.decision_id": "応答の値（形式どおりなら）",
+        "reason_code": "deny_failmode",
+        "detail.result / fail_mode": "denied / deny"
+      },
+      {
+        "場面": "既知の良い判定を再利用（fail-mode=known_good）",
+        "decision_source": "known_good",
+        "no_decision_cause": "（書かない）",
+        "corr.decision_id": "元の判定の値",
+        "reason_code": "元の判定の reason",
+        "detail.result / fail_mode": "degraded / known_good"
+      },
+      {
+        "場面": "L0（テナント照合）で拒否し PDP を呼ばない",
+        "decision_source": "none",
+        "no_decision_cause": "l0_reject",
+        "corr.decision_id": "書かない",
+        "reason_code": "deny_l0:<missing|mismatch|not_found|indeterminate>（暫定、ADR-012 L-05）",
+        "detail.result / fail_mode": "denied / （不要）"
+      },
+      {
+        "場面": "façade に接続できない・締切超過",
+        "decision_source": "none",
+        "no_decision_cause": "pdp_unreachable / pdp_timeout",
+        "corr.decision_id": "書かない",
+        "reason_code": "deny_failmode",
+        "detail.result / fail_mode": "denied / deny か spool_reject"
+      },
+      {
+        "場面": "応答に形式どおりの decision_id が無い・解釈できない",
+        "decision_source": "none",
+        "no_decision_cause": "pdp_response_invalid",
+        "corr.decision_id": "書かない",
+        "reason_code": "deny_failmode",
+        "detail.result / fail_mode": "denied / deny か spool_reject"
+      },
+      {
+        "場面": "token 検証失敗（OB-02）",
+        "decision_source": "none",
+        "no_decision_cause": "token_invalid",
+        "corr.decision_id": "書かない",
+        "reason_code": "deny_token",
+        "detail.result / fail_mode": "denied / （不要）。subject・actor は書かない。tid は経路・資源から導いたテナント（L0 の (iii)）、導けなければ ~platform"
+      }
+    ],
+    "rules": [
+      "decision_id の代わりに request_id や乱数を decision_id 欄へ入れない。E1 との突合で偽の一致を作るため [D]（ADR-011 D5-3・D6-1）。",
+      "façade に届いたが engine に届かない場合は façade が decision_id を採番して deny_unavailable を返す（E1 が残る）。この場合は decision_source=pdp で記録する [D]（ADR-011 D3-6）。",
+      "判定の無い E2 は E1 と突合できないため、照合（ADR-012 D12-12 の「判定を伴った要求数」）では判定を伴わない要求として数える [D]。"
+    ]
+  },
+  "x-integrity-chain": {
+    "$comment": "v1.1（I-3、P-03）: L1（producer 連鎖。ADR-014 D14-29）の作り方。v1.0 は初期値と計算方法を明記せず、模擬連携では空文字列の SHA-256 を初期値にし、JSON.stringify の出力でハッシュしていた [M]（13_integration-trial/expense-service/src/audit.js）。",
+    "rules": [
+      "連鎖の単位: (integrity.producer_id, integrity.chain_id)。chain_id を省く場合は producer_id 単独 [D]。",
+      "初期値: 連鎖の最初のレコードは producer_seq=1・prev_fp=null [D]。",
+      "再起動: producer_seq と直前の fingerprint を耐久的に保存していれば同じ chain_id で続ける。保存していなければ新しい chain_id で producer_seq=1・prev_fp=null から始める（前の連鎖の末尾は照合で欠損かどうかを判定する）[D]。",
+      "fingerprint（暫定）: record_stage=produced として送るレコード全体（received_time・tenant_seq・integrity.seal を含まない）を RFC 8785（JSON Canonicalization Scheme）で正準化した UTF-8 バイト列の SHA-256 を、padding なし base64url にして `sha-256:` を前置する [D]。正準化規則は DL-77 付属文書で確定するまで暫定であり、変える場合は minor 版で fingerprint の alg 名か schema_ver で区別する [D]（x-open-issues）。",
+      "送信の順序: producer は producer_seq の順に送る。spool 中も順序を保つ（pep-contract §3.8）[D]。"
+    ]
+  },
+  "x-ref-derivation": {
+    "$comment": "v1.1（I-3、P-03）: 仮名欄・相関欄の参照値の求め方と鍵の取得経路。鍵（K_corr・res_ref 用のテナント鍵・ip_ref 用の法域鍵）と subj_ref の対応表は K 層（cell の鍵表）にあり（ADR-014 D14-43）、依存サービスへ配布しない [D]。依存サービス（producer）は cell 内の参照値 API（監査 SDK が内包。SDK を使わない実装は同じ API を直接呼ぶ）から値を受け取る [D]。参照値 API の契約は未作成であり、x-handoff-v1.1 の申し送り 3 で作成を求める。区切り 0x1F（US）は本版の暫定で、発行台帳（ADR-007 D7-45）の jti_ref と同じ関数・同じ鍵であることを優先する（C-34）[D]。",
+    "rows": [
+      {
+        "欄": "subject.subj_ref・actor.*.subj_ref",
+        "値の作り方": "K 層が (tid, sub) ごとに払い出す乱数（sr_ + 小文字英数字 26〜40 文字）。計算では求めない",
+        "鍵": "なし（対応表）",
+        "依存サービスの取得方法": "参照値 API に (tid, sub) を渡して受け取る。要求の tid（検証済み token の tid）以外は引けない。逆引き（subj_ref→sub）は提供しない",
+        "根拠": "ADR-014 D14-44 [D]"
+      },
+      {
+        "欄": "resource.res_ref",
+        "値の作り方": "rr_k<版>. + base64url(HMAC-SHA-256(K_res[tid, 版], resource.type ‖ 0x1F ‖ resource.id))",
+        "鍵": "テナントごとの res_ref 用鍵（K 層）",
+        "依存サービスの取得方法": "参照値 API に (tid, resource.type, resource.id) を渡して受け取る",
+        "根拠": "ADR-014 D14-09・D14-43 [D]"
+      },
+      {
+        "欄": "corr.jti_ref",
+        "値の作り方": "k<版>. + base64url(HMAC-SHA-256(K_corr[法域, 版], iss ‖ 0x1F ‖ jti))",
+        "鍵": "法域パーティションごとの K_corr（K 層）",
+        "依存サービスの取得方法": "参照値 API に (iss, jti) を渡して受け取る。E2 では任意（必須は E1）",
+        "根拠": "ADR-014 D14-21 [D]"
+      },
+      {
+        "欄": "prot.ip_ref",
+        "値の作り方": "ir_k<版>. + base64url(HMAC-SHA-256(法域鍵, IP の正規表記))",
+        "鍵": "法域鍵（K 層）",
+        "依存サービスの取得方法": "参照値 API。依存サービスの E2 では prot を書かなくてよい",
+        "根拠": "AP-02 [D]"
+      },
+      {
+        "欄": "prot.ciphertext の DEK",
+        "値の作り方": "producer が DEK を生成し、テナント鍵で wrap する",
+        "鍵": "テナント鍵（cell の KMS 鍵で wrap）",
+        "依存サービスの取得方法": "wrap は参照値 API と同じ経路の wrap 操作で行い、テナント鍵を受け取らない",
+        "根拠": "ADR-014 D14-45 [D]"
+      }
+    ],
+    "rules": [
+      "依存サービスは鍵付きハッシュを自前の鍵で計算しない。自前の鍵で作った値は W 層の値と結合できず、K 層の削除（対応表・鍵の消去）でも結合が切れない [D]（D14-44）。",
+      "参照値 API に届かない場合は値を推測で作らず、レコードを producer のローカル spool に保持して後で値を埋めて送る。spool の上限超過は操作階層の規則で拒否する [D]（pep-contract §3.8、ADR-013 D13-25）。",
+      "subj_ref は producer 内でキャッシュしてよいが、主体の消去（ADR-014 D14-43 の K 層の行削除）を知らせる lifecycle イベント（CON-07）を受けたら破棄する [D]。",
+      "モック・結合確認では参照値 API の代わりに試験用の固定値表を使い、本番の鍵と同じ形式（接頭辞・長さ）だけを満たす [D]。"
+    ]
+  },
+  "x-changes-v1.1": [
+    "v1.1（I-3、P-03）: E2 の decision_id を条件付き必須に変更。DetailEnforcement に decision_source・no_decision_cause を追加し、判定の無い E2（L0 拒否・PDP 不達・締切超過・応答不正・token 検証失敗）の reason_code・result・fail_mode を規則化（x-enforcement-without-decision）。",
+    "v1.1（I-3、P-03）: corr.txn_absence を追加し、write・privileged・break-glass/B の E1・E2 は txn か txn_absence のどちらかを必須に変更。txn は検証済み Txn-Token の値だけを写す。",
+    "v1.1（I-3、P-03）: integrity.chain_id を追加し、producer_seq=1 の prev_fp を null に限定。連鎖の単位・再起動・fingerprint の暫定計算方法を x-integrity-chain に記述。",
+    "v1.1（I-3、P-03）: subj_ref・res_ref・jti_ref・ip_ref・DEK wrap の求め方と鍵の取得経路を x-ref-derivation に記述（依存サービスは鍵を持たず参照値 API から受け取る）。",
+    "v1.1（I-5、P-06）: subject.type・actor.*.type は ptype の値をそのまま写すことを明記し、AuthZEN Subject.type との対応を x-subject-type-map に記述。",
+    "v1.1（I-3・I-5）: examples[5]〜[7] と負例 12 件を追加。",
+    "v1.1 の同期（版 0.3.1）: (1) action.name の説明と examples の can_read を read に改めた（CON-03 §12 N-4、I-5）。(2) properties.tier の enum の写しを CON-02 OperationTierClass への参照にした（CON-02 HO-I7-2、I-7。値の集合は同じ）。$defs.TenantId は値の集合が CON-02 TenantId と異なるため置き換えず、$comment に未決として記した。(3) x-subject-type-map の正本を CON-02 x-subject-type-map と明記した（申し送り 4 のうち CON-02 の部分）。(4) x-negative-examples の各項目に id（AEN-01〜AEN-32）を付けた（CON-11 §14.3 H11-6、I-11）。既存の負例の内容と順序は変えていない [D]。"
+  ],
+  "x-handoff-v1.1": {
+    "title": "他文書への申し送り（v1.1）",
+    "items": [
+      "1. 04_architecture/pep-contract.md §3.7（ARC-06）: 内部理由表の `deny_pdp:<reason>` を「façade の reason をそのまま」に改める（本スキーマの reason_code の pattern は区切り : を 1 つしか受けず、`deny_pdp:deny_guardrail:<規則ID>` を表せない）。enforcement 記録の欄表に decision_source・no_decision_cause・txn_absence・chain_id を加える。L0 の結果欄は no_decision_cause=l0_reject と reason_code で表す。",
+      "2. 10_integration（INT-02 §3.2）・pep-contract §3.8・ADR-005 D9-3: write 以上の要求に Txn-Token が無い・検証できない場合に業務として拒否するか処理するかを定める（監査は txn_absence で必ず記録する）。txn を読む前に Txn-Token を検証する手順と TTS の JWKS の入手先（I-9、CON-05）を示す。ADR-005 D9-3 の「txn 必須」を「txn か txn_absence」に読み替える注記を入れる。",
+      "3. 11_contracts（新規契約、所有者 DL-77・ADR-014）: 参照値 API（subj_ref の払出し照会・res_ref/jti_ref/ip_ref の計算・DEK wrap。cell 内、workload 認証、要求 tid 限定、逆引きなし）と監査送信 API（耐久ジャーナルへの送信、producer_seq 順、spool・再送・冪等キー event_id）の契約を作る（I-3 の送信 API を含む。P-03）。mock-contract-test-kit MK-07 にこの 2 API のスタブを加える。",
+      "4. 11_contracts/schemas/common.schema.json（CON-02）: ptype ↔ AuthZEN Subject.type の対応表の正本を置く（I-5。service_account→core/client は暫定、ai_agent は未決）。CON-06 access-token-claims.schema.json の ptype の $comment「subject.type へ変換表なしで写す」を「CON-02 の対応表で写す。監査（CON-08）へは値のまま写す」に改める。CON-03 の例の core/user と本スキーマの human が別欄であることを CON-03 に注記する。",
+      "5. 05_adr/ADR-007 D7-45（発行台帳）・ADR-009 D09-35（STS 交換台帳）: jti_ref の入力の区切り（本版暫定 0x1F）と鍵版の前置を発行台帳と一致させる（C-34）。",
+      "6. 05_adr/ADR-014 D14-29・DL-77 付属文書: 連鎖の単位 (producer_id, chain_id)、初期値 null、再起動時の新連鎖、fingerprint の正準化（暫定 RFC 8785）を正本に反映し、照合 C1 で chain_id の重複と連鎖の断絶を検査する。",
+      "7. 05_adr/ADR-012 L-05・ADR-011: L0 拒否の reason 値を確定する（本スキーマは deny_l0:<missing|mismatch|not_found|indeterminate> を暫定で検査する）。",
+      "8. 10_integration（INT-00・INT-02 の監査の節）・11_contracts/mock-contract-test-kit.md: 依存サービス向けに x-enforcement-without-decision・x-integrity-chain・x-ref-derivation・x-subject-type-map への参照を置き、examples[5]〜[7] と追加負例を結合確認の入力に加える。"
+    ]
   }
 }

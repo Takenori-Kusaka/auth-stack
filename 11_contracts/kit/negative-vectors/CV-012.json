@@ -1,0 +1,528 @@
+{
+  "id": "CV-012",
+  "title": "PDP の timeout・deny・失効（MK-03 の注入）",
+  "source": [
+    "ADR-022 D-6-2 (12)",
+    "CON-03 §7",
+    "ADR-013 D13-23",
+    "ADR-013 RR13-13",
+    "ARC-06 §3.6",
+    "ARC-06 TC-06-07"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    },
+    {
+      "role": "CR-2"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "PDP スタブは注入ごとに応答を変えられる（CON-11 §4.4 の表）",
+    "接続確立の遅延は TCP の accept を遅らせる中継で作る（応答の遅延では代用しない）",
+    "SUT 側の計時（接続確立・TLS 完了・ヘッダ受信・本文受信）を記録する",
+    "SUT の D(t) は fail-mode 設定文書（CON-11 §11.6）から読ませ、スタブの遅延は D(t) を超える値にする"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-012a",
+      "description": "MK-03 の注入「応答しない」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "timeout"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012b",
+      "description": "MK-03 の注入「接続確立を D(t) を超えて遅らせ、確立後に decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "connect_delay"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012c",
+      "description": "MK-03 の注入「TLS ハンドシェイクの途中で D(t) を超えて止め、その後 decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "tls_stall"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012d",
+      "description": "MK-03 の注入「状態行とヘッダは直ちに、本文（decision=true）を D(t) を超えて分割送信」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "body_delay"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012e",
+      "description": "MK-03 の注入「D(t)+δ で正しい decision_id・X-Request-ID 付きの decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "late_allow"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012f",
+      "description": "MK-03 の注入「503＋Retry-After」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "overload_503"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012g",
+      "description": "MK-03 の注入「429＋Retry-After」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "quota_429"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012h",
+      "description": "MK-03 の注入「200、decision=false、deny_unavailable」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "engine_unreachable"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012i",
+      "description": "MK-03 の注入「200、decision=false、deny_indeterminate」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "indeterminate"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012j",
+      "description": "MK-03 の注入「unsupported_profile」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "unsupported_profile"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012k",
+      "description": "MK-03 の注入「200、decision=true、decision_id なし」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "decision_id_missing"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012l",
+      "description": "MK-03 の注入「X-Request-ID が別の値」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "request_id_mismatch"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012m",
+      "description": "MK-03 の注入「要求より弱い実効 consistency.mode の decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "consistency_weaker"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "allow_used_after_deadline": 0,
+          "write_allow_during_injection": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012n",
+      "description": "MK-03 の注入「deny」（200、decision=false）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "deny"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "tenant_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-012o",
+      "description": "MK-03 の注入「失効」（制御 API の剥奪以後、同じ要求に decision=false）。剥奪の直前に 1 回 allow を得てから、同じ要求を再送する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "revoke",
+            "scope": "subject",
+            "when": "after_first_allow"
+          }
+        ],
+        "inject": {
+          "target": "MK-03",
+          "kind": "revoked"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "tenant_denied",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "剥奪後の最初の要求から拒否。allow を PEP の外で cache しない（DEV-9）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit",
+    "kit_record",
+    "sut_timing"
+  ],
+  "strength": "自社規範（CON-03 §7、ARC-06 §3.6・§3.10、ADR-013 D13-25）。fail-open 0 件",
+  "notes": [
+    "read-sensitive も KD13-6 の決裁までは known-good を使わず no_decision（CON-11 L11-5）",
+    "mTLS の段（tls_stall）を再現できない構成では、そのケースを未試験として判定記録に明示する（合格に数えない）"
+  ],
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

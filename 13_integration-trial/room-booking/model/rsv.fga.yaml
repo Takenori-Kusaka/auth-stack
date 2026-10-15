@@ -1,0 +1,176 @@
+# 会議室予約（rsv）の認可モデル草案と試験（INT-03 §3.1 段 3〜8、§15.2 S-4）。
+# core 型は CON-16 §3.5 の代替定義をそのまま写した（開発・試験専用。本番に配備しない）。
+# 正本は model/rsv.cam.json（CON-04 CamModule の形）。本ファイルはその手写し（ADR-011 D2-3 により本番に出さない）。
+model: |
+  model
+    schema 1.1
+  type core/user
+  type core/workload
+  type core/client
+  type core/tenant
+    relations
+      define member: [core/user]
+      define external_member: [core/user]
+      define admin: [core/user]
+      define security_admin: [core/user]
+      define role_manager: [core/user, core/role#assignee]
+      define manage_roles: role_manager or admin
+      define manage_idp: security_admin
+      define view_audit: security_admin or admin
+      define revoke_session: security_admin or admin
+      define manage: admin
+  type core/group
+    relations
+      define member: [core/user, core/group#member]
+      define owner_unit: [core/unit, core/tenant]
+  type core/unit
+    relations
+      define parent: [core/unit, core/tenant]
+      define admin: [core/user, core/group#member]
+      define member: [core/user, core/group#member]
+      define admin_scope: [core/admin_scope]
+      define manage: admin or manage from parent
+      define view_directory: member or manage
+      define manage_membership: manage or delegate from admin_scope
+  type core/admin_scope
+    relations
+      define delegate: [core/user, core/group#member]
+      define owner_unit: [core/unit, core/tenant]
+  type core/role
+    relations
+      define assignee: [core/user, core/group#member]
+  type core/external_grant
+    relations
+      define grantee: [core/user with not_expired]
+  type core/share_link
+    relations
+      define holder: [core/user with not_expired]
+  type core/exception
+    relations
+      define holder: [core/user with not_expired]
+  # ---- rsv（会議室予約）----
+  # 拠点 → フロア → 会議室 → 予約。包含は parent（X-11、N-9 の K05-7 採用後の形）。
+  type rsv/site
+    relations
+      define parent: [core/tenant]
+      define facility_admin: [core/user, core/group#member]
+      define booker: [core/user, core/group#member, core/role#assignee, core/tenant#member]
+      define administrators: facility_admin or manage from parent
+      define bookers: booker or administrators
+      define configure: administrators
+  type rsv/floor
+    relations
+      define parent: [rsv/site]
+      define booker: [core/user, core/group#member, core/role#assignee]
+      define administrators: administrators from parent
+      define bookers: booker or bookers from parent
+  type rsv/room
+    relations
+      define parent: [rsv/floor]
+      define administrators: administrators from parent
+      define bookers: bookers from parent
+      define book: bookers
+      define view: bookers or administrators
+      define configure: administrators
+  type rsv/booking
+    relations
+      define parent: [rsv/room]
+      define organizer: [core/user]
+      define attendee: [core/user, core/group#member]
+      define guest: [core/external_grant#grantee]
+      define restricted_external: [core/tenant#external_member]   # core の生成器が付ける予約 relation（模写）
+      define view: organizer or attendee or guest or administrators from parent
+      define cancel: organizer or administrators from parent
+      define invite_guest: organizer
+  condition not_expired(current_time: timestamp, expires_at: timestamp) {
+    current_time < expires_at
+  }
+tuples:
+  # テナント t1（資源側）
+  - { user: "core/user:t1_admin", relation: admin, object: "core/tenant:t1" }
+  - { user: "core/tenant:t1", relation: parent, object: "rsv/site:tokyo" }
+  - { user: "core/tenant:t1", relation: parent, object: "rsv/site:osaka" }
+  - { user: "core/user:fac_tokyo", relation: facility_admin, object: "rsv/site:tokyo" }
+  - { user: "core/tenant:t1#member", relation: booker, object: "rsv/site:tokyo" }
+  - { user: "core/user:alice", relation: member, object: "core/tenant:t1" }
+  - { user: "core/user:bob", relation: member, object: "core/tenant:t1" }
+  - { user: "core/user:carol", relation: booker, object: "rsv/floor:osaka_3f" }
+  - { user: "rsv/site:tokyo", relation: parent, object: "rsv/floor:tokyo_10f" }
+  - { user: "rsv/site:osaka", relation: parent, object: "rsv/floor:osaka_3f" }
+  - { user: "rsv/floor:tokyo_10f", relation: parent, object: "rsv/room:r1001" }
+  - { user: "rsv/floor:osaka_3f", relation: parent, object: "rsv/room:r0301" }
+  - { user: "rsv/room:r1001", relation: parent, object: "rsv/booking:b1" }
+  - { user: "rsv/room:r1001", relation: parent, object: "rsv/booking:b2" }
+  - { user: "core/user:alice", relation: organizer, object: "rsv/booking:b1" }
+  - { user: "core/user:bob", relation: attendee, object: "rsv/booking:b1" }
+  - { user: "core/user:bob", relation: organizer, object: "rsv/booking:b2" }
+  # 他テナント t2 のゲスト（外部付与。期限付き。façade が書く想定）
+  - { user: "core/user:guest_t2", relation: grantee, object: "core/external_grant:g1", condition: { name: not_expired, context: { expires_at: "2026-12-31T00:00:00Z" } } }
+  - { user: "core/external_grant:g1#grantee", relation: guest, object: "rsv/booking:b1" }
+  - { user: "core/user:guest_old", relation: grantee, object: "core/external_grant:g0", condition: { name: not_expired, context: { expires_at: "2026-01-01T00:00:00Z" } } }
+  - { user: "core/external_grant:g0#grantee", relation: guest, object: "rsv/booking:b2" }
+tests:
+  - name: booking-basic
+    description: 予約の作成・閲覧・取消の肯定と否定
+    check:
+      - user: core/user:alice
+        object: rsv/room:r1001
+        assertions: { book: true, view: true, configure: false }
+      - user: core/user:alice
+        object: rsv/room:r0301
+        assertions: { book: false, view: false }
+      - user: core/user:carol
+        object: rsv/room:r0301
+        assertions: { book: true }
+      - user: core/user:carol
+        object: rsv/room:r1001
+        assertions: { book: false }
+      - user: core/user:alice
+        object: rsv/booking:b1
+        assertions: { view: true, cancel: true, invite_guest: true }
+      - user: core/user:bob
+        object: rsv/booking:b1
+        assertions: { view: true, cancel: false, invite_guest: false }
+      - user: core/user:alice
+        object: rsv/booking:b2
+        assertions: { view: false, cancel: false }
+  - name: hierarchy-admin
+    description: 拠点の施設管理者と、テナント管理者（manage from parent、CON-16 IE-5 の代替定義に依存）
+    check:
+      - user: core/user:fac_tokyo
+        object: rsv/booking:b2
+        assertions: { view: true, cancel: true, invite_guest: false }
+      - user: core/user:fac_tokyo
+        object: rsv/room:r0301
+        assertions: { view: false, configure: false }
+      - user: core/user:t1_admin
+        object: rsv/room:r0301
+        assertions: { configure: true, view: true }
+  - name: cross-tenant-guest
+    description: 外部付与のある予約だけをゲストが閲覧でき、取消・招待・会議室の予約はできない（INT-03 XS-8、INT-02 NP16-2・NP16-6）
+    check:
+      - user: core/user:guest_t2
+        object: rsv/booking:b1
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { view: true, cancel: false, invite_guest: false }
+      - user: core/user:guest_t2
+        object: rsv/booking:b1
+        context: { current_time: "2027-01-01T00:00:00Z" }
+        assertions: { view: false }
+      - user: core/user:guest_t2
+        object: rsv/booking:b2
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { view: false }
+      - user: core/user:guest_t2
+        object: rsv/room:r1001
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { book: false, view: false }
+      - user: core/user:guest_old
+        object: rsv/booking:b2
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { view: false }
+    list_objects:
+      - user: core/user:guest_t2
+        type: rsv/booking
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { view: ["rsv/booking:b1"] }

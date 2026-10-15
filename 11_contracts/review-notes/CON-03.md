@@ -1,6 +1,6 @@
 # CON-03 Authorization API 独立レビュー記録
 
-> 文書ID: CON-03-RV（レビュー記録）/ 版: 0.1 / 状態: review / 最終更新: 2026-10-15
+> 文書ID: CON-03-RV（レビュー記録）/ 版: 0.2 / 状態: review / 最終更新: 2026-10-15（0.2: v1.1 の同期で §6 に CON-03 の v1.1 改訂（版 0.3）と同期（版 0.3.1）の記録を加えた。CON-03 §12 N-6）
 > 対応要求: R-098, R-144, R-205（DL-72）、G-066, G-120, G-121
 > 依存文書: 11_contracts/authorization-api.openapi.yaml, CONVENTIONS.md, traceability/deliverables.md（DL-72）, 05_adr/ADR-010, ADR-011, ADR-013, ADR-016, ADR-021, ADR-022, ADR-025, 04_architecture/authorization-model.md（ARC-05）, 04_architecture/pep-contract.md（ARC-06）, 11_contracts/schemas/common.schema.json（CON-02）, research/RS-07-authz-engines-consistency.md, research/standards-status.md
 
@@ -64,6 +64,17 @@
 | YAML から JSON への変換と `python -m json.tool` | 成功 |
 | example の検査（jsonschema 4.26、Draft 2020-12、`$ref` 解決込み） | 正例 24 件はすべて適合した。`x-negative-examples` の 3 件（subject.id の欠落、空の evaluations で既定値がない要求、limit 超過）はすべて不適合と判定された |
 | コード生成（openapi-typescript 7.4.4） | 成功 |
+
+## 6. v1.1 改訂と同期の記録（2026-10-15）
+
+本節は独立レビューではなく、改訂の記録である。CON-03 §12 N-6 の申し送りにより、v1.1 の同期作業（AI エージェント）が置いた [D]。
+
+| 版 | 契機 | 変更 | 本文の記録 |
+|---|---|---|---|
+| 0.3（v1.1 改訂） | AI による模擬連携検証（13_integration-trial/report.md。実在の連携チームの検証ではない）の P-01・P-05・P-20、改善提案 I-1・I-5 | V-1〜V-7（write の allow 例の `fully_consistent`、件数に連動する evaluations の例、X-Request-ID の echo 前提の例、`action.name` の動詞の permission 名への統一と pattern、search の結果の型、汎用モックの制約の表） | CON-03 §11、§12 |
+| 0.3.1（v1.1 の同期） | 他文書の v1.1 改訂の申し送り（CON-02 HO-I7-1、CON-04 HO-V11-4、CON-11 H11-1、INT-02 HO11-1・HO11-3・HO11-5、INT-03 HO-V11-3・HO-V11-8、CON-08 の 4） | `TenantId` の CON-02 への参照化と例の tid の置換、kit の R1・R3・R5 への参照、PP-2 と searchResources、§9 の未決 2 件、`Subject` の写像の正本 | CON-03 §13 |
+
+- いずれも作成者以外による照合は未実施である。Redocly lint の結果は CON-00 §2.3 にある [D]。
 
 ## 参考文献
 

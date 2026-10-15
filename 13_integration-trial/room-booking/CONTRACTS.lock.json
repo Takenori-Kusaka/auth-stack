@@ -1,0 +1,19 @@
+{
+  "$comment": "INT-00 入口の手順 2（使う契約を決め、契約ファイルのコミットを固定する）。v1.1 の契約は 2026-10-15 時点で HEAD 33e06ea に未コミットの作業ツリーにしかないため、コミットでは固定できず、ファイルごとの SHA-256 で固定した（report.md の詰まった点 S-1）。",
+  "repository_head": "33e06ea336fc4b9d66b0a61d7b49cdbcb2af5121",
+  "working_tree_dirty": true,
+  "taken_at": "2026-10-15",
+  "files": {
+    "11_contracts/authorization-api.openapi.yaml": { "id": "CON-03", "sha256": "82155c6ceb2c398671e5cd13ae7cb88b465ec9520a2095d4a8aa0d571d53a054", "operations": ["evaluateAccess", "evaluateAccessBatch", "GET /.well-known/authzen-configuration"] },
+    "11_contracts/token-exchange.openapi.yaml": { "id": "CON-05", "sha256": "31739dac670496b1961d8839a660d280e32f39a19e3e85a464d87f9788300ff9", "operations": ["requestTxnToken", "getTxnTokenJwks", "registerAcceptanceRecord"] },
+    "11_contracts/relationship-model-registry.openapi.yaml": { "id": "CON-04", "sha256": "ae766e118804ab466c797598c1dcb39752633af8d04ca60469d4a5af26211625", "operations": ["writeRelationships", "deleteRelationships", "CamModule (schema)"] },
+    "11_contracts/schemas/access-token-claims.schema.json": { "id": "CON-06", "sha256": "766a3ff8b6ddf7a3accc78f4a1e7644886ee8efed621a0ad1987eef2b71b4b70" },
+    "11_contracts/schemas/common.schema.json": { "id": "CON-02", "sha256": "7f7ef899eeff8279c671ab8153a2c81e5cb4d88ff720109768551502f043bdde" },
+    "11_contracts/schemas/audit-event.schema.json": { "id": "CON-08", "sha256": "3820bb4b143c05b58695a8f1ad8f14fd570f8f6b2fe898ad6bc438a11ebde458" },
+    "11_contracts/integration-essentials.md": { "id": "CON-16", "sha256": "32fc6521595e67ae6675090378502395ae5c9b0d9010e92fec11ba85bdec9700" },
+    "11_contracts/mock-contract-test-kit.md": { "id": "CON-11", "sha256": "d471b4fbf4e59221ad7ffab9011fa226677418db5423a47360e09f5129302243" },
+    "11_contracts/kit/echo-proxy.js": { "id": "CON-11-KIT", "sha256": "32be0ea2b380f0721e78857f08e458c9c47cab07b96322fbf15a559d5013d61c" },
+    "11_contracts/kit/negative-vectors/CV-001.json..CV-014.json, CV-045.json": { "id": "CON-11-KIT", "sha256_of_CV-045": "dbbf473ae2fcbbb34d83927c7b1cfb2185985da9f3e05bfa078be2561a427f08", "note": "個別の SHA-256 は report.md 付録 A" }
+  },
+  "tools": { "node": "22.23.2", "prism": "@stoplight/prism-cli@5.12.0", "fga": "openfga/cli v0.8.1 (go install)" }
+}

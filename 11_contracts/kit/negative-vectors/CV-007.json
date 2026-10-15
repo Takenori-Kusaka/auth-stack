@@ -1,0 +1,155 @@
+{
+  "id": "CV-007",
+  "title": "期限切れ",
+  "source": [
+    "ADR-022 D-6-2 (7)",
+    "ARC-02 NV-21",
+    "ARC-02 NV-22"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-007a",
+      "description": "exp が過去（許容時刻差の上限 60 秒を十分に超える 1 時間前）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "exp": "{{now-3600}}",
+            "iat": "{{now-7200}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-007b",
+      "description": "nbf が未来（1 時間後）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "nbf": "{{now+3600}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-007c",
+      "description": "境界値: exp が 1 秒前（exp=now−1）。許容時刻差を exp に足す実装（exp + skew <= now で拒否する実装）を検出する。v1.1 の同期で追加（CON-16 §1.10 EN-1、IE-3）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "exp": "{{now-1}}",
+            "iat": "{{now-600}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-007d",
+      "description": "境界値の対の正例: exp が 60 秒後（exp=now+60）。受理して続行する。CV-007c と組で流し、拒否側だけ合格する過剰な実装（exp を短く切る等）を区別する。v1.1 の同期で追加（CON-16 IE-3）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "exp": "{{now+60}}",
+            "iat": "{{now-600}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "response_profile": "success",
+        "notes": "受理の後の判定は PDP スタブの allow による。exp の判定だけを見る"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response"
+  ],
+  "strength": "N: RFC 7519 §4.1.4・§4.1.5 の MUST。OWASP API2:2023",
+  "notes": [
+    "許容時刻差は SUT の検証設定（CON-11 §11.4 の AUTH_VERIFIER_CONFIG_URL）から読む。ARC-02 §4.4 の S_int は初期値 10 秒・上限 60 秒",
+    "v1.1 の同期（CON-16 §1.10 EN-1、IE-3）: 許容時刻差は iat・nbf の未来方向だけに使い、exp には足さない（ADR-005 V7 の抜粋。CON-16 §1.3）。CV-007c・CV-007d を加えた"
+  ],
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）。CV-007c・CV-007d は 0.2.0（v1.1 の同期。CON-16 IE-3）",
+  "deprecated": null
+}

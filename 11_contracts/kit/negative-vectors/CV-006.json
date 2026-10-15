@@ -1,0 +1,60 @@
+{
+  "id": "CV-006",
+  "title": "未知の crit",
+  "source": [
+    "ADR-022 D-6-2 (6)",
+    "ARC-02 NV-24"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-006a",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "header": {
+            "crit": [
+              "x-kit-unknown"
+            ],
+            "x-kit-unknown": 1
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response"
+  ],
+  "strength": "N: RFC 7515 §4.1.11（受信者が理解しない拡張が crit にあれば JWS は無効）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

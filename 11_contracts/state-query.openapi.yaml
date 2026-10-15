@@ -1,0 +1,790 @@
+openapi: 3.1.2
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Lifecycle state query API（ライフサイクル正本照会）
+  version: 0.2.0
+  summary: 依存サービスが破壊的・不可逆な処理の直前（CON-12 RO-12）と長期停止からの復旧時（CON-12 RO-9）に、テナント・主体・所属の現在状態と要求の有効性を正本から引く読取り専用 API
+  description: |
+    文書ID: CON-15 / 成果物: DL-121 / 版: 0.2.0 / 状態: draft / 凍結区分: preview / 最終更新: 2026-10-15
+    対応要求: G-137, G-118, G-138, R-044, R-109 / 依存文書: 11_contracts/lifecycle-events.asyncapi.yaml（CON-12）、11_contracts/schemas/lifecycle-event.schema.json（CON-13）
+
+    改版（v1.1（I-10））: 版 0.2.0 で、CON-12 版 0.5.0 の拡張 `x-state-query-api` の値（本契約の版 0.1.0）を本ファイルへ切り出した。切出しは内容を変えずに行い（字下げだけを 2 桁戻した）、その上で次を加えた [D]。
+    (1) §2 に QC-8（応答と要求の結び付きの確認）と QC-9（応答の分類と扱い）を加え、QC-2 を QC-9 に結び付けた。不適合応答・4xx・未知の verdict・未知の reason_code・3xx・その他の 5xx の扱い（実行の可否、再試行、報告の outcome と failure_reason、警報先）を 1 つの表で定めた。
+    (2) 同じ表を機械可読にした `x-response-classes` を info に置いた。
+    (3) 負例 LQN-20〜LQN-29 を加えた。(4) §7 に汎用モック（Prism）で使う場合の注意を加えた。(5) §8 に他文書への申し送り（v1.1）を置いた。
+    根拠は AI による模擬連携検証（13_integration-trial/report.md。実在の連携チームの検証ではない）の詰まり P-12（CON-15 が拡張内にあり汎用モックに渡せない）・P-13（不適合応答・4xx・未知 verdict の扱いが未定義）である [D]。
+    版 0.1.0 の時点では、並行作業の約束により CON-12 の拡張 `x-state-query-api` の中に置いていた。AsyncAPI の AsyncAPI Object は `x-` で始まる拡張を持ってよい（MAY）[N][^aa31]。ただし AsyncAPI の検証器（@asyncapi/cli validate）は拡張の中の OpenAPI の `$ref`（`#/components/...`）を AsyncAPI 文書のルートから解決しようとして invalid-ref を 28 件出していた（2026-10-15 に本書の作成者が CON-12 版 0.5.0 で確認）[M]。単独ファイル化でこれも解消する [D]。
+    ファイル名: traceability/deliverables.md §4.5・§8 と CON-12 §10 H3-3・H5-1 は例として `lifecycle-state.openapi.yaml` を挙げていたが、v1.1 の改訂計画で `state-query.openapi.yaml` とした。deliverables.md・CON-00 の所在の修正は §8 で申し送る [D]。
+
+    ## 0. CON-12 §4.1 の最小要件との対応
+    | §4.1 | 本契約 |
+    |---|---|
+    | Q-1 (a)(b) テナント・主体の現在状態（状態、収容 cell、保全と hold_ref、削除要求の request_id と状態） | getTenantState・getPrincipalState（TenantState・PrincipalState の state・cell・legal_hold・hold_refs・open_requests）。所属は getMembershipState |
+    | Q-1 (c) mapping_ref の有効性と内容（対応表の digest、request_id、役割） | getMappingState（MappingState） |
+    | Q-1 (d) RO-9 の全件突合の一括照会（ページング付き） | listReconciliationSnapshot |
+    | Q-2 publisher と別の workload・別の配備、最新の書込みの反映、古い読取りなら unknown | QS-1、LQ11、QC-3 |
+    | Q-3 相互 TLS、broker を経ない、登録簿のサービスだけ、監査記録 | workloadMtls、QC-5、QS-3、QS-4 |
+    | Q-4 不透明 ID と状態だけ | QS-2 |
+    | Q-5 凍結区分 | §5 |
+    | （本契約で追加）RO-12 の照合を 1 回の呼出しで行い、判定と理由コードを返す | verifyLifecycleAction、§4 |
+
+    ## 1. 使う場面（CON-12 の義務との対応）
+    | 場面 | CON-12 の義務 | 使う operation |
+    |---|---|---|
+    | 削除の実行（tenant.deletion.requested・user.deletion.requested、猶予 G_del の満了後） | RO-12、RO-13 | verifyLifecycleAction（action=delete_tenant_data・delete_principal_data） |
+    | 保全解除による削除の再開（tenant/user.legal_hold.released） | RO-12 | verifyLifecycleAction（action=resume_deletion_after_hold_release） |
+    | 統合・分割の付け替え（tenant.merge.cutover・tenant.split.cutover） | RO-12 | verifyLifecycleAction（action=retarget_tenant_references） |
+    | 所属除去に伴うデータの削除・移管（membership.removed） | RO-12 | verifyLifecycleAction（action=remove_membership_data） |
+    | W_replay を超えて停止した後の全件突合 | RO-9 | listReconciliationSnapshot、getTenantState・getPrincipalState・getMembershipState |
+
+    ## 2. 受信側（呼ぶ側）の規則
+    - QC-1 直前照会: verifyLifecycleAction は、不可逆な処理を始める直前に呼ぶ。`checked_at` から実行開始までの許容時間 Q_fresh は TBD（CON-12 §7 に追加を申し送り）で、超えたら照会し直す [D]。
+    - QC-2 fail closed: HTTP 200 で、応答が本契約の VerificationResult に適合し、`verdict=proceed` の場合だけ実行する。それ以外（未知の verdict、スキーマ不適合、4xx、5xx、timeout、接続失敗）はすべて実行しない [D]。実行しない場合の再試行・報告（outcome と failure_reason）・警報は、応答を QC-9 の区分 RC-1〜RC-9 に分けて決める（v1.1（I-10））[D]。
+    - QC-3 結果の写像: `verdict=do_not_proceed` のとき、`reason_code` が LQ02（撤回）なら CON-13 DeletionReport を outcome=withdrawn で報告する。LQ08（猶予中）なら `grace_until` の後に照会し直す。LQ11（最新の正本を読めない）は照会不能として QC-4 と同じに扱う（CON-12 §4.1 Q-2）。それ以外の値と未知の値は「正本不一致」として outcome=failed で報告し、SOC へ警報する（CON-12 RO-12）[D]。
+    - QC-4 到達不能: 503・429・timeout・接続失敗は「照会不能」とし、実行を保留する。`Retry-After` があればその時間を待ち、なければランダム化した指数 backoff で再試行する。報告期限（事象の deadline）までに照会できなければ outcome=failed（理由: 照会不能）で報告する。503・429 以外の 5xx と 3xx の扱いは QC-9 の RC-3・RC-4 による（v1.1（I-10））。削除の遅延を偽造の受理より優先する（CON-12 RO-12）[D]。
+    - QC-5 経路: 照会は本 API（publisher と別の workload ID・別の配備。CON-12 RO-12、§4.1 Q-2）へ workload ID の相互 TLS で直接行い、broker や事象の経路を経ない（CON-12 RO-12、§4.1 Q-3）。URL は設定（CON-11 §11.4 の `LIFECYCLE_STATE_QUERY_URL`）から得て、コードに直書きしない（CON-00 §2.5 手順 6）[D]。
+    - QC-6 キャッシュ禁止: 照会の結果を保存して後の判断に使わない。応答には `Cache-Control: no-store` を付ける。no-store は、cache が要求・応答のどの部分も保存してはならず（MUST NOT）、他の要求への応答に使ってはならない（MUST NOT）とする指示である [N][^9111]。同 RFC はこの指示を秘匿の手段として信頼できないとしているので、秘匿の根拠には使わない [N][^9111]。
+    - QC-7 事象を引数にする: verifyLifecycleAction には、根拠にした事象の id・source・type・sequence を渡す。基盤は、その事象が正本側の outbox の記録（publisher が送る元）に当該パーティションの番号で載っているかを確かめる（LQ09）。署名の検証（RO-11）を省いてよい理由にはならない [D]。
+    - QC-8 応答と要求の結び付き（v1.1（I-10））: verifyLifecycleAction の 200 応答は、次をすべて満たす場合だけ「適合」とする。満たさない応答は QC-9 の RC-8（不適合応答）として扱い、実行しない [D]。(a) `target.kind` が action と対応する（delete_tenant_data・retarget_tenant_references は tenant、delete_principal_data は principal、remove_membership_data は membership、resume_deletion_after_hold_release は要求に tid を入れたら tenant、sub だけなら principal）。(b) `target.id` が要求の tid（tenant）、sub（principal）、「tid/sub」（membership）と一致する（不透明値として文字列の完全一致で比べる）。(c) verdict=proceed のとき reason_code が LQ00 である。(d) reason_code=LQ08 のとき grace_until がある（LQN-17）。(e) verdict=proceed のとき request_status が withdrawn・in_grace・unknown でなく、hold_status が active・unknown でなく、mapping_status が mismatch・unknown でない。結び付きを確かめないと、別の対象についての proceed（汎用モックが固定の例を返す場合や、経路上で差し替えた応答）で削除を実行してしまうためである（13_integration-trial の P-13）[D]。
+    - QC-9 応答の分類と扱い（v1.1（I-10））: 呼ぶ側は、応答を次の表の上から順に照らし、最初に当たった区分で扱う。区分は HTTP の状態コードで決め、Problem 本文の reason_code は記録にだけ使う（本文が Problem でない、reason_code がない、状態コードと食い違う場合も状態コードで決める。LQN-27）[D]。`Cache-Control: no-store` の有無は区分の判定に使わない（呼ぶ側は QC-6 により結果を保存しないため。欠落は記録して基盤チームへ連絡する）[D]。再試行は毎回新しい verifyLifecycleAction の呼出しとし、前の応答を使い回さない（QC-6）[D]。表の機械可読の写しは `info.x-response-classes` である。
+
+    | 区分 | 判定条件 | 実行 | 再試行 | 報告期限までに proceed を得られない場合の報告（CON-13 DeletionReport） | 警報 |
+    |---|---|---|---|---|---|
+    | RC-1 到達不能 | 接続失敗、TLS の握手の失敗、timeout（照会の timeout は TBD。§5） | しない（保留） | する。ランダム化した指数 backoff（QC-4） | outcome=failed・failure_reason=state_query_unavailable | 期限の時点で所有者へ。TLS の握手の失敗が続くときは自サービスの証明書・登録の誤りの疑いとして所有者へ即時 |
+    | RC-2 過負荷 | 429（LQ23）・503（LQ24） | しない（保留） | する。Retry-After があればその秒数の後、なければ backoff。待ちが報告期限を超える場合は期限に報告する | 同上 | 期限の時点で所有者へ |
+    | RC-3 その他の 5xx | 503 以外の 5xx（500・502・504 など） | しない（保留） | する（backoff） | 同上 | 期限の時点で所有者へ。続く場合は基盤チームへ |
+    | RC-4 転送 | 3xx | しない。`Location` を辿らない。設定の URL（QC-5）以外へ照会を送らないためである | しない（設定を確かめるまで） | 同上 | 所有者とプラットフォームチームへ即時（設定の誤りか経路の改ざんの疑い） |
+    | RC-5 要求の誤り | 400（LQ20）と、本契約にない 4xx（401・405・406・409・413・415・422 など。403・404・429 を除く） | しない | 同じ要求を再送しない。実装・設定を直してから照会し直す | outcome=failed・failure_reason=processing_error（受信側の処理失敗） | 所有者へ即時 |
+    | RC-6 拒否 | 403（LQ21） | しない | 自動では再送しない。受信サービスの登録簿（CON-12 LC-OI-4）と購読範囲を確かめてから照会し直す | outcome=failed・failure_reason=state_query_unavailable | 所有者とプラットフォームチームへ即時。購読範囲外の対象を指す事象を受けた疑いがあるので SOC へも送る |
+    | RC-7 対象なし | 404（LQ22） | しない | しない | outcome=failed・failure_reason=source_of_truth_mismatch | SOC と所有者へ（CON-12 RO-12） |
+    | RC-8 不適合応答 | 200 だが次のいずれか。media type が application/json でない、JSON として読めない、VerificationResult に適合しない（verdict 欄がない、verdict が未知の値、必須欄の欠落、型・pattern の違反）、QC-8 の (a)〜(e) を満たさない。および 200 以外の 2xx と 1xx 以外の上記にない状態コード | しない | する（backoff）。基盤の一時的な不具合の可能性があるため | outcome=failed・failure_reason=state_query_unavailable（正しい応答を得られなかったのであり、正本不一致とは判定しない） | SOC と所有者へ即時（照会 API の不具合か、経路上の偽の応答の疑い） |
+    | RC-9 不実行の判定 | 200・適合・verdict=do_not_proceed | しない | reason_code による（QC-3）。LQ08 は grace_until の後、LQ11 は RC-1 と同じ、それ以外（未知の値を含む）は再試行しない | QC-3 と §4 の表（LQ02 は outcome=withdrawn、LQ11 は state_query_unavailable、それ以外と未知の値は source_of_truth_mismatch） | QC-3（正本不一致は SOC へ） |
+    | RC-10 実行可 | 200・適合（QC-8 を満たす）・verdict=proceed | `checked_at` から Q_fresh 以内に実行する（QC-1） | — | 処理の結果による（completed など） | — |
+
+    - 状態取得の operation（getTenantState・getPrincipalState・getMembershipState・getMappingState・listReconciliationSnapshot）の応答も同じ区分で分ける。ただしこれらの結果を根拠に不可逆な処理を実行しない（不可逆な処理は必ず verifyLifecycleAction の RC-10 を要する）。RO-9 の全件突合では、RC-1〜RC-6・RC-8 は突合を完了とせず処理の再開を保留し、RC-7 は例外台帳（DL-05）に登録して所有者へ連絡する（v1.1（I-10））[D]。
+    - 報告期限に間に合わない区分（RC-1〜RC-6・RC-8）でも、削除の遅延を偽造の受理より優先する（CON-12 RO-12）。failure_reason の値は CON-13 DeletionReport の x-known-values（source_of_truth_mismatch・state_query_unavailable・processing_error・other）の範囲で選び、新しい値を作らない [D]。
+
+    ## 3. 基盤（応答する側）の規則
+    - QS-1 正本から読む: 本 API は publisher と別の workload ID・別の配備で動かし（CON-12 RO-12、§4.1 Q-2）、テナント状態・主体台帳の正本（outbox と同じ取引で書く store）から、最新の書込みを反映した読取りで答える。事象から作った投影は使わない。`authoritative_as_of` に読み取った時点を入れる [D]。最新の書込みを反映した読取りができない場合は状態を `unknown` にし、verifyLifecycleAction は do_not_proceed／LQ11 を返す。古い読取りで撤回を見落とすと、撤回済みの削除を実行してしまうためである（§4.1 Q-2）[D]。
+    - QS-2 最小化: 状態の区分と参照だけを返し、テナント名・ドメイン名・email などの属性を返さない（CON-12 PO-11 と同じ方針）[D]。
+    - QS-3 範囲: 呼出し元の workload が受信サービスの登録簿（CON-12 LC-OI-4）に載っていなければ 403（LQ21）にする。照会できる対象は、呼出し元が購読しているパーティションに限る [D]。
+    - QS-4 記録: verifyLifecycleAction の結果は CON-08 の監査イベントとして記録する（呼出し元、事象 id、verdict、reason_code）。副作用はこの記録だけである [D]。
+    - QS-5 過負荷: 過負荷・保守中は 503 と `Retry-After` を返す。503 は一時的な過負荷・保守で要求を処理できないことを示し、server は Retry-After を送ってよい（MAY）[N][^9110]。503 とともに送る Retry-After は、サービスが使えないと見込まれる時間を示す [N][^9110]。レート制限には 429 と `Retry-After` を返す。429 の応答は状況の説明を含めるべき（SHOULD）で、Retry-After を含めてよい（MAY）[N][^6585]。
+    - QS-6 判定の順序: 次の順に調べ、最初に当てはまった理由コードで do_not_proceed を返す。LQ11 → LQ09 → LQ01 → LQ03 → LQ02 → LQ10 → LQ05・LQ06 → LQ07 → LQ04 → LQ08。どれにも当たらなければ proceed（LQ00）[D]。
+
+    ## 4. 理由コード（開いた列挙。CON-00 §4.8 R-1）
+    | code | 意味 | verdict・HTTP | 呼ぶ側の扱い（QC-3） |
+    |---|---|---|---|
+    | LQ00 | 一致。実行してよい | proceed・200 | 実行する |
+    | LQ01 | request_id が正本に存在しない | do_not_proceed・200 | 正本不一致（failed、SOC 警報） |
+    | LQ02 | 要求が撤回された | do_not_proceed・200 | outcome=withdrawn |
+    | LQ03 | request_id はあるが対象（tid・sub）か種別が事象と違う | do_not_proceed・200 | 正本不一致 |
+    | LQ04 | 対象の状態が処理の前提と違う（例: 削除要求の状態にない） | do_not_proceed・200 | 正本不一致 |
+    | LQ05 | 保全が継続している（hold_ref が解除されていない） | do_not_proceed・200 | 正本不一致 |
+    | LQ06 | hold_ref が正本に存在しない | do_not_proceed・200 | 正本不一致 |
+    | LQ07 | mapping_ref が存在しないか、request_id・対象と結び付いていない | do_not_proceed・200 | 正本不一致 |
+    | LQ08 | 猶予 G_del が満了していない | do_not_proceed・200 | grace_until の後に照会し直す |
+    | LQ09 | 事象（id・sequence）が正本側の outbox の記録にない | do_not_proceed・200 | 正本不一致（偽造の疑い） |
+    | LQ10 | 削除の対象に保全が掛かっている | do_not_proceed・200 | 正本不一致として報告し、保全の解除を待つ |
+    | LQ11 | 最新の書込みを反映した正本を読めない（状態 unknown） | do_not_proceed・200 | 照会不能（QC-4）。正本不一致にはしない |
+    | LQ20 | 要求の形が不正 | 400 | 照会不能ではなく実装の誤り。実行しない（QC-9 RC-5） |
+    | LQ21 | 呼出し元が登録簿にない、または対象が購読範囲外 | 403 | 実行しない。所有者へエスカレーション（QC-9 RC-6） |
+    | LQ22 | 対象（tid・sub・所属）が正本に存在しない | 404 | 正本不一致（QC-9 RC-7） |
+    | LQ23 | レート制限 | 429 | 照会不能（QC-4、QC-9 RC-2） |
+    | LQ24 | 一時的に応答できない | 503 | 照会不能（QC-4、QC-9 RC-2） |
+
+    理由コードは開いた列挙である。呼ぶ側は、200 の応答にある未知の LQ 値を QC-3 により正本不一致として扱い（RC-9）、4xx・5xx の Problem にある未知の LQ 値は記録だけして状態コードで扱う（QC-9）[D]。
+
+    ## 5. 凍結区分と GA への条件
+    - 版 0.1.0 では全 operation が preview である（x-preview-expires: 2027-10-15。CON-12 の preview と同じ）[D]。版 0.2.0（v1.1）でも変えない。QC-8・QC-9 は呼ぶ側の規則の追加であり、要求・応答の形は変えていない [D]。
+    - CON-12 §4.1 Q-5 の案は、識別子と応答の状態の列挙値を irreversible、操作を GA とするものである。本契約はこの案を目標とし、GA に上げるまでは preview に置く。preview の間も、状態の列挙値（TenantState の DL-49 §2.1 の ID、PrincipalState・MembershipState の値、RequestStatus、理由コードの意味）は、意味を変えずに追加だけを行う [D]。
+    - CON-12 §6 は、照会 API が揃うまで CON-12 の GA の凍結（DEC-8 第 1 段）を付議しないとしている。このため、verifyLifecycleAction の要求・応答の形、QC-1〜QC-9（QC-8・QC-9 は v1.1 で追加）、§4 の理由コードの意味は、CON-12 の GA の付議の前に GA へ上げる候補である。上げる条件は、作成者以外の独立レビュー、モック（CON-11 MK-08）での x-negative-examples の実行（TC-026）、DL-49・DL-08 の所有者による状態区分の確認である [D]。
+    - 数値（Q_fresh、照会の timeout、レート）はすべて TBD である。値を決めることは制約を強める変更として扱う（CON-00 §6.1）[D]。
+
+    ## 6. 作成方法と誠実性
+    AI エージェント（Claude）が CON-12 RO-9・RO-12・RO-13、CON-13 の data 定義（request_id・hold_ref・mapping_ref）、DL-49 §2.1 の主状態、DL-08 §4・§7.1 の状態機械を正本として起草した。
+    外部原典（OpenAPI 3.1.2 の Security Scheme Object、RFC 9111 §5.2.2.5、RFC 9110 §10.2.3・§15.6.4、RFC 6585 §4、AsyncAPI 3.1.0 の AsyncAPI Object と Specification Extensions）は 2026-10-15 に原文を取得して照合した。作成者以外による独立レビューと人による照合は未実施である [D]。
+    版 0.2.0（v1.1）の QC-8・QC-9・RC-1〜RC-10・LQN-20〜LQN-29 は、AI による模擬連携検証（13_integration-trial/report.md。実在の連携チームの検証ではない）の P-13 を、本書の既存の規則（QC-2〜QC-6、§4）と CON-12 RO-12・CON-13 の failure_reason の既知の値から導いた設計推論であり、新しい外部事実は加えていない [D]。
+
+    ## 7. 汎用モック（Prism など）で使う場合の注意（v1.1（I-10））
+    - 本ファイルは単独の OpenAPI 3.1.2 文書なので、汎用モックにそのまま渡せる。版 0.1.0 のように CON-12 から取り出す手順は要らない（P-12 の解消）[D]。
+    - 汎用モックは operation の examples を返すだけで、要求の中身を見ない。verifyLifecycleAction の正例（proceed）は `target.id=t5wq2hzr7nmc4ka3vd6pxe2bfy` を返すので、QC-8 (b) を満たす正例の結合確認は要求の tid にこの値を使う。別の tid で呼ぶと、契約に忠実な呼ぶ側は RC-8（不適合応答）として実行しない。これは期待どおりの動作である [D]。
+    - 正例以外の 200 の例（mismatch＝LQ01、graceNotElapsed＝LQ08）と 4xx・5xx の応答は、汎用モックの例の選択機能で取り出せる場合がある（選択の方法は製品ごとに違い、本契約では定めない）。2026-10-15 に本書の作成者が Prism 5.12.0 で本ファイルを起動し、要求ヘッダ `Prefer: example=mismatch`・`Prefer: example=graceNotElapsed` で LQ01・LQ08 の例が、`Prefer: code=403`・`code=429`・`code=503` で各 Problem が返ることを確かめた。同じ起動で、要求の tid を例と違う値にしても proceed（target.id は例の値）が返り、503 に Retry-After は付かなかった（ヘッダが任意のため）[M]。このため LQN-12（Retry-After: 120）と LQN-24 以外の QC-8 の負例は注入で作る。RC-1（timeout・接続失敗）、RC-3（500 など）、RC-4（3xx）、RC-8（不適合応答。verdict 欄の欠落・未知の verdict・QC-8 の不一致）は本契約の examples に無いので、汎用モックでは作れない。これらは CON-11 MK-08 の注入か、試験側の中継（CON-11 の kit）で作る（§8 V11-Q3）[D]。
+    - 照会の timeout・Retry-After の上限・Q_fresh は TBD（§5）なので、試験では設定値として外から与える（CON-11 §11.4 への申し送りは §8 V11-Q4）[D]。
+
+    ## 8. 他文書への申し送り（v1.1）
+    本ファイル以外は本改訂の担当外のため未編集である。v1.1 の同期作業で反映する [D]。
+
+    | # | 宛先 | 内容 | 理由 |
+    |---|---|---|---|
+    | V11-Q1 | traceability/deliverables.md §4.5（DL-121 行）・§8（ファイル計画）・§R6 の申し送り表 | DL-121 の所在を `11_contracts/lifecycle-state.openapi.yaml`（未作成）から `11_contracts/state-query.openapi.yaml`（作成済み、版 0.2.0）に改める。「CON-12 の拡張 x-state-query-api にあり」の記述を外す | v1.1（I-10）で切り出した。ファイル名は v1.1 の改訂計画による |
+    | V11-Q2 | 11_contracts/README.md（CON-00）§2.1・§2.3・ファイル一覧・§9 申し送り 14 | CON-15 の行の所在を本ファイルに改め、「案」を外し、SHA-256 を取り直す。§2.3 の検査結果を本ファイルの x-lint-notes に置き換える。ファイル一覧の「拡張 x-state-query-api に CON-15 を内包」を外す。申し送り 14 を済とする | 同上 |
+    | V11-Q3 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.11・§6.3（MK-08 と照会族の負例）、11_contracts/kit/ | (a) 照会 API のモックの出所を本ファイルに改める（CON-12 §10 H5-2 (a) の「x-state-query-api」を読み替え）。(b) MK-08 または kit の中継に RC-1・RC-3・RC-4・RC-8 の注入（timeout、500、302、text/html の 200、verdict 欄のない 200、未知の verdict、target.id の食い違い、proceed と request_status=withdrawn の組合せ）を加える。(c) LQN-20〜LQN-29 を照会族の負例に加え、CV 番号へ採番する | QC-8・QC-9 の試験手段。汎用モックでは作れない（§7） |
+    | V11-Q4 | 11_contracts/mock-contract-test-kit.md（CON-11）§11.4 | `LIFECYCLE_STATE_QUERY_URL` の説明を「CON-15（11_contracts/state-query.openapi.yaml）の servers に当たる URL」に改め、差替え点に照会の timeout と Q_fresh（いずれも TBD）を加える | QC-1・RC-1 の値を試験で外から与えるため |
+    | V11-Q5 | 10_integration（INT-00 §6.3、INT-03 のライフサイクル受信の手順、INT-06 の該当 FQ） | CON-15 の所在を本ファイルに改め、「CON-12 から取り出して汎用モックに渡す」手順があれば削る。照会の応答の扱いは本書 QC-9 を参照させる | P-12・P-13 |
+    | V11-Q6 | traceability/open-items.md（POA&M） | CON-12 §10 H5-3 の「単独ファイルへの切出し（H5-1）」を済とし、残りを「CON-15 の独立レビュー、GA への昇格、MK-08 での LQN-01〜LQN-29 の実行（TC-026）、timeout・Q_fresh の値」とする | 切出しは v1.1 で済んだ |
+  license:
+    name: 社内限定（Proprietary, internal use only）
+    identifier: LicenseRef-Proprietary-Internal
+  x-document-id: CON-15（traceability/deliverables.md §4.5 で登録済み。所在の修正は §8 V11-Q1）
+  x-deliverable: DL-121（traceability/deliverables.md §4.5 で登録済み）
+  x-status: draft
+  x-freeze-class: preview
+  x-preview-expires: '2027-10-15'
+  x-last-updated: '2026-10-15'
+  x-requirements: [G-137, G-118, G-138, R-044, R-109]
+  x-response-classes:
+    description: 'QC-9 の表の機械可読の写し（v1.1（I-10））。呼ぶ側は items を上から順に照らし、最初に当たった区分で扱う。execute はどの区分でも RC-10 以外は false。report は報告期限までに proceed を得られない場合の CON-13 DeletionReport の値で、failure_reason は CON-13 x-known-values の範囲だけを使う [D]。'
+    items:
+      - { id: RC-1, name: unreachable, match: 'connection_error | tls_handshake_error | timeout', execute: false, retry: backoff, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner_at_deadline] }
+      - { id: RC-2, name: overloaded, match: 'status in [429, 503]', execute: false, retry: retry_after_or_backoff, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner_at_deadline] }
+      - { id: RC-3, name: other_5xx, match: 'status in 500..599 and status != 503', execute: false, retry: backoff, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner_at_deadline, platform_if_persistent] }
+      - { id: RC-4, name: redirect, match: 'status in 300..399', execute: false, retry: none_until_config_checked, follow_location: false, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner, platform] }
+      - { id: RC-5, name: request_error, match: 'status == 400 or (status in 400..499 and status not in [403, 404, 429])', execute: false, retry: none_until_fixed, report: { outcome: failed, failure_reason: processing_error }, alert: [owner] }
+      - { id: RC-6, name: forbidden, match: 'status == 403', execute: false, retry: none_until_registry_checked, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner, platform, soc] }
+      - { id: RC-7, name: not_found, match: 'status == 404', execute: false, retry: none, report: { outcome: failed, failure_reason: source_of_truth_mismatch }, alert: [owner, soc] }
+      - { id: RC-8, name: nonconforming, match: 'status != 200 (other 2xx and any status not matched above) | media_type != application/json | body not JSON | not VerificationResult | QC-8 (a)-(e) violated (unknown or missing verdict included)', execute: false, retry: backoff, report: { outcome: failed, failure_reason: state_query_unavailable }, alert: [owner, soc] }
+      - { id: RC-9, name: do_not_proceed, match: 'status == 200 and conforming and verdict == do_not_proceed', execute: false, retry: 'by reason_code (QC-3): LQ08 after grace_until, LQ11 as RC-1, others none', report: 'QC-3 and §4 (LQ02 -> withdrawn, LQ11 -> failed/state_query_unavailable, others and unknown -> failed/source_of_truth_mismatch)', alert: 'QC-3 (soc on mismatch)' }
+      - { id: RC-10, name: proceed, match: 'status == 200 and conforming (QC-8) and verdict == proceed', execute: 'true within Q_fresh of checked_at (QC-1)', retry: none, report: 'by processing result', alert: [] }
+  x-depends-on:
+    - 11_contracts/lifecycle-events.asyncapi.yaml（CON-12 RO-9・RO-12・RO-13、LC-OI-3・LC-OI-4）
+    - 11_contracts/schemas/lifecycle-event.schema.json（CON-13 の OpaqueRef・request_id・hold_ref・mapping_ref）
+    - 11_contracts/schemas/common.schema.json（CON-02 の OpaqueId・Problem）
+    - 11_contracts/mock-contract-test-kit.md（CON-11 §4.11 MK-08、§11.4）
+    - 02_requirements/tenant-lifecycle.md（DL-49 §2.1、§7）
+    - 02_requirements/identity-lifecycle.md（DL-08 §4、§7.1、§16.3）
+  x-references:
+    - '[^oas] OpenAPI Initiative『OpenAPI Specification v3.1.2』2025-09-19. https://spec.openapis.org/oas/v3.1.2.html （参照箇所: §4.8.27.1 Security Scheme Object の type（有効な値に mutualTLS を含む）、確認日: 2026-10-15。OAI/OpenAPI-Specification の versions/3.1.2.md の原文で確認）'
+    - '[^9111] R. Fielding, M. Nottingham, J. Reschke『HTTP Caching』RFC 9111 (STD 98), 2022-06. https://www.rfc-editor.org/rfc/rfc9111 （参照箇所: §5.2.2.5 no-store、確認日: 2026-10-15）'
+    - '[^9110] R. Fielding, M. Nottingham, J. Reschke『HTTP Semantics』RFC 9110 (STD 97), 2022-06. https://www.rfc-editor.org/rfc/rfc9110 （参照箇所: §10.2.3 Retry-After、§15.6.4 503 Service Unavailable、確認日: 2026-10-15）'
+    - '[^aa31] AsyncAPI Initiative『AsyncAPI Specification 3.1.0』. https://www.asyncapi.com/docs/reference/specification/v3.1.0 （参照箇所: AsyncAPI Object（"This object MAY be extended with Specification Extensions"）、Specification Extensions（`^x-` の patterned field）、確認日: 2026-10-15。asyncapi/spec の v3.1.0 タグの原文で確認）'
+    - '[^6585] M. Nottingham, R. Fielding『Additional HTTP Status Codes』RFC 6585, 2012-04. https://www.rfc-editor.org/rfc/rfc6585 （参照箇所: §4 429 Too Many Requests、確認日: 2026-10-15）'
+  x-negative-examples:
+    description: 照会族の負例。期待結果はすべて「不可逆な処理を実行しない」。LQN-20〜LQN-29 は v1.1（I-10）で追加し、QC-9 の区分 RC-1〜RC-9 を少なくとも 1 件ずつ含む（RC-1・RC-2 は LQN-01・LQN-12、RC-9 は LQN-03 ほか）。CON-11 §6.3 のライフサイクル族に加える（CON-00 §9 で申し送り）。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
+    items:
+      - { ref: LQN-01, op: verifyLifecycleAction, case: "client 証明書を提示しない（相互 TLS なし）", expect: "TLS の握手で拒否される。呼ぶ側は照会不能として実行を保留する（QC-4）" }
+      - { ref: LQN-02, op: verifyLifecycleAction, case: "受信サービスの登録簿にない workload から呼ぶ", expect: "403 Problem（reason_code=LQ21）。実行しない" }
+      - { ref: LQN-03, op: verifyLifecycleAction, case: "署名は正しいが request_id が正本にない tenant.deletion.requested（CON-12 LC-CV-12）", expect: "200 do_not_proceed / LQ01。呼ぶ側は outcome=failed（正本不一致）で報告し警報する" }
+      - { ref: LQN-04, op: verifyLifecycleAction, case: "猶予中に撤回された削除要求。撤回事象は落とした（CON-12 LC-CV-13）", expect: "200 do_not_proceed / LQ02。outcome=withdrawn" }
+      - { ref: LQN-05, op: verifyLifecycleAction, case: "保全が継続している hold_ref の legal_hold.released（CON-12 LC-CV-14）", expect: "200 do_not_proceed / LQ05。削除を再開しない" }
+      - { ref: LQN-06, op: verifyLifecycleAction, case: "tenant.merge.cutover の mapping_ref が request_id と結び付いていない", expect: "200 do_not_proceed / LQ07。付け替えない" }
+      - { ref: LQN-07, op: verifyLifecycleAction, case: "G_del の満了前に action=delete_tenant_data で照会する", expect: "200 do_not_proceed / LQ08、grace_until あり。満了後に照会し直す" }
+      - { ref: LQN-08, op: verifyLifecycleAction, case: "publisher が発行していない event.id・sequence を引数にする（broker への注入を想定）", expect: "200 do_not_proceed / LQ09" }
+      - { ref: LQN-09, op: verifyLifecycleAction, case: "request_id は tid=A のものだが、要求の tid=B", expect: "200 do_not_proceed / LQ03" }
+      - { ref: LQN-10, op: verifyLifecycleAction, case: "削除要求の対象テナントに保全が掛かっている", expect: "200 do_not_proceed / LQ10" }
+      - { ref: LQN-11, op: verifyLifecycleAction, case: "action=delete_principal_data で sub を省く", expect: "400 Problem（reason_code=LQ20）" }
+      - { ref: LQN-12, op: verifyLifecycleAction, case: "503 と Retry-After: 120 を返す（モックの注入）", expect: "呼ぶ側は実行を保留し、120 秒後に再試行する。deadline までに照会できなければ outcome=failed（照会不能）" }
+      - { ref: LQN-13, op: verifyLifecycleAction, case: "200 だが verdict が未知の値（例 maybe）か、verdict 欄がない（モックの注入）", expect: "呼ぶ側は実行しない（QC-2 fail closed）" }
+      - { ref: LQN-14, op: verifyLifecycleAction, case: "checked_at から Q_fresh を超えてから実行しようとする", expect: "呼ぶ側は照会し直す（QC-1）" }
+      - { ref: LQN-15, op: getTenantState, case: "tid に空白を含む値（'t5wq 2hz'）", expect: "400 Problem（reason_code=LQ20）" }
+      - { ref: LQN-17, op: verifyLifecycleAction, case: "verdict=proceed なのに reason_code=LQ05、または reason_code=LQ08 なのに grace_until がない（モックの注入）", expect: "呼ぶ側は不適合として実行しない（QC-2）" }
+      - { ref: LQN-18, op: verifyLifecycleAction, case: "正本の読取りが最新の書込みを反映できない（replica の遅延の注入）", expect: "200 do_not_proceed / LQ11。呼ぶ側は照会不能として保留する（QC-3、QC-4）" }
+      - { ref: LQN-19, op: getMappingState, case: "取り消された mapping_ref", expect: "200 status=revoked。呼ぶ側は付け替えない" }
+      - { ref: LQN-16, op: listReconciliationSnapshot, case: "改ざんした cursor を渡す", expect: "400 Problem（reason_code=LQ20）。突合を最初からやり直す" }
+      - { ref: LQN-20, op: verifyLifecycleAction, case: "500 を返す（モックの注入。v1.1（I-10））", expect: "RC-3。実行せず backoff で再試行する。deadline までに proceed を得られなければ outcome=failed・failure_reason=state_query_unavailable" }
+      - { ref: LQN-21, op: verifyLifecycleAction, case: "302 と別ホストの Location を返す（モックの注入。v1.1（I-10））", expect: "RC-4。Location を辿らず実行しない。所有者とプラットフォームチームへ即時に警報する" }
+      - { ref: LQN-22, op: verifyLifecycleAction, case: "本契約にない 4xx（例 401・415）を返す（モックの注入。v1.1（I-10））", expect: "RC-5。実行せず同じ要求を再送しない。deadline までに直せなければ outcome=failed・failure_reason=processing_error" }
+      - { ref: LQN-23, op: verifyLifecycleAction, case: "200 だが Content-Type が text/html（中継の障害ページなど）、または本文が JSON として読めない（モックの注入。v1.1（I-10））", expect: "RC-8。実行せず SOC と所有者へ警報し、backoff で再試行する。deadline では failure_reason=state_query_unavailable" }
+      - { ref: LQN-24, op: verifyLifecycleAction, case: "要求は tid=B だが、200 proceed/LQ00 の target.id が tid=A（汎用モックの固定の例、経路上の差替え。v1.1（I-10））", expect: "RC-8（QC-8 (b)）。実行しない" }
+      - { ref: LQN-25, op: verifyLifecycleAction, case: "200 proceed/LQ00 だが request_status=withdrawn、または hold_status=active（モックの注入。v1.1（I-10））", expect: "RC-8（QC-8 (e)）。実行しない" }
+      - { ref: LQN-26, op: verifyLifecycleAction, case: "200 do_not_proceed で reason_code が未知の値（例 LQ37）（v1.1（I-10））", expect: "RC-9。正本不一致として outcome=failed・failure_reason=source_of_truth_mismatch で報告し SOC へ警報する。再試行しない（QC-3）" }
+      - { ref: LQN-27, op: verifyLifecycleAction, case: "403 だが本文が Problem でない、または reason_code=LQ24 と状態コードが食い違う（モックの注入。v1.1（I-10））", expect: "状態コードで RC-6 とする。実行せず自動では再送しない。所有者・プラットフォームチーム・SOC へ警報する" }
+      - { ref: LQN-28, op: getTenantState, case: "RO-9 の全件突合で、受信側が保持する tid について 404 を返す（v1.1（I-10））", expect: "RC-7。この結果を根拠にデータを削除しない。例外台帳（DL-05）に登録して所有者へ連絡する" }
+      - { ref: LQN-29, op: verifyLifecycleAction, case: "action=delete_tenant_data に対し、200 proceed/LQ00 の target.kind=principal（モックの注入。v1.1（I-10））", expect: "RC-8（QC-8 (a)）。実行しない" }
+  x-lint-notes: '版 0.2.0（v1.1（I-10））の検査: 2026-10-15 に本書の作成者が本ファイルを Redocly CLI 2.64.0（npx @redocly/cli@latest lint、recommended、設定ファイルなし）で検査し、エラー 0・警告 0。Python jsonschema 4.26.0 の check_schema は components.schemas の 19 件すべて合格、operation の examples 10 件はすべて適合。QC-8 の必要性の確認として、LQN-24（target.id の食い違い）・LQN-25（proceed と request_status=withdrawn）・LQN-29（target.kind の食い違い）・LQN-26（未知の reason_code）の応答はスキーマには適合し、LQN-13（verdict 欄なし、verdict=maybe）は不適合になることを確かめた（スキーマ検証だけでは RC-8 を判定できない）。Prism 5.12.0 で 6 operation すべてが 200 を返し、Prefer ヘッダで 403・429・503 と LQ01・LQ08 の例を取り出せた（mutualTLS は検査しないという警告あり。§7）。以下は版 0.1.0 の記録。2026-10-15 に本書の作成者が、この OpenAPI 文書（x-state-query-api の値）を単独のファイルとして取り出して検査した。Redocly lint 2.63.0（recommended、設定ファイルなし）はエラー 0・警告 0。Python jsonschema 4.26.0 の check_schema は components.schemas の 19 件すべて合格、operation の examples 10 件（mapping を含む）はすべて適合、要求の形の負例 5 件（LQN-11、保全解除で対象なし、未知の action、空白を含む tid、20 桁でない sequence）はすべて不適合。Prism 5.12.0 で 6 operation すべてが 200 を返した（mutualTLS は検査しないという警告あり）。組合せの規則（verdict と reason_code、LQ08 と grace_until）は、if/then で書くと Redocly の例検査が誤検知したので、本文と負例 LQN-17 で定めた。生データは作成者の一時作業領域にだけ置いた。'
+servers:
+  - url: https://lifecycle-query.id-domain.example
+    description: 照会 API の endpoint（publisher と別の配備。QS-1）。ホスト名は仮置きで凍結しない。呼ぶ側は設定 LIFECYCLE_STATE_QUERY_URL（CON-11 §11.4）から得る。cell ごとに endpoint を分けるかは CON-12 LC-OI-4 と同時に決める
+security:
+  - workloadMtls: []
+tags:
+  - name: verification
+    description: 破壊的・不可逆な処理の直前の照合（CON-12 RO-12）。preview（GA 候補）
+  - name: state
+    description: 現在状態の取得と全件突合（CON-12 RO-9）。preview
+paths:
+  /v1/lifecycle/verifications:
+    post:
+      operationId: verifyLifecycleAction
+      tags: [verification]
+      summary: 不可逆な処理の直前に、事象と正本の一致を照合する（RO-12）
+      description: 読取り専用の照合。副作用は監査記録だけ（§3 QS-4）。request_id などの参照を URL やアクセスログに残さないため、要求本文で渡す。
+      x-freeze-class: preview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+            examples:
+              tenantDeletion:
+                summary: tenant.deletion.requested の猶予満了後の照合
+                value:
+                  action: delete_tenant_data
+                  event: { id: 'e7q2m4vx9kd3ta6pnr2bw7cyh5', source: 'https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy', type: 'example.id-domain.lifecycle.tenant.deletion.requested', sequence: '00000000000000000042' }
+                  tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  request_id: r4kz7qm2vx5hd3ta6pnr2bw7cy
+              holdRelease:
+                summary: legal_hold.released による削除の再開の照合
+                value:
+                  action: resume_deletion_after_hold_release
+                  event: { id: 'h2n8c5wq7kd3ta6pnr2bw7cyh1', source: 'https://lifecycle.id-domain.example/tenants/t5wq2hzr7nmc4ka3vd6pxe2bfy', type: 'example.id-domain.lifecycle.tenant.legal_hold.released', sequence: '00000000000000000057' }
+                  tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  hold_ref: hk3vq7m2xh5d4ta6pzr2nbw7yc
+      responses:
+        '200':
+          description: 照合の結果。適合（QC-8）し verdict=proceed のときだけ実行してよい（QC-2。v1.1（I-10）で QC-8 を追加）。応答の区分は QC-9
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+              examples:
+                proceed:
+                  summary: 一致（LQ00）
+                  value:
+                    verification_id: vq9k2m4x7hd3ta6pnr2bw7cyz1
+                    verdict: proceed
+                    reason_code: LQ00
+                    checked_at: '2026-10-15T03:00:05Z'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+                    target: { kind: tenant, id: t5wq2hzr7nmc4ka3vd6pxe2bfy, state: D }
+                    request_status: executable
+                    hold_status: not_applicable
+                    mapping_status: not_applicable
+                    partition_last_sequence: '00000000000000000042'
+                mismatch:
+                  summary: request_id が正本にない（LQ01）
+                  value:
+                    verification_id: vq9k2m4x7hd3ta6pnr2bw7cyz2
+                    verdict: do_not_proceed
+                    reason_code: LQ01
+                    checked_at: '2026-10-15T03:00:05Z'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+                    target: { kind: tenant, id: t5wq2hzr7nmc4ka3vd6pxe2bfy, state: A }
+                    request_status: unknown
+                    hold_status: not_applicable
+                    mapping_status: not_applicable
+                    partition_last_sequence: '00000000000000000041'
+                graceNotElapsed:
+                  summary: 猶予中（LQ08）
+                  value:
+                    verification_id: vq9k2m4x7hd3ta6pnr2bw7cyz3
+                    verdict: do_not_proceed
+                    reason_code: LQ08
+                    checked_at: '2026-10-15T03:00:05Z'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+                    target: { kind: tenant, id: t5wq2hzr7nmc4ka3vd6pxe2bfy, state: R }
+                    request_status: in_grace
+                    hold_status: not_applicable
+                    mapping_status: not_applicable
+                    grace_until: '2026-11-14T03:00:00Z'
+                    partition_last_sequence: '00000000000000000042'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+  /v1/lifecycle/tenants/{tid}:
+    get:
+      operationId: getTenantState
+      tags: [state]
+      summary: テナントの現在状態を取得する
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TidPath'
+      responses:
+        '200':
+          description: テナントの現在状態
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantState'
+              examples:
+                pendingDeletion:
+                  value:
+                    tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    state: R
+                    cell: jp-east-1
+                    legal_hold: false
+                    hold_refs: []
+                    open_requests:
+                      - { request_id: r4kz7qm2vx5hd3ta6pnr2bw7cy, request_type: 'example.id-domain.lifecycle.tenant.deletion.requested', status: in_grace, grace_until: '2026-11-14T03:00:00Z' }
+                    partition_last_sequence: '00000000000000000042'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+  /v1/lifecycle/principals/{sub}:
+    get:
+      operationId: getPrincipalState
+      tags: [state]
+      summary: 主体の現在状態を取得する
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/SubPath'
+      responses:
+        '200':
+          description: 主体の現在状態
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrincipalState'
+              examples:
+                active:
+                  value:
+                    sub: k3vq7m2xh5d4ta6pzr2nbw7ycu
+                    state: active
+                    cell: jp-east-1
+                    legal_hold: false
+                    hold_refs: []
+                    open_requests: []
+                    partition_last_sequence: '00000000000000000007'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+  /v1/lifecycle/tenants/{tid}/memberships/{sub}:
+    get:
+      operationId: getMembershipState
+      tags: [state]
+      summary: テナント内の所属の現在状態を取得する
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TidPath'
+        - $ref: '#/components/parameters/SubPath'
+      responses:
+        '200':
+          description: 所属の現在状態
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipState'
+              examples:
+                removed:
+                  value:
+                    tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    sub: k3vq7m2xh5d4ta6pzr2nbw7ycu
+                    state: removed
+                    open_requests:
+                      - { request_id: m8wq2hzr7nmc4ka3vd6pxe2bf1, request_type: 'example.id-domain.lifecycle.membership.removed', status: executable }
+                    partition_last_sequence: '00000000000000000044'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+  /v1/lifecycle/mappings/{mapping_ref}:
+    get:
+      operationId: getMappingState
+      tags: [state]
+      summary: 統合・分割の mapping_ref の有効性と内容を取得する（CON-12 §4.1 Q-1 (c)）
+      x-freeze-class: preview
+      parameters:
+        - name: mapping_ref
+          in: path
+          required: true
+          description: CON-13 TenantRestructureData の mapping_ref（不透明値）
+          schema:
+            $ref: '#/components/schemas/OpaqueId'
+      responses:
+        '200':
+          description: mapping_ref の正本上の状態
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingState'
+              examples:
+                merge:
+                  value:
+                    mapping_ref: mp7q2m4vx9kd3ta6pnr2bw7cy1
+                    status: valid
+                    kind: merge
+                    request_id: r9kz7qm2vx5hd3ta6pnr2bw7c2
+                    source_tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    target_tid: t8ab2hzr7nmc4ka3vd6pxe2c3z
+                    mapping_digest: 'sha-256:9f2d6c1e4b7a0d3f5e8c2b1a7d6e4f3c2b1a0e9d8c7b6a5f4e3d2c1b0a9f8e7d'
+                    authoritative_as_of: '2026-10-15T03:00:05Z'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+  /v1/lifecycle/snapshots/{kind}:
+    get:
+      operationId: listReconciliationSnapshot
+      tags: [state]
+      summary: W_replay を超えた停止の後の全件突合に使う現在状態の一覧（RO-9）
+      description: 呼出し元が購読しているパーティション（QS-3）の現在状態を cursor で分けて返す。各項目の partition_last_sequence を、突合の後に replay を再開する位置にする。
+      x-freeze-class: preview
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [tenant, principal, membership] }
+        - name: tid
+          in: query
+          required: false
+          description: kind=membership のとき、対象テナントを絞る
+          schema:
+            $ref: '#/components/schemas/OpaqueId'
+        - name: cursor
+          in: query
+          required: false
+          description: 前の応答の next_cursor。不透明値で、呼ぶ側は解析しない
+          schema: { type: string, minLength: 1, maxLength: 512 }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 500 }
+      responses:
+        '200':
+          description: 現在状態の一覧の 1 ページ
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotPage'
+              examples:
+                tenants:
+                  value:
+                    kind: tenant
+                    snapshot_at: '2026-10-15T03:00:05Z'
+                    items:
+                      - { tid: t5wq2hzr7nmc4ka3vd6pxe2bfy, state: A, cell: jp-east-1, legal_hold: false, hold_refs: [], open_requests: [], partition_last_sequence: '00000000000000000042', authoritative_as_of: '2026-10-15T03:00:05Z' }
+                    next_cursor: 'c1q8w2e4r6t'
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '429':
+          $ref: '#/components/responses/ProblemTooManyRequests'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable'
+components:
+  securitySchemes:
+    workloadMtls:
+      type: mutualTLS
+      description: 呼出し元の依存サービスの workload ID（X.509 SVID など。ADR-009、DL-55）による相互 TLS。broker を経ず publisher 側の本 API と直接結ぶ（CON-12 RO-12、QC-5）。OpenAPI 3.1.2 は Security Scheme の type の有効な値に mutualTLS を含む [N][^oas]
+  parameters:
+    TidPath:
+      name: tid
+      in: path
+      required: true
+      description: テナント ID（CON-02 TenantId。不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
+    SubPath:
+      name: sub
+      in: path
+      required: true
+      description: 主体 ID（CON-02 PrincipalId。不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
+  headers:
+    CacheControlNoStore:
+      description: 照会結果を保存させない（QC-6）
+      required: true
+      schema: { type: string, const: no-store }
+    RetryAfter:
+      description: 再試行までの秒数（RFC 9110 §10.2.3 の delay-seconds の形だけを使う）
+      required: false
+      schema: { type: string, pattern: '^[0-9]+$' }
+  responses:
+    ProblemBadRequest:
+      description: 要求の形が不正（LQ20）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example: { type: 'about:blank', title: Bad Request, status: 400, reason_code: LQ20 }
+    ProblemForbidden:
+      description: 呼出し元が登録簿にない、または対象が購読範囲外（LQ21）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example: { type: 'about:blank', title: Forbidden, status: 403, reason_code: LQ21 }
+    ProblemNotFound:
+      description: 対象が正本に存在しない（LQ22）。呼ぶ側は正本不一致として扱う
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example: { type: 'about:blank', title: Not Found, status: 404, reason_code: LQ22 }
+    ProblemTooManyRequests:
+      description: レート制限（LQ23）。呼ぶ側は照会不能として保留する（QC-4）
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example: { type: 'about:blank', title: Too Many Requests, status: 429, reason_code: LQ23 }
+    ProblemUnavailable:
+      description: 一時的に応答できない（LQ24）。呼ぶ側は照会不能として保留する（QC-4）
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example: { type: 'about:blank', title: Service Unavailable, status: 503, reason_code: LQ24 }
+  schemas:
+    OpaqueId:
+      description: 基盤が払い出す不透明識別子（CON-02 OpaqueId の写し。凍結前に $ref へ寄せる。CON-00 §4.9 D-7）。解析・正規化・大小同一視をしない
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[\x21-\x7E]{1,64}$'
+    Sequence:
+      description: CON-13 の Sequence と同じ。20 桁 0 埋めの 10 進数
+      type: string
+      pattern: '^[0-9]{20}$'
+    Timestamp:
+      type: string
+      format: date-time
+    EventRef:
+      description: 根拠にした事象（CON-13 Envelope の id・source・type・sequence）。QC-7
+      type: object
+      required: [id, source, type, sequence]
+      properties:
+        id: { type: string, minLength: 1, maxLength: 64 }
+        source: { type: string, format: uri-reference, minLength: 1 }
+        type: { type: string, minLength: 1, maxLength: 256 }
+        sequence: { $ref: '#/components/schemas/Sequence' }
+    VerificationRequest:
+      description: 実行しようとする不可逆な処理（CON-12 RO-12 の列挙）ごとに必須項目が違う。action は閉じた列挙（delete_tenant_data・delete_principal_data・resume_deletion_after_hold_release・retarget_tenant_references・remove_membership_data）
+      oneOf:
+        - $ref: '#/components/schemas/VerifyDeleteTenantData'
+        - $ref: '#/components/schemas/VerifyDeletePrincipalData'
+        - $ref: '#/components/schemas/VerifyResumeDeletionAfterHoldRelease'
+        - $ref: '#/components/schemas/VerifyRetargetTenantReferences'
+        - $ref: '#/components/schemas/VerifyRemoveMembershipData'
+    VerifyDeleteTenantData:
+      type: object
+      description: tenant.deletion.requested による削除の実行（RO-12、RO-13）
+      required: [action, event, tid, request_id]
+      properties:
+        action: { type: string, const: delete_tenant_data }
+        event: { $ref: '#/components/schemas/EventRef' }
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+    VerifyDeletePrincipalData:
+      type: object
+      description: user.deletion.requested による削除の実行（RO-12、RO-13）
+      required: [action, event, sub, request_id]
+      properties:
+        action: { type: string, const: delete_principal_data }
+        event: { $ref: '#/components/schemas/EventRef' }
+        sub: { $ref: '#/components/schemas/OpaqueId' }
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+    VerifyResumeDeletionAfterHoldRelease:
+      type: object
+      description: tenant/user.legal_hold.released による削除の再開（RO-12）。tid か sub の一方を必ず入れる（DL-49・DL-08 の保全の対象）
+      required: [action, event, hold_ref]
+      properties:
+        action: { type: string, const: resume_deletion_after_hold_release }
+        event: { $ref: '#/components/schemas/EventRef' }
+        hold_ref: { $ref: '#/components/schemas/OpaqueId' }
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        sub: { $ref: '#/components/schemas/OpaqueId' }
+      anyOf:
+        - { required: [tid], properties: { tid: { $ref: '#/components/schemas/OpaqueId' } } }
+        - { required: [sub], properties: { sub: { $ref: '#/components/schemas/OpaqueId' } } }
+    VerifyRetargetTenantReferences:
+      type: object
+      description: tenant.merge.cutover・tenant.split.cutover による付け替え（RO-12）
+      required: [action, event, tid, mapping_ref, request_id, role]
+      properties:
+        action: { type: string, const: retarget_tenant_references }
+        event: { $ref: '#/components/schemas/EventRef' }
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        mapping_ref: { $ref: '#/components/schemas/OpaqueId' }
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+        role: { type: string, enum: [source, target], description: 'CON-13 TenantRestructureData の role' }
+    VerifyRemoveMembershipData:
+      type: object
+      description: membership.removed に伴うデータの削除・移管（RO-12）
+      required: [action, event, tid, sub, request_id]
+      properties:
+        action: { type: string, const: remove_membership_data }
+        event: { $ref: '#/components/schemas/EventRef' }
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        sub: { $ref: '#/components/schemas/OpaqueId' }
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+    VerificationResult:
+      type: object
+      description: verdict=proceed のときの reason_code は LQ00 だけ、reason_code=LQ08 のときは grace_until が必須である。この 2 つの組合せの規則に反する応答を、呼ぶ側は不適合として扱い実行しない（QC-2、LQN-17）。v1.1（I-10）で、加えて QC-8 の (a)(b)(e)（target と action・要求の対応、proceed と各状態の組合せ）を満たさない応答も不適合（QC-9 RC-8）とする。組合せの規則は if/then で書くと lint の例検査が誤検知するため、本文と負例で定める
+      required: [verification_id, verdict, reason_code, checked_at, authoritative_as_of, target, request_status, hold_status, mapping_status, partition_last_sequence]
+      properties:
+        verification_id: { $ref: '#/components/schemas/OpaqueId' }
+        verdict:
+          type: string
+          enum: [proceed, do_not_proceed]
+          description: 閉じた列挙。呼ぶ側は proceed 以外をすべて実行しない（QC-2）
+        reason_code:
+          type: string
+          pattern: '^LQ[0-9]{2}$'
+          description: 開いた列挙（§4）。呼ぶ側は未知の値を正本不一致として扱う（QC-3）
+          x-enum-kind: open
+          x-known-values: [LQ00, LQ01, LQ02, LQ03, LQ04, LQ05, LQ06, LQ07, LQ08, LQ09, LQ10, LQ11]
+        checked_at: { $ref: '#/components/schemas/Timestamp' }
+        authoritative_as_of: { $ref: '#/components/schemas/Timestamp' }
+        target:
+          type: object
+          required: [kind, id, state]
+          properties:
+            kind: { type: string, enum: [tenant, principal, membership] }
+            id: { type: string, minLength: 1, maxLength: 130, description: 'tenant は tid、principal は sub、membership は「tid/sub」' }
+            state: { type: string, minLength: 1, maxLength: 32, description: 'TenantState・PrincipalState・MembershipState の state と同じ値' }
+        request_status: { $ref: '#/components/schemas/RequestStatus' }
+        hold_status: { type: string, enum: [active, released, unknown, not_applicable] }
+        mapping_status: { type: string, enum: [valid, mismatch, unknown, not_applicable] }
+        grace_until: { $ref: '#/components/schemas/Timestamp' }
+        partition_last_sequence: { $ref: '#/components/schemas/Sequence' }
+    RequestStatus:
+      type: string
+      enum: [in_grace, executable, withdrawn, completed, unknown, not_applicable]
+      description: request_id の正本上の状態（CON-12 §4.1 Q-1 の「猶予中・撤回済み・実行可」に completed・unknown・not_applicable を加えた）。in_grace=猶予 G_del の満了前、executable=実行可、withdrawn=撤回済み、completed=基盤側で完了済み、unknown=最新の正本を読めない（LQ11）
+    OpenRequest:
+      type: object
+      required: [request_id, request_type, status]
+      properties:
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+        request_type: { type: string, minLength: 1, maxLength: 256, description: '要求を表す事象の type（CON-12 §2）' }
+        status: { $ref: '#/components/schemas/RequestStatus' }
+        grace_until: { $ref: '#/components/schemas/Timestamp' }
+    TenantState:
+      type: object
+      required: [tid, state, cell, legal_hold, hold_refs, open_requests, partition_last_sequence, authoritative_as_of]
+      properties:
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        state:
+          type: string
+          pattern: '^([A-Z][A-Z0-9]{0,3}|unknown)$'
+          description: DL-49 §2.1 の主状態 ID（P・A・S1・S2・M・N・R・D・K・X・G）。開いた列挙。呼ぶ側は未知の値を「不可逆な処理の前提を満たさない」として扱う
+          x-enum-kind: open
+          x-known-values: [P, A, S1, S2, M, N, R, D, K, X, G, unknown]
+        cell: { type: string, minLength: 1, maxLength: 64, description: '収容 cell の論理名（CON-12 §4.1 Q-1 (a)）。値の体系は凍結しない' }
+        legal_hold: { type: boolean, description: 'DL-49 §2.1 の法的保全 H が掛かっているか' }
+        hold_refs: { type: array, items: { $ref: '#/components/schemas/OpaqueId' }, description: '有効な保全の hold_ref（CON-13 LegalHoldData）。legal_hold=false なら空' }
+        merged_into: { $ref: '#/components/schemas/OpaqueId', description: 'state=G のとき統合先の tid' }
+        open_requests: { type: array, items: { $ref: '#/components/schemas/OpenRequest' } }
+        partition_last_sequence: { $ref: '#/components/schemas/Sequence' }
+        authoritative_as_of: { $ref: '#/components/schemas/Timestamp' }
+    PrincipalState:
+      type: object
+      required: [sub, state, cell, legal_hold, hold_refs, open_requests, partition_last_sequence, authoritative_as_of]
+      properties:
+        sub: { $ref: '#/components/schemas/OpaqueId' }
+        state:
+          type: string
+          pattern: '^[a-z][a-z_]{0,31}$'
+          description: DL-08 §4 SM-P の状態（pending=未確認、active=有効、suspended=停止、pending_deletion=削除猶予、deleted=削除済）。開いた列挙。非人間主体の扱いは CON-12 LC-OI-2 で未決
+          x-enum-kind: open
+          x-known-values: [pending, active, suspended, pending_deletion, deleted, unknown]
+        cell: { type: string, minLength: 1, maxLength: 64, description: '主体の正本を収容する cell の論理名（CON-12 §4.1 Q-1 (b)）' }
+        legal_hold: { type: boolean }
+        hold_refs: { type: array, items: { $ref: '#/components/schemas/OpaqueId' } }
+        open_requests: { type: array, items: { $ref: '#/components/schemas/OpenRequest' } }
+        partition_last_sequence: { $ref: '#/components/schemas/Sequence' }
+        authoritative_as_of: { $ref: '#/components/schemas/Timestamp' }
+    MembershipState:
+      type: object
+      required: [tid, sub, state, open_requests, partition_last_sequence, authoritative_as_of]
+      properties:
+        tid: { $ref: '#/components/schemas/OpaqueId' }
+        sub: { $ref: '#/components/schemas/OpaqueId' }
+        state:
+          type: string
+          pattern: '^[a-z][a-z_]{0,31}$'
+          description: DL-08 §7.1 SM-M の状態（active=有効、suspended=停止、removed=除去）。開いた列挙
+          x-enum-kind: open
+          x-known-values: [active, suspended, removed, unknown]
+        open_requests: { type: array, items: { $ref: '#/components/schemas/OpenRequest' } }
+        partition_last_sequence: { $ref: '#/components/schemas/Sequence', description: '所属の事象はテナントのパーティション（tenant:<tid>）で送るので、その最終番号' }
+        authoritative_as_of: { $ref: '#/components/schemas/Timestamp' }
+    MappingState:
+      type: object
+      description: 統合・分割の対応表への参照の状態。対応表の中身（件ごとの写像）は返さず、digest だけを返す。受信側は付け替えに使う対応表の digest を照合する [D]
+      required: [mapping_ref, status, kind, request_id, source_tid, target_tid, mapping_digest, authoritative_as_of]
+      properties:
+        mapping_ref: { $ref: '#/components/schemas/OpaqueId' }
+        status: { type: string, enum: [valid, revoked, unknown], description: 'unknown は最新の正本を読めない場合（QS-1）' }
+        kind: { type: string, enum: [merge, split] }
+        request_id: { $ref: '#/components/schemas/OpaqueId' }
+        source_tid: { $ref: '#/components/schemas/OpaqueId' }
+        target_tid: { $ref: '#/components/schemas/OpaqueId' }
+        mapping_digest: { type: string, pattern: '^sha-256:[0-9a-f]{64}$', description: '対応表の正準形の SHA-256（正準形の定義は DL-49 §8 の所有者が決める。未決）' }
+        authoritative_as_of: { $ref: '#/components/schemas/Timestamp' }
+    SnapshotPage:
+      type: object
+      required: [kind, snapshot_at, items]
+      properties:
+        kind: { type: string, enum: [tenant, principal, membership] }
+        snapshot_at: { $ref: '#/components/schemas/Timestamp' }
+        items:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/TenantState'
+              - $ref: '#/components/schemas/PrincipalState'
+              - $ref: '#/components/schemas/MembershipState'
+        next_cursor: { type: string, minLength: 1, maxLength: 512, description: '続きがなければ省く' }
+    Problem:
+      description: RFC 9457 の problem details（CON-02 Problem と同じ形にする。凍結前に $ref へ寄せる。CON-00 §4.9 D-7）
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        reason_code: { type: string, pattern: '^LQ[0-9]{2}$' }

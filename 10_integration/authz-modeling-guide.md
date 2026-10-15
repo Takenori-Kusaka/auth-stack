@@ -1,9 +1,9 @@
 # 認可モデリングガイド
 
-> 文書ID: INT-03 / 版: 0.7 / 状態: draft / 最終更新: 2026-10-15（0.7: PoC/R7反映。[M] の付け方を CONVENTIONS §3 の条件に揃え（MP-7-15）、§10.1 に POC-02 の X-C・X-D からのモデル規則 XS-8・XS-9 を加えた。末尾「レビュー記録」の「PoC/R7反映」）
+> 文書ID: INT-03 / 版: 0.9（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15（0.9（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§15.2 S-3 の `base_revision` と `tier` の表記（CON-04 HO-V11-2）、§15.2 の CLI の版の注記（CON-11 H11-4）、§16.5 の記録。0.8: 0.8: v1.1 改訂。AI による模擬連携検証 13_integration-trial/report.md の P-04・P-05・P-06・P-17 と改善提案 I-4・I-5 を反映した。§9.7 経費精算の承認経路（組織階層・部署長・閾値による上位承認）の通し例、所属部署・祖先の取得手段、決裁前に使える暫定形、§4.4 N-26（`action.name` の書き方）、§1.3 D-11・D-12、§16.4 の申し送り。末尾「レビュー記録」の「v1.1 改訂」。0.7: PoC/R7反映。[M] の付け方を CONVENTIONS §3 の条件に揃え（MP-7-15）、§10.1 に POC-02 の X-C・X-D からのモデル規則 XS-8・XS-9 を加えた。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-252, R-256, G-107, G-108, G-115, G-116, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-65 を含む全行）。成果物計画の DL-65 行が挙げる R-098, R-147, R-148, R-205 も対応表に含める
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-65）, 04_architecture/authorization-model.md（ARC-05。本書の上位仕様）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-021・ADR-024・ADR-025・ADR-029（設計判断の正本）, 05_adr/reconciliation-notes.md, 11_contracts/relationship-model-registry.openapi.yaml（CON-04、DL-73）, 11_contracts/authorization-api.openapi.yaml（CON-03、DL-72）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 02_requirements/customer-admin-responsibility.md（DL-26）, 01_governance/raci-governance.md（GOV-05 §6）, 01_governance/assumptions-register.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-026〜T-034, T-080）, 07_slo/numeric-contracts.md（SLI-040〜SLI-043）, 12_poc/preregistered-test-plan.md, research/RS-07, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md
-> 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。v0.6（模擬パネル ラウンド5 の対応）で、契約の参照版を CON-04 v0.3.0 に改め、PoC の CAM 生成器（12_poc/code/model/generate.js）の利用可否と条件、PoC の cam.json と CON-04 `CamModule` の差 3 点を §0-6・§15.1・§15.2 S-8・§15.3 G-7 に書き、§14 残課題 21 と §16.3 の申し送りを加えた。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+> 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。v0.6（模擬パネル ラウンド5 の対応）で、契約の参照版を CON-04 v0.3.0 に改め、PoC の CAM 生成器（12_poc/code/model/generate.js）の利用可否と条件、PoC の cam.json と CON-04 `CamModule` の差 3 点を §0-6・§15.1・§15.2 S-8・§15.3 G-7 に書き、§14 残課題 21 と §16.3 の申し送りを加えた。v0.8（v1.1 改訂。13_integration-trial の I-4・I-5）で、§9.7（経費精算の承認経路）と付録 A.7 を加え、§4.4 に N-26、§1.3 に D-11・D-12、§7.2・§7.3・§10.2（AC-33）・§13（INT03-K5）・§14（残課題 22〜24）・§15.2・§15.3（G-8）・§16.4 を改め、付録 A の `tier` を CON-04 v0.4.0（v1.1 改訂）の表記（CON-02 `OperationTier`）に揃えた。模擬パネルと模擬連携検証は AI による自己レビュー・模擬で、実在の CTO/CISO の決裁でも実在の連携チームの検証でもない（CONVENTIONS §8）[D]。
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・調査ノートから起草した。ADR に反する設計は置いていない。ADR で決まっていない点は「未決（ADR-0xx）」と書いた。§9 の例は作成者が手作業で OpenFGA DSL と SpiceDB schema に写し、公式 CLI で予備実行した（§9.0。証拠 E4 には数えない）。その後、起草者と別の AI エージェント（Claude）が独立レビューを行い修正した（末尾「レビュー記録」）。実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。
 
 ---
@@ -13,10 +13,10 @@
 1. **モデルは要件の平文から始め、役割名からは始めない。各要件は「G 段（基盤の deny）」「R 段の関係」「R 段の条件」「業務 workflow」「アプリ内の制御」の 5 か所のどれに置くかを §3 の判定図で先に決める** [D]。OpenFGA の公式手順も「利用者が対象に操作できるのはどの場合か」という平文から始め、「role」から始めると誤った方向に進み得ると述べている [V][^1]（RS-17#84）。テナント境界・主体停止・認証強度などは G 段の 6 規則で基盤が評価するので、ドメインのモデルに書かない（ADR-011 D1-2）[D]。
 2. **ドメインが所有するのは自分の名前空間の型・relation・permission と、その試験・宣言（深度、fanout、一覧方式、書込権限）だけである。横断型・deny・越境共有は基盤が所有し、中央の関与は自動ゲートと権限拡大の非同期レビューに限る** [D]（ADR-011 D2-6、ADR-021 D21-25・D21-26、GOV-05 §6.1・§6.4）。変更は M0〜M3 に自動判定され、登録 → CI 検査 → shadow → canary cell → wave → テナント固定の更新の 6 段を通る（ADR-016 D16-31）[D]。審査 SLA の値は未決で、PoC の実測を受けて CTO が決める（GOV-05 DP-6、期限 Gate 3）[D]。
 3. **巨大ロール表は「関係を資源に付ける」「custom role はデータで表し委譲可の permission だけを入れる」「属性は型付き relation に写す」の 3 つで避ける** [D]（ADR-011 D1-3・D4-1〜D4-3）。資源名・拠点名・金額帯を役割名に埋め込んだ時点で表は資源数と条件の積で増える [D]。Google Cloud は数千の権限を含む basic role を本番で付与しないよう述べ、custom role は自動で更新されず利用者が保守するとしている [V][^6]（RS-17#89）。
-4. **6 ドメイン（ファイル共有、組織・拠点・ツール、プロジェクト管理、医療記録、金融取引承認、管理コンソール）の、要件から試験までの通しの例を §9 に置いた。作成者の予備実行では、OpenFGA CLI v0.7.4 の `fga model test` で 73 件の Check と 1 件の ListObjects、zed v0.30.2 の `zed validate` で 72 件の assertion がすべて期待どおりだった** [D]（作成者の予備実行。TC 未採番、生データは作成者の一時作業領域にあり本リポジトリ未保存。CAM 生成器を通しておらず、試験した engine は RS-07 の確認版より古い。E4 には数えない）。v0.5 で全例を CAM での書き方（§4.4）に書き直し、CON-04 v0.2.0 の `CamModule` の JSON Schema で検証して誤り 0 件を確かめた [D]（作成者の自前の確認。§9.0。書き直し後の engine での再実行は未実施）。正式な検証は TC-ARC05-10・TC-ARC05-11（DL-22 の TC-013）で行う [D]。
+4. **6 ドメイン（ファイル共有、組織・拠点・ツール、プロジェクト管理、医療記録、金融取引承認、管理コンソール）の、要件から試験までの通しの例を §9 に置いた。作成者の予備実行では、OpenFGA CLI v0.7.4 の `fga model test` で 73 件の Check と 1 件の ListObjects、zed v0.30.2 の `zed validate` で 72 件の assertion がすべて期待どおりだった** [D]（作成者の予備実行。TC 未採番、生データは作成者の一時作業領域にあり本リポジトリ未保存。CAM 生成器を通しておらず、試験した engine は RS-07 の確認版より古い。E4 には数えない）。v0.5 で全例を CAM での書き方（§4.4）に書き直し、CON-04 v0.2.0 の `CamModule` の JSON Schema で検証して誤り 0 件を確かめた [D]（作成者の自前の確認。§9.0。書き直し後の engine での再実行は未実施）。正式な検証は TC-ARC05-10・TC-ARC05-11（DL-22 の TC-013）で行う [D]。v1.1（I-4）: 7 つ目の例として §9.7（経費精算。部署長と金額閾値による上位承認の経路）を加えた。経路の解決は承認 workflow が行い、R 段には結果の `approver`・`route_member` の tuple だけを置く。作成者の予備実行（OpenFGA CLI、go install 版で版表示は `dev`）で、3 試験群の Check 39 件・ListObjects 2 件と変形 A の Check 8 件が期待どおりだった [D]（作成者の予備実行。TC 未採番、生データは本リポジトリ未保存。E4 には数えない）。
 5. **表せない要件は 3 類型に限られる。承認の定足数と内容への束縛、職務分離（自己承認の禁止・相反役割の同時保持）、件数上限である** [D]。それぞれ workflow・書込検査・業務側の rate 制御に置き、ReBAC で近似しない（§10.2 の要件カタログ、ARC-05 §8.7）[D]。
 6. **基盤の完成を待たずに、連携開発者は本書・CON-03・CON-04・CON-11 のモックと engine 公式 CLI だけでモデル設計・モデル試験・アプリの契約試験を始められる（§15）。CAM の式の文法（CAM 式 v0）、試験ケースの提出形式、変更区分（M0〜M3）の返却欄、意味の変更の申告欄、条件カタログの列挙、階層サービス API は CON-04 v0.2.0 に preview として定義し、v0.3.0 でもその形は変わっていない（v0.3.0 の改版はテナント結合 §6 の追加）。残る待ちは、条件カタログの引数の確定、階層の決裁（ARC-05 K05-6〜K05-8）、CAM 生成器と `validateModel` の提供である** [D]（§15.3）。PoC の CAM 生成器（12_poc/code/model/generate.js）は手元で生成結果を見る参考には使えるが、入力の形が CON-04 の `CamModule` と 3 点で異なる（PoC の cam.json は CON-04 v0.3.0 の `CamModule` の JSON Schema で誤り 13 件）。このため S-8 の生成器には数えず、提出物は CON-04 の形で別に作る [D]（§15.1、§15.3 G-7）。
-7. **新たな決裁は 4 件（§13）。最大の論点は、組織の木（unit）を core 型に昇格するかと、組織の木を辿る継承で解決深度の設計値 8 [A-036] を超える問題の扱いである** [D]。RS-18反映（2026-10-15）: ARC-05 v0.3 §3.6 が、`core/tenant`・`core/unit`（単一親の再帰コンテナ、`kind` 属性）・`core/group`（n:n）・`core/admin_scope`（非ネストの委任範囲）の 4 型、containment の `parent` 統一、祖先閉包 `ancestor` の事前計算を決裁案 K05-6〜K05-8 として置いた。INT03-K1・K2 は同じ論点なので ARC-05 の決裁と 1 回にまとめる [D][^28]。閉じ方は、机上（A）で閉じるのが R-252・R-256・R-098・G-107 の 4 件、組織決定（B）が G-116 の 1 件、実測（C）が残る 6 件である（末尾の対応表）[D]。
+7. **新たな決裁は 5 件（§13。v1.1（I-4）で INT03-K5「部署長（業務上の長）の置き場所」を加えた）。最大の論点は、組織の木（unit）を core 型に昇格するかと、組織の木を辿る継承で解決深度の設計値 8 [A-036] を超える問題の扱いである** [D]。RS-18反映（2026-10-15）: ARC-05 v0.3 §3.6 が、`core/tenant`・`core/unit`（単一親の再帰コンテナ、`kind` 属性）・`core/group`（n:n）・`core/admin_scope`（非ネストの委任範囲）の 4 型、containment の `parent` 統一、祖先閉包 `ancestor` の事前計算を決裁案 K05-6〜K05-8 として置いた。INT03-K1・K2 は同じ論点なので ARC-05 の決裁と 1 回にまとめる [D][^28]。閉じ方は、机上（A）で閉じるのが R-252・R-256・R-098・G-107 の 4 件、組織決定（B）が G-116 の 1 件、実測（C）が残る 6 件である（末尾の対応表）[D]。
 
 ---
 
@@ -54,6 +54,8 @@
 | D-8 | relation ごとに「その tuple の書込を認可する permission」を決め、書込前に判定する（書込対応表） | §3.1 段 7 | 契約試験の負例（DL-80） |
 | D-9 | tuple の書込順序（剥奪は同期で先に確定、付与は outbox 可）、移動の 1 要求化、整合性トークンの保存、差分照合を実装する | ARC-05 §1.3 I-4〜I-7 | 契約試験の順序族（CON-11 §6.3） |
 | D-10 | 基盤の完成前は §15 の手順でモデル試験とアプリの契約試験を進める | §15 | `fga model test`・`zed validate`、CON-11 のキット |
+| D-11 | v1.1（I-5）: PEP が送る `action.name` は catalog に載せた動詞の permission 名だけにし（型名・`can_`・scope の形を付けない）、`subject.type` はモデルの型名（`core/user` など）にする。判定宣言（CON-03 §4.2 `caller_scope`）に入れる permission が自分のモデルに存在することを、登録前に確かめる | §4.4 N-24・N-26 | CON-03 `Action.name` の pattern（v1.1。scope の形は 400）、`caller_scope`（宣言外は `deny_guardrail:caller_scope`） |
+| D-12 | v1.1（I-4）: 承認者が組織の位置（部署長・上位部署）で決まる要件は、§9.7 の形（経路は workflow が解決し、R 段には結果の tuple だけを置く）で設計する | §9.7 | モデル試験と workflow の負例（§9.7 の WF-01〜WF-09） |
 
 ---
 
@@ -208,8 +210,12 @@ CON-04 v0.2.0 の `CamRelation` は `required: [name, directly_related]`・`addi
 |---|---|---|---|
 | N-22 | `relations`（`CamRelation`）には直接付与だけを書く。直接型（`directly_related`）、条件（`conditions`）、宣言（`max_depth`・`max_direct`・`public`）以外を書かない。包含・継承・和・積は全て `permissions`（`CamPermission.expression`）に書く | relation `editor: [core/user, core/group#member, core/role#assignee]` | CON-04 `CamRelation`・`CamPermission` [D] |
 | N-23 | 直接付与を包含・継承で広げた集合（v0.4 までの `editor: [T] \| owner \| parent->editor` に当たるもの）は、relation 名の複数形の permission（保持者集合）として書く。relation 名は単数の名詞のまま残す。保持者集合を作るのは、(a) arrow の右辺として他の型か `parent->` の再帰から参照される、(b) 2 つ以上の permission から参照される、のどちらかの場合に限り、それ以外は動詞の permission の式に直接展開する | `editors = editor \| owner \| parent->editors`、`viewers = viewer \| editors \| parent->viewers`（§9.1）。展開の例は `fin/account#view = viewer \| operator \| unit->manage`（§9.5） | PoC の P-10（`editor` と `editors`・`viewers`・`members`）と同じ命名 [D]。arrow の右辺が permission になり E-5・N-15 の推奨にも沿う [D] |
-| N-24 | PEP が CON-03 の `action.name` に渡すのは、permission catalog に操作階層と印を付けて載せた動詞の permission だけである。保持者集合と、式の部品として置いた補助の permission（§9.3 の `view_internal`、§9.4 の `clinician`）は catalog に載せず、`tier` は `read_sensitive`、`marks` は付けない（PoC と同じ）。呼出し元の判定宣言（CON-03 §4.2 `caller_scope`）にもこれらを入れない | アプリは `files/file` に `read`・`write` を問い合わせ、`editors`・`viewers` を問い合わせない | CON-03 §4.2（宣言外の permission の照会は `deny_guardrail:caller_scope`）[D]。保持者集合を問い合わせ先にすると、catalog の操作階層と監査の単位が permission とずれる [D] |
+| N-24 | PEP が CON-03 の `action.name` に渡すのは、permission catalog に操作階層と印を付けて載せた動詞の permission だけである。保持者集合と、式の部品として置いた補助の permission（§9.3 の `view_internal`、§9.4 の `clinician`）は catalog に載せず、`tier` は `read-sensitive`（v1.1: CON-04 v0.4.0（v1.1 改訂。I-7）で表記を CON-02 `OperationTier` に揃えた。v1.0 までは `read_sensitive`）、`marks` は付けない（PoC と同じ）。呼出し元の判定宣言（CON-03 §4.2 `caller_scope`）にもこれらを入れない | アプリは `files/file` に `read`・`write` を問い合わせ、`editors`・`viewers` を問い合わせない | CON-03 §4.2（宣言外の permission の照会は `deny_guardrail:caller_scope`）[D]。保持者集合を問い合わせ先にすると、catalog の操作階層と監査の単位が permission とずれる [D] |
 | N-25 | core の生成器が付ける部分（予約 relation `restricted_external`、計算 `restricted_external_inherited`、動詞の permission への `- restricted_external_inherited` の付加）は、ドメインの `CamModule` に書かない。ドメインは exclusion を含まない式（例 `read = viewers`）を書く | §9.1 の「core 生成器が付ける部分」の注記 | ARC-05 §3.1（`restricted_external` は core が生成）・§8.2、CON-04 E-6（exclusion は core モジュールだけ）[D]。生成器がこの付加を行う規則は CON-04 に未記載（§16.2 HO-R3-2） |
+| N-26（v1.1（I-5）） | `action.name` には、`resource.type` の型に定義した動詞の permission の名前を**そのまま**入れる。型名・名前空間（`docs.document.read`）、接頭辞（`can_read`）、OAuth scope の形を付けない。型は `resource.type` で運ぶ。`<名前空間>.<型>.<動詞>` の形は第三者に公開する OAuth scope（CON-02 `ExternalScope`、ADR-021 D21-28）だけに使い、判定要求には使わない。`subject.type` は主体のモデルの型名（人間の利用者は `core/user`、workload は `core/workload`）で、token の主体類型（`ptype` の `human` など）を入れない。類型は `subject.properties.principal_type` に入れる | 良い例: `resource.type="files/file"`、`action.name="read"`、`subject.type="core/user"`。悪い例: `action.name="can_read"`（モデルに `can_read` がない）、`"files.file.read"`（scope の形）、`subject.type="human"` | CON-03 `Action`（v1.1 で CON-02 `NameSegment` の pattern を課し、scope の形は 400）・`Subject`（v1.1）[D]。主体類型から `subject.type` への写像の正本は CON-02 で、本書は写しを持たない（§16.4 HO-V11-6）[D] |
+
+- v1.1（I-5）の背景: v1.0 の文書群は `action.name` を 3 通り（CON-03 の例の `can_read`、INT-02 の例の `docs.document.read`、本書の `read`）に書いていた [D]（13_integration-trial P-05）。モデルにない名前を送ると、本番では判定宣言（CON-03 §4.2）に当たらず全件 `deny_guardrail:caller_scope` になるが、汎用モックは名前の意味を評価しないので開発中に気づけない [D]。名前の正本は自分のモデル（`CamModule` の `permissions[].name`）であり、PEP の設定・判定宣言・試験の期待値はこの一覧から作る [D]。
+- 判定宣言を登録する前に、宣言した `(resource.type, action.name)` の組が自分の `CamModule` の catalog 対象の permission（保持者集合・補助の permission を除く。N-24）に全て含まれることを、CI の自前の検査で確かめる（`validateModel` の検査に入るまでの代わり。CON-03 §12 N-3 の申し送りを本書で受けた）[D]。手順は §15.2 S-5 の完了判定に入れた [D]。
 
 - 名前の対応（v0.4 → v0.5）: v0.4 の例の計算 relation `editor`・`viewer`（`files`）、`admin`・`member`（`proj/project`、§6.1）は、v0.5 では保持者集合の permission `editors`・`viewers`・`admins`・`members` になり、直接付与の部分が同名の relation になった [D]。v0.4 の §9.0 で SpiceDB に写した `editor_direct`（直接部分）は v0.5 の relation `editor`、計算 relation `editor` は permission `editors` に当たる [D]。動詞の permission（`read`・`write`・`view` など）の名前と意味は変えていない [D]。
 - 判定の意味は変わらない [D]。v0.4 の relation 式 `X: [T] | e` は「直接付与 `[T]` と式 `e` の和」であり、relation `X: [T]` と permission `Xs = X | e`（`e` の中の `parent->X` は `parent->Xs`）に分けても同じ主体の集合になる [D]。
@@ -344,6 +350,9 @@ G-115 の合格条件は「全負例が拒否される」ことである [D]。�
 | ツール use | instance → site → unit×N（`manage`）、または staff（条件付き） | 2＋N | 同上 |
 | 医療記録 read_clinical | record → care_team → 主体（＋`acr_gate` → tenant#member） | 2〜3 | 内 |
 | 支払 approve | payment → band → role → group | 3〜6 | 内 |
+| 経費 view・approve（v1.1、§9.7） | report → `route_member`・`approver`（主体を直接） | 1 | 内 |
+| 経費 pay（v1.1、§9.7） | report → `approved_in` → book → role → group×3 | 3〜6 | 内 |
+| 経費 view の変形 A（v1.1、§9.7） | report → `request_unit` → unit×N（core/unit の `manage` の `parent` 継承）→ group×3 | 1＋N＋3 | N は unit の深さ（上限 5 は NA-ARC05-1 の初期案）。最悪 9 で設計値 8 を超え得る（K2・K05-8） |
 
 ### 7.3 一覧方式の初期選択
 
@@ -354,6 +363,7 @@ G-115 の合格条件は「全負例が拒否される」ことである [D]。�
 | `med/patient_record` | L1 | 担当・ケアチーム経由で見える記録は限られる見込み。存在そのものが機微のため件数・補完を出さない（ADR-025 D25-13・D25-14、A-071） | 同上。p99 が 1,000 を超えれば L3 へ |
 | `fin/payment` | L2 | 口座で絞った候補の許可割合が高い見込み | 同上 |
 | `tool/instance` | L1 | 拠点あたりの台数が少ない見込み | 同上 |
+| `expense/report`（v1.1、§9.7） | L2 | 台帳（`book`）と状態で絞った候補は、経理担当には大半が見え、申請者・承認者は自分の申請と承認待ちで絞れる見込み | 同上。経理担当の可視件数が 1,000 を超える前提なので L1 にしない |
 
 - 上表は机上の初期案である [D]。宣言の変更はモデル変更と同じ 6 段を通す（ADR-025 D25-05）[D]。
 - OpenFGA は権限付きの検索に 3 つの方式を示し、対象が多く許可割合が低い場合は変更の購読から作る索引を勧めている [V][^16]（RS-07#21）。L3 はこの方式に当たる（ADR-025 D25-05）[D]。
@@ -974,6 +984,241 @@ type files/tenant_policy
 - 二者承認・申請者≠承認者は R 段では表さず、管理 API の申請 workflow で行う（ARC-05 §8.6）[D]。権限を縮小する操作（剥奪、session 失効、停止）は事前承認なしで即時に反映する（REQ-03 J8）[D]。
 - 基盤運用者の support アクセスは、対象テナント文脈の期限付き付与（JIT）として表し、三者一致の例外を作らない（ADR-024 D24-09、ADR-029）[D]。
 
+### 9.7 経費精算（承認経路・組織階層。v1.1（I-4））
+
+v1.1（I-4）で加えた例である [D]。INT-02 §2.2 は経費精算を代表例に挙げていたが、v1.0 の本書には「申請者の所属部署の部署長が承認し、金額が大きければ上位部署の部署長も承認する」型の例がなく、模擬連携検証では `core/unit` の公開 permission、部署長と `core/unit#admin` の違い、所属部署の引き方が分からずにモデルを確定できなかった（13_integration-trial P-04）[D]。本節はその要件を、要件 → 置き場所 → モデル → 経路の解決 → 取得手段 → 決裁前の暫定形 → 試験の順に通す [D]。
+
+- 組織の木の型は決裁前である（ARC-05 K05-6〜K05-8、本書 INT03-K1・K2）[D]。本節のモデルは ARC-05 v0.3 §8.3 の推奨案（`core/unit`）を参照する形で書き、決裁の結果ごとの書き換えを「決裁前に使える暫定形」の表に置いた [D]。
+- §9.5（金融取引承認）との使い分け: 承認者の集合が金額帯ごとに固定で決まる（帯の承認者は組織の位置に依らない）なら §9.5 の `band`、承認者が申請者の組織上の位置（所属部署とその上位）で決まるなら本節の形を使う [D]。両方が要る場合は、組織の経路で決まった各段に、帯の条件を workflow の検査として重ねる [D]。
+
+**要件**
+
+| # | 要件（平文） | 階層 |
+|---|---|---|
+| EX-1 | 経費台帳の利用者は経費を申請できる。申請者は自分の申請を作成・編集・提出・閲覧できる | write / read-sensitive |
+| EX-2 | 提出した申請は、提出時の申請者の所属部署（申請部署）の部署長が承認する | write |
+| EX-3 | 金額がテナントの定める閾値を超える申請は、上位部署の部署長も順に承認する（必要な段数は金額で決まる） | write |
+| EX-4 | 申請者は自分の申請を承認できない。同じ人が 2 つの段を承認しない。承認後に内容を変えたら承認をやり直す | write（職務分離） |
+| EX-5 | 承認経路に入った部署長（承認済み・承認待ちの段）は、その申請を閲覧できる | read-sensitive |
+| EX-6 | 経理担当は台帳の申請を閲覧でき、最終承認された申請だけを支払処理できる | read-sensitive / write |
+| EX-7 | 部署長の指名は、部署の管理者（`core/unit` の `manage`）か経費の設定管理者が行う。部署長は自分で自分を指名できない | privileged/T |
+| EX-8 | （変形 A。テナントが選んだ場合だけ）申請部署とその上位部署の管理者は、配下の申請を閲覧できる | read-sensitive |
+
+**置き場所**（§3.2 の判定図）
+
+| 要件 | 置き場所 | 理由 |
+|---|---|---|
+| EX-1 の申請者 | R 段 relation（`requester`） | 主体と資源の関係 |
+| EX-2・EX-3 の「誰が承認者か」の決定 | 承認 workflow（経路の解決）。結果を R 段の `approver`・`route_member` の tuple として書く | 「申請者が所属する部署の長」は主体から部署へ辿る式になるが、所属は `core/unit#member` の tuple（部署の側の relation）で、`core/user` は relation を持たないので、申請者から部署へ arrow で辿れない [D]。「n 段上まで」「申請者を飛ばす」「同じ人を 2 回数えない」は主体どうしの比較と回数で、ReBAC の和・積で表せない（§3.2 の Q5、ARC-05 §8.7）[D] |
+| EX-3 の閾値・段数 | テナント設定（承認段数の表）。workflow が提出時に読む | 金額は資源属性だが、ここでは承認者の決定にだけ使い、R 段の判定には使わない [D] |
+| EX-4 | workflow の検査 | 自己承認禁止・定足数・内容への束縛は表せない 3 類型（§0-5）[D] |
+| EX-5 | R 段 relation（`route_member`。workflow が経路の確定時に書く） | 経路は提出時に確定するデータなので、継承の式ではなくデータで表す（§9.5 で上位帯の承認者をデータで書くのと同じ考え方）[D] |
+| EX-6 | R 段（`book->process`、`approved_in->process`） | 台帳との関係。最終承認の結果は workflow が `approved_in` として書く（§9.5 の `released_to` と同じ形）[D] |
+| EX-7 | R 段（`expense/unit_policy#configure`）と書込対応表 | 部署長の指名は承認権限の付与なので privileged/T（REQ-03 J2(a)）[D] |
+| EX-8 | R 段（変形 A の `request_unit->manage`） | `core/unit` の `manage` は管理の継承（子へ継承する）をそのまま使う [D] |
+
+**部署長と `core/unit#admin` の違い**（P-04）
+
+| 項目 | `core/unit#admin`（基盤の型。ARC-05 §3.1・§8.3、決裁前の案） | 部署長（本節の `expense/unit_policy#head`） |
+|---|---|---|
+| 意味 | 部署という木の節点の**管理者**。所属の変更・配下の管理（`manage`）を行う | 業務上の**長**。そのドメインの業務（ここでは経費の承認）の権限を持つ |
+| 継承 | `manage = admin \| parent->manage` で配下の全部署に継承する（管理は子へ継承。ARC-05 X-12） | 継承しない。上位部署の長が下位の申請を承認するのは、閾値で段数が増えた場合に workflow が経路に入れたときだけ |
+| 操作階層 | privileged/T（所属・委任の変更） | write（承認）。指名は privileged/T |
+| 誰が持つか | 情報システム部門や人事の担当者が持つことがある（業務上の長と一致するとは限らない） | 業務規程で決まる。代理・兼務がある |
+| 本節での扱い | 承認には使わない。部署長の指名（EX-7）と変形 A（EX-8）でだけ参照する | 承認経路の解決に使う |
+
+- `core/unit#admin` を承認者に使うと、(1) 管理を担う担当者が承認権限を持ち、(2) 継承により上位の全部署の管理者が全申請の承認者になる [D]。予備実行の試験で、申請部署の管理者（`ita`）が `approve` も `view` も deny になることを確かめた（下の試験表）[D]（作成者の予備実行）。
+- 部署長を基盤の `core/unit` に持たせる（例: `core/unit#head`）か、各ドメインが本節のように自分の型で持つかは INT03-K5（§13）の決裁案とした [D]。決裁までは本節の形（ドメインの型）で書く [D]。
+
+**ドメインが参照してよい `core/unit` の名前**（P-04「公開 permission の一覧がない」への回答。ARC-05 v0.3 §8.3 の案に基づく。決裁で変わり得る）
+
+| 名前 | 種類 | ドメインの使い方 | 根拠 |
+|---|---|---|---|
+| `manage` | permission（`admin \| parent->manage`） | arrow の右辺に使ってよい（`unit->manage`）。判定宣言に入れて、部署長の指名などの書込前判定に使ってよい（§16.4 HO-V11-3） | N-15（arrow の右辺は permission）、ARC-05 §8.3 |
+| `view_directory` | permission（`member \| manage`） | arrow の右辺に使ってよい（名簿を見せる要件） | 同上 |
+| `manage_membership` | permission | 参照しない（所属の変更は基盤の管理機能の操作） | ARC-05 §3.6.1 |
+| `admin`・`member`・`admin_scope`・`parent` | relation | arrow の右辺に使わない（N-15、INT03-K4）。`member`・`parent` は tuple の**読取り**（下の取得手段 M-1・M-4）にだけ使う | ARC-05 X-4・X-12・X-13 |
+| `ancestor` | 予約 relation（葉ノードに階層サービスが書く。K05-8） | 書かない（N-21）。本節のモデルは使わない | ARC-05 X-13 |
+
+**モデル**（名前空間 `expense`。core 型は ARC-05 v0.3 §8.3 の案）
+
+```text
+type expense/book                          # テナントに 1 つの経費台帳
+  relations
+    member:     [core/user, core/group#member]
+    accountant: [core/user, core/group#member, core/role#assignee]
+  permissions
+    file_report = member | accountant
+    process     = accountant
+
+type expense/unit_policy                   # 部署ごとの経費承認の設定（1 unit に 1 件）。木を持たない（N-20）
+  relations
+    unit:         [core/unit]              # 参照（containment ではない。X-12）。作成時に 1 回だけ書き、付け替えない
+    head:         [core/user]              # 部署長（max_direct 1）
+    policy_admin: [core/user, core/role#assignee]
+  permissions
+    configure = policy_admin | unit->manage    # 部署長の指名。部署とその上位の管理者、または経費の設定管理者
+
+type expense/report
+  relations
+    book:         [expense/book]
+    requester:    [core/user]
+    approver:     [core/user]              # 承認待ちの段の承認者。承認 workflow だけが書く
+    route_member: [core/user]              # 経路に入った部署長（全段）。承認 workflow だけが書く
+    approved_in:  [expense/book]           # 最終承認で承認 workflow が書く
+  permissions
+    view    = requester | approver | route_member | book->process
+    edit    = requester                    # 提出後の編集の可否は申請の状態（アプリ）。変えたら承認をやり直す（EX-4）
+    submit  = requester
+    approve = approver                     # 自己承認禁止・重複禁止・内容の束縛は workflow
+    pay     = approved_in->process
+```
+
+- 申請部署・祖先列・経路は、R 段の tuple にせず承認 workflow の記録（経路のスナップショット）に持つ [D]。判定に使わない relation を置くと、試験のない relation（`test_summary.uncovered_relations`）になり、tuple の量も増えるからである [D]。変形 A を採る場合だけ `request_unit` を relation にする（下の「変形 A」）[D]。
+- `unit->manage` の tupleset `unit` は core 型を指す relation で、CON-04 E-4 の「core 型の relation」に当たる（§9.0 の数え方で `files/tenant_policy#tenant` を E-4 に数えていないのと同じ読み）[D]。E-4 の範囲の確定は HO-R3-3 に従う [D]。
+- 申請者の所属部署を `expense/report` から arrow で辿る式（`requester->...`）は書けない。arrow の左辺（tupleset）は直接型だけを持つ relation で、その先の型（`core/user`）が辿る relation を持たないからである（CON-04 E-3、§1.2）[D]。
+
+**permission catalog**
+
+| permission | 階層 | テナント委譲可 | 外部付与可 | 備考 |
+|---|---|---|---|---|
+| `expense/book#file_report` | write | ○ | × | — |
+| `expense/book#process` | write | ○ | × | 支払処理。決済に当たる場合は修飾子 +FIN をドメイン責任者が判定（REQ-03 §6.3） |
+| `expense/unit_policy#configure` | privileged/T | ○ | × | 部署長の指名（承認権限の付与。REQ-03 J2(a)） |
+| `expense/report#view` | read-sensitive | ○ | × | 経費の明細は個人情報を含み得る |
+| `expense/report#edit`・`submit` | write | × | × | 申請者だけ |
+| `expense/report#approve` | write | × | × | 自己承認の禁止と経路の検査は workflow |
+| `expense/report#pay` | write | ○ | × | `approved_in` は承認 workflow だけが書く |
+
+**宣言と書込対応表**
+
+| 項目 | 値 | 根拠 |
+|---|---|---|
+| 書込宣言（経費サービス） | `expense/book#member`・`accountant`、`expense/unit_policy#unit`・`head`・`policy_admin`、`expense/report#book`・`requester` | ARC-05 X-8 |
+| 書込宣言（承認 workflow） | `expense/report#approver`・`route_member`・`approved_in` だけ | 起票側のサービスが自分で承認者・最終承認を書けないようにする（§9.5 の `released_to` と同じ）[D] |
+| `max_direct` | `expense/unit_policy#head` は 1（部署長は 1 人。兼務は別の unit の policy に書く） | 経路の解決で段ごとに 1 人を選ぶため [D] |
+| 一覧方式 | `expense/report` L2 | §7.3 |
+
+| 書く relation | 書込を認可する permission | 理由 |
+|---|---|---|
+| `expense/unit_policy#unit`（policy の作成） | 作成者が対象 unit の `core/unit#manage` を持つ（PEP が判定する。§16.4 HO-V11-3） | 他の部署の承認設定を作らせない [D] |
+| `expense/unit_policy#head`・`policy_admin` | 対象 policy の `configure` | 部署長は `configure` を持たない（自分で自分を指名しない。EX-7）[D] |
+| `expense/report#book`・`requester` | 台帳の `file_report`（起票時。`requester` は起票者自身だけ） | — |
+| `expense/report#approver`・`route_member`・`approved_in` | 利用者の操作としては書かない（承認 workflow の書込宣言だけ） | 経路の解決結果だけを書く [D] |
+
+**承認経路の解決（承認 workflow）**
+
+| 段 | すること | 失敗時 |
+|---|---|---|
+| R-1 | 提出要求で `expense/report#submit` を判定する（write、最新） | deny |
+| R-2 | 申請部署を決める。所属部署の候補を下の取得手段 M-1 で引く（`fully_consistent`）。0 件なら提出を受け付けない。1 件ならそれ。2 件以上なら申請者が選んだ unit（BFF のセッション状態か要求パラメータ。N-19b）を使い、候補に含まれることを確かめる | 0 件・候補外は業務エラーで拒否（WF-05・WF-06）。読取の失敗は保留（WF-09） |
+| R-3 | 申請部署から根までの祖先列を引く（M-2、使えなければ M-4）。並びは近い順（申請部署、親、祖父、…） | 取得失敗・`ancestor_sync=pending` は保留（WF-09）。推測で経路を組まない |
+| R-4 | 提出時の金額とテナント設定の段数表から必要な段数 n を決める（例: 10 万円以下は 1 段、100 万円以下は 2 段、それ以上は 3 段。例示であり既定値ではない。NA-INT03-3） | 設定の読めない場合は保留 |
+| R-5 | 祖先列を近い順に辿り、各 unit の `expense/unit_policy` の `head` を引く（自分の名前空間の `readRelationships`。`fully_consistent`）。部署長がいない、申請者本人である、既に経路に入っている、のどれかなら、その unit を飛ばして上へ進む（繰上げ）。異なる部署長が n 人そろうまで続ける | 根まで辿っても n 人に満たなければ提出を受け付けない（WF-07）。代替の承認者をテナント設定で持つかは事業責任者が決める（TBD） |
+| R-6 | 経路のスナップショットを workflow の記録に確定する（申請 ID、内容のハッシュ、金額、申請部署、祖先列、経路の部署長 h1〜hn、段数表の版）。`route_member@h1〜hn` と `approver@h1` を書く（付与なので outbox 可。ARC-05 I-5） | — |
+| R-7 | 段 k の承認要求で `approve` を判定する（write、最新）。workflow が、要求者＝hk、要求者≠申請者、未承認、内容のハッシュがスナップショットと一致、を確かめる。さらに hk が今もその unit の `head` であることを `fully_consistent` で読み直す | 交代していれば受け付けず、段 k を R-5 の規則で現在の木から引き直す（WF-03） |
+| R-8 | `approver@hk` を削除して確定させ（剥奪は同期で先。ARC-05 I-5）、次の段があれば `approver@hk+1` を書く。最終段なら `approved_in@book` を書く | — |
+| R-9 | 承認後に内容を変えた場合は、`approver`・`approved_in` を同期で削除し、R-2 からやり直す。新しい経路に入らない `route_member` も同期で削除する | — |
+
+```mermaid
+sequenceDiagram
+  participant A as 申請者
+  participant S as 経費サービス
+  participant WF as 承認 workflow
+  participant R as 関係 API（CON-04）
+  participant F as PDP façade（CON-03）
+  A->>S: 提出
+  S->>F: submit の判定（write、最新）
+  S->>WF: 提出を依頼（申請 ID、選んだ unit）
+  WF->>R: 所属部署の候補（M-1）と祖先列（M-2 / M-4）
+  WF->>R: 各 unit の unit_policy#head（自分の名前空間）
+  WF->>WF: 段数 n、繰上げ（申請者・重複・不在を飛ばす）、スナップショット
+  WF->>R: route_member@h1..hn、approver@h1（付与は outbox 可）
+  loop 段 k = 1..n
+    WF->>F: approve の判定（write、最新）
+    WF->>R: hk が今も head か読み直す（fully_consistent）
+    WF->>R: approver@hk を削除（同期）→ approver@hk+1 または approved_in
+  end
+```
+
+**所属部署・祖先の取得手段**（P-04「所属部署を引く API がない」への回答）
+
+| # | 手段 | 契約と状態 | 使い方 | 注意 |
+|---|---|---|---|---|
+| M-1 | `readRelationships`（filter: `resource_type=core/unit`、`relation=member`、`subject_type=core/user`、`subject_id`＝申請者の sub） | CON-04、GA | 申請者が直接所属する unit の列を得る | 呼出し元は読める resource type を宣言し、宣言外は 403（CON-04 `readRelationships`）。`core/unit` をドメインの読取宣言に入れてよいかが契約に書かれていない（§16.4 HO-V11-1）。グループ経由の所属（`core/group#member` を直接型にした tuple）は出ないので、承認経路には直接所属の tuple だけを使う（NA-INT03-4） |
+| M-2 | `readAncestors`（`type=core/unit`、`id`＝申請部署） | CON-04 §10、preview（K05-6・K05-8 の決裁待ち。不採用なら削除） | 祖先列を 1 回で得る。`ancestor_sync` が `synced` のときだけ使う | 祖先列は経路の解決に使い、token・認可キーにしない（ARC-05 §3.6.5） |
+| M-3 | `getUnit` を親へ繰り返す | CON-04 §10、preview | M-2 が使えない場合 | 回数は深さ上限（5。NA-ARC05-1）で打ち切る |
+| M-4 | `readRelationships`（filter: `resource_type=core/unit`、`resource_id`＝unit、`relation=parent`）を親へ繰り返す | CON-04、GA | 階層 API が使えない間の暫定。決裁に依らない | M-1 と同じ読取宣言が要る。回数は深さ上限で打ち切り、上限を超えたら保留する |
+| ― | 使わないもの: token の部署 claim・groups claim、SCIM の enterprise 拡張（`department`・`manager`） | — | — | token は判定時点の状態を表さない（§11 E-10、ARC-05 §3.6.5 で階層を token に載せない）。SCIM（CON-07）は顧客 IdP から基盤への受信契約で、依存サービスには公開されない。`department` は文字列で unit の ID ではなく、`manager` は人の上長で部署長と一致するとは限らない [D] |
+
+**決裁前に使える暫定形**（K05-6〜K05-8、INT03-K5 の結果ごとの書き換え）
+
+| 状況 | モデルの書き方 | 所属部署 | 祖先 | 試験 |
+|---|---|---|---|---|
+| 現在（決裁前） | 本節のとおり `core/unit` を参照して書く | M-1（読取宣言が得られるまでは MK-04 でだけ試験） | M-4 | `fga model test` は本節の core の代役（下の試験）で、契約試験は MK-04 に unit の `parent`・`member` の tuple を種として書いて流す |
+| K05-6 (a) 採用 | 変更なし | M-1 | M-2（K05-8 採用時）、なければ M-3 | 同左 |
+| K05-6 (b)（組織の木を各ドメインの型に） | `core/unit` を組織の木を持つドメインの型（例 §9.2 の `org/unit`）に置き換える。`manage` はその型の公開 permission にしてもらう（N-14、HO-R3-4）。本番データの投入前なら置き換え、投入後は N-13 の多段手順 | M-1 の filter をその型に | M-4 をその型の `parent`（§9.2 の形）に | 同左 |
+| K05-6 (c)（組織の木を持たない） | 組織階層から経路を導けない。`expense/unit_policy#unit` の直接型を `core/group` に変え、上位の承認者はテナント設定の承認経路表（段ごとの承認者）で持つ | `core/group` の直接所属 | 経路表 | 同左 |
+| K05-7 採用 | 影響なし（`unit`・`request_unit` は containment でない参照なので `parent` にしない。X-12） | — | — | — |
+| K05-8 不採用 | 既定のモデルは影響なし。変形 A は unit の深さ分の hop が残る（§7.2） | — | M-3・M-4 | — |
+| INT03-K5 (b) 採用（部署長を core に） | `expense/unit_policy#head` を `core/unit#head`（仮称）の読取りに置き換え、`unit_policy` は経費固有の設定だけにする | — | — | 同左 |
+
+**試験**（作成者の予備実行で全件期待どおり。OpenFGA CLI（go install 版、版表示 `dev`）の `fga model test`。core 型は ARC-05 v0.3 §8.3 の案の最小の代役で、`core/unit#parent` は `core/unit` だけにした）
+
+| 主体 | 対象（2 段の経路の段 1。部署長 dan→上位の vic） | permission | 期待 |
+|---|---|---|---|
+| 申請者 alice | r1 | view・edit・submit / approve・pay | allow / deny |
+| 段 1 の部署長 dan | r1 | view・approve / edit・pay | allow / deny |
+| 段 2 の部署長 vic（まだ承認待ちでない） | r1 | view / approve | allow / deny |
+| 経路外の最上位部署の部署長 hana | r1 | view・approve | deny |
+| 申請部署の管理者 ita（`core/unit#admin`、部署長でない） | r1 | view・approve | deny |
+| 経理担当 carol | r1（未承認） | view / approve・pay | allow / deny |
+| 経理担当 carol | r2（`approved_in` あり） | pay | allow |
+| 段 1 承認後の dan（approver を削除済み） | r1 | view / approve | allow / deny |
+| 設定管理者 pam、申請部署の管理者 ita、上位部署の管理者 dadm | p_dept | configure | allow |
+| 申請部署の管理者 ita | 上位部署の p_div | configure | deny |
+| 部署長 dan | 自部署の p_dept | configure | deny（自分で自分を指名しない） |
+| 他テナントの部署長・管理者・経理担当 eve | r1 | view・approve・pay | deny（越境の否定試験） |
+| 段 2 の部署長 vic（ListObjects） | `expense/report` | view / approve | [r1] / [] |
+
+- 集計: 3 試験群、Check 39 件・ListObjects 2 件が期待どおり。期待値を 1 件だけ誤らせると 38/39 になり、失敗を検出した [D]（作成者の予備実行。TC 未採番、2026-10-15。試験ファイルと結果は本リポジトリに保存していない。E4 には数えない）。付録 A.7 の `CamModule` は、CON-04 v0.4.0（作業ツリーの版。`tier` は CON-02 `OperationTier` を参照）の `components.schemas.CamModule` に対する JSON Schema 2020-12 の検証（jsonschema 4.26.0）で誤り 0 件だった。同じ検証で A.1〜A.6 も誤り 0 件で、旧表記 `read_sensitive` を入れた陰性対照は不合格になった [D]（作成者の自前の確認）。
+
+workflow の負例（契約試験 DL-80 に入れる。R 段だけでは防げない）:
+
+| # | 負例 | 期待 |
+|---|---|---|
+| WF-01 | 申請者が申請部署の部署長である | 申請者を経路から外して上位へ繰り上げる。申請者の `approve` は deny（`approver` に書かれない） |
+| WF-02 | 同じ人が 2 つの部署の部署長を兼ねる | 1 段として数え、さらに上位へ進む |
+| WF-03 | 承認待ちの間に段 k の部署長が交代した | 旧部署長の承認を受け付けず、段 k を引き直す |
+| WF-04 | 承認後に金額・明細を変えた | `approver`・`approved_in` を同期で削除し、経路を解決し直す |
+| WF-05 | 申請者の直接所属の unit が 0 件 | 提出を受け付けない |
+| WF-06 | 所属が 2 件以上で、選んだ unit が候補にない | 提出を受け付けない |
+| WF-07 | 根まで辿っても必要な段数の部署長がそろわない | 提出を受け付けない（代替の承認者の設定がなければ） |
+| WF-08 | 部署長でない `core/unit#admin` が承認を試みる | deny（R 段。上の試験表） |
+| WF-09 | 所属・祖先・部署長の読取りが 503、または `ancestor_sync=pending` | 提出を保留して再試行する。読めた範囲で経路を組まない（fail-closed） |
+
+**変形 A（EX-8。申請部署とその上位の管理者に閲覧を許す）**
+
+```text
+type expense/report
+  relations
+    request_unit: [core/unit]              # 申請部署。R-2 で承認 workflow が書く（書込宣言に加える）
+    ...                                    # 他は上と同じ
+  permissions
+    view = requester | approver | route_member | request_unit->manage | book->process
+```
+
+- `core/unit` の `manage` は子へ継承するので、申請部署の管理者と全ての上位部署の管理者が閲覧でき、兄弟部署の管理者は閲覧できない [D]。作成者の予備実行で、申請部署の管理者・上位部署の管理者が `view` allow・`approve` deny、兄弟部署の管理者が `view` deny であることを確かめた（Check 8 件が期待どおり）[D]（作成者の予備実行）。
+- 閲覧者が管理者（業務上の長とは限らない）に広がるので、テナントの業務規程が「部署の管理者は配下の経費を見てよい」としている場合だけ採る [D]。既定のモデルからの変更は権限拡大で M1 になる（§8.3）[D]。深さは §7.2 の表のとおり unit の深さ分増える [D]。
+- `request_unit` は提出時の値に固定する（組織改編で書き換えない）か、改編に追随させるかを業務規程で決める。既定は固定とする [D]。
+
+**注意**
+
+- 経路は提出時に確定し（R-6）、組織改編・異動が承認の途中で起きても経路を組み替えない。ただし各段の承認時に部署長であることを読み直し（R-7）、交代していればその段だけを引き直す [D]。異動後の申請者に、元の部署の経路で承認させるかは業務規程の選択であり、既定はスナップショットとする [D]。
+- 部署長の代理（不在時の期限付きの承認）は、`expense/unit_policy` に `acting_head: [core/user with c.not_expired]` を別の relation として加え（条件付きの直接型は 1 relation に 1 種類。§3.1）、R-5 で `head` の代わりに使う [D]。加える変更は M0 で、経路の解決で期限切れを読み飛ばすために、workflow は候補ごとに PDP の判定で期限を確かめる（tuple の条件を自前で評価しない）[D]。
+- 承認の結果を R 段に書く形（`approver` を段ごとに付け替える）は、承認待ちでない段の部署長に `approve` を与えないためである [D]。全段の部署長を最初から `approver` に書くと、段の順序を workflow の検査だけで守ることになる [D]。
+- 部署長の交代や部署の廃止で `expense/unit_policy` が古くなる。unit の廃止の API と事象は未定義（残課題 19）なので、経費サービスは R-5 で `unit_policy` が見つからない unit を「部署長不在」として飛ばし、管理者に設定を促す [D]。
+
 ---
 
 ## 10. 越境共有・一覧検索の表し方と、認可要件カタログ
@@ -1037,9 +1282,10 @@ type files/tenant_policy
 | AC-30 | custom role | 顧客管理者が委譲可 permission で役割を作る | `core/role#assignee` | 表せる | 済 | 上限数は TBD（ADR-011 D4-5） |
 | AC-31 | 件数上限 | 1 日 N 件まで閲覧可 | — | 表せない | — | 業務側の rate 制御と監査の検知（RS-13 の不正対策） |
 | AC-32 | 管理機能 | セキュリティ管理者は設定を見られるが変更・一括エクスポートはできない | §9.6 | 表せる | 済 | 二者承認は管理 workflow |
+| AC-33（v1.1、I-4） | 承認ワークフロー（組織階層） | 申請部署の部署長が承認し、金額が閾値を超えれば上位部署の部署長も順に承認する。承認経路の部署長は申請を閲覧できる | 経路は workflow が解決し、結果を `approver`・`route_member` の tuple で書く（§9.7） | 一部 | 済（R 段部分） | 経路の解決（申請者の所属部署、祖先、繰上げ、段数）・自己承認禁止・内容への束縛は workflow。部署の管理者への閲覧は変形 A |
 
-- 机上判定の集計は、表せる 24 件（写像が要るもの 2 件を含む）、一部 5 件、表せない 3 件で、G-108 の 13 類型を全て含む [D]。表せない 3 件と一部 5 件は全てに代替手段を書いた [D]。
-- SLI-040（表現力）は「カタログのうちモデル・policy の変更だけで表せる割合」と定義されている（SLO-01）[D]。本書の机上判定では 24/32 だが、正式な値は TC-ARC05-11 の判定で求める [D]。目標値は TBD（所有者 CTO、期限 G4、決め方 カタログの判定とパイロット。SLO-01 SLI-040）[D]。
+- 机上判定の集計は、表せる 24 件（写像が要るもの 2 件を含む）、一部 6 件（v1.1 で AC-33 を加えた）、表せない 3 件の計 33 件で、G-108 の 13 類型を全て含む [D]。表せない 3 件と一部 6 件は全てに代替手段を書いた [D]。
+- SLI-040（表現力）は「カタログのうちモデル・policy の変更だけで表せる割合」と定義されている（SLO-01）[D]。本書の机上判定では 24/33（v1.0 は 24/32）だが、正式な値は TC-ARC05-11 の判定で求める [D]。目標値は TBD（所有者 CTO、期限 G4、決め方 カタログの判定とパイロット。SLO-01 SLI-040）[D]。
 
 ---
 
@@ -1073,7 +1319,7 @@ type files/tenant_policy
 
 | 指標 | 定義（ARC-05 §13、SLO-01） | 本書が与えるもの | 測り方 | 目標値 |
 |---|---|---|---|---|
-| ① 表現力（SLI-040） | 要件カタログのうち CAM の変更だけで表せる割合 | §10.2 のカタログ 32 件と机上判定 | TC-013・TC-ARC05-11 で全件に検証ツールの判定を付ける | TBD（CTO、G4） |
+| ① 表現力（SLI-040） | 要件カタログのうち CAM の変更だけで表せる割合 | §10.2 のカタログ 33 件（v1.1。v1.0 は 32 件）と机上判定 | TC-013・TC-ARC05-11 で全件に検証ツールの判定を付ける | TBD（CTO、G4） |
 | ② 変更速度（SLI-041） | 申請から本番相当環境への反映までの所要時間（p50・p95）と、自動審査だけで反映できた割合 | §8 の M0〜M3 と自動ゲート。M0 は中央を待たない | レジストリと pipeline の時刻記録。審査待ちは K-31 | TBD（CTO、G3 決裁／G4 実測。TC-119） |
 | ③ テナント側の設定範囲（SLI-042） | 顧客管理者が基盤チームへの依頼なしに行える設定の割合 | §6 の custom role・委任管理、ADR-024 の越境ポリシー | DL-26 の設定項目と基盤予約の対の列挙 | TBD（CTO＋事業責任者（B2B）。TC-119） |
 | ④ 安全性の維持（SLI-043） | 意図的に混入させた誤 allow を自動解析・shadow で検出できた割合 | §11 の誤りを注入の種にする | 誤った変更（E-05・E-07・E-08・E-09 など）を注入し、CI と shadow での検出率を測る（TC-012、TC-ARC05-12） | TBD（CISO、G4） |
@@ -1085,7 +1331,7 @@ type files/tenant_policy
 
 ## 13. 決裁案
 
-ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 DP-6 で既に決裁案になっている点は重ねて決めない [D]。本書で新たに判断が要る点は次の 4 件である [D]。
+ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 DP-6 で既に決裁案になっている点は重ねて決めない [D]。本書で新たに判断が要る点は次の 5 件である（INT03-K5 は v1.1（I-4）で追加）[D]。
 
 | # | 論点 | 選択肢 | 推奨 | 帰結 | 決める人・期限 |
 |---|---|---|---|---|---|
@@ -1093,6 +1339,7 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | INT03-K2（RS-18反映（2026-10-15）: ARC-05 K05-8 と同じ論点。ARC-05 は (a)＋(b) を推奨） | 組織の木・custom role の hop で解決深度の設計値 8 [A-036] を超える問題 | (a) 組織の木からの継承を管理系 permission に限り、閲覧系は資源側の付与で表す、(b) 祖先の閉包を基盤の階層サービスが事前計算し tuple として書く、(c) 設計値を引き上げる（例: 12） | 当面 (a)。(b)・(c) は TC-ARC05-08 の結果で判断 | (a) は「上位部署の所属者は配下の文書を全部見る」型の要件を直接表せず、グループの付与で代替する [D]。(b) は組織改編のたびに大量の tuple を非原子的に書き換え、剥奪先行の順序規則と差分照合（ARC-05 §11）が前提になる [D]。(c) は Check の tail latency と PDP の計算量増幅（T-031）に効き、容量モデル（DL-58）の見直しが要る [D] | CTO。G4（TC-ARC05-08 の後） |
 | INT03-K3 | 認可要件カタログ（§10.2）の維持責任 | (a) プラットフォームのプロダクト責任者が持ち、各ドメインが追記を申請する、(b) 各ドメインが自ドメインの分を持ち、基盤は集計だけ、(c) 独立立会人が持つ | (a) | (a) は SLI-040 の分母が 1 か所で管理され、G-108 の判定者（CTO と独立立会人）が全件を追える [D]。(b) は分母がドメインごとに揺れ、表現力の値が比較できない [D]。(c) は立会人の独立性と作成責任が衝突する [D] | CTO。G3 |
 | INT03-K4 | ドメインが core の relation を arrow で参照する形 | (a) core に参照用の公開 permission（例: テナント管理者を表す permission）を置き、ドメインはそれだけを参照する、(b) core の relation を直接参照してよい（現状の ARC-05 §8 の例） | (a) | (a) は core の relation の意味を変えても参照側が影響を受けにくく、zed の推奨（arrow は permission を指す）にも沿う。core の変更（M3）と、ARC-05 §8 の例の書換えが要る [D]。(b) は core relation が不可逆側に入り、改名・分割が多段手順になる（ADR-021 D21-27）[D] | 認可・PDP チーム（M3、CISO 同意）。DL-73 凍結前 |
+| INT03-K5（v1.1（I-4）。ARC-05 K05-6 に関わる） | 部署長（業務上の長）の置き場所（§9.7） | (a) 各ドメインが自分の型（例 `expense/unit_policy#head`）で unit ごとに持つ、(b) 基盤が `core/unit` に業務上の長の relation（例 `head`。継承しない）を持ち、ドメインは読むだけにする、(c) `core/unit#admin` を部署長として使う | 当面 (a)。経費・購買・勤怠など部署長を使うドメインが 2 つ以上になった時点で (b) を再検討 | (a) は core の変更が要らず決裁を待たないが、ドメインごとに部署長の指名と保守が重複し、同じ部署の部署長がドメインごとに食い違い得る [D]。(b) は 1 か所で指名でき、上位部署の長を祖先閉包から引けるが、core の変更（M3）で、業務上の役割（承認権限）を基盤の型に入れることになる [D]。(c) は管理者と長の意味が違い、継承で上位の全管理者が承認者になる（§9.7 の比較表。予備実行で deny を確認した試験の逆）[D] | CTO（CISO 同意）。K05-6 と同じ場（Gate 3、DL-73 凍結前） |
 
 ---
 
@@ -1101,11 +1348,11 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | # | 残課題 | 区分 | 所有者・期限 |
 |---|---|---|---|
 | 1 | §9 の例は手作業の写像による予備実行だけで、CAM 生成器・現行版 engine での検証（E4）は未取得 | C | 認可・PDP チーム。TC-ARC05-10、G3 |
-| 2 | 要件カタログ 32 件の検証ツールによる正式判定と、独立立会人の確認（G-108） | C | CTO と独立立会人。TC-ARC05-11・TC-013、段階 2 |
+| 2 | 要件カタログ 33 件（v1.1）の検証ツールによる正式判定と、独立立会人の確認（G-108） | C | CTO と独立立会人。TC-ARC05-11・TC-013、段階 2 |
 | 3 | 柔軟性 4 指標（SLI-040〜SLI-043）の目標値の決裁と実測（G-147） | C・B | CTO（④は CISO）。G4 |
 | 4 | 審査 SLA の値と承認記録（G-116）。パイロットでの実測が前提 | B | プラットフォームチーム長（SLA 案）、CTO（決裁、DP-6）。Gate 3 |
 | 5 | G-115 の負例ベクタ NV-01〜NV-09 の TC 採番と PoC 実測。認証方針側の負例は DL-26 | C | DL-22 の所有者。G4 |
-| 6 | INT03-K1〜K4 の決裁 | B | §13 のとおり |
+| 6 | INT03-K1〜K5 の決裁（K5 は v1.1 で追加） | B | §13 のとおり |
 | 7 | CON-04 の `CamPermission.tier` は 5 分類だけを持ち、/T・/P と修飾子（+XT、+FIN、+REG）を運べない。操作の登録形式（REQ-03 §2.4 で DL-15・DL-70 が決める）との対応付けが未決 | A | 認可・PDP チーム＋DL-15 の所有者。DL-73 凍結前 |
 | 8 | 命名規則 X-2 の確定（OpenFGA の識別子規則の原典確認。予備実行では `/` を含む型名が受理された）と、名前空間コードの長さ（X-2 の 3〜64 と CON-04 の 3〜63）の統一 | C | 認可・PDP チーム。TC-ARC05-10、DL-73 凍結前 |
 | 9 | 職務分離の書込検査の置き場所（ARC-05 K05-4）が決まるまで、AC-22 は未実装 | B | CTO。G4 |
@@ -1121,6 +1368,9 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | 19 | v0.4 で CON-04 に置くと決め、preview として定義した（§15.3 G-6、CON-04 §10）。連携開発者は MK-04 の改訂後に `attachToHierarchy`・`moveHierarchyNode` を使う書込を試験できる。採否は K05-6〜K05-8 の決裁に従い、不採用なら削除する。unit の廃止とテナント統合・分割の API は未定義 | A・B | 認可・PDP チーム（CON-04 の所有者）、CTO（K05-6〜K05-8）。DL-73 凍結前 |
 | 20 | v0.5 で §4.4 の書き方に書き直した例（付録 A）を engine の CLI（`fga model test`・`zed validate`）で再実行していない。構造と構文は JSON Schema と自前の構文解析器で確かめた（§9.0）。あわせて CON-04 側の不足（E-4 の範囲、permission の公開宣言、保持者集合の印、core 生成器の付加規則。§16.2 HO-R3-1〜HO-R3-5）の解消を待つ | C・A | 認可・PDP チーム。TC-ARC05-10、DL-73 凍結前 |
 | 21 | v0.6: PoC の CAM 生成器と cam.json が CON-04 の `CamModule` と 3 点で異なる（§15.1 の差 D-1〜D-3、§15.3 G-7）。本書は (a) PoC 側を契約の形に揃える案を採り、POA&M への起票を申し送った（§16.3 HO-R5-1）。揃うまで、PoC の生成器は S-8 に数えない | A | PoC チーム（DL-82）、認可・PDP チーム。PoC の凍結済み試験の再実行前（G4 入場前） |
+| 22 | v1.1（I-4）: §9.7 の所属部署・祖先の取得（M-1・M-4）に要る `core/unit` の読取宣言（`member`・`parent`）が CON-04 で定まっていない。決まるまで連携開発者は MK-04 でしか試験できない（§16.4 HO-V11-1） | A | 認可・PDP チーム（CON-04 の所有者）。DL-73 凍結前 |
+| 23 | v1.1（I-4）: §9.7 の例は core の代役（ARC-05 v0.3 §8.3 の案の最小形）で予備実行しただけで、SpiceDB（`zed validate`）では実行していない。K05-6〜K05-8・INT03-K5 の決裁後に暫定形の表どおり書き換えて再実行する。前提 NA-INT03-3（承認段数と金額閾値はテナント設定、値 TBD）・NA-INT03-4（承認経路に使う所属は直接所属の tuple に限る）を前提台帳へ追加要 | C・A | 認可・PDP チーム、前提台帳の所有者。TC-ARC05-10、G3 |
+| 24 | v1.1（I-4）: 承認経路の解決（§9.7 R-1〜R-9）は各ドメインの承認 workflow が実装する。ARC-05 K05-4 が承認 workflow を基盤の部品（(b)）にすると推奨しているので、部品の API が決まれば §9.7 をその呼出しに置き換える | B | CTO（K05-4）。G4 |
 
 ---
 
@@ -1161,11 +1411,11 @@ CON-04 v0.3.0 の `components.schemas.CamModule` に対し、PoC の 12_poc/code
 
 | # | すること | 出力 | 完了の判定 |
 |---|---|---|---|
-| S-1 | §3.1 段 1〜2 のとおり要件を平文で書き、REQ-03 の操作階層と置き場所を付ける | 要件表（§10.2 の形式） | 全要件に階層と置き場所がある |
+| S-1 | §3.1 段 1〜2 のとおり要件を平文で書き、REQ-03 の操作階層と置き場所を付ける | 要件表（§10.2 の形式） | 全要件に階層と置き場所がある。v1.1（I-4）: 承認者が組織の位置で決まる要件は §9.7 の置き場所の表で振り分けた |
 | S-2 | 名前空間コードの申請内容を CON-04 `NamespaceRequestInput` の形で作り、台帳の運用が始まっていれば `/v1/namespace-requests` で申請する。始まる前は候補コードをローカルだけで使い、払い出されたコードが異なれば本番登録の前に置き換える（未登録の名前は N-13 の改名手順の対象外）[D] | 申請内容 | 自動検査 3 種（`naming_rule` 等）に通る形である |
-| S-3 | モデルを CON-04 `CamModule` の JSON（型、relation、permission、`tier`・`marks`、`max_depth`・`max_direct`、`list_method`、`write_declarations`）で書く。§4.4 のとおり、relation には直接付与だけを書き、包含・継承は保持者集合の permission（`editors` など）、操作は動詞の permission に書く。`expression` は CAM 式 v0（CON-04 §9、本書 §1.2）で書き、条件は `ConditionId` の 6 件から選ぶ。付録 A が書き方の見本である。S-4 の試験を `ModelChangeRequest.tests` の形でも書き、`semantic_change` を付ける | `ModelChangeRequest` の JSON | CON-04 の JSON Schema で検証が通る（付録 A は通ることを確かめた。§9.0）。式は CON-04 §9.1 の EBNF に合う（`validateModel` の提供前は目視と S-4 の手写しで確かめる）。アプリが CON-03 の `action.name` に渡す名前が、catalog に載せた動詞の permission だけである |
+| S-3 | モデルを CON-04 `CamModule` の JSON（型、relation、permission、`tier`・`marks`、`max_depth`・`max_direct`、`list_method`、`write_declarations`）で書く。§4.4 のとおり、relation には直接付与だけを書き、包含・継承は保持者集合の permission（`editors` など）、操作は動詞の permission に書く。`expression` は CAM 式 v0（CON-04 §9、本書 §1.2）で書き、条件は `ConditionId` の 6 件から選ぶ。付録 A が書き方の見本である。S-4 の試験を `ModelChangeRequest.tests` の形でも書き、`semantic_change` を付ける | `ModelChangeRequest` の JSON | CON-04 の JSON Schema で検証が通る（付録 A は通ることを確かめた。§9.0）。式は CON-04 §9.1 の EBNF に合う（`validateModel` の提供前は目視と S-4 の手写しで確かめる）。アプリが CON-03 の `action.name` に渡す名前が、catalog に載せた動詞の permission だけである v1.1 の同期（CON-04 §11 HO-V11-2、v1.1（I-7・I-14））: `tier` は CON-02 `OperationTier` の表記（`read-sensitive`、`privileged/T` など）で書く。登録要求（`ModelChangeRequest`）の `base_revision` は、registry 全体の直近の revision を `listModels` で取って入れる。名前空間の初回登録でも同じで、registry の初期化で `core` だけの revision（`sequence`=1）が登録されている。直近でなければ 409 `base_revision_conflict`（`latest_revision` 付き）が返るので、取り直して出し直す |
 | S-4 | 同じモデルを OpenFGA DSL（schema 1.1）に手で写し、`.fga.yaml` に tuple と試験（check、list_objects の期待値）を書いて `fga model test` で流す [V][^3]（RS-17#86）。SpiceDB も評価する場合は zed の validation file に assertion を書いて `zed validate` で流す [V][^4]（RS-17#87）。§4.4 の書き方では relation と permission の名前が分かれているので、OpenFGA DSL ではどちらも `define`、SpiceDB schema では relation は `relation`、permission は `permission` として名前を変えずに写す。演算子は CON-04 §9.3 の写像表のとおりに写す | 手写しの DSL と試験ファイル | §8.2 の観点（全 relation の肯定・否定、越境の否定）がそろい、全件が期待どおり。使った CLI と内蔵 engine の版を記録する |
-| S-5 | アプリの PEP を、PEP SDK（ARC-06）か、SDK のない言語では契約に適合する自前実装（ARC-06 PP-2。ADR-011 D5-4 との関係は ARC-06 L06-3 で未決）で実装し、CON-11 のキットで契約試験を流す。MK-03 の許可表には S-4 の試験と同じ期待値を入れる | アプリと契約試験の結果 | CON-11 §8 の段 1〜7 が合格 |
+| S-5 | アプリの PEP を、PEP SDK（ARC-06）か、SDK のない言語では契約に適合する自前実装（ARC-06 PP-2。ADR-011 D5-4 との関係は ARC-06 L06-3 で未決）で実装し、CON-11 のキットで契約試験を流す。MK-03 の許可表には S-4 の試験と同じ期待値を入れる | アプリと契約試験の結果 | CON-11 §8 の段 1〜7 が合格。v1.1（I-5）: PEP が送る全ての `(resource.type, action.name)` と判定宣言の permission が、S-3 の `CamModule` の catalog 対象の permission に含まれることを CI の自前の検査で確かめた（N-26）。`subject.type` が CON-02 の写像どおり（人間の利用者は `core/user`）である |
 | S-6 | tuple の書込を CON-04 の `writeRelationships`・`deleteRelationships` で MK-04 に対して実装し、書込対応表（§3.1 段 7）、書込順序（ARC-05 I-5・I-6）、整合性トークンの保存（I-4）を試験する | 書込経路の実装 | CON-11 の順序族のベクタが合格 |
 | S-7 | 一覧は SDK の一覧ヘルパだけで実装し（LS-1）、MK-03 の search（preview）で `completeness=incomplete` と post-check を試験する | 一覧の実装 | CON-11 §4.4 の一覧の応答を扱える |
 | S-8 | CAM 生成器と `validateModel` が使えるようになったら、S-3 の JSON を登録前検証にかけ、生成器が出した DSL を S-4 の試験で再評価し、手写しの DSL を捨てる（ADR-011 D2-3: 人が DSL を直接編集した結果は本番に配布しない） | `ValidationReport` | `result=pass`。手写しと生成の DSL で S-4 の試験結果が一致 |
@@ -1173,6 +1423,7 @@ CON-04 v0.3.0 の `components.schemas.CamModule` に対し、PoC の 12_poc/code
 - S-8 の「CAM 生成器」は ADR-011 D2-3 の基盤の生成器で、CON-04 の形（`ModelChangeRequest.modules[].content`）を入力に取るものを指す [D]。PoC の生成器（12_poc/code/model/generate.js）は入力の形が違う（§15.1 の差 D-1〜D-3）ので、これを使っても S-8 は完了しない。それまでは §15.1 の条件 1〜5 の範囲で、手写しの DSL の見比べにだけ使ってよい [D]。PoC の生成器が CON-04 の形に揃った時点（§16.3 HO-R5-1 の (a)）で、本項を見直す。
 
 - S-4 の手写しの DSL は開発中の試験のためだけに使い、本番には出さない [D]（ADR-011 D2-3、§11 E-17）。
+- v1.1 の同期（CON-11 §14.3 H11-4、v1.1（I-14）。P-24）: `fga model test` の CLI の版と入手方法は CON-11 §6.7 と `11_contracts/kit/README.md` §6 にある。キットの既定は openfga/cli **v0.8.1** である。§9.0 の作成者の予備実行は v0.7.4（内蔵 engine openfga v1.9.5）で行ったので、キットの既定と版が違う。版で試験の結果が変わり得るため、使った CLI と内蔵 engine の版を S-4 の出力に記録する。v0.8.1 での §9 の全例の再実行は残課題とする（本節の下の記録、§16.5）[D]。
 - engine の版は RS-07 の確認版（OpenFGA v1.21.0、SpiceDB v1.56.2）を基準にする [D]。§9.0 の予備実行は CLI 内蔵の古い engine で行ったため、基準版での再確認は TC-ARC05-10 で行う [D]。
 - MK-03 は判定にモデルの意味論を使わないので、アプリの契約試験が合格してもモデルの正しさは示さない [D]（CON-11 §4.4）。モデルの正しさは S-4 と、基盤提供後の S-8 で示す [D]。
 
@@ -1189,6 +1440,7 @@ v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に pre
 | G-5 | 条件カタログの正式な一覧と引数の型が未公開 | `ConditionId`（6 件の列挙）と `ConditionCatalog.$defs`（各条件の tuple_context・request_context）を preview として置いた。`CamRelation.conditions` は列挙に変えた。tuple の `Condition.name`（GA）は列挙で縛らない [D] | 引数の型・既定・CEL 式の確定（ARC-05 §3.5 は案のまま） | 条件カタログ（認可・PDP チーム、DL-73 凍結前） |
 | G-6 | 階層サービス（unit の作成・移動、循環・深さ検査、祖先閉包）の API の置き場所が未定（残課題 19） | CON-04 に置くと決め、`createUnit`・`getUnit`・`attachToHierarchy`・`moveHierarchyNode`・`readAncestors` を tag `hierarchy`、`x-decision-pending: [K05-6, K05-8]` の preview で定義した。`ancestor` と unit を親に取る `parent` は階層サービスだけが書く（既存の `relation_not_writable`）[D] | K05-6〜K05-8 の決裁（不採用なら削除）。unit の廃止とテナント統合・分割の接ぎ木の API | ARC-05 §16（CTO、Gate 3・G4） |
 | G-7 | （v0.6 で追加）PoC の CAM 生成器と cam.json が CON-04 の `CamModule` と別の形を使う（§15.1 の差 D-1〜D-3）。cam.json の `$comment` は「CamModule に従う」と書くが、検証すると誤り 13 件。PoC の生成器と、cam.json を読む試験（TC-013 の参照評価器 `refEvaluate` の既定入力、TC-012・TC-021・TC-026 など）は、連携開発者が CON-04 の形で書くモデルとは別の形式を検証している [D] | 対応なし（CON-04 の変更は本書の範囲外） | 本書は (a)「PoC の cam.json と生成器を `ModelChangeRequest.modules[].content`（名前空間ごとの `CamModule`）の形に揃える」を採る。条件の定義は条件カタログ（CON-04 `ConditionCatalog`）の別ファイル、版は生成器の出力（manifest の `cam_revision`）に移し、書込宣言は `WriteDeclaration` の形に改める。(b)「CON-04 に `cam_version`・条件カタログの埋込みを preview で加える」は採らない（理由は §16.3 HO-R5-1）。実施までの扱いは §15.1 の条件 1〜5 | POA&M への起票（§16.3 HO-R5-1）。PoC チーム（DL-82）と認可・PDP チーム（CON-04 の所有者）。凍結済みの試験の再実行前 |
+| G-8 | （v1.1（I-4）で追加）承認経路の解決に要る、申請者の所属部署と祖先列の取得手段が契約に示されていなかった（13_integration-trial P-04）。`readRelationships` は GA だが `core/unit` を依存サービスの読取宣言に入れてよいかが未定。`readAncestors`・`getUnit` は preview（K05-6・K05-8 の決裁待ち） | 対応なし（CON-04 の変更は本書の範囲外）。本書 §9.7 に取得手段 M-1〜M-4 と、決裁の結果ごとの暫定形を置いた [D] | `core/unit#member`・`#parent` の読取宣言の可否と、主体の所属 unit を返す専用の照会を設けるか（関係の存在が機微になり得る T-034 との兼ね合い） | CON-04（§16.4 HO-V11-1）、ARC-05 K05-6 |
 
 ---
 
@@ -1246,7 +1498,43 @@ v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に pre
 | HO-R5-3 | 10_integration/README.md（INT-00）§6.3「暫定ローカル結合環境の条件」 | 「使える構成要素」に「CAM 生成器（`model/generate.js`。参考用途だけ、条件は INT-03 §15.1）」を加え、「依存してはならないもの」に「cam.json の形式（POC-03 §10.2 P-15）」を加える | 部品表に生成器の可否がない（模擬パネル ラウンド3 MP-3-22・ラウンド5 の指摘） |
 | HO-R5-4 | traceability/mock-panel-report.md MP-3-22 | 「契約版が古い」は本書 §15.1 で CON-04 v0.3.0 に改め、「CAM 生成器の利用可否が未判断」は §15.1 の条件付きの可否で判断した、として状態を更新する（POA&M の HO-R5-1 の行が閉じるまで生成器の契約適合は残る） | 指摘の閉じ方の記録 |
 
+### 16.4 他文書への申し送り（v1.1）
+
+v1.1 改訂（13_integration-trial の I-4・I-5）では本書だけを編集した（並行作業のため）。次の改訂は各文書の所有者に申し送る [D]。
+
+| # | 対象 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| HO-V11-1 | CON-04（11_contracts/relationship-model-registry.openapi.yaml）`readRelationships`・§6.3（読取宣言）・§10 | (1) 依存サービスが `core/unit#member`（subject を指定した filter）と `core/unit#parent` を読取宣言に入れてよいかと、その条件（例: `subject_id` を要求の起点主体に限る、件数上限）を定める。(2) 代わりに「主体の直接所属 unit の一覧」を返す hierarchy の照会（例 `listSubjectUnits`、preview）を置く案を検討する。(3) `readAncestors` の応答の並び（根から親）を例で示す | §9.7 の M-1・M-4 が契約上できるか分からない（13_integration-trial P-04）。所属の読取りは関係 graph の読取り（T-034）なので、無条件の宣言にはしない [D] |
+| HO-V11-2 | ARC-05（04_architecture/authorization-model.md）§3.1・§3.6・§8.3・§16 K05-6、11_contracts の core 型抜粋（I-2 の担当） | (1) `core/unit` の relation・permission のうち、ドメインが arrow の右辺に使ってよいもの（`manage`・`view_directory`）と、読取りだけに使うもの（`member`・`parent`）を表にする（本書 §9.7 の表を写す）。(2) K05-6 の論点に「業務上の長（部署長）を `core/unit` に持たせるか」（本書 INT03-K5）を加える。(3) 連携開発者向けの core 型抜粋に `core/unit` の最小定義（§9.7 の試験で使った代役）を載せる | 連携開発者が手写しの DSL に core 型を書けない（P-17）。部署長と `admin` の意味の違いが文書にない（P-04） |
+| HO-V11-3 | CON-03（11_contracts/authorization-api.openapi.yaml）§4.2、ARC-05 X-14 | 判定宣言（`caller_scope`）に core の permission（例 `core/unit#manage`。§9.7 の部署長の指名の書込前判定）を入れてよいかを定める | 書込対応表（§3.1 段 7）で core の permission を判定する場面がある |
+| HO-V11-4 | 前提台帳（01_governance/assumptions-register.md） | NA-INT03-3（承認段数と金額閾値はテナント設定。値 TBD）、NA-INT03-4（承認経路の解決に使う所属は `core/user` の直接所属の tuple に限る）を登録する | §9.7 の前提（残課題 23） |
+| HO-V11-5 | INT-02（10_integration/integration-patterns.md）§2.2 の経費精算の行 | 認可モデルの参照先に本書 §9.7 を加える | 代表例に挙げた経費精算の例が本書になかった（P-04） |
+| HO-V11-6 | 10_integration/README.md（INT-00）の連携の入口、CON-08（11_contracts/schemas/audit-event.schema.json） | 主体類型から `subject.type` への写像の正本の所在を 1 つに揃える。CON-03 v1.1（`Subject` の説明、§12 N-5）は CON-02 を正本とし、INT-00 の v1.1 の記述は CON-08 を挙げている。本書 N-26 は CON-02 を正本として参照した | I-5「写像を 1 か所に」。参照先が 2 つあると P-06 が再発する |
+| HO-V11-7 | CON-11（11_contracts/mock-contract-test-kit.md）MK-04 | (1) `core/unit` の `parent`・`member` の tuple を種として書き、`readRelationships` の subject filter で所属を返す example を加える。(2) §9.7 の workflow の負例 WF-01〜WF-09 を契約試験の族（承認経路）として加える | §9.7 の暫定形の試験を MK-04 で流せるようにする |
+| HO-V11-8 | CON-03 §12 N-3 | 本書側の対応（`action.name` と scope の形の書き分け、判定宣言の permission がモデルに存在することの登録前の確認）を N-26 と §15.2 S-5 で行った。N-3 の本書の分を閉じてよい | 申し送りの閉じ方の記録 |
+
 ---
+
+### 16.5 v1.1 の同期の記録
+
+他文書の v1.1 改訂が本書に宛てた申し送りと、§16.4 の申し送りの宛先での反映状況を、v1.1 の同期作業（AI エージェント。人による照合は未実施）で次のとおり記録する [D]。
+
+| 出所 | 内容 | 反映・確認 |
+|---|---|---|
+| CON-04 §11 HO-V11-2 | 登録手順の `base_revision` と初期 revision、`tier` の表記 | §15.2 S-3。付録 A と N-24 の `tier` は v1.1（版 0.8）で改め済みを確かめた |
+| CON-11 §14.3 H11-4 | `fga model test` の CLI の版と入手方法、§9.0 の版の差 | §15.2 の注記。v0.8.1 での §9 の全例の再実行は未実施（残課題） |
+| CON-02 HO-I7-7 | `tier` の記入例の表記 | 本文・付録 A に v1.0 の表記（`read_sensitive`、副区分のない `privileged`）が `tier` の値として残っていないことを確かめた（改版の経緯の記述を除く） |
+| INT-02 §9.2 HO11-6 (a) | N-24 と INT-02 AN-1〜AN-5 の一致 | 一致を確かめた。どちらも `action.name` は catalog に載せた動詞の permission 名だけで、型名・名前空間・保持者集合を入れない（N-24、AN-1〜AN-3）。判定宣言の permission がモデルにあることの登録前の確認は §15.2 S-5 と AN-5 が同じ観点である |
+| INT-02 §9.2 HO11-6 (b) | §9.7 の承認経路と INT-02 BN-2（通知の宛先を workflow が決める）の整合 | 矛盾しないことを確かめた。§9.7 は承認者を workflow が書く `approver` の tuple で決め、通知の宛先の決め方は書いていない。宛先は INT-02 §3.9 の BN-2 に従い workflow が決める |
+| CON-12 §10.1 V11-L5、CON-15 §8 V11-Q5 | 本書のライフサイクル受信の手順の参照 | 本書にはライフサイクル事象の受信の手順・`lcsig`・CON-15 への参照がないことを確かめた（変更不要）。受信の手順は INT-00 §6.1・INT-02 §10.1 にある |
+| §16.4 HO-V11-1 | CON-04 の所属の読取り | CON-04 §8 に未決として登録された |
+| §16.4 HO-V11-2 | ARC-05 の表・K05-6、core 型抜粋の `core/unit` | (3) は CON-16 §3.5 に `core/unit` の代替定義があることを確かめた。(1)(2) は 04_architecture の範囲で、本同期では未反映 |
+| §16.4 HO-V11-3 | 判定宣言に core の permission | CON-03 §9 に未決として登録された |
+| §16.4 HO-V11-4 | 前提台帳 | 01_governance の範囲で、本同期では未反映 |
+| §16.4 HO-V11-5 | INT-02 §2.2 | INT-02 §2.2 で反映された |
+| §16.4 HO-V11-6 | 写像の正本の所在 | CON-02 `x-subject-type-map` に一本化した。INT-00・CON-08・CON-16・INT-02・INT-06 の記述を揃えた |
+| §16.4 HO-V11-7 | CON-11 MK-04 | CON-11 §4.5・§6.8 CV-054 で反映された（CV-054 は preview） |
+| §16.4 HO-V11-8 | CON-03 §12 N-3 の本書の分 | CON-03 §13 で閉じた |
 
 ## 対応表
 
@@ -1257,7 +1545,7 @@ v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に pre
 | R-252 | R-requirements（対応成果物に本書） | typed ReBAC を中核に固定 RBAC と限定 ABAC を合成し、巨大ロール表を避ける | §3.2, §5, §6, §9 | A | 設計済み。実証は R-205 |
 | R-256 | R-requirements（対応成果物に本書） | schema-first、policy-as-code、revision pinning、shadow 判定、canary、rollback の維持 | §3.1, §8 | A | 設計済み（手順と API への写像）。実測は R-148・TC-ARC05-12・13 |
 | G-107 | G-goal-criteria（DL-65） | 柔軟性を 4 指標で定義 | §12 | A | 定義と測り方を ARC-05 §13 と整合して記載。目標値は G-147 |
-| G-108 | G-goal-criteria（DL-65） | 要件カタログと、検証ツールによる表現可否の一覧 | §10.2, §9.0 | C | カタログ 32 件・13 類型と机上判定、代替手段を記載。予備実行のみで正式判定（TC-ARC05-11・TC-013）待ち |
+| G-108 | G-goal-criteria（DL-65） | 要件カタログと、検証ツールによる表現可否の一覧 | §10.2, §9.0 | C | カタログ 33 件（v1.1 で AC-33 を追加）・13 類型と机上判定、代替手段を記載。予備実行のみで正式判定（TC-ARC05-11・TC-013）待ち |
 | G-115 | G-goal-criteria（DL-65） | 顧客管理者の設定範囲、最低基準、昇格・他テナント影響の防止、負例の PoC | §6 | C | 認可モデル側の範囲と負例 NV-01〜09 を定義。PoC 実測待ち。認証方針側は DL-26 |
 | G-116 | G-goal-criteria（DL-65） | ドメインが自名前空間で設計・申請でき、中央審査は互換性・安全性の確認に限定され、審査 SLA が承認されている | §2, §4.1, §8, §15 | B | 手順と区分を記載。基盤完成前の着手手順と契約の不足（§15.3）を記載。SLA の値と承認記録は未達（DP-6、Gate 3） |
 | G-147 | G-goal-criteria（DL-65） | 4 指標の目標値・実測・決裁 | §12 | C（B 併用） | 未達。目標値 TBD、実測は TC-013・TC-119・TC-012 |
@@ -1288,6 +1576,8 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 
 §9.1〜§9.6 のモデルを、CON-04 v0.2.0 の `CamModule`（1 名前空間に 1 件）で書いたものである [D]。§9.0 の機械検証（JSON Schema の誤り 0 件）はこの JSON に対して行い、本文の `text` のモデルとの一致（14 型の relation・直接型・条件・式）も自前のスクリプトで確かめた [D]（作成者の自前の確認。スクリプトは本リポジトリに保存していない）。core 型（ARC-05 §3.1）と core 生成器が付ける部分（N-25）は含めていない。`write_declarations` の workload は仮置きの SPIFFE ID（trust domain `example.invalid`）で、本文に書込宣言のある `files`・`fin` だけに置いた [D]。`org/unit#parent` の `max_depth` 5 は NA-ARC05-1 の初期案を入れた（本文では TBD）[D]。
 
+v1.1: CON-04 v0.4.0（v1.1 改訂）で `CamPermission.tier` の表記が CON-02 `OperationTier` に変わった（I-7、P-09）ので、A.1〜A.6 の `tier` を `read_sensitive` → `read-sensitive`（21 か所）、`privileged` → `privileged/T`（10 か所。§9 の catalog はいずれもテナント内の管理操作）に改めた。式・relation・宣言は変えていない [D]。v1.1（I-4）で §9.7 の `expense` を A.7 に加えた [D]。
+
 ### A.1 `files`
 
 ```json
@@ -1301,9 +1591,9 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/external_grant#grantee"], "max_direct": 1000}
       ],
       "permissions": [
-        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive"},
-        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive"},
-        {"name": "read", "expression": "viewers", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read-sensitive"},
+        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read-sensitive"},
+        {"name": "read", "expression": "viewers", "tier": "read-sensitive", "marks": ["tenant_delegable", "external_grantable"]},
         {"name": "write", "expression": "editors", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "share", "expression": "owner | parent->share", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "share_external", "expression": "owner | parent->share_external", "tier": "write"},
@@ -1318,9 +1608,9 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/external_grant#grantee"], "max_direct": 1000}
       ],
       "permissions": [
-        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive"},
-        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive"},
-        {"name": "read", "expression": "viewers", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "editors", "expression": "editor | owner | parent->editors", "tier": "read-sensitive"},
+        {"name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read-sensitive"},
+        {"name": "read", "expression": "viewers", "tier": "read-sensitive", "marks": ["tenant_delegable", "external_grantable"]},
         {"name": "write", "expression": "editors", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "share", "expression": "owner | parent->share", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "delete", "expression": "owner | parent->delete", "tier": "write", "marks": ["tenant_delegable"]}
@@ -1332,9 +1622,9 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "policy_admin", "directly_related": ["core/user", "core/role#assignee"]}
       ],
       "permissions": [
-        {"name": "view", "expression": "policy_admin | tenant->admin | tenant->security_admin", "tier": "privileged", "marks": ["tenant_delegable"]},
-        {"name": "change_retention", "expression": "policy_admin | tenant->admin", "tier": "privileged", "marks": ["tenant_delegable"]},
-        {"name": "export_all", "expression": "tenant->admin", "tier": "privileged"}
+        {"name": "view", "expression": "policy_admin | tenant->admin | tenant->security_admin", "tier": "privileged/T", "marks": ["tenant_delegable"]},
+        {"name": "change_retention", "expression": "policy_admin | tenant->admin", "tier": "privileged/T", "marks": ["tenant_delegable"]},
+        {"name": "export_all", "expression": "tenant->admin", "tier": "privileged/T"}
       ]
     }
   ],
@@ -1357,11 +1647,11 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "user_admin", "directly_related": ["core/user"]}
       ],
       "permissions": [
-        {"name": "view_directory", "expression": "member | manager | parent->view_directory", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
-        {"name": "manage", "expression": "manager | parent->manage", "tier": "privileged"},
-        {"name": "manage_membership", "expression": "user_admin | manage | parent->manage_membership", "tier": "privileged"},
-        {"name": "assign_user_admin", "expression": "manage", "tier": "privileged"},
-        {"name": "restructure", "expression": "parent->manage", "tier": "privileged"}
+        {"name": "view_directory", "expression": "member | manager | parent->view_directory", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
+        {"name": "manage", "expression": "manager | parent->manage", "tier": "privileged/T"},
+        {"name": "manage_membership", "expression": "user_admin | manage | parent->manage_membership", "tier": "privileged/T"},
+        {"name": "assign_user_admin", "expression": "manage", "tier": "privileged/T"},
+        {"name": "restructure", "expression": "parent->manage", "tier": "privileged/T"}
       ]
     },
     {"name": "org/site",
@@ -1371,8 +1661,8 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "facility_admin", "directly_related": ["core/user"]}
       ],
       "permissions": [
-        {"name": "enter_system", "expression": "staff | unit->manage", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
-        {"name": "administer", "expression": "facility_admin | unit->manage", "tier": "privileged"}
+        {"name": "enter_system", "expression": "staff | unit->manage", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
+        {"name": "administer", "expression": "facility_admin | unit->manage", "tier": "privileged/T"}
       ]
     }
   ]
@@ -1391,9 +1681,9 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "viewer", "directly_related": ["core/user", "core/group#member"]}
       ],
       "permissions": [
-        {"name": "view", "expression": "viewer | operator | site->administer", "tier": "read_sensitive"},
+        {"name": "view", "expression": "viewer | operator | site->administer", "tier": "read-sensitive"},
         {"name": "use", "expression": "operator & site->enter_system", "tier": "write", "marks": ["tenant_delegable"]},
-        {"name": "configure", "expression": "site->administer", "tier": "privileged"}
+        {"name": "configure", "expression": "site->administer", "tier": "privileged/T"}
       ]
     }
   ]
@@ -1414,12 +1704,12 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "guest", "directly_related": ["core/external_grant#grantee"]}
       ],
       "permissions": [
-        {"name": "admins", "expression": "admin | owner", "tier": "read_sensitive"},
-        {"name": "members", "expression": "member | admins", "tier": "read_sensitive"},
-        {"name": "view_internal", "expression": "members | unit->manage", "tier": "read_sensitive"},
-        {"name": "view", "expression": "view_internal | guest", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "admins", "expression": "admin | owner", "tier": "read-sensitive"},
+        {"name": "members", "expression": "member | admins", "tier": "read-sensitive"},
+        {"name": "view_internal", "expression": "members | unit->manage", "tier": "read-sensitive"},
+        {"name": "view", "expression": "view_internal | guest", "tier": "read-sensitive", "marks": ["tenant_delegable", "external_grantable"]},
         {"name": "edit", "expression": "members", "tier": "write", "marks": ["tenant_delegable"]},
-        {"name": "manage_members", "expression": "admins", "tier": "privileged", "marks": ["tenant_delegable"]},
+        {"name": "manage_members", "expression": "admins", "tier": "privileged/T", "marks": ["tenant_delegable"]},
         {"name": "archive", "expression": "owner | unit->manage", "tier": "write", "marks": ["tenant_delegable"]}
       ]
     },
@@ -1430,7 +1720,7 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "watcher", "directly_related": ["core/user", "core/external_grant#grantee"]}
       ],
       "permissions": [
-        {"name": "view", "expression": "project->view_internal | assignee | watcher", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"]},
+        {"name": "view", "expression": "project->view_internal | assignee | watcher", "tier": "read-sensitive", "marks": ["tenant_delegable", "external_grantable"]},
         {"name": "edit", "expression": "project->edit | assignee", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "delete", "expression": "project->manage_members", "tier": "write", "marks": ["tenant_delegable"]}
       ]
@@ -1466,12 +1756,12 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "researcher", "directly_related": ["core/group#member"], "conditions": ["c.purpose_in"]}
       ],
       "permissions": [
-        {"name": "clinician", "expression": "attending | care_team->member", "tier": "read_sensitive"},
-        {"name": "read_clinical", "expression": "(clinician & acr_gate) | emergency", "tier": "read_sensitive"},
+        {"name": "clinician", "expression": "attending | care_team->member", "tier": "read-sensitive"},
+        {"name": "read_clinical", "expression": "(clinician & acr_gate) | emergency", "tier": "read-sensitive"},
         {"name": "append", "expression": "clinician & acr_gate", "tier": "write"},
-        {"name": "read_billing", "expression": "attending | billing_clerk", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
-        {"name": "read_portal", "expression": "patient->person | patient->guardian", "tier": "read_sensitive"},
-        {"name": "read_research", "expression": "researcher & acr_gate", "tier": "read_sensitive"}
+        {"name": "read_billing", "expression": "attending | billing_clerk", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
+        {"name": "read_portal", "expression": "patient->person | patient->guardian", "tier": "read-sensitive"},
+        {"name": "read_research", "expression": "researcher & acr_gate", "tier": "read-sensitive"}
       ]
     }
   ]
@@ -1490,7 +1780,7 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee"]}
       ],
       "permissions": [
-        {"name": "view", "expression": "viewer | operator | unit->manage", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "view", "expression": "viewer | operator | unit->manage", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
         {"name": "initiate", "expression": "operator", "tier": "write", "marks": ["tenant_delegable"]}
       ]
     },
@@ -1507,7 +1797,7 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
         {"name": "released_to", "directly_related": ["core/user"], "conditions": ["c.not_expired"]}
       ],
       "permissions": [
-        {"name": "view", "expression": "account->view | requester", "tier": "read_sensitive", "marks": ["tenant_delegable"]},
+        {"name": "view", "expression": "account->view | requester", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
         {"name": "approve", "expression": "band->approver & account->view", "tier": "write", "marks": ["tenant_delegable"]},
         {"name": "execute", "expression": "released_to & account->initiate", "tier": "write"},
         {"name": "cancel", "expression": "requester", "tier": "write"}
@@ -1517,6 +1807,55 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
   "write_declarations": [
     {"workload": "spiffe://example.invalid/ns/fin/sa/payment-service", "relations": ["fin/payment#account", "fin/payment#band", "fin/payment#requester"]},
     {"workload": "spiffe://example.invalid/ns/fin/sa/approval-workflow", "relations": ["fin/payment#released_to"]}
+  ]
+}
+```
+
+### A.7 `expense`（v1.1、§9.7。既定のモデル。変形 A は含めない）
+
+```json
+{
+  "types": [
+    {"name": "expense/book",
+      "relations": [
+        {"name": "member", "directly_related": ["core/user", "core/group#member"]},
+        {"name": "accountant", "directly_related": ["core/user", "core/group#member", "core/role#assignee"]}
+      ],
+      "permissions": [
+        {"name": "file_report", "expression": "member | accountant", "tier": "write", "marks": ["tenant_delegable"]},
+        {"name": "process", "expression": "accountant", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "expense/unit_policy",
+      "relations": [
+        {"name": "unit", "directly_related": ["core/unit"]},
+        {"name": "head", "directly_related": ["core/user"], "max_direct": 1},
+        {"name": "policy_admin", "directly_related": ["core/user", "core/role#assignee"]}
+      ],
+      "permissions": [
+        {"name": "configure", "expression": "policy_admin | unit->manage", "tier": "privileged/T", "marks": ["tenant_delegable"]}
+      ]
+    },
+    {"name": "expense/report", "list_method": "L2",
+      "relations": [
+        {"name": "book", "directly_related": ["expense/book"]},
+        {"name": "requester", "directly_related": ["core/user"]},
+        {"name": "approver", "directly_related": ["core/user"]},
+        {"name": "route_member", "directly_related": ["core/user"]},
+        {"name": "approved_in", "directly_related": ["expense/book"]}
+      ],
+      "permissions": [
+        {"name": "view", "expression": "requester | approver | route_member | book->process", "tier": "read-sensitive", "marks": ["tenant_delegable"]},
+        {"name": "edit", "expression": "requester", "tier": "write"},
+        {"name": "submit", "expression": "requester", "tier": "write"},
+        {"name": "approve", "expression": "approver", "tier": "write"},
+        {"name": "pay", "expression": "approved_in->process", "tier": "write", "marks": ["tenant_delegable"]}
+      ]
+    }
+  ],
+  "write_declarations": [
+    {"workload": "spiffe://example.invalid/ns/expense/sa/expense-service", "relations": ["expense/book#member", "expense/book#accountant", "expense/unit_policy#unit", "expense/unit_policy#head", "expense/unit_policy#policy_admin", "expense/report#book", "expense/report#requester"]},
+    {"workload": "spiffe://example.invalid/ns/expense/sa/approval-workflow", "relations": ["expense/report#approver", "expense/report#route_member", "expense/report#approved_in"]}
   ]
 }
 ```
@@ -1670,3 +2009,22 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 - 設計上の含意 [D]: 見直しトリガーは ADR-024 §8（X-C）と CON-04 §3 の末尾（X-D の設計欠陥への分類）。追加 TC は XS-8 のモデル試験の負例と、CON-11 の Registry 族の userset 主体のベクタ。
 - 閉じられなかったもの [D]: §9.0 の予備実行を TC として採番し生データを保存すること（DL-22 の担当）。
 - 対応件数: 3 件（対応済み 3）[D]。
+
+### v1.1 改訂（2026-10-15、版 0.7 → 版 0.8）
+
+> 13_integration-trial/report.md（AI エージェントが新規の経費精算サービスの開発チームを演じた模擬連携検証。実在の連携チームによる検証ではない）の P-04・P-05・P-06・P-17 と改善提案 I-4・I-5 を反映した。改訂は AI エージェント（Claude）が行い、独立レビュー・人による照合は未実施（CONVENTIONS §8）[D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| V11-1 | P-04、I-4（承認経路の通し例） | 経費精算の通し例を加えた。要件 EX-1〜EX-8、置き場所、部署長と `core/unit#admin` の比較、ドメインが参照してよい `core/unit` の名前、モデル、catalog、書込宣言と書込対応表、承認経路の解決 R-1〜R-9、試験、workflow の負例 WF-01〜WF-09、変形 A | §9.7、付録 A.7 |
+| V11-2 | P-04、I-4（所属部署の取得手段） | 取得手段 M-1〜M-4 と、使わないもの（token の claim、SCIM の `department`・`manager`）を書いた。契約の不足を G-8 とした | §9.7、§15.3 G-8 |
+| V11-3 | P-04、I-4（決裁前に使える暫定形） | K05-6〜K05-8・INT03-K5 の結果ごとの書き換えを表にした。部署長の置き場所を INT03-K5 として決裁案にした | §9.7、§13 |
+| V11-4 | P-05・P-06、I-5 | `action.name` は型名・接頭辞・scope の形を付けない動詞の permission 名、`subject.type` はモデルの型名とする規則 N-26 を加え、判定宣言の permission がモデルに存在することの登録前の確認を S-5 に入れた。写像の正本は CON-02 とし、本書は写しを持たない | §4.4 N-26、§1.3 D-11、§15.2 S-5 |
+| V11-5 | P-17（core 型の定義がない）の一部 | §9.7 の試験に使った `core/unit` の最小の代役を示し、core 型抜粋への収載を申し送った | §9.7 試験、§16.4 HO-V11-2 |
+| V11-6 | CON-04 v0.4.0（並行作業の I-7） | 付録 A の `tier` を CON-02 `OperationTier` の表記に改めた（21＋10 か所）。N-24 の `read_sensitive` も改めた | 付録 A、§4.4 N-24 |
+| V11-7 | 波及 | §0-4・§0-7、§1.3 D-12、§7.2・§7.3 の表、§10.2 AC-33（カタログ 33 件、表せる 24・一部 6・表せない 3）、§12、§14 残課題 6・22〜24、§16.4、対応表の G-108 | 各節 |
+
+- 確認 [D]（作成者の予備実行・自前の確認。TC 未採番、2026-10-15、生データは本リポジトリに保存していない）: (a) §9.7 の既定のモデルを OpenFGA DSL（schema 1.1）に手で写し、`fga model test`（OpenFGA CLI の go install 版、版表示 `dev`）で 3 試験群 Check 39/39・ListObjects 2/2、変形 A で Check 8/8。期待値を 1 件誤らせた陰性対照は 38/39 で失敗を検出した。(b) 付録 A.1〜A.7 を CON-04 v0.4.0（作業ツリー）の `CamModule` に対して jsonschema 4.26.0（Draft 2020-12、`referencing` で CON-02 の `$ref` を解決）で検証し、7 件とも誤り 0 件。`tier` に旧表記を入れた陰性対照は不合格。SpiceDB（`zed validate`）では実行していない（残課題 23）。
+- 新たな事実の根拠: 本改訂で使った事実は、13_integration-trial/report.md と同 expense-service/model、ARC-05 §3.1・§3.6・§8.3・§16、CON-04 の `readRelationships`・`TupleFilter`・§10・`readAncestors`・`CamModule`・E-4、CON-03 の `Action`・`Subject`・§12 N-3、CON-02 の `NameSegment`・`ExternalScope`・`OperationTier`、CON-07 の `EnterpriseUser` で、いずれも本リポジトリのファイルを開いて確かめた [D]。外部の原典は新たに引用していない。
+- 未解決: §16.4 HO-V11-1〜HO-V11-8 の他文書の改訂、INT03-K5 の決裁、残課題 22〜24。
+- 対応件数: 7 件（対応済み 7。うち他文書の改訂を要するものは §16.4 に申し送り）[D]。

@@ -2,8 +2,8 @@ openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Token Exchange API（RFC 8693 社内 profile と Transaction Token 要求）
-  version: 0.1.0
-  summary: cell 内 STS の利用者委任 token exchange と、TTS への Txn-Token 要求の契約（DL-74）
+  version: 0.2.0
+  summary: cell 内 STS の利用者委任 token exchange、TTS への Txn-Token 要求、内部開始の受付記録登録と TTS の検証鍵公開の契約（DL-74）
   x-document-id: CON-05
   x-deliverable: DL-74
   x-status: draft
@@ -22,7 +22,10 @@ info:
     - 04_architecture/claims-catalog.md（ARC-15 §3.5, §4.2）
     - 01_governance/assumptions-register.md（A-043, NA09-1, NA09-2 は前提台帳へ追加要）
     - research/RS-04-oauth-oidc-profile.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-17-integration-patterns-modeling.md
-    - research/standards-status.md（SS-A09, SS-A10, SS-A07, SS-B04, SS-I16, SS-I17）
+    - research/standards-status.md（SS-A09, SS-A10, SS-A07, SS-B04, SS-I16, SS-I17, SS-A47）
+    - 11_contracts/schemas/common.schema.json（Problem、OpaqueId、OperationTier。v1.1（I-9））
+    - 11_contracts/schemas/access-token-claims.schema.json（txnTokenJwsHeader、txnTokenClaims。v1.1（I-9）の署名済み例の検証に使用）
+    - 13_integration-trial/report.md（P-11、P-19、I-9。v1.1 の改訂根拠）
   x-requirements:
     - id: R-100
       coverage: ADR-009 の token exchange 決定（D09-10〜D09-17）を機械可読な契約にした。閉じ方 A（契約として）。決裁は未了
@@ -75,6 +78,18 @@ info:
       name: JSON Schema 2020-12
       status: 公式サイト上の現行版（IETF 上は失効した I-D。確認日 2026-10-03）
       conformance: jsonSchemaDialect に明示
+    - id: （standards-status 未登録。§9 HO-06）
+      name: RFC 7517 JSON Web Key (JWK)
+      status: final（Proposed Standard、2015-05。確認日 2026-10-15）
+      conformance: v1.1（I-9）。TTS の検証鍵（/txn-token-jwks）を §5 の JWK Set で返す
+    - id: （standards-status 未登録。§9 HO-06）
+      name: RFC 9562 Universally Unique IDentifiers (UUIDs)
+      status: final（Proposed Standard、2024-05、RFC 4122 を廃止。確認日 2026-10-15）
+      conformance: v1.1（I-9）。内部開始の subject_token_type を urn:uuid の URN で表す（名前空間の登録を要しない）
+    - id: SS-A47
+      name: RFC 9457 Problem Details for HTTP APIs
+      status: final（Proposed Standard、2023-07。CON-02 の記載による）
+      conformance: v1.1（I-9）。受付記録の登録（OAuth の token endpoint ではない）のエラー形式。/token・/txn-token は RFC 6749 §5.2 のまま
   x-profile:
     name: 内部 token exchange profile v1（DL-74）。Txn-Token は社内 profile txn-v1（ADR-009 D09-22）
     act-chain:
@@ -90,9 +105,24 @@ info:
       evaluated-from-subject-token: false
       authority: 交換登録簿・委任 grant 台帳・TTS 発行方針台帳（AS 側。ADR-009 D09-17、reconciliation-notes §3.3）
     lifetimes: 派生 token の最大寿命の値は凍結しない区分（ADR-022 D-2）で TBD（ADR-006・DL-20）。不変条件 exp ≤ min(入力 token の残存寿命, 要求元 SVID の残存寿命, 操作階層の派生 token 最大寿命) だけを契約にする
+  x-test-signing-key:
+    description: |
+      v1.1（I-9、P-11）。モック・契約試験専用の ES256 鍵（P-256）。凍結しない。responses の Txn-Token 例はこの鍵で署名済みで、/txn-token-jwks の例はこの公開鍵を返す。秘密鍵を公開しているため、この鍵の署名は真正性の証拠にならない。本番・検証環境の trust 設定に入れてはならず、受信側 SDK は本番 profile で kid が test-only- で始まる token を拒否する（§8、§9 HO-04）[D]。
+      負例の作り方: (1) 例の JWT の payload を base64url で復号し、exp・aud・tctx などを書き換える、(2) header {"typ":"txntoken+jwt","alg":"ES256","kid":"test-only-tts-c07-01"} と合わせ、下の private-jwk で ES256（JWS の r||s 64 バイト形式）に署名し直す。鍵不一致の負例は別に生成した鍵で署名する [D]。
+      生成と確認: 改訂者が Python cryptography 50.0.0 で鍵を生成して署名し、公開鍵での検証成功と、payload の CON-06 txnTokenClaims（jsonschema Draft 2020-12）への適合を 2026-10-15 に確認した [M]。
+    kid: test-only-tts-c07-01
+    private-jwk:
+      kty: EC
+      crv: P-256
+      x: quEADo3I33Cyq9_fQEwLm_QZaVL38FDQNEshjig6rkg
+      y: eM9udSIVg2klnfEAZl0X6_YwTZuUYS-zz0Xy8R35vpw
+      d: SVVvB-LrBoh6-w4hi2OxS2BuGG2Jej3c69CQcDx1Srk
+      kid: test-only-tts-c07-01
+      alg: ES256
   description: |
-    > 文書ID: CON-05 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
-    > 対応要求: R-100, R-206, R-251, R-255, G-102, G-118, G-119（全件は info.x-requirements）
+    > 文書ID: CON-05 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: R-100, R-206, R-251, R-255, G-102, G-118, G-119, G-138（全件は info.x-requirements）
+    > 改訂: v1.1（I-9、P-11、P-19）。変更点は §7、他文書への申し送りは §9、改版履歴は末尾
     > 依存文書: info.x-depends-on
 
     ## 0. 要旨
@@ -102,6 +132,7 @@ info:
     - 標準の項目名・意味は変えない。社内 profile は許容値を絞るだけである [D]。絞った点は次の 6 つである [D]。(1) `actor_token` を送られたら拒否（ADR-009 D09-14）、(2) `resource` をちょうど 1 つ必須（D09-11）、(3) access token 要求では `audience` を受け付けない（ARC-04 W55-14 を本契約で確定）、(4) scope は subject_token の scope と交換登録簿の上限の共通部分以下（D09-15）、(5) `act` の深さ上限と循環拒否（D09-16）、(6) refresh token を発行しない。
     - `may_act` は token に載せず、subject_token に含まれていても判定に使わない [D]（ADR-009 D09-17）。RFC 8693 は `may_act` を、ある主体が actor になることを認可されているという表明として定義し [N][^1]、処理義務を定めていない（RS-06#45）。
     - 値（N_act、各寿命）は根拠となる実測がないため初期案または TBD とし、所有者・期限・決め方を `info.x-profile` に記した [D]。
+    - v1.1（I-9）: 模擬連携検証（13_integration-trial/report.md）の P-11・P-19 を受け、(1) 内部開始の受付記録を SDK なしで登録する操作 `registerAcceptanceRecord`、(2) TTS の検証鍵を配る操作 `getTxnTokenJwks` を preview で加え、(3) 内部開始の `subject_token_type` を `<id-domain>` に依存しない URN（`urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173`）に替えた。あわせて、Txn-Token の応答例を tctx を含む試験鍵の署名済み JWT にし（P-11）、/token の例を scope 別に増やした（P-19）[D]。変更の一覧は §7。
 
     ## 1. 本契約の範囲
 
@@ -111,6 +142,7 @@ info:
     | Txn-Token の要求（edge 起点、内部開始） | M2M の client credentials grant（ADR-009 D09-19、ARC-04 §4.4） |
     | エラーコードと理由コード（R01〜R10、T01〜T08） | 発行する token の claim の正本（DL-75、DL-115） |
     | 負例の期待結果 | 法域パーティション越えの委任（identity chaining。下記「未決」） |
+    | v1.1（I-9）: 内部開始の受付記録の登録（A1 利用者要求の非同期実行・A2 委任 grant による実行の受付時）、TTS の検証鍵（JWK Set）の取得 | A3（定期ジョブ）の受付記録（プラットフォームのスケジューラが内部で書く）、A4（イベント consumer）の受付記録参照形式（DL-71 と合わせて未決）、STS が発行する内部 access token の検証鍵（DL-75 の担当。§9 HO-05） |
 
     ## 2. 処理の要点（ADR-009・ARC-04 の写像）
 
@@ -130,6 +162,9 @@ info:
     | 内部開始の subject_token 種別（本契約の提案） | preview |
     | 派生 token の寿命の値、エンドポイント URL・配置 | 凍結しない |
     | 理由コード R01〜R10・T01〜T08 の意味 | GA 候補（エラーコードの意味の変更は破壊的変更。ADR-022 D-5-1） |
+    | v1.1（I-9）: 受付記録の登録（`/acceptance-records`）の要求・応答と理由コード J01〜J08 | preview（ADR-026 の内部開始が preview のため） |
+    | v1.1（I-9）: TTS の検証鍵（`/txn-token-jwks`）の応答形（RFC 7517 の JWK Set） | preview（Txn-Token が draft-11 依存のため。JWK Set の形自体は final の RFC） |
+    | v1.1（I-9）: 試験鍵（`kid` が `test-only-` で始まる鍵）と署名済みの例 | 凍結しない（試験専用。本番の trust 設定に入れない） |
 
     preview の要素には GA 昇格・改版・廃止を判断する期限を付ける（ADR-022 D-1-2）。期限の値は TBD（所有者 CTO、期限 DEC-8 前、決め方 ADR-022 D-1-2）[D]。`/token`（GA 候補）は `/txn-token`（preview）に必須依存しない（ADR-022 D-1-1）[D]。
 
@@ -146,6 +181,42 @@ info:
     ## 6. 誠実性
 
     本契約は AI エージェント（Claude）が ADR・設計文書・research を通読して起草した [D]。research にない原典（RFC 8693 §2.2.1・§2.2.2・§3、RFC 6749 §3.2・§5.1・§5.2、Transaction Tokens draft-11 §11.1・§11.4・§13.3、OAS 3.1.2 §4.1）は起草者が 2026-10-15 に取得して照合した。作成者以外のエージェントによる独立レビュー（RFC 8693 §2.1〜§3、draft-11 §9.1・§9.2・§11.1〜§11.4・§13.15 を 2026-10-15 に再取得して照合）を 2026-10-15 に行い、記録を 11_contracts/review-notes/CON-05.md に置いた。人による照合と traceability/ への照合ログ追記は未了である（CONVENTIONS §8）。負例は 1 件も実行しておらず、本契約の主張はすべて設計段階のものである [D]。
+
+    v1.1（I-9）の改訂も AI エージェント（Claude）が行った。13_integration-trial/report.md（AI による模擬連携検証の記録で、実在の開発チームによる検証ではない）の P-11・P-19 を根拠とし、RFC 7517 §4.5・§5、RFC 9562 §1・§4・§7 は改訂者が 2026-10-15 に原典を取得して照合した。試験鍵と署名済みの例は改訂者が Python cryptography 50.0.0 で生成し、署名が JWK Set の公開鍵で検証できること、payload が CON-06 の txnTokenClaims に適合することを 2026-10-15 に確認した [M]（再現手順は info.x-test-signing-key）。作成者以外による独立レビュー・人による照合は v1.1 分について未実施である（CONVENTIONS §8）。
+
+    ## 7. v1.1 の変更（I-9、P-11、P-19）
+
+    | 区分 | 変更 | 解消する詰まり |
+    |---|---|---|
+    | 追加 | v1.1（I-9）: 操作 `registerAcceptanceRecord`（`POST /acceptance-records`、ジョブ台帳）。受付側サービスが SDK なしで受付記録を書き、`job_run_id` を受け取る。`sub`・tid・起点 `txn`・grant 参照は要求本文ではなく、要求に添えた起点要求の Txn-Token から台帳が取る [D]（ADR-026 D26-02, D26-11, D26-16） | P-11 前半「受付記録登録 API がない」。模擬連携では enqueue が「PEP SDK の enqueue（基盤内部）」とだけ書かれ、SDK を使わない実装が受付記録を作れなかった |
+    | 追加 | v1.1（I-9）: 操作 `getTxnTokenJwks`（`GET /txn-token-jwks`、TTS）。Txn-Token の署名検証鍵を RFC 7517 の JWK Set で返す [N][^9]（§5） | P-11 中段「TTS の JWKS がない」。模擬連携では署名検証の正例試験を自前鍵で代用した |
+    | 変更（preview の破壊的変更） | v1.1（I-9）: 内部開始の `subject_token_type` を `https://id-domain.example/token-types/internal-start-ref`（ホスト部が未決の `<id-domain>`）から `urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173` に替えた。旧値は T03 で拒否する（負例 X74-N7）[D] | I-9 後半。模擬連携は未確定のプレースホルダ入りの値を契約から写すしかなかった |
+    | 変更 | v1.1（I-9）: Txn-Token の応答例 `edgeSync`・`internalStart` を、`tctx` を含む payload を試験鍵（`kid`=`test-only-tts-c07-01`）で ES256 署名した JWT にした。`getTxnTokenJwks` の例がその公開鍵を返すので、モックだけで署名検証と tctx の読取りの正例試験ができる [D] | P-11 後段「Prism の Txn-Token に tctx がない」 |
+    | 追加 | v1.1（P-19）: /token の要求・応答の例を scope ごとに 3 組（`hopAtoB`＝invoice.read、`hopToPayment`＝payment.create、`hopNoScope`＝scope 省略で共通部分を返す）にし、例の名前を要求と応答で揃えた。§8 にモックでの選び方を書いた [D] | P-19「CON-05 例の scope 固定」。模擬連携は支払サービス向けの scope を `invoice.read` に合わせて試験した |
+    | 追加 | v1.1（I-9）: 理由コード J01〜J08、負例 X74-N7〜X74-N14、x-open-issues 3 件、x-standards 3 件（RFC 7517、RFC 9562、RFC 9457）、info.x-test-signing-key | — |
+
+    `/token`（GA 候補）の要求・応答の形・エラーコードは v1.1 で変えていない（例を足しただけ）[D]。内部開始の `subject_token_type` の変更は preview の要素の変更であり、ADR-022 D-1 が preview に互換保証を課さない範囲で行った [D]。v1.0 の値で実装した利用者（模擬連携の expense-service を含む）は値を差し替える必要がある（§9 HO-07）。
+
+    ## 8. モックでの使い方（v1.1（P-19、P-11））
+
+    - 静的な例を返すモック（Prism 5.12.0 で確認）は、要求の `scope` に関係なく 1 つの例を返す。応答の例を選ぶには、要求に `Prefer: example=<例の名前>` を付ける（例: `Prefer: example=hopToPayment`）[D]。この挙動は Prism 5.12.0 の実装（`@stoplight/prism-http-server` の `dist/getHttpConfigFromRequest.js` が `Prefer` ヘッダの `code`・`example`・`dynamic` を読む）で 2026-10-15 に確認したもので、公式文書での確認は未了（未確認）である [D]。他のモックは各ツールの方法による。
+    - 応答の `scope` は STS が「要求 scope ∩ subject_token の scope ∩ 登録簿の上限」で決める（profile の (4)）。例の値は 1 つの場合を示すだけで、利用者は応答の `scope` が要求以下であることだけを確かめ、要求と一致することを前提にしない [D]。
+    - Txn-Token の例は試験鍵で署名済みで、`exp` は 1792051260（2026-10-15T08:01:00Z）である。署名検証の正例試験は時計を `iat`〜`exp` の間に固定して行う [D]。期限切れ・鍵不一致などの負例は、info.x-test-signing-key の秘密鍵で payload を書き換えて署名し直して作る（手順は同欄）[D]。
+    - 試験鍵は公開されているので、これで署名された token は誰でも作れる。本番・検証環境の trust 設定（配置スナップショットの TTS 鍵）に `kid` が `test-only-` で始まる鍵を入れてはならず、受信側 SDK はその `kid` の token を本番 profile で拒否する（§9 HO-04）[D]。
+
+    ## 9. 他文書への申し送り（v1.1）
+
+    | ID | 宛先 | 内容 |
+    |---|---|---|
+    | HO-01 | 05_adr/ADR-026（D26-02, D26-16、§2.12 の未決） | 内部開始の `subject_token_type` を `urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173` に決めたこと（v1.1（I-9））、受付記録の登録 API（`registerAcceptanceRecord`）を DL-74 に置いたこと、`sub`・tid・起点 txn を起点要求の Txn-Token から取る方式を D26-02 に追記する。A3・A4 の扱いは x-open-issues のまま |
+    | HO-02 | 11_contracts/schemas/common.schema.json（CON-02、DL-71） | 受付記録参照（`job_run_id`）の形を OpaqueId（払出しは IssuedOpaqueId）として $defs に載せる（現在は本契約内の `JobRunId`）。本契約の受付記録の登録のエラー（Problem、AcceptanceProblemCode）を CON-02 の Problem の採用範囲に入れる。CON-02 の HO-I7-5（tctx の tier・tid は CON-02 OperationTier・IssuedTenantId を参照先とする）は本契約の tctx の例と説明に反映済み |
+    | HO-03 | 04_architecture/claims-catalog.md（ARC-15 §3.5, §4.2）、11_contracts/schemas/access-token-claims.schema.json（CON-06） | 内部開始の Txn-Token の例（`ptxn` あり、`sid` なし、`root_jti` は起点要求のもの）を正例に加える。`root_jti` の例外（ADR-026 L26-1）が決まれば本契約の例も直す |
+    | HO-04 | 04_architecture（SDK の検証規則 ADR-005 V1〜V14 の写し）、11_contracts/mock-contract-test-kit.md（CON-11） | 受信側 SDK は本番 profile で `kid` が `test-only-` で始まる鍵を信頼しない規則を V 規則に加える。CON-11 は本契約の試験鍵・署名済み例・JWK Set をキットに入れ、`Prefer: example=` による例の選択を INT-00 §6.3・FQ-43 の汎用モックの制約と合わせて書く |
+    | HO-05 | 11_contracts/schemas/access-token-claims.schema.json（DL-75）、STS の配置 | STS が発行する内部 access token の検証鍵の配布（JWK Set の所在）が契約にない。本契約は TTS 分だけを扱ったので、STS 分は DL-75 または本契約の次版で同じ形で定める |
+    | HO-06 | research/standards-status.md | RFC 7517（JWK）と RFC 9562（UUID URN）を SS 番号付きで登録する（本契約の x-standards では「未登録」と書いた） |
+    | HO-07 | 13_integration-trial/expense-service（CONTRACTS.lock.json、src/sts.js）、12_poc | v1.0 の記録は改めない。v1.1 での再試験時に、`subject_token_type` を URN に替え、受付記録を `registerAcceptanceRecord` で登録し、支払サービス向けに `Prefer: example=hopToPayment` を使う |
+    | HO-08 | 10_integration/integration-patterns.md（P-04・P-05 の enqueue の図）、10_integration/developer-faq.md | 「PEP SDK の enqueue（基盤内部）」に、SDK を使わない場合は CON-05 `registerAcceptanceRecord` を呼ぶ旨を加える |
+    | HO-09 | 配置スナップショットの文書（ADR-022 D-2 の配布物） | ジョブ台帳と TTS JWK Set の URL を配置スナップショットに載せる（本契約は URL を凍結しない） |
 
     ## 参考文献
 
@@ -164,6 +235,19 @@ info:
     [^7]: T. Lodderstedt, J. Bradley, A. Labunets, D. Fett / IETF『RFC 9700: Best Current Practice for OAuth 2.0 Security』BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.3, §2.5、確認日: 2026-10-03。RS-04#17、RS-17#19）
 
     [^8]: OpenAPI Initiative『OpenAPI Specification v3.1.2』2025-09-19. https://spec.openapis.org/oas/v3.1.2.html （参照箇所: §4.1 Versions, §4.8.1.1 の openapi・jsonSchemaDialect、確認日: 2026-10-15。版・状態は standards-status SS-I16）
+
+    [^9]: M. Jones / IETF『RFC 7517: JSON Web Key (JWK)』Standards Track, 2015-05. https://www.rfc-editor.org/rfc/rfc7517 （参照箇所: §4.5 kid（鍵の更新時に JWK Set の中から鍵を選ぶ用途）、§5 JWK Set（`keys` メンバは必須（MUST）、理解できない kty の JWK は無視すべき（SHOULD））、§8.5 media type、確認日: 2026-10-15。v1.1（I-9）で改訂者が原典を取得して照合。research ノート外）
+
+    [^10]: K. Davis, B. Peabody, P. Leach / IETF『RFC 9562: Universally Unique IDentifiers (UUIDs)』Standards Track, 2024-05. https://www.rfc-editor.org/rfc/rfc9562 （参照箇所: §1（UUID の URN 名前空間を定める）、§4 の `urn:uuid:` の例、§7（IANA の URN 名前空間登録）。RFC 4122 を廃止。確認日: 2026-10-15。v1.1（I-9）で改訂者が原典を取得して照合。research ノート外）
+
+    [^11]: M. Nottingham, E. Wilde, S. Dalal / IETF『RFC 9457: Problem Details for HTTP APIs』Standards Track, 2023-07. https://www.rfc-editor.org/rfc/rfc9457 （参照箇所: §3, §3.1。本契約の改訂者は原典を再取得していない。CON-02（11_contracts/schemas/common.schema.json の Problem、standards-status SS-A47、RS-16#12）の照合結果に依る）
+
+    ## 改版履歴
+
+    | 版 | 日付 | 内容 |
+    |---|---|---|
+    | 0.1.0 | 2026-10-15 | 初版（提出版 v1.0、タグ v1.0-submission） |
+    | 0.2.0 | 2026-10-15 | v1.1（I-9、P-11、P-19）。§7 の変更一覧のとおり。GA 候補の /token の形は不変、preview の内部開始の subject_token_type を変更 |
   x-lint-notes:
     - rule: info-license
       result: warning（1 件）
@@ -178,7 +262,13 @@ info:
     - id: ADR-026 L26-2
       text: 内部開始取引の txn の意味（入口を edge と内部開始の 2 つとするか）。DEC-3 の決裁資料、CTO＋CISO
     - id: ADR-026（内部開始の subject_token 種別）
-      text: 本契約の提案 X74-01（下記 InternalStartReference）。ADR-026 D26-16 が DL-74 に内部開始の要求形式を求め、ADR-009 D09-24 が unsigned_json を禁じたため、受付記録への不透明な参照を subject_token にする形を置いた。A4（イベント consumer）の参照形式は DL-71 の受付記録参照形式と合わせて決める（未決）
+      text: 本契約の提案 X74-01（下記 InternalStartReferenceType）。ADR-026 D26-16 が DL-74 に内部開始の要求形式を求め、ADR-009 D09-24 が unsigned_json を禁じたため、受付記録への不透明な参照を subject_token にする形を置いた。v1.1（I-9）で種別の値を urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173 に決めた（<id-domain> 未決に依存しない）。値の採否は ADR-026 の決裁で確定する（§9 HO-01）。A4（イベント consumer）の参照形式は DL-71 の受付記録参照形式と合わせて決める（未決）
+    - id: v1.1（I-9）受付記録の登録の範囲
+      text: registerAcceptanceRecord は A1・A2（利用者の要求を受けた時点での登録）だけを扱う。A3（定期ジョブ。起点の Txn-Token がない）はプラットフォームのスケジューラが内部で書き、A4（イベント consumer）は DL-71 の受付記録参照形式とあわせて決める。所有者 CTO、期限 DL-115 凍結前
+    - id: v1.1（I-9）受付記録の保持と重複排除
+      text: 受付記録の有効期限（TTS が内部開始を受け付ける期間）と dedup_key の保持期間の値は TBD（ADR-026 の A1 寿命・DL-20 と合わせる）。所有者 CTO、期限 G3
+    - id: v1.1（I-9）検証鍵の配布経路
+      text: 受信側 SDK は TTS 鍵を配置スナップショットの trust 設定から得るのが既定で、/txn-token-jwks は SDK を使わない実装と試験のための経路である。両者の優先と更新間隔（鍵更新時に未知の kid を受けた場合の再取得の頻度上限）は TBD（ADR-005 の鍵更新、DL-20）。所有者 CISO、期限 G3
     - id: Txn-Token の置換（ADR-026 D26-03 の段内置換、draft-11 §13.15）
       text: ADR-026 は同一段の内部で scope を狭める置換を認めるが、草案は Txn-Token を subject_token にする要求の subject_token_type を定めていない（§11.2 に Txn-Token の値がない）。v0.1 は置換要求を定義せず T03 で拒否する。追加時は txn・sub・aud を変えない・期限切れを置換しない（草案 §13.15 の MUST NOT）を負例 N-34 として契約に入れる。所有者 CTO、期限 DL-115 凍結前
     - id: ADR-017 L17-1
@@ -210,12 +300,22 @@ info:
     tts:
       T01: { error: invalid_client, http: 401, meaning: mTLS の SVID が無効、または未登録 }
       T02: { error: invalid_request, http: 400, meaning: actor_token が含まれる }
-      T03: { error: invalid_request, http: 400, meaning: subject_token が未署名・期限切れ・他 cell の issuer・typ 不一致、または subject_token_type が unsigned_json・self_signed・v0.1 で定義しない種別（Txn-Token を subject_token にする置換要求を含む） }
+      T03: { error: invalid_request, http: 400, meaning: subject_token が未署名・期限切れ・他 cell の issuer・typ 不一致、または subject_token_type が unsigned_json・self_signed・本契約で定義しない種別（Txn-Token を subject_token にする置換要求と、v1.1（I-9）で廃止した https://<id-domain>/token-types/internal-start-ref を含む） }
       T04: { error: invalid_request, http: 400, meaning: 同期の要求で、要求元が edge でない、または subject_token の cnf が要求元 SVID と一致しない（W55-17） }
       T05: { error: invalid_target, http: 400, meaning: audience がこの TTS の cell の trust domain 値でない }
       T06: { error: invalid_scope, http: 400, meaning: scope が entry point 台帳の操作 ID でない、subject_token の scope を超える、または判定できない }
       T07: { error: invalid_request, http: 400, meaning: 内部開始で、要求元が TTS 発行方針台帳に登録されていない、受付記録・委任 grant が無効、または要求 scope が委任 grant を超える（ADR-026 D26-03） }
       T08: { error: invalid_request, http: 400, meaning: 起点主体・テナント・委任 grant が失効状態に該当する }
+    jobs:
+      description: v1.1（I-9）。受付記録の登録（registerAcceptanceRecord）の理由コード。応答は RFC 9457 の Problem で code だけを返し、理由コードは台帳にだけ記録する（R・T と同じ）[D]
+      J01: { code: unauthenticated, http: 401, meaning: mTLS の SVID が無効、または未登録 }
+      J02: { code: invalid_request, http: 400, meaning: Txn-Token ヘッダがない、署名・typ・aud・exp の検証に失敗、または他 cell の TTS の発行 }
+      J03: { code: access_denied, http: 403, meaning: 要求元が当該 job_definition_id の受付側サービスとして TTS 発行方針台帳に登録されていない }
+      J04: { code: access_denied, http: 403, meaning: Txn-Token の scope（操作 ID）が job_definition_id の受付を認める操作でない }
+      J05: { code: invalid_request, http: 400, meaning: grant_ref が無効・失効、または Txn-Token の sub・tid と一致しない（A2） }
+      J06: { code: invalid_request, http: 400, meaning: params_hash・job_definition_id・dedup_key の形式違反、または本文に未定義の項目（sub・tid・txn など）がある }
+      J07: { code: conflict, http: 409, meaning: 同じ要求元・dedup_key で内容の異なる受付記録が既にある }
+      J08: { code: access_denied, http: 403, meaning: 起点主体・テナント・委任 grant が失効状態に該当する }
   x-negative-examples:
     description: ARC-04 §10.3 の負例のうち本契約の操作に掛かるもの。期待結果はすべて「拒否」と、交換台帳・発行台帳への理由コード付き記録。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
     items:
@@ -243,6 +343,14 @@ info:
       - { ref: X74-N6, op: requestTxnToken, case: subject_token_type が unsigned_json・self_signed, expect: "400 invalid_request / T03" }
       - { ref: N-42, op: requestTxnToken, case: TTS 発行方針台帳にない workload の内部開始要求, expect: "400 invalid_request / T07" }
       - { ref: N-39, op: requestTxnToken, case: 代理される利用者の停止後のジョブ実行, expect: "400 invalid_request / T08（allow 0 件）" }
+      - { ref: X74-N7, op: requestTxnToken, case: "v1.1（I-9）subject_token_type に v1.0 の https://id-domain.example/token-types/internal-start-ref", expect: "400 invalid_request / T03" }
+      - { ref: X74-N8, op: registerAcceptanceRecord, case: "v1.1（I-9）Txn-Token ヘッダなし、または期限切れ・他 cell・試験鍵（本番 profile）の Txn-Token", expect: "400 invalid_request / J02" }
+      - { ref: X74-N9, op: registerAcceptanceRecord, case: "v1.1（I-9）発行方針台帳で受付側として登録されていない workload が登録", expect: "403 access_denied / J03" }
+      - { ref: X74-N10, op: registerAcceptanceRecord, case: "v1.1（I-9）本文に sub・tid を入れて他人・他テナントの受付記録を作ろうとする", expect: "400 invalid_request / J06（本文に未定義の項目。sub・tid は本文で受け付けず Txn-Token からだけ取るので、他人名義の記録は 0 件）" }
+      - { ref: X74-N11, op: registerAcceptanceRecord, case: "v1.1（I-9）A2 で他人の grant_ref を指定", expect: "400 invalid_request / J05" }
+      - { ref: X74-N12, op: registerAcceptanceRecord, case: "v1.1（I-9）同じ dedup_key で params_hash の異なる再送", expect: "409 conflict / J07" }
+      - { ref: X74-N13, op: requestTxnToken, case: "v1.1（I-9）他の実行主体が登録した job_run_id で内部開始を要求（ADR-026 D26-11 の差替え）", expect: "400 invalid_request / T07" }
+      - { ref: X74-N14, op: getTxnTokenJwks, case: "v1.1（I-9）応答に秘密鍵成分（d）・対称鍵（kty=oct）を含む JWK", expect: "契約違反（JwkSet スキーマで不適合）。受信側は当該 JWK を使わない" }
       - { ref: N-34, op: requestTxnToken, case: 期限切れ subject_token による発行・scope 拡大（ARC-04 の N-34 のうち置換・txn 変更の部分は、置換要求を v0.1 で定義しないため T03 で拒否。x-open-issues「Txn-Token の置換」）, expect: "400 invalid_request / T03、400 invalid_scope / T06" }
 servers:
   - url: https://sts.{cell}.id-domain.example
@@ -255,7 +363,9 @@ tags:
   - name: token-exchange
     description: 利用者委任の各 hop の token exchange（RFC 8693 社内 profile）。GA 候補
   - name: transaction-token
-    description: TTS への Txn-Token 要求（draft-11 依存）。preview
+    description: TTS への Txn-Token 要求（draft-11 依存）と、v1.1（I-9）で加えた TTS の検証鍵の取得。preview
+  - name: internal-start
+    description: v1.1（I-9）内部開始の受付記録の登録（ジョブ台帳）。preview
 paths:
   /token:
     post:
@@ -314,6 +424,21 @@ paths:
                   subject_token_type: urn:ietf:params:oauth:token-type:access_token
                   resource: https://svc.id-domain.example/s/b9k2q7xw
                   scope: invoice.read
+              hopToPayment:
+                summary: v1.1（P-19）正例。経費精算サービスが支払サービス宛ての token を得る（scope は payment.create）
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+                  resource: https://svc.id-domain.example/s/p4x7n2kd
+                  scope: payment.create
+              hopNoScope:
+                summary: v1.1（P-19）正例。scope を省略し、STS が subject_token の scope ∩ 登録簿上限を返す
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+                  resource: https://svc.id-domain.example/s/b9k2q7xw
               edgeFirst:
                 summary: 正例。edge の最初の exchange（subject_token は外部 opaque token）
                 value:
@@ -323,7 +448,8 @@ paths:
                   resource: https://svc.id-domain.example/s/a3m8p1zt
       responses:
         '200':
-          description: 発行成功。出力 token の不変条件は info.description §2 の 4
+          description: |
+            発行成功。出力 token の不変条件は info.description §2 の 4。v1.1（P-19）応答例は要求例と同じ名前で置いた。静的モックでは `Prefer: example=<名前>` で選ぶ（info.description §8）。`scope` は要求以下であることだけを確かめ、要求との一致を前提にしない
           headers:
             Cache-Control:
               $ref: '#/components/headers/CacheControlNoStore'
@@ -342,6 +468,22 @@ paths:
                     token_type: Bearer
                     expires_in: 120
                     scope: invoice.read
+                hopToPayment:
+                  summary: v1.1（P-19）正例。支払サービス宛て、scope=payment.create
+                  value:
+                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL3A0eDduMmtkIn0.ZHVtbXktc2lnbmF0dXJl
+                    issued_token_type: urn:ietf:params:oauth:token-type:access_token
+                    token_type: Bearer
+                    expires_in: 120
+                    scope: payment.create
+                hopNoScope:
+                  summary: v1.1（P-19）正例。scope 省略の要求に、共通部分（この例では 2 値）を返す
+                  value:
+                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2I5azJxN3h3In0.ZHVtbXktc2lnbmF0dXJl
+                    issued_token_type: urn:ietf:params:oauth:token-type:access_token
+                    token_type: Bearer
+                    expires_in: 120
+                    scope: invoice.read invoice.approve
         '400':
           $ref: '#/components/responses/TokenError400'
         '401':
@@ -367,7 +509,7 @@ paths:
         - 草案の MUST: `grant_type` は token-exchange、`requested_token_type` は `urn:ietf:params:oauth:token-type:txn_token`、`audience` は trust domain 名 [N][^4]（§11.1）。本基盤の trust domain 値は cell ごとの内部値であり、SPIFFE trust domain とは別物である [D]（ADR-009 D09-09、reconciliation-notes C-26）。
         - 応答: `token_type` は `N_A`、`access_token` は Txn-Token の JWT、`issued_token_type` は txn_token で、`refresh_token` を含めてはならない（MUST NOT）[N][^4]（§11.4, §13.3）。RFC 8693 も、発行した token が access token として使えない場合は `token_type` に `N_A` を使うとする [N][^1]（§2.2.1）。
         - TTS は要求元 workload を認証し（MUST）、発行する `scope` を subject_token の scope 以下にし、判定できなければ拒否する [N][^4]（RS-06#33, #34）。
-        - 2 つの使い方がある [D]。(a) 同期（edge 起点）: subject_token は edge の最初の exchange で得た内部 access token（最初の呼出し先宛て、edge に cnf 束縛）。TTS は「宛先＝要求元」ではなく「subject_token の `cnf`＝要求元 SVID」と「要求元＝edge」を確かめる（ARC-04 W55-17 を本契約で確定）。(b) 内部開始（ジョブ・consumer）: subject_token は受付記録への不透明な参照（本契約の提案 X74-01、未決）で、TTS は発行方針台帳・受付記録・委任 grant・失効状態・scope 上限を確かめる（ADR-026 D26-03, D26-12）。
+        - 2 つの使い方がある [D]。(a) 同期（edge 起点）: subject_token は edge の最初の exchange で得た内部 access token（最初の呼出し先宛て、edge に cnf 束縛）。TTS は「宛先＝要求元」ではなく「subject_token の `cnf`＝要求元 SVID」と「要求元＝edge」を確かめる（ARC-04 W55-17 を本契約で確定）。(b) 内部開始（ジョブ・consumer）: subject_token は受付記録への不透明な参照（本契約の提案 X74-01、未決）で、受付記録は受付時に `registerAcceptanceRecord`（v1.1（I-9））または SDK が登録する。TTS は発行方針台帳・受付記録・委任 grant・失効状態・scope 上限を確かめる（ADR-026 D26-03, D26-12）。
         - 草案は subject_token に署名なし JSON や自己署名 JWT も使えるとするが [N][^4]（RS-06#32）、本 profile は `unsigned_json`・`self_signed` を受け付けない [D]（ADR-009 D09-24、T-040）。
         - `request_context`・`request_details`（草案で RECOMMENDED）[N][^4] は、txn-v1 が `rctx` を発行しないので（ADR-009 D09-30）、送られても Txn-Token の生成に使わず無視する [D]。v2 で `rctx` に載せる候補は ADR-009 P09-3 で扱う。
         - Txn-Token は Authorization ヘッダではなく `Txn-Token` ヘッダで下流へ無改変で渡し、全文をログに残さない [N][^4]（RS-06#35, #41）。これらは受信側の義務で、本操作の範囲外（正本 ADR-009 D09-24、ARC-04 §6.2）である。
@@ -401,14 +543,14 @@ paths:
                   subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2EzbThwMXp0In0.ZHVtbXktc2lnbmF0dXJl
                   subject_token_type: urn:ietf:params:oauth:token-type:access_token
               internalStart:
-                summary: 正例（preview・本契約の提案 X74-01）。ジョブ実行主体が job_run_id で内部開始を要求
+                summary: 正例（preview・本契約の提案 X74-01）。ジョブ実行主体が job_run_id（registerAcceptanceRecord の応答値）で内部開始を要求。v1.1（I-9）subject_token_type を URN に変更
                 value:
                   grant_type: urn:ietf:params:oauth:grant-type:token-exchange
                   requested_token_type: urn:ietf:params:oauth:token-type:txn_token
                   audience: txn-td-c07
                   scope: op.report.generate
-                  subject_token: jr_9fK2mQ7xL0pV3sT8
-                  subject_token_type: https://id-domain.example/token-types/internal-start-ref
+                  subject_token: r6kq2wz7xm3na5tv4dh2pce7gy
+                  subject_token_type: urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173
       responses:
         '200':
           description: 発行成功
@@ -423,9 +565,16 @@ paths:
                 $ref: '#/components/schemas/TxnTokenResponse'
               examples:
                 edgeSync:
-                  summary: 正例（中身は TxnTokenResponse.access_token の x-decoded-payload-example）
+                  summary: 正例。v1.1（I-9、P-11）access_token は tctx を含む payload を試験鍵 test-only-tts-c07-01 で ES256 署名した JWT（/txn-token-jwks の例の公開鍵で検証できる。中身は TxnTokenResponse.access_token の x-decoded-payload-example の edgeSync）
                   value:
-                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6InR4bnRva2VuK2p3dCIsImtpZCI6ImMwNy10eC0wMSJ9.eyJ0eG4iOiJ0eF9rN1FwMnZYOW1MNHNSOHdaMSJ9.ZHVtbXktc2lnbmF0dXJl
+                    access_token: eyJ0eXAiOiJ0eG50b2tlbitqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qtb25seS10dHMtYzA3LTAxIn0.eyJpc3MiOiJodHRwczovL3R0cy5jZWxsLW9wYXF1ZS1jb2RlLmlkLWRvbWFpbi5leGFtcGxlIiwiYXVkIjoidHhuLXRkLWMwNyIsImlhdCI6MTc5MjA1MTIwMCwiZXhwIjoxNzkyMDUxMjYwLCJ0eG4iOiJ4N3BxM216Mmt2NWhhNHRkNnJuMmN3ZTdieSIsInN1YiI6ImszdnE3bTJ4aDVkNHRhNnB6cjJuYnc3eWN1Iiwic2NvcGUiOiJvcC5pbnZvaWNlLmFwcHJvdmUiLCJyZXFfd2wiOiJzcGlmZmU6Ly9qcC5pZC1kb21haW4uZXhhbXBsZS93L2VkZ2UtZ3ciLCJ0Y3R4Ijp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5Iiwicm9vdF9qdGkiOiIzZjZjMmIxZS04ZDRhLTRjN2UtOWIyZi01YTFkMGU5YzdiNDIiLCJncmVmIjoiZzVyejJrcTd2bTN4YTRoZDZ0bjJwd2M3YmUiLCJzaWQiOiJzNG5kN2txMnhtNWhhM3R2NnByMmN3ZTdieiIsInRpZXIiOiJ3cml0ZSIsInZlciI6IjEuMCJ9fQ.hgUd1kKNlYJpjqOeGQZh2VKROA2oEEyVwEcLbisjuUq4C_dH3clQWnDQmFd7XoC3EJiQQnDSX3HNr97Oytzsng
+                    issued_token_type: urn:ietf:params:oauth:token-type:txn_token
+                    token_type: N_A
+                    expires_in: 60
+                internalStart:
+                  summary: v1.1（I-9、P-11）正例（preview）。内部開始の Txn-Token。tctx に親取引 ptxn（起点要求の txn）を持ち、sid は持たない。試験鍵で署名済み（中身は x-decoded-payload-example の internalStart）
+                  value:
+                    access_token: eyJ0eXAiOiJ0eG50b2tlbitqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qtb25seS10dHMtYzA3LTAxIn0.eyJpc3MiOiJodHRwczovL3R0cy5jZWxsLW9wYXF1ZS1jb2RlLmlkLWRvbWFpbi5leGFtcGxlIiwiYXVkIjoidHhuLXRkLWMwNyIsImlhdCI6MTc5MjA1MTIwMCwiZXhwIjoxNzkyMDUxMjYwLCJ0eG4iOiJtMndxN2h6M2tyNW5hNHR2NmRwMnhjZTdmeSIsInN1YiI6ImszdnE3bTJ4aDVkNHRhNnB6cjJuYnc3eWN1Iiwic2NvcGUiOiJvcC5yZXBvcnQuZ2VuZXJhdGUiLCJyZXFfd2wiOiJzcGlmZmU6Ly9qcC5pZC1kb21haW4uZXhhbXBsZS93L3JlcG9ydC1qb2IiLCJ0Y3R4Ijp7InRpZCI6InQ1d3EyaHpyN25tYzRrYTN2ZDZweGUyYmZ5Iiwicm9vdF9qdGkiOiIzZjZjMmIxZS04ZDRhLTRjN2UtOWIyZi01YTFkMGU5YzdiNDIiLCJncmVmIjoiZzVyejJrcTd2bTN4YTRoZDZ0bjJwd2M3YmUiLCJ0aWVyIjoicmVhZC1zZW5zaXRpdmUiLCJwdHhuIjoieDdwcTNtejJrdjVoYTR0ZDZybjJjd2U3YnkiLCJ2ZXIiOiIxLjAifX0.5iU5-w8sBBY54Nj2y_N6FAuyTykS9vkIKaMsmVn7lE_EKfYb_wURFIQFX3TUQno_lbjn_LfWIKLEvts-vsksPA
                     issued_token_type: urn:ietf:params:oauth:token-type:txn_token
                     token_type: N_A
                     expires_in: 60
@@ -435,6 +584,143 @@ paths:
           $ref: '#/components/responses/InvalidClient401'
         '503':
           $ref: '#/components/responses/Unavailable503'
+  /txn-token-jwks:
+    get:
+      operationId: getTxnTokenJwks
+      tags: [transaction-token]
+      summary: v1.1（I-9）TTS の Txn-Token 署名検証鍵（JWK Set）の取得
+      x-freeze-class: preview
+      x-requirements: [R-118, R-128, G-138]
+      servers:
+        - url: https://tts.{cell}.id-domain.example
+          description: cell の TTS。ホスト名・パスは仮置きで凍結しない。実際の URL は配置スナップショットで配布する（§9 HO-09）
+          variables:
+            cell:
+              default: cell-opaque-code
+      description: |
+        v1.1（I-9）。13_integration-trial/report.md の P-11（TTS の JWKS がない）への対応。TTS が Txn-Token の署名に使う鍵の公開部分を RFC 7517 §5 の JWK Set で返す [N][^9]。
+
+        - `keys` は必須で、JWK の配列である（RFC 7517 §5 の MUST）[N][^9]。受信側は理解できない `kty` の JWK を無視すべき（SHOULD）[N][^9]（§5）。
+        - 受信側は Txn-Token の header の `kid` で鍵を選ぶ。`kid` は鍵の更新時に JWK Set の中から鍵を選ぶために使う [N][^9]（§4.5）。本 profile は、更新の間は新旧 2 つの鍵を同時に載せ、未知の `kid` の token を受けたときだけ再取得する（再取得の頻度上限は TBD、x-open-issues「検証鍵の配布経路」）[D]。
+        - 本番の受信側 SDK は配置スナップショットの trust 設定を既定の鍵源とし、本操作は SDK を使わない実装と試験の経路とする [D]。いずれの経路でも、`kid` が `test-only-` で始まる鍵を本番 profile で信頼しない（info.x-test-signing-key）[D]。
+        - 鍵は cell の TTS ごとに別で、他 cell の鍵で署名された Txn-Token は受け付けない（ADR-009 D09-09 の trust domain の分離）[D]。
+        - 応答に秘密鍵成分（`d` など）・対称鍵を含めない [D]（負例 X74-N14）。
+      security:
+        - svidMtls: []
+      responses:
+        '200':
+          description: JWK Set。キャッシュの上限時間は Cache-Control の max-age で示す（値は TBD、DL-20）
+          headers:
+            Cache-Control:
+              description: public でない max-age 付きの値（例 max-age=300）。値は凍結しない
+              schema:
+                type: string
+          content:
+            application/jwk-set+json:
+              schema:
+                $ref: '#/components/schemas/JwkSet'
+              examples:
+                testOnly:
+                  summary: v1.1（I-9、P-11）試験鍵だけを載せた例（モック・契約試験専用）。/txn-token の応答例の署名をこの鍵で検証できる
+                  value:
+                    keys:
+                      - kty: EC
+                        crv: P-256
+                        x: quEADo3I33Cyq9_fQEwLm_QZaVL38FDQNEshjig6rkg
+                        y: eM9udSIVg2klnfEAZl0X6_YwTZuUYS-zz0Xy8R35vpw
+                        kid: test-only-tts-c07-01
+                        use: sig
+                        alg: ES256
+        '401':
+          $ref: '#/components/responses/InvalidClient401'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
+  /acceptance-records:
+    post:
+      operationId: registerAcceptanceRecord
+      tags: [internal-start]
+      summary: v1.1（I-9）内部開始の受付記録の登録（SDK を使わない受付側サービス向け）
+      x-freeze-class: preview
+      x-requirements: [R-118, R-128, G-138]
+      servers:
+        - url: https://jobs.{cell}.id-domain.example
+          description: cell のジョブ台帳（ADR-026 D26-02）。ホスト名・パスは仮置きで凍結しない。実際の URL は配置スナップショットで配布する（§9 HO-09）
+          variables:
+            cell:
+              default: cell-opaque-code
+      description: |
+        v1.1（I-9）。13_integration-trial/report.md の P-11（受付記録登録 API がない）への対応。ADR-026 D26-16 は、SDK を使わない実装が契約だけで連携できるようにすることを求める [D]。本操作は、利用者の要求（A1）または委任 grant の設定（A2）を受け付けたサービス（受付側）が、ジョブ台帳に受付記録を書き、`job_run_id` を受け取るためのものである。
+
+        - 受付記録の項目は ADR-026 D26-02 のとおり（job_run_id、ジョブ定義 ID、起点主体 sub、tid、委任 grant 参照、起点 txn、受付時の整合性トークン、操作階層、実行パラメータのハッシュ、受付時刻）[D]。
+        - `sub`・tid・起点 `txn`・`root_jti`・grant 参照（A1）は要求本文で受け付けず、要求に添えた起点要求の Txn-Token（`Txn-Token` ヘッダ、受け取ったまま無改変）を台帳が検証して取る [D]。受付側の自己申告で他人・他テナント名義の記録を作らせないためである（ADR-026 D26-11 の「メッセージの値を使わない」を登録時にも適用）[D]。本文に未定義の項目があれば拒否する（J06、負例 X74-N10）。
+        - 操作階層は受付側の申告ではなく、TTS 発行方針台帳のジョブ定義の値を記録する [D]。
+        - `job_run_id` は台帳が CSPRNG で払い出す（ADR-021 D21-36 と同じ形式）。受付側は値を選べない [D]。
+        - 受付側は、台帳が 201（または同じ dedup_key の再送への 200）を返すまでジョブを投入しない。503 や不達のとき、受付記録のないジョブを投入しない（内部開始の Txn-Token が発行されず、ジョブは T07 で止まる）[D]（ADR-009 D09-42 の趣旨）。
+        - 実行主体は、メッセージで受け取った `job_run_id` を `subject_token`、`subject_token_type` を応答の値（urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173）として requestTxnToken を呼ぶ [D]。
+        - エラーは RFC 9457 の Problem で返す（OAuth の token endpoint ではないため）[N][^11]。理由コード J01〜J08（info.x-reason-codes.jobs）は応答に入れず台帳にだけ記録する [D]。
+      security:
+        - svidMtls: []
+      parameters:
+        - $ref: '#/components/parameters/TxnTokenHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptanceRecordRequest'
+            examples:
+              a1ReportExport:
+                summary: v1.1（I-9）正例。A1。利用者の「報告書の生成」要求を受け付けた報告書サービスが登録する
+                value:
+                  job_definition_id: report.generate.v1
+                  params_hash: sha-256:LyuoyJ-MkdQZ0A7PYM-lbpglbvvYYefQS8ZhTlnLwD8
+                  consistency_token: ct_GAIiEAo3wq6
+                  dedup_key: rq-8f2c1a7e
+              a2DelegatedSchedule:
+                summary: v1.1（I-9）正例。A2。委任 grant による実行を設定した時点で登録する
+                value:
+                  job_definition_id: expense.monthly-close.v1
+                  grant_ref: g5rz2kq7vm3xa4hd6tn2pwc7be
+                  params_hash: sha-256:t1T7YKJMNeq0dkdRw9PSwspyK0VgrZGVswgwJj2CVG4
+      responses:
+        '201':
+          description: 受付記録を作成した
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptanceRecordResponse'
+              examples:
+                a1ReportExport:
+                  summary: v1.1（I-9）正例
+                  value:
+                    job_run_id: r6kq2wz7xm3na5tv4dh2pce7gy
+                    job_definition_id: report.generate.v1
+                    origin_txn: x7pq3mz2kv5ha4td6rn2cwe7by
+                    tier: read-sensitive
+                    accepted_at: '2026-10-15T08:00:05Z'
+                    subject_token_type: urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173
+        '200':
+          description: 同じ要求元・dedup_key・同じ内容の再送。最初の登録と同じ応答を返す（記録は増えない）
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptanceRecordResponse'
+        '400':
+          $ref: '#/components/responses/AcceptanceProblem400'
+        '401':
+          $ref: '#/components/responses/AcceptanceProblem401'
+        '403':
+          $ref: '#/components/responses/AcceptanceProblem403'
+        '409':
+          $ref: '#/components/responses/AcceptanceProblem409'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
 components:
   securitySchemes:
     svidMtls:
@@ -442,6 +728,14 @@ components:
       description: |
         X.509-SVID による mTLS クライアント認証（RFC 8705 の tls_client_auth。登録 metadata は tls_client_auth_san_uri で SPIFFE ID を 1 つ示す）[D]（ADR-009 D09-14）。RFC 8705 は PKI 方式の client が期待する証明書 subject を metadata のうちちょうど 1 つで示すことを MUST とする [N][^5]（§2.1.2。ADR-009 起草者が確認）。
         SVID は URI SAN をちょうど 1 つ持ち、検証は SVID が属する trust domain の bundle で行う（ADR-009 N-a, N-c2）。共有 client secret・private_key_jwt は本 API では受け付けない [D]（STS・TTS は cell 内部の workload だけが呼ぶ。外部 partner の M2M は client credentials の別契約）。
+  parameters:
+    TxnTokenHeader:
+      name: Txn-Token
+      in: header
+      required: true
+      description: v1.1（I-9）。起点要求で受け取った Txn-Token をそのまま（無改変で）添える。台帳は署名・typ・aud・exp を検証し、sub・tid・txn・root_jti・gref をここから取る（J02）。全文をログに残さない [N][^4]（RS-06#35, #41）
+      schema:
+        $ref: '#/components/schemas/JwsCompact'
   headers:
     CacheControlNoStore:
       description: RFC 6749 §5.1 は token を含む成功応答に付けることを MUST とする [N][^3]。エラー応答（400・401）にも付けるのは本 profile の選択 [D]
@@ -515,6 +809,58 @@ components:
       headers:
         Retry-After:
           $ref: '#/components/headers/RetryAfter'
+    AcceptanceProblem400:
+      description: v1.1（I-9）J02・J05・J06。理由コードは台帳にだけ記録する
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalidRequest:
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                code: invalid_request
+    AcceptanceProblem401:
+      description: v1.1（I-9）J01。TLS は成立したが SVID が未登録
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            unauthenticated:
+              value:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                code: unauthenticated
+    AcceptanceProblem403:
+      description: v1.1（I-9）J03・J04・J08。read-sensitive 以上の扱いに合わせ、どの理由かを応答で区別させない（CON-02 ProblemCode の方針）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            accessDenied:
+              value:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                code: access_denied
+    AcceptanceProblem409:
+      description: v1.1（I-9）J07。同じ dedup_key で内容の異なる登録
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            conflict:
+              value:
+                type: about:blank
+                title: Conflict
+                status: 409
+                code: conflict
   schemas:
     GrantTypeTokenExchange:
       type: string
@@ -530,11 +876,13 @@ components:
       description: Transaction Tokens 草案（draft-11）が定める識別子。IANA 登録は草案上の記述で、RFC 発行時に登録される段階 [N][^4]（RS-06#41）
     InternalStartReferenceType:
       type: string
-      pattern: '^https://[a-z0-9.-]+/token-types/internal-start-ref$'
+      const: urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173
       description: |
-        本契約の提案 X74-01（preview、未決（ADR-026））。RFC 8693 §3 は他の URI を token type に使ってよい（MAY）とする [N][^1]。草案は subject_token_type を URI でなければならない（MUST）とし、独自の種別を「要求元と TTS が合意した独自の URN」と書く [N][^4]（§11.2）。https URI は MUST を満たすが草案の例示（URN）とは異なるので、URN 形式に揃えるかを ADR-021 の名前空間とともに決める（未決（ADR-026））[D]。ホスト部は ADR-021 の `<id-domain>`（未確定）。subject_token の値は受付記録への不透明な参照（ジョブは `job_run_id`、ADR-026 D26-11）で、TTS が台帳を引き直して `sub`・tid・grant 参照を決める（メッセージの値を使わない）[D]。
+        本契約の提案 X74-01（preview、未決（ADR-026））。RFC 8693 §3 は他の URI を token type に使ってよい（MAY）とする [N][^1]。草案は subject_token_type を URI でなければならない（MUST）とし、独自の種別を「要求元と TTS が合意した独自の URN」と書く [N][^4]（§11.2）。
+        v1.1（I-9）: v1.0 の `https://<id-domain>/token-types/internal-start-ref` は、ホスト部が未決の `<id-domain>`（ADR-021）に依存し、利用者が確定値を書けなかった（13_integration-trial/report.md P-11・I-9）。そこで RFC 9562 の UUID URN 名前空間（`urn:uuid:`）[N][^10]（§1, §4, §7）で固定値を 1 つ定めた [D]。`urn:ietf:params:oauth:token-type:` は IANA 登録の名前空間なので社内の種別には使わず、独自の URN 名前空間（NID）は登録を要するので採らなかった [D]。値は意味を持たない識別子で、利用者は文字列一致だけで扱う。旧値は T03 で拒否する（X74-N7）[D]。
+        subject_token の値は受付記録への不透明な参照（ジョブは `job_run_id`、ADR-026 D26-11）で、TTS が台帳を引き直して `sub`・tid・grant 参照を決める（メッセージの値を使わない）[D]。
       examples:
-        - https://id-domain.example/token-types/internal-start-ref
+        - urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173
     JwsCompact:
       type: string
       pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
@@ -668,7 +1016,7 @@ components:
           type: string
           minLength: 1
           maxLength: 8192
-          description: 同期は edge の最初の exchange で得た署名済み内部 access token。内部開始は受付記録への不透明な参照（X74-01）。未署名 JSON・自己署名 JWT は受け付けない（T03）[D]
+          description: 同期は edge の最初の exchange で得た署名済み内部 access token。内部開始は受付記録への不透明な参照（X74-01。v1.1（I-9）では registerAcceptanceRecord が返す job_run_id）。未署名 JSON・自己署名 JWT は受け付けない（T03）[D]
         subject_token_type:
           oneOf:
             - $ref: '#/components/schemas/TokenTypeAccessToken'
@@ -700,22 +1048,41 @@ components:
           x-decoded-payload-example:
             description: |
               Txn-Token（txn-v1）の JWT payload の参考例。正本は DL-115（04_architecture/claims-catalog.md §3.5, §4.2）で、tctx の claim 名は名前案（KC-1 で確定）。署名・typ・aud・exp の検証は受信側 SDK が行う。`rctx`・`purp` は発行しない。業務パラメータ・個人識別属性・権限を tctx に入れない（ADR-009 D09-29）。
+              v1.1（I-9、P-11）: payload は /txn-token の応答例（edgeSync、internalStart）の JWT の中身と一致させた（v1.0 の例は JWT と中身が食い違い、ID も払い出し規則に合わなかった）。header は {"typ":"txntoken+jwt","alg":"ES256","kid":"test-only-tts-c07-01"}。tctx.tid の形は CON-02 IssuedTenantId、tctx.tier の値は CON-02 OperationTier を参照先とする（CON-02 HO-I7-5）。両 payload が CON-06 txnTokenClaims に適合することを確認した [M]（info.x-test-signing-key）。
             payload:
               iss: https://tts.cell-opaque-code.id-domain.example
               aud: txn-td-c07
               iat: 1792051200
               exp: 1792051260
-              txn: tx_k7Qp2vX9mL4sR8wZ1
-              sub: usr-7f4c9e2a
+              txn: x7pq3mz2kv5ha4td6rn2cwe7by
+              sub: k3vq7m2xh5d4ta6pzr2nbw7ycu
               scope: op.invoice.approve
               req_wl: spiffe://jp.id-domain.example/w/edge-gw
               tctx:
-                tid: tnt-3k9q
-                root_jti: jti-a1b2c3d4
-                gref: gr-55x8
-                sid: sid-0p9o
+                tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                root_jti: 3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42
+                gref: g5rz2kq7vm3xa4hd6tn2pwc7be
+                sid: s4nd7kq2xm5ha3tv6pr2cwe7bz
                 tier: write
                 ver: '1.0'
+            internalStart:
+              description: v1.1（I-9）内部開始の payload。txn は TTS が新たに払い出し、起点要求の txn を tctx.ptxn に、起点要求の root_jti を tctx.root_jti に入れる（root_jti の例外は未決 ADR-026 L26-1）。sid は持たない
+              payload:
+                iss: https://tts.cell-opaque-code.id-domain.example
+                aud: txn-td-c07
+                iat: 1792051200
+                exp: 1792051260
+                txn: m2wq7hz3kr5na4tv6dp2xce7fy
+                sub: k3vq7m2xh5d4ta6pzr2nbw7ycu
+                scope: op.report.generate
+                req_wl: spiffe://jp.id-domain.example/w/report-job
+                tctx:
+                  tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  root_jti: 3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42
+                  gref: g5rz2kq7vm3xa4hd6tn2pwc7be
+                  tier: read-sensitive
+                  ptxn: x7pq3mz2kv5ha4td6rn2cwe7by
+                  ver: '1.0'
         issued_token_type:
           $ref: '#/components/schemas/TokenTypeTxnToken'
         token_type:
@@ -730,6 +1097,133 @@ components:
           not: {}
           description: 含めてはならない（MUST NOT）[N][^4]（§11.4, §13.3）
       additionalProperties: false
+    JobRunId:
+      type: string
+      pattern: '^[a-z2-7]{26}$'
+      description: v1.1（I-9）受付記録への不透明な参照（ADR-026 D26-11）。台帳が CSPRNG で払い出す（ADR-021 D21-36 と同じ形式。払い出し側の形は CON-02 IssuedOpaqueId の base32 候補）。受信側は解析しない。CON-02 への登録は §9 HO-02
+      examples:
+        - r6kq2wz7xm3na5tv4dh2pce7gy
+    AcceptanceRecordRequest:
+      type: object
+      description: |
+        v1.1（I-9）受付記録の登録要求。`sub`・tid・起点 txn・root_jti は本文に置かず、Txn-Token ヘッダから台帳が取る [D]。未定義の項目は拒否する（J06）。
+      required: [job_definition_id, params_hash]
+      properties:
+        job_definition_id:
+          type: string
+          pattern: '^[a-z][a-z0-9._-]{2,63}$'
+          description: TTS 発行方針台帳（ADR-026 D26-12）に登録されたジョブ定義 ID。要求元はこのジョブ定義の受付側として登録されていなければならない（J03）
+        grant_ref:
+          type: string
+          pattern: '^[a-z2-7]{26}$|^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+          description: A2（委任 grant による実行）の委任 grant 参照（CON-02 GrantRef の払い出し形）。A1 では省略し、台帳は Txn-Token の tctx.gref を記録する。Txn-Token の sub・tid の grant でなければ J05
+        params_hash:
+          type: string
+          pattern: '^sha-256:[A-Za-z0-9_-]{43}$'
+          description: 実行パラメータのハッシュ（SHA-256 の base64url、パディングなし）。実行主体はメッセージのパラメータのハッシュをこれと照合し、不一致なら実行しない（ADR-026 D26-11）。正規化の規則は ADR-026 の SDK 仕様に従う（未定義なら §9 HO-01 で申し送り）
+        consistency_token:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: 受付時の認可判定で得た整合性トークン（CON-02 ConsistencyToken。ADR-026 D26-02）。実行時の再認可の整合性の下限に使う
+        dedup_key:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{1,64}$'
+          description: 受付側の再送の重複排除キー（要求元ごとに一意）。同じキー・同じ内容は 200 で最初の応答を返し、内容が違えば 409（J07）。保持期間は TBD（x-open-issues）
+      additionalProperties: false
+    AcceptanceRecordResponse:
+      type: object
+      description: v1.1（I-9）受付記録の登録結果。sub・tid は返さない（受付側は既に知っており、応答に個人識別に結び付く値を増やさない）[D]
+      required: [job_run_id, job_definition_id, origin_txn, tier, accepted_at, subject_token_type]
+      properties:
+        job_run_id:
+          $ref: '#/components/schemas/JobRunId'
+        job_definition_id:
+          type: string
+        origin_txn:
+          type: string
+          description: 起点要求の txn（Txn-Token から取った値）。内部開始の Txn-Token の tctx.ptxn になる
+        tier:
+          type: string
+          enum: [public, read-sensitive, write, privileged/T, privileged/P, break-glass/B, break-glass/P]
+          description: 発行方針台帳のジョブ定義の操作階層（CON-02 OperationTier の値の写し。正本は CON-02）
+        accepted_at:
+          type: string
+          format: date-time
+        subject_token_type:
+          $ref: '#/components/schemas/InternalStartReferenceType'
+      additionalProperties: false
+    AcceptanceProblemCode:
+      type: string
+      enum: [invalid_request, unauthenticated, access_denied, conflict, service_unavailable]
+      description: v1.1（I-9）受付記録の登録の安定エラーコード（閉じた列挙。追加は minor）。CON-02 ProblemCode の形（小文字・下線）に従う
+    Problem:
+      type: object
+      description: v1.1（I-9）RFC 9457 の Problem Details [N][^11]。正本は CON-02（common.schema.json の Problem）で、本契約はモックに渡せるよう写しを置く（§9 HO-02）。`code` は拡張メンバ
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          description: 理由コード・台帳の内容を入れない
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          $ref: '#/components/schemas/AcceptanceProblemCode'
+      additionalProperties: true
+    EcPublicJwk:
+      type: object
+      description: v1.1（I-9）P-256 の公開鍵 JWK。秘密鍵成分（d）を持たない（X74-N14）
+      required: [kty, crv, x, y, kid, alg]
+      properties:
+        kty:
+          type: string
+          const: EC
+        crv:
+          type: string
+          const: P-256
+        x:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        y:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        kid:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{1,64}$'
+          description: CON-06 keyId と同じ形。test-only- で始まる値は試験鍵
+        use:
+          type: string
+          const: sig
+        alg:
+          type: string
+          const: ES256
+          description: CON-06 issuedAlg（ES256 だけ）
+        d:
+          not: {}
+          description: 秘密鍵成分を含めない
+      additionalProperties: true
+    JwkSet:
+      type: object
+      description: v1.1（I-9）RFC 7517 §5 の JWK Set。`keys` は必須 [N][^9]。本 profile では EC P-256 の公開鍵だけを載せる [D]
+      required: [keys]
+      properties:
+        keys:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/EcPublicJwk'
+      additionalProperties: true
     TokenErrorResponse:
       type: object
       description: RFC 6749 §5.2 のエラー応答 [N][^3]。v1 で返す error は下の enum に限る。エラーコードの意味の変更は破壊的変更（ADR-022 D-5-1）

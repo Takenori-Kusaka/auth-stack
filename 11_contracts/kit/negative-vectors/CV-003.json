@@ -1,0 +1,130 @@
+{
+  "id": "CV-003",
+  "title": "issuer mix-up（他 issuer を名乗る token、RP の認可応答の iss 不一致）",
+  "source": [
+    "ADR-022 D-6-2 (3)",
+    "ARC-02 NV-14",
+    "ARC-02 NV-39",
+    "ARC-02 NV-42"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    },
+    {
+      "role": "CR-4"
+    }
+  ],
+  "status": "required",
+  "distinguish_from": [
+    {
+      "id": "CV-011",
+      "how": "CV-003 は署名を issuer A の正規の現行鍵（JWKS に載った kid）で作り、iss だけを未知の issuer にする。署名の検査では拒否されないので、iss の照合だけが拒否の理由になる。CV-011 は issuer B が実在し（discovery と JWKS が SUT から到達できる）、B の鍵で正しく署名された token で、SUT が B を信頼・参照しないことを確かめる"
+    }
+  ],
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-003a",
+      "description": "iss が discovery にない issuer。署名は issuer A の現行鍵で正規",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "other",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "fetches": {
+            "issuer_other.discovery": 0,
+            "issuer_other.jwks": 0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "CV-003b",
+      "applies_when": "roles contains CR-4",
+      "description": "RP: 認可応答の iss が要求を送った issuer と異なる（ARC-02 NV-42）",
+      "stimulus": {
+        "request": {
+          "operation": "{{rp.callback}}",
+          "rp_authorization_response": {
+            "iss": "{{issuer.other}}"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "code を token endpoint に送らない。login を成立させない"
+      }
+    },
+    {
+      "case_id": "CV-003c",
+      "description": "起動時の検査: issuer A の discovery が、SUT の設定の期待値と別の issuer（{{issuer.other}}）を返す。SUT は issuer の期待値を discovery の応答から取らず、設定の値と完全一致しなければ起動しない（または検証器を有効にしない）。v1.1 の同期で追加（CON-16 §1.10 EN-2、IE-3）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "discovery_override": {
+              "issuer": "{{issuer.other}}"
+            },
+            "when": "before_sut_start"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "other",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "notes": "合格は (a) SUT が起動しない（起動ログに issuer 不一致）か、(b) 起動しても全要求を拒否する、のいずれか。issuer=other の token を受理したら不合格"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "stub_access_log"
+  ],
+  "strength": "自社規範（ADR-005、ARC-02 §10）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）。CV-003c は 0.2.0（v1.1 の同期。CON-16 IE-3）",
+  "deprecated": null,
+  "notes": [
+    "v1.1 の同期（CON-16 §1.10 EN-2、IE-3）: CV-003c を加えた。V4 は issuer の期待値を設定から読み、discovery の応答から取らない"
+  ]
+}

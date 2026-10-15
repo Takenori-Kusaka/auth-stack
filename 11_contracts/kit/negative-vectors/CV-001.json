@@ -1,0 +1,95 @@
+{
+  "id": "CV-001",
+  "title": "aud の誤り（他 API 宛ての token）",
+  "source": [
+    "ADR-022 D-6-2 (1)",
+    "ARC-02 NV-12",
+    "ARC-02 NV-13",
+    "CON-06 NE-05"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-001a",
+      "description": "aud が他サービスの識別子",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "aud": "{{other.audience}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-001b",
+      "description": "aud が配列で、自サービスと他サービスを含む（本 profile は 1 値の文字列。CON-06 serviceAudience）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "aud": [
+              "{{sut.audience}}",
+              "{{other.audience}}"
+            ]
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit"
+  ],
+  "strength": "N: RFC 9068 §5 の MUST（資源ごとに異なる aud）。配列の拒否は自社規範（CON-06 serviceAudience）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

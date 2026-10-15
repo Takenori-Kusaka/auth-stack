@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Authorization API（AuthZEN 1.0 準拠 PEP–PDP 契約）
-  version: 0.2.0
+  version: 0.3.1
   summary: OpenID AuthZEN Authorization API 1.0（Final）の evaluation・evaluations・resource search と、版付き自社 profile（decision_id、model/policy revision、consistency、reason、obligation、txn）を定める PEP–PDP 契約。
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -34,6 +34,7 @@ info:
     - 03_threat-model/attacker-model.md（§3.6 ATK-06。ラウンド1 是正で追加）
     - 03_threat-model/threat-catalog.md（T-033、T-034、CE-05 の網羅表。ラウンド1 是正で追加）
     - 04_architecture/claims-catalog.md（ARC-15 の `jti`・`cnf`・`sub` 行、DEV-1、Txn-Token の `tctx`。ラウンド1 是正で追加）
+    - 13_integration-trial/report.md（AI による模擬連携検証。P-01・P-05・P-20、I-1・I-5。v1.1 で追加）
     - 11_contracts/schemas/common.schema.json（CON-02。本書は $ref せず、ModelRevision の項目名、TenantId・ConsistencyToken の形式、Reason の規則 ID 形式を独立レビュー時に揃えた。残る差分は 11_contracts/review-notes/CON-03.md に記録。共通型は凍結前に同ファイルへ移す）
   x-requirements:
     R: [R-098, R-144, R-205, R-142, R-109, R-152, R-204, R-262]
@@ -45,12 +46,14 @@ info:
     binding: HTTPS JSON binding（AuthZEN 1.0 §10.1）
     extensions-carrier: 要求・応答の context に置く名前空間付きキー `x-authz-profile`（キー名は暫定。未決（ADR-021））
   description: |
-    > 文書ID: CON-03 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+    > 文書ID: CON-03 / 版: 0.3.1（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15
     > 対応要求: R-098, R-144, R-205（DL-72 行）、R-142, R-109, R-152, R-204, R-262／G-066, G-072, G-109, G-118, G-120, G-121
     > 依存文書: info.x-depends-on を参照
     > 作成方法: AI エージェント（Claude）が ADR-011 ほかの決定を契約に落として起草した。CTO/CISO の決裁を経ていない（CONVENTIONS §8）[D]。
     > 独立レビュー: 作成者とは別のエージェント（Claude）が 2026-10-15 に原典（AuthZEN 1.0 Final）を再取得して照合し、修正した。記録は 11_contracts/review-notes/CON-03.md。人による照合は未実施 [D]。
     > 模擬パネル: 版 0.2 は、AI エージェントによる模擬パネル（redteam 役）のラウンド1 指摘を反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（末尾「レビュー記録」）[D]。
+    > v1.1 改訂（版 0.3）: AI エージェントによる模擬連携検証（13_integration-trial/report.md。実在の連携チームによる検証ではない）の P-01・P-05・P-20 と改善提案 I-1・I-5 を反映した。変更点は §11、他文書への申し送りは §12 [D]。
+    > v1.1 の同期（版 0.3.1）: 他文書の v1.1 改訂が本書に宛てた申し送り（CON-02 HO-I7-1、CON-04 HO-V11-4、CON-11 §14.3 H11-1、INT-02 §9.2 HO11-1・HO11-3・HO11-5、INT-03 §16.4 HO-V11-3・HO-V11-8、CON-08 x-handoff-v1.1 の 4）を反映した。記録は §13 [D]。
 
     ## 1. 位置付け
     - 本契約は PEP（依存サービスの SDK または契約適合の自前実装）が cell 内の PDP façade を呼ぶ唯一の認可判定契約である（ADR-011 D5-1・D5-3・D5-4）[D]。engine（OpenFGA・SpiceDB 等）のネイティブ API・ヘッダを依存サービスが呼ぶことは CI で拒否する（ADR-022 D-3-2、G-072）[D]。
@@ -72,6 +75,7 @@ info:
 
     - 互換規則: minor では後方互換な追加だけを行う（AuthZEN §4 の "MAY augment" / "MUST NOT modify" に揃える）[N][^1]（RS-07#62）[D]。制約を強める変更は `profile_version` の major を上げ、未対応の façade は `unsupported_profile` で拒否する（ADR-011 D6-2）[D]。endpoint の識別子は v1 を含む（AuthZEN の SHOULD）[N][^1]（RS-07#62）。
     - 非推奨の告知は Deprecation header（RFC 9745、Proposed Standard）と Sunset header（RFC 8594、Informational）で行う [N][^6][^7]（RS-16#34, #35）。期間の値は DL-70・ADR-016 で決める [D]。
+    - v1.1（I-1）: Deprecation・Sunset は非推奨になった endpoint の応答にだけ付く条件付きのヘッダなので、各 operation の `responses.*.headers` から外し、形を `x-conditional-response-headers`（本書の最上位）に移した。v1.0 では宣言していたため、汎用モック（Prism）が非推奨でない endpoint にも `Deprecation: string` を返し、pattern を検査する PEP が応答を不適合とした（13_integration-trial P-01、CON-11 §4.10）[D]。PEP は両ヘッダがあれば形を検査して記録し、なければ非推奨でないとして扱う。ヘッダの有無で判定の採否を変えない [D]。
 
     ## 3. search 系の扱い
     - resource search は PEP が直接呼ぶ契約にしない。SDK の一覧ヘルパの内部だけで使い、返却前に evaluations（`execute_all`）で後段 Check することを必須とする（ADR-011 D5-2、ADR-025 D25-04、ADR-022 D-2-2）[D]。AuthZEN 自身が「search の結果を evaluation にかけると true に SHOULD なるが保証されない」と述べる [N][^2]（RS-07#65）。
@@ -134,10 +138,13 @@ info:
     - 要求全体の誤りは HTTP ステータスで返し、本文は AuthZEN の表どおり「エラーメッセージ文字列」とする [N][^3]。依存サービスは本文の文字列一致に依存しない（ADR-022 D-3-2）[D]。
     - evaluations の個別要素の誤りは要素の `context.error`（`status`・`message`）で返し、decision は false とする（AuthZEN §7.2.1）[N][^2]。本 profile では同時に `reason`=`deny_indeterminate` を付ける [D]。
     - PEP SDK は、façade 不達・timeout、`deny_unavailable`、`deny_indeterminate`、`unsupported_profile`、`decision_id` の欠落、X-Request-ID の echo 不一致を「判定が得られない」として扱う（ARC-06 §3.5）[D]。
+    - v1.1（I-1）: 許可応答の実効 `consistency.mode` が要求したモード（要求がなければ操作階層の既定）より弱い場合も、PEP は「判定が得られない」として扱う（格下げの拒否。ADR-011 D6-3 の PEP 側の検査。CON-11 §4.4 からの申し送りを本書に明記）[D]。同じか強いモードは受け入れる。したがって `fully_consistent` の許可はどの操作階層の要求にも使える [D]。
     - `reason` はエンドユーザーに返さない（ADR-011 D6-1）[D]。
 
     ## 8. 正例・負例
     各 operation の `examples` に正例とスキーマ上は妥当な負例を置き、スキーマに違反する負例（400 になるもの）は `x-negative-examples` に分けた。負例の説明は各 example の `description` に書く。主な負例: テナント不一致（`deny_guardrail`）、必須属性の欠落（400）、未対応の profile major（`unsupported_profile`）、整合性の格下げ要求（格上げして評価）、解釈できない consistency token（`fully_consistent` に格上げ）、engine 不達（`deny_unavailable`）、privileged 操作での `permit_on_first_permit`（400）、evaluations が空で上位の既定値もない要求（400）、search の `limit` 超過（400）、他主体の page token（403）、宣言外の資源型・permission の照会（`deny_guardrail:caller_scope`）、裏付け token と異なる主体（`deny_guardrail:subject_binding`）。多数テナントへの走査は 1 要求では判定できないので、要求例ではなく検知規則と試験ベクタ（CON-11・PoC への申し送り、§10）で扱う。応答側は評価不能（`deny_indeterminate`）と未対応 profile（`unsupported_profile`）の例を置く。
+    - v1.1（I-1、I-5）: 正例に write の許可（要求・応答の `allowWrite`）と、evaluations の要求件数 1・2・3 に対になる要求例・応答例（§7 ではなく evaluations の operation の表）を加えた。負例に scope の形の `action.name`（`scopeFormActionName`、400）を加えた。全 examples の `action.name` を動詞の permission 名（`read`・`update`・`manage_idp`・`read_clinical`）に統一した [D]。
+    - 汎用モックで examples を使うときの制約（先頭の例が既定で返る、要求の値を写さない、件数・型を合わせない）と回避方法は §11 の表にまとめた [D]。
 
     ## 9. 未決（ADR で決まっていない点。本契約の暫定値は安全側）
     | 論点 | 決める場 | 暫定 |
@@ -156,6 +163,8 @@ info:
     | 判定宣言（X-14）の粒度・登録手続・初期登録の方法 | ADR-011・ARC-05（X-14 の追加は申し送り）、DL-73 | 宣言外は deny（`caller_scope`）。宣言なしの呼出し元はすべて deny |
     | 内部 access token を façade に渡す形（全文か、検証可能な参照か）と最大長 | ADR-011・ADR-005（ARC-15） | 全文（ログに残さない）。最大長は ADR-015 D15-40 の初期案 6,144 byte を超えない |
     | 照会の広がりの KRI の閾値 | 認可・PDP チーム、kri.md の所有者 | TBD（DL-72 凍結前） |
+    | 判定宣言（§4.2）に core の permission（例 `core/unit#manage`）を入れてよいか（v1.1 の同期。INT-03 §16.4 HO-V11-3） | ADR-011・ARC-05 X-14、認可・PDP チーム | 未決。宣言は自ドメインの資源型に限る現行の扱いのまま。INT-03 §9.7 の部署長の指名の書込前判定は、決まるまで INT-03 の暫定形による [D] |
+    | token の主体と別の主体（通知の宛先、承認者の候補など）を `subject` にする照会を `subject_binding` の必須化の後も許すか、許すなら判定宣言の属性で許すか（v1.1 の同期。INT-02 §9.2 HO11-5） | ADR-011 | 未決。必須化までは §4.3 のとおり裏付けがなければ評価する。INT-02 BN-5（送信時に宛先の権限を評価しない）は本項が決まるまでの制約 [D] |
 
     ## 10. 他文書への申し送り（ラウンド1 是正。本書以外は並行作業のため未編集）
     | # | 宛先 | 申し送る内容 |
@@ -169,6 +178,61 @@ info:
     | M-7 | 12_poc/preregistered-test-plan.md | M-6 の (i)〜(iv) を事前登録の TC として追加し、裏付けの照合による遅延の増分（p99）を測る |
     | M-8 | 04_architecture/pep-contract.md（ARC-06）、04_architecture/claims-catalog.md（ARC-15） | PEP SDK が受信した `Txn-Token` ヘッダと検証済み内部 access token を façade に渡すこと（DEV-5 の「下流へ無改変で渡す」の façade 版）。façade が token の全文をログに残さないこと |
     | M-9 | 11_contracts/review-notes/CON-03.md、traceability/claims-ledger.md、traceability/dissent-log.md | 本是正の記録。裏付けを v1.0 では任意とした判断（残余リスクは §4.3）を異論として記録するかの判断 |
+
+    ## 11. v1.1 の変更（模擬連携検証の反映）
+    AI エージェントによる模擬連携検証（13_integration-trial/report.md。経費精算サービスを想定した模擬であり、実在の連携チームによる検証ではない）で、本書に起因する詰まりが P-01・P-05・P-20 として挙がった。改善提案 I-1・I-5 に沿って次のとおり改めた [D]。
+
+    | # | 対応（詰まり／提案） | 変更 | 箇所 |
+    |---|---|---|---|
+    | V-1 | P-01／I-1 | evaluation の応答例の先頭に fully_consistent の許可 `allowWrite` を置き、要求例 `allowWrite`（write の `update`）を加えた。§7 に「実効モードが要求より弱い許可は判定が得られない、同じか強いモードは受け入れる」を明記した | §7、`/access/v1/evaluation` |
+    | V-2 | P-01／I-1 | evaluations に要求件数 1・2・3 の対の例を置き、許可要素の実効モードを fully_consistent にした。件数の一致（AuthZEN §7.2）と PEP の検査を明記した | `/access/v1/evaluations` |
+    | V-3 | P-01／I-1 | 応答ヘッダ X-Request-ID に、要求側の例と同じ値の例を付け、echo 前提の値であることとモックでの確かめ方を書いた | components/headers/XRequestIdEcho、components/parameters/XRequestId |
+    | V-4 | P-01 | Deprecation・Sunset を各応答の宣言から外し、最上位の `x-conditional-response-headers` に移した（モックが `Deprecation: string` を返さないように） | §2、`x-conditional-response-headers` |
+    | V-5 | P-01 | metadata の `policy_decision_point` がモックで一致しないことは MUST NOT が働いた結果であり、検査を外さずに確かめる方法を書いた | `/.well-known/authzen-configuration` |
+    | V-6 | P-05／I-5 | `action.name` を動詞の permission 名に統一し、CON-02 `NameSegment` と同じ pattern を課した。scope の形の負例を加えた。`subject.type` と主体類型の区別を Subject に書いた | components/schemas/Action・Subject、全 examples |
+    | V-7 | P-20 | search の `results[].type` は要求の型と一致することを契約にし（`x-constraint`）、一覧ヘルパの扱いとモックの制約を書いた | `/access/v1/search/resource`、ResourceSearchResponse |
+
+    汎用モック（Prism 5.12.0 で確認した振舞い。13_integration-trial §5・W-1・W-2）で examples を使うときの制約と回避方法 [M][D]:
+
+    | 制約 | 影響 | 回避方法（PEP の検査は外さない） |
+    |---|---|---|
+    | 既定で応答 examples の先頭を返す | evaluation は `allowWrite`、evaluations は `mixed`（2 件）、search は `truncated` が返る | `Prefer: example=<例の名前>` で選ぶ |
+    | X-Request-ID を写さず例の値を返す | 例と異なる値を送ると echo 不一致 | 要求に例の値を付けるか、echo proxy を置く |
+    | evaluations の件数を要求に合わせない | 対の例のない件数は件数不一致 | 対の例（1〜3 件）を選ぶか、件数を合わせる proxy を置く |
+    | search の `results[].type` を要求に合わせない | 自ドメインの型の検索に `docs/document` が返る | 型を書き換える proxy を置く |
+    | metadata の `policy_decision_point` が例の固定値 | モックの URL と一致しない | PDP 識別子を例の値に設定するか、書き換える proxy を置く |
+
+    - 互換性: V-6 の pattern は制約を強める変更である。本書は v1 凍結（DEC-8）前の draft なので、`profile_version` は 1.0 のまま据え置く [D]。v1.0 の例どおり `can_read` 等を送っていた実装は、モデルに同名の permission がない限り本番で deny になるので、版上げの前に名前を改める必要がある（§12 N-3）[D]。V-4 は宣言の位置の変更で、非推奨時の応答の形は変えない [D]。
+    - 残余: echo proxy・件数合わせ・型の書換えはモックの前段の試験用部品であり、本書の examples だけでは件数 4 以上と自ドメインの型の正例を作れない。proxy の提供は CON-11 の kit に申し送る（§12 N-2）[D]。
+
+    ## 12. 他文書への申し送り（v1.1）
+    本書以外は並行作業のため本書の担当者は編集していない。宛先の担当が反映する [D]。
+
+    | # | 宛先 | 申し送る内容 |
+    |---|---|---|
+    | N-1 | 10_integration/README.md（INT-00 §6.3）、10_integration/developer-faq.md（FQ-43） | 汎用モックで CON-03 の正例を確かめる手順を §11 の表に合わせる（先頭の例、`Prefer: example=`、X-Request-ID の例の値、metadata の識別子の設定）。「モックに合わせて PEP の検査を外さない」を明記する |
+    | N-2 | 11_contracts/mock-contract-test-kit.md（CON-11）と kit（echo proxy） | proxy に (a) X-Request-ID の写し、(b) evaluations の件数を要求に合わせる組み直し（要素の型は CON-03 の許可要素、実効モードは要求のモード以上）、(c) search の `results[].type` を要求の型に書き換える、(d) metadata の `policy_decision_point` の書換え、を持たせる。§4.10 の「CON-03 の Deprecation ヘッダ」の既知の誤りを v1.1 で解消済みとし、§4.4 の「要求より弱い実効モードは判定が得られない」の CON-03 への申し送り（§14.2 の CON-03 行、未解決事項の 2）を本書 §7 で反映済みとする。契約試験に `results[].type` の一致（ResourceSearchResponse の `x-constraint`）と `scopeFormActionName` の 400 を加える |
+    | N-3 | 10_integration/integration-patterns.md（INT-02。認可モデル例の行）、10_integration/authz-modeling-guide.md（INT-03） | `docs.document.read`・`docs.document.update` を「操作（scope の形）」としている記述を、`action.name` は `read`・`update`（permission 名）、scope の形は CON-02 `ExternalScope` に限る、と書き分ける。判定宣言（§4.2）の登録時に、宣言した permission がモデルに存在することを lint で確かめる手順を加える |
+    | N-4 | 11_contracts/schemas/audit-event.schema.json（CON-08） | `action.name` の説明の例 `can_read` を `read` に改める |
+    | N-5 | 11_contracts/schemas/common.schema.json（CON-02） | `ActionName` は本書の Action.name と同じ pattern（`NameSegment`）であることを確認し、凍結前に本書が `$ref` で参照できる形にする。I-5 の後半（`subject.type` の写像を 1 か所に）として、token の `ptype`（`human` 等）から `subject.type`（`core/user` 等）と `principal_type` への写像表の正本を置く |
+    | N-6 | 11_contracts/review-notes/CON-03.md、traceability/change-log.md | 本改訂（版 0.3、V-1〜V-7）の記録 |
+
+    ## 13. v1.1 の同期（他文書からの申し送りの反映）
+    v1.1 の各改訂が本書に宛てた申し送りを、v1.1 の同期作業（AI エージェント）で反映した。人による照合は未実施である [D]。
+
+    | 申し送り | 内容 | 反映 |
+    |---|---|---|
+    | CON-02 HO-I7-1（v1.1（I-7）） | `TenantId` を CON-02 への参照にし、例の tid を払い出し規則に合う値に替える | `components/schemas/TenantId` を `./schemas/common.schema.json#/$defs/TenantId` への参照にした。例の tid を `t5wq2hzr7nmc4ka3vd6pxe2bfy`・`u3nb7xk2qm5zr4ha6tc2wfe7dy` に替えた（すべての出現）。`operation_tier` は CON-02 `OperationTier` への参照のまま [D] |
+    | CON-04 HO-V11-4（v1.1（I-7）） | `operation_tier` の写像が不要になった旨 | façade は `operation_tier` を CON-04 の `CamPermission.tier` から引く。v1.1 で両者が同じ CON-02 `OperationTier` の表記（`read-sensitive`、`privileged/T` など）になったので、façade は表記の写像を持たない。v1.0 の CON-04 の表記（`read_sensitive`・`privileged`）は受理しない [D] |
+    | CON-11 §14.3 H11-1（v1.1（I-1）） | echo proxy の所在、件数連動、metadata、例の名前の変更の注意 | (1) `XRequestIdEcho` の説明に `11_contracts/kit/echo-proxy.js` を記した。(2) evaluations の説明に規則 R5 を記した。(3) PDP metadata の説明に規則 R3 を記した。(4) 改版の注意: `Prefer: example=` で選ぶ例の名前（`allowWrite`・`mixed`・`oneItem`・`threeItems` など）を変える改版は、CON-11 kit/README.md §2.2 の R7 の例と連携チームの CI に影響するので、CON-01 CP-60 の通知の対象とする [D] |
+    | INT-02 §9.2 HO11-1（v1.1（I-5）） | examples の `can_read` を `read` に、`Action.name` の説明 | 本書 v1.1（版 0.3）の §11 V-6 で反映済みであることを確かめた（examples に `can_read` は 0 件、`Action` の説明に scope の形と `can_` 前置を使わない旨がある）[D] |
+    | INT-02 §9.2 HO11-3 (a)（v1.1（I-6）） | PP-2 は searchResources を呼べないこと、façade が SDK とアプリコードを区別できないこと | `/access/v1/search/resource` の description に加えた。(b)(c) は CON-11 に反映した [D] |
+    | INT-02 §9.2 HO11-5、INT-03 §16.4 HO-V11-3 | 主体以外を subject にする照会、判定宣言に core の permission を入れること | 決裁事項なので §9 に未決として加えた [D] |
+    | INT-03 §16.4 HO-V11-8 | §12 N-3 の INT-03 の分を閉じる | INT-03 版の N-26・§15.2 S-5 で反映済み。N-3 は INT-02 の分（認可モデル例の行）を残す [D] |
+    | CON-08 x-handoff-v1.1 の 4（v1.1（I-5）） | `subject.type` の写像の正本、監査の `human` と別の欄であること | `Subject` の説明に CON-02 `x-subject-type-map` と、CON-08 の欄との違いを記した [D] |
+    | §12 N-5 の確認 | `ActionName` と本書の `Action.name` の pattern | CON-02 `ActionName` は `NameSegment` への参照で、本書の `Action.name` の pattern と同じであることを確かめた。本書から `$ref` で参照できる形である（参照への置換は凍結前に行う）[D] |
+
+    - 互換性: `TenantId` の参照化は値の集合を変えない。例の値の変更は契約の振舞いを変えないが、汎用モックの応答の値が変わるので、例の値を試験の期待値に固定していた連携チームは期待値を替える必要がある [D]。
 
     ## 参考文献
     - [^1]: O. Gazitt, D. Brossard, A. Tulshibagwale (Eds.), OpenID AuthZEN WG『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §1, §2, §4, §5（5.1〜5.5）, §11.1〜11.2、確認日: 2026-10-03。RS-07#60〜#63）
@@ -192,6 +256,20 @@ info:
     |---|---|---|---|
     | High | façade は PEP の mTLS 認証だけで要求を受け付け、`subject.id`・`tid` を検証済み token・Txn-Token と突き合わせない。G 段規則 1 は PEP が渡した 2 つの `tid` を比べるだけである。侵害された依存サービス（ATK-06）が同じ cell の全テナント・他ドメインの資源型を Check でき、関係の存在（T-034）を引き出す oracle になる。判定・照会側に呼出し元ごとの宣言がなく、ATK-06 の「PDP への探索的な Check」に T・統制・TC がない（G-078 の追跡切れ）。DEC-8 で現形のまま凍結すると、裏付けの必須化が major 改版になる | 本書内: (1) §4.1 に問題を明記。(2) §4.2 に G 段規則 `caller_scope`（判定宣言。SPIFFE ID 全体で照合）を v1 の契約として追加。(3) §4.3 に G 段規則 `subject_binding` を追加し、`Txn-Token` ヘッダ（全 operation の parameters）と `subject_evidence.access_token`（ProfileRequest、preview）の欄を予約。照合規則（`sub`↔`subject.id`、token のテナント↔`subject.properties.tid`）を定め、必須化は判定宣言の属性で行うので major 改版を要しない形にした。必須化の時期は §9 に ADR-011 の未決として明記。(4) §4.4 に照会の広がりの検知を追加。(5) §5 に G 段規則 1 の限界を明記。(6) §8 と evaluation の要求・応答の examples に負例 2 件（`callerOutOfScope`、`subjectBindingMismatch`）を追加。他文書: threat-catalog T-087、ARC-05 X-14、ADR-011、CON-04 の tuple 書込みのテナント結合、kri.md、CON-11、PoC 計画、ARC-06・ARC-15 を §10（M-1〜M-9）に申し送り。新たな事実の根拠は RS-06 の検証済み原典（Transaction Tokens 草案、WIMSE identifier・mutual-tls 草案）[^10][^11][^12] | info.version、§4.1〜§4.4、§5、§8、§9、§10、components（TxnToken、SubjectEvidence、ProfileRequest、`txn`）、/access/v1/evaluation の examples |
     | — | 残余 | 裏付けの必須化までは、裏付けを省いた照会を宣言範囲内で止められない（§4.3 の残余リスク）。threat-catalog・kri.md・CON-11・PoC 計画の実際の追記は宛先文書の担当が行う（本書では未完了） | §4.3、§10 |
+x-conditional-response-headers:
+  description: |
+    v1.1（I-1、P-01）: 非推奨になった endpoint の 200 応答にだけ付くヘッダ。非推奨でない endpoint は送らないので、各 operation の `responses` には宣言しない（宣言すると汎用モックが常に値を返す）[D]。適用範囲は §2 の互換規則、期間の値は DL-70・ADR-016 [D]。
+  applies-to: 非推奨になった operation の 200 応答
+  headers:
+    Deprecation:
+      description: 非推奨の告知（RFC 9745、Proposed Standard）。値は RFC 9651 §3.3.7 の Date（`@` に続く Unix 時刻）[N]（RS-16#34）。
+      schema:
+        type: string
+        pattern: "^@-?[0-9]{1,15}$"
+    Sunset:
+      description: 提供終了の予定日時（RFC 8594、Informational）。値は HTTP-date [N]（RS-16#35）。Deprecation の日時より前にしない（RFC 9745）[N]。
+      schema:
+        type: string
 servers:
   - url: https://{cell}.pdp.{idDomain}
     description: cell ごとの PDP façade（ADR-011 D5-3、ADR-013）。ホスト名の規則は未決（ADR-021 D21-28 の自社所有ドメイン修飾に従う）。
@@ -221,6 +299,7 @@ paths:
         AuthZEN 1.0 §9 の PDP metadata を返す [N]。提供は RECOMMENDED で、本 façade は必ず提供する（ADR-011 D5-6）[D]。
         公開しない search endpoint（subject・action）のパラメータは載せない [D]。
         負例: 返された `policy_decision_point` が取得に使った識別子と一致しない場合、PEP SDK はそのメタデータを使ってはならない（AuthZEN §9.2.3 の MUST NOT。PDP mix-up 対策）[N]。
+        v1.1（I-1、P-01）: 汎用モックは例の固定値（`https://cell-placeholder.pdp.id-domain.invalid`）を返すので、モックの URL で取得すると必ず不一致になる。これは上の MUST NOT が正しく働いた結果であり、検査を外して合わせない。汎用モックでは `11_contracts/kit/echo-proxy.js` の規則 R3（`policy_decision_point` を proxy の URL に書き換える）を前に置くのが既定の方法である（CON-11 §14.3 H11-1 (3)）。それ以外の方法としては、PEP の設定で PDP 識別子を例の値にし、その名前をモックに解決させるか、`policy_decision_point` をモックの URL に書き換える proxy（CON-11 の kit。§12 N-2）を前に置く [D]。
       x-maturity: GA
       x-authzen-section: "§9"
       parameters:
@@ -260,6 +339,7 @@ paths:
         AuthZEN 1.0 §6 の Access Evaluation [N]。評価順序は L0（PEP 内）→ G 段（façade）→ R 段（engine）で、既定拒否・deny 優先・評価不能は deny とする（ADR-011 D3-1〜D3-3、ARC-05 §4.1）[D]。
         拒否は 200 と `decision: false` で返す（AuthZEN §10.1.2）[N]。
         自社 profile の項目は `context.x-authz-profile` に置く（AuthZEN 1.0 外）[D]。
+        v1.1（I-1、P-01）: 汎用モック（Prism）は既定で応答 examples の先頭を返すので、先頭を `fully_consistent` の許可 `allowWrite` にした。§7 の格下げ検査により `fully_consistent` の許可は read・write どちらの要求にも合うため、先頭の例だけで read と write の両方の正例を確かめられる [D]。v1.0 は先頭が `at_least_as_fresh` の許可だけで、write の正例が格下げとして fail-closed になった [D]。特定の例を返させるときは `Prefer: example=<例の名前>` を付ける（Prism の機能。本番の façade は解釈しない）[D]。
       x-maturity: GA
       x-authzen-section: "§6"
       parameters:
@@ -281,11 +361,49 @@ paths:
                   subject:
                     type: core/user
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+              scopeFormActionName:
+                summary: 負例（action.name に scope の形を入れた。v1.1（I-5））
+                description: action.name に OAuth scope の形 `docs.document.read` を入れている。permission 名は `read`（型は resource.type で表す）。CON-02 `NameSegment` の pattern に反するので 400（§10.1.1）。v1.0 では受理され、本番で判定宣言（§4.2）に当たらず全件 deny_guardrail:caller_scope になっていた（13_integration-trial P-05）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  action:
+                    name: docs.document.read
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
             examples:
+              allowWrite:
+                summary: 正例（write の更新。v1.1（I-1）。応答例 allowWrite と対）
+                description: write 階層の permission `update` を fully_consistent で評価する。Txn-Token は write 以上の経路で運ばれるので `Txn-Token` ヘッダにも付ける（§4.3 (a)）。`txn` は検証済み Txn-Token の `txn` の写し（preview）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  action:
+                    name: update
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: fully_consistent
+                      txn: x1t2r3a4n5s6a7c8t9i0o1n2id
               allowRead:
                 summary: 正例（read-sensitive の閲覧。内容に保存した consistency token を渡す）
                 value:
@@ -293,14 +411,14 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   context:
                     x-authz-profile:
                       profile_version: "1.0"
@@ -315,14 +433,14 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
                     properties:
-                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+                      tid: u3nb7xk2qm5zr4ha6tc2wfe7dy
               unsupportedProfile:
                 summary: 負例（未対応の profile major）
                 description: profile_version の major を façade が理解できない。200・decision=false・reason=unsupported_profile（ADR-011 D6-1）。
@@ -331,14 +449,14 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_edit
+                    name: update
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   context:
                     x-authz-profile:
                       profile_version: "9.0"
@@ -350,14 +468,14 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_edit
+                    name: update
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   context:
                     x-authz-profile:
                       profile_version: "1.0"
@@ -371,7 +489,7 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
@@ -383,14 +501,14 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
                     name: read_clinical
                   resource:
                     type: med/patient_record
                     id: 3c8v1b5n9m2q6w0e4r7t1y5u8i
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
               subjectBindingMismatch:
                 summary: 負例（裏付け token と異なる主体。ラウンド1 是正、preview）
                 description: |
@@ -401,14 +519,14 @@ paths:
                     type: core/user
                     id: 8z1x4c7v0b3n6m9q2w5e8r1t4y
                     properties:
-                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+                      tid: u3nb7xk2qm5zr4ha6tc2wfe7dy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     id: 5k2j8h4g1f7d3s9a6p0o2i8u4y
                     properties:
-                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+                      tid: u3nb7xk2qm5zr4ha6tc2wfe7dy
                   context:
                     x-authz-profile:
                       profile_version: "1.0"
@@ -420,17 +538,29 @@ paths:
           headers:
             X-Request-ID:
               $ref: "#/components/headers/XRequestIdEcho"
-            Deprecation:
-              $ref: "#/components/headers/Deprecation"
-            Sunset:
-              $ref: "#/components/headers/Sunset"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Decision"
               examples:
+                allowWrite:
+                  summary: 正例（write の許可。v1.1（I-1）。汎用モックの既定応答として先頭に置く）
+                  description: 実効モード fully_consistent の許可。§7 の格下げ検査上、read・write どちらの要求にも合う。write の許可は consistency token を返し、PEP は資源の内容とともに保存して以後の read-sensitive の要求で渡す（ADR-010 D-14）。
+                  value:
+                    decision: true
+                    context:
+                      x-authz-profile:
+                        decision_id: a7s4d1f8g5h2j9k6l3z0x7c4vq
+                        reason: allow
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+                          token: v1.e1.01J9Z8K4M2T6WQ8R1C5N7B3X9D.Kp7wQ2
                 allow:
-                  summary: 正例（許可）
+                  summary: 正例（read-sensitive の許可。要求例 allowRead への応答）
+                  description: 実効モード at_least_as_fresh の許可。read-sensitive の要求には合うが、write（既定 fully_consistent）の要求への応答としては格下げにあたり、PEP は判定が得られないとして扱う（§7）。汎用モックでこの例を返させるには Prefer ヘッダで example=allow を指定する。
                   value:
                     decision: true
                     context:
@@ -566,6 +696,17 @@ paths:
         PEP SDK の「全て必要」は `deny_on_first_deny`、「いずれか」は `permit_on_first_permit` に固定し、一覧の後段 Check は `execute_all` を使う（ADR-011 D3-7）[D]。
         `permit_on_first_permit` を privileged 以上の操作（permission catalog の操作階層）に使った要求は、要求全体を 400 で拒否する（ADR-011 D3-7 の実施方法として本契約が定める）[D]。
         応答の上位 `decision` は返さない（AuthZEN の RECOMMENDED）[N]。上位の `context.x-authz-profile.batch_decision_id` は一覧 1 回の判定記録の主キーに使う（ADR-025 D25-18）[D]。
+        v1.1（I-1、P-01）: 応答の `evaluations` は要求の `evaluations` と同じ件数・同じ順序で返す（AuthZEN §7.2）[N]。PEP は件数の不一致を「判定が得られない」として扱う [D]。汎用モックは要求の件数を見ずに静的な例を返すので、要求件数ごとに対になる例を置いた（下表）。モックでは `Prefer: example=<応答例>` で件数の合う例を選ぶか、要求件数に合わせて応答を組み直す echo proxy（CON-11 の kit。§12 N-2）を前に置く。件数が 4 以上の正例は例ではなく proxy で作る。PEP の件数検査を外して合わせない [D]。
+
+        | 要求件数 | 要求例 | 応答例 | 内容 |
+        |---|---|---|---|
+        | 1 | `postCheckOne` | `oneItem` | 許可 1 件 |
+        | 2 | `postCheck` | `mixed`（先頭。既定） | 許可 1 件、資源なし 1 件 |
+        | 3 | `postCheckThree` | `threeItems` | 許可 2 件、関係なし 1 件 |
+
+        v1.1 の同期（CON-11 §14.3 H11-1 (2)）: 対の例がない件数（4 件以上、または例と異なる組合せ）を汎用モックで確かめるときは、`11_contracts/kit/echo-proxy.js` の規則 R5（応答の件数を要求の件数に合わせる）をモックの前に置く。件数の連動は AuthZEN §7.2 による契約の振舞いであり、モックの例の件数ではない [D]。
+
+        一覧の後段 Check は `execute_all` の fully_consistent で呼ぶので、許可要素の実効モードは例でも fully_consistent にした（v1.0 は minimize_latency で、格下げとして fail-closed になった）[D]。
       x-maturity: GA
       x-authzen-section: "§7"
       parameters:
@@ -590,18 +731,20 @@ paths:
                   evaluations: []
             examples:
               postCheck:
-                summary: 正例（一覧の後段 Check。上位に共通の subject と context を置く）
+                summary: 正例（一覧の後段 Check。要求件数 2。上位に共通の subject と context を置く。応答例 mixed と対）
                 value:
                   subject:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   context:
                     x-authz-profile:
                       profile_version: "1.0"
+                      consistency:
+                        mode: fully_consistent
                   options:
                     evaluations_semantic: execute_all
                   evaluations:
@@ -609,12 +752,68 @@ paths:
                         type: docs/document
                         id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
                         properties:
-                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                     - resource:
                         type: docs/document
                         id: 1a3s5d7f9g2h4j6k8l0z2x4c6v
                         properties:
-                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+              postCheckOne:
+                summary: 正例（要求件数 1。v1.1（I-1）。応答例 oneItem と対）
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  action:
+                    name: read
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: fully_consistent
+                  options:
+                    evaluations_semantic: execute_all
+                  evaluations:
+                    - resource:
+                        type: docs/document
+                        id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                        properties:
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+              postCheckThree:
+                summary: 正例（要求件数 3。v1.1（I-1）。応答例 threeItems と対）
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  action:
+                    name: read
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: fully_consistent
+                  options:
+                    evaluations_semantic: execute_all
+                  evaluations:
+                    - resource:
+                        type: docs/document
+                        id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                        properties:
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    - resource:
+                        type: docs/document
+                        id: 1a3s5d7f9g2h4j6k8l0z2x4c6v
+                        properties:
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    - resource:
+                        type: docs/document
+                        id: 6h8j0k2l4z6x8c0v2b4n6m8q0w
+                        properties:
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
               permitAnyOnPrivileged:
                 summary: 負例（privileged 操作での permit_on_first_permit）
                 description: tenant の設定変更（privileged）に「いずれか」の意味論を使っている。要求全体を 400 で拒否する（ADR-011 D3-7）。
@@ -623,35 +822,31 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   options:
                     evaluations_semantic: permit_on_first_permit
                   evaluations:
                     - action:
-                        name: can_change_security_settings
+                        name: manage_idp
                       resource:
                         type: core/tenant
-                        id: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                        id: t5wq2hzr7nmc4ka3vd6pxe2bfy
                         properties:
-                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                          tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
       responses:
         "200":
           description: 要素ごとの判定（要求の順序どおり）。
           headers:
             X-Request-ID:
               $ref: "#/components/headers/XRequestIdEcho"
-            Deprecation:
-              $ref: "#/components/headers/Deprecation"
-            Sunset:
-              $ref: "#/components/headers/Sunset"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EvaluationsResponse"
               examples:
                 mixed:
-                  summary: 正例と負例の混在（2 件目は資源が存在しない）
-                  description: 2 件目は AuthZEN §7.2.1 の形で context.error を返し decision=false。本 profile は reason=deny_indeterminate を併記する。PEP は「存在しない」と「権限がない」を利用者に同じ応答で返す（ADR-025 D25-16）。
+                  summary: 正例と負例の混在（要求件数 2。要求例 postCheck への応答。2 件目は資源が存在しない）
+                  description: 2 件目は AuthZEN §7.2.1 の形で context.error を返し decision=false。本 profile は reason=deny_indeterminate を併記する。PEP は「存在しない」と「権限がない」を利用者に同じ応答で返す（ADR-025 D25-16）。v1.1（I-1）で実効モードを fully_consistent に改めた（要求は fully_consistent。minimize_latency は格下げにあたる）。
                   value:
                     context:
                       x-authz-profile:
@@ -666,7 +861,7 @@ paths:
                               model_revision: docs@01JB7X4K2Q
                               guardrail_catalog_version: g@2026.10.1
                             consistency:
-                              mode: minimize_latency
+                              mode: fully_consistent
                       - decision: false
                         context:
                           error:
@@ -679,10 +874,65 @@ paths:
                               model_revision: docs@01JB7X4K2Q
                               guardrail_catalog_version: g@2026.10.1
                             consistency:
-                              mode: minimize_latency
+                              mode: fully_consistent
+                oneItem:
+                  summary: 正例（要求件数 1。v1.1（I-1）。要求例 postCheckOne への応答）
+                  value:
+                    context:
+                      x-authz-profile:
+                        batch_decision_id: e2r5t8y1u4i7o0p3a6s9d2f5gj
+                    evaluations:
+                      - decision: true
+                        context:
+                          x-authz-profile:
+                            decision_id: f3g6h9j2k5l8z1x4c7v0b3n6mr
+                            reason: allow
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: fully_consistent
+                threeItems:
+                  summary: 正例と負例の混在（要求件数 3。v1.1（I-1）。要求例 postCheckThree への応答）
+                  description: 1・3 件目は許可、2 件目は関係がないため拒否（deny_no_relation）。順序は要求どおり。
+                  value:
+                    context:
+                      x-authz-profile:
+                        batch_decision_id: u6i9o2p5a8s1d4f7g0h3j6k9lw
+                    evaluations:
+                      - decision: true
+                        context:
+                          x-authz-profile:
+                            decision_id: v1b4n7m0q3w6e9r2t5y8u1i4oe
+                            reason: allow
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: fully_consistent
+                      - decision: false
+                        context:
+                          x-authz-profile:
+                            decision_id: g2h5j8k1l4z7x0c3v6b9n2m5qr
+                            reason: deny_no_relation
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: fully_consistent
+                      - decision: true
+                        context:
+                          x-authz-profile:
+                            decision_id: i8o1p4a7s0d3f6g9h2j5k8l1zt
+                            reason: allow
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: fully_consistent
                 singleCompat:
                   summary: 正例（evaluations が無いか空の要求への応答。AuthZEN §7.1 の後方互換）
-                  description: §6.2 と同じ Decision の形で返す。PEP SDK はこの形を受けない（SDK は evaluations 1 件以上でだけ呼ぶ）。
+                  description: §6.2 と同じ Decision の形で返す。PEP SDK はこの形を受けない（SDK は evaluations 1 件以上でだけ呼ぶ）。v1.1（I-1）で実効モードを fully_consistent に改めた。
                   value:
                     decision: true
                     context:
@@ -693,7 +943,7 @@ paths:
                           model_revision: docs@01JB7X4K2Q
                           guardrail_catalog_version: g@2026.10.1
                         consistency:
-                          mode: minimize_latency
+                          mode: fully_consistent
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -713,11 +963,13 @@ paths:
       summary: Resource Search（AuthZEN 1.0 §8.5。preview・SDK 一覧ヘルパ内部専用）
       description: |
         AuthZEN 1.0 §8.5 の Resource Search [N]。`resource` は `type` だけを持ち、`id` は SHOULD で省略され、含まれていても MUST で無視される [N]。
-        **呼出し制限**: SDK の一覧ヘルパ以外の呼出しは CI 検査と façade の受付制御で拒否する（ADR-025 D25-03）[D]。受付制御の方式（workload ID の許可リスト等）は未決（ADR-025）で、許可されない呼出し元には 403 を返す [D]。
+        **呼出し制限**: SDK の一覧ヘルパ以外の呼出しは CI 検査と façade の受付制御で拒否する（ADR-025 D25-03）[D]。v1.1（I-6）の同期（INT-02 §9.2 HO11-3 (a)）: PEP 配置 PP-2（契約適合の自前実装。SDK を使わない）は本 operation を呼べない。一覧の候補生成は INT-02 §3.8 の方式（L2・L3）による。façade は mTLS の workload ID で呼出し元を認証するだけで、同じ workload の中の SDK とアプリコードを区別できないので、PP-2 の呼出しの禁止は façade では強制できず、INT-02 §3.8.3 の NP09-4a（アプリコードの静的検査）・NP09-4b（申告）・NP09-4c（監査の照合）で確かめる [D]。汎用モックは本 operation に 200 を返すので、モックで呼べたことは呼んでよいことを意味しない（CON-11 の汎用モックの制約）[D]。受付制御の方式（workload ID の許可リスト等）は未決（ADR-025）で、許可されない呼出し元には 403 を返す [D]。
         **結果は認可の根拠にならない**: 返す前に各資源を evaluations（`execute_all`）で後段 Check する（ADR-025 D25-04、ADR-022 D-2-2）[D]。
         **件数**: `page.total` は返さない。`page.count` はこの応答の件数だけを表す（ADR-025 D25-13）[D]。
         **打切り**: engine の列挙が上限・制限時間に達した場合は `context.x-authz-profile.completeness` に `incomplete` と理由を返し、「完全」と返さない（ADR-025 D25-07）[D]。
         **ページング**: 原子的スナップショットを保証しない（重複・欠落があり得る）[N]。続きのページは最初の要求と同一のパラメータで要求する（MUST）[N]。`page.token` は主体・テナント・条件・model revision に束縛される（ADR-025 D25-15）[D]。
+        **結果の型（v1.1（P-20））**: façade は `results` の各要素の `type` を要求の `resource.type` と同じ値にする。AuthZEN §8.5.1 の要求は `resource.type` を必須とする [N]。返す要素の型が要求の型と一致することは本 profile が課す契約である [D]。一覧ヘルパは `type` の異なる要素を候補から除き、契約違反として記録する。除いた後の候補だけを後段 Check にかける。違反を理由に一覧全体を失敗させるかは一覧ヘルパの fail-mode（DL-19）に従う [D]。
+        **汎用モックの制約（v1.1（P-20））**: 汎用モック（Prism）は要求の `resource.type` を見ずに静的な例（`docs/document`）を返す。自ドメインの型（例 `expense/report`）で検索した結果に `docs/document` が返るのはモックの制約であり、契約の振舞いではない。モックで自ドメインの型の正例を確かめるときは、`results[].type` を要求の型に書き換える echo proxy（CON-11 の kit。§12 N-2）を前に置く。型の検査を外して合わせない [D]。応答例 `truncated`・`lastPage` は要求例 `firstPage`（`docs/document`）への応答である [D]。
       x-maturity: preview
       x-authzen-section: "§8.5"
       x-callers: PEP SDK の一覧ヘルパ（ADR-011 D5-2）だけ
@@ -741,13 +993,13 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   page:
                     limit: 5000
             examples:
@@ -758,13 +1010,13 @@ paths:
                     type: core/user
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   context:
                     x-authz-profile:
                       profile_version: "1.0"
@@ -778,13 +1030,13 @@ paths:
                     type: core/user
                     id: 8z6x4c2v0b9n7m5q3w1e8r6t4y
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   action:
-                    name: can_read
+                    name: read
                   resource:
                     type: docs/document
                     properties:
-                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
                   page:
                     token: v1.c.Zm9yZWlnbi1jdXJzb3ItYm91bmQtdG8tYW5vdGhlcg
       responses:
@@ -793,17 +1045,13 @@ paths:
           headers:
             X-Request-ID:
               $ref: "#/components/headers/XRequestIdEcho"
-            Deprecation:
-              $ref: "#/components/headers/Deprecation"
-            Sunset:
-              $ref: "#/components/headers/Sunset"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceSearchResponse"
               examples:
                 truncated:
-                  summary: 正例（打切りあり）
+                  summary: 正例（打切りあり。要求例 firstPage への応答）
                   description: engine の列挙が上限に達したため incomplete を返す。total は返さない。
                   value:
                     results:
@@ -865,6 +1113,7 @@ components:
       description: |
         PEP が要求ごとに採番する不透明値（AuthZEN §10.1.3。要求 ID の付与は MAY、ヘッダ名は RECOMMENDED）[N]。
         自社 profile では PEP SDK・契約適合実装は必ず付ける（ADR-011 D5-5、ARC-06 §3.6）[D]。AuthZEN 準拠の受理範囲を保つため、façade は欠けた要求を 400 にはしない [D]。
+        v1.1（I-1）: 例の値は応答ヘッダ `components/headers/XRequestIdEcho` の例と同じにした。実装では要求ごとに新しい値を採番し、例の値を固定で使わない [D]。
       schema:
         type: string
         minLength: 1
@@ -896,18 +1145,15 @@ components:
         description: JWS compact serialization。最大長は ADR-015 D15-40 の初期案（内部 JWT 1 個 6,144 byte）に揃えた暫定値 [D]。
   headers:
     XRequestIdEcho:
-      description: 要求に X-Request-ID があれば、PDP は同じ値を応答に含める（AuthZEN §10.1.3 の MUST）[N]。engine が返さない場合も façade が補う（ADR-011 D5-5、OpenFGA は返さない RS-07#68）[D]。PEP SDK は不一致を「判定が得られない」として扱う [D]。
+      description: |
+        要求に X-Request-ID があれば、PDP は同じ値を応答に含める（AuthZEN §10.1.3 の MUST）[N]。engine が返さない場合も façade が補う（ADR-011 D5-5、OpenFGA は返さない RS-07#68）[D]。PEP SDK は不一致を「判定が得られない」として扱う [D]。
+        v1.1（I-1）: 本ヘッダの値は「要求の X-Request-ID の写し」であり、固定値ではない。例の値は、要求側 `components/parameters/XRequestId` の例と同じ値にした（echo を前提とした例）[D]。v1.0 では例がなく、汎用モック（Prism）が `string` を返したため、echo を検査する PEP が正例でも fail-closed になった（13_integration-trial P-01）[D]。
+        汎用モックは要求の値を写さず例の値を返す。モックで正例を確かめるときは、(a) 要求に例と同じ値 `r-01JB9Q2W3E4R5T6Y7U8I9O0PAS` を付けるか、(b) 要求の値を写す echo proxy（`11_contracts/kit/echo-proxy.js` の規則 R1。CON-11 §14.3 H11-1 (1)、§12 N-2）をモックの前に置く。PEP の echo 検査を外して合わせない [D]。
       schema:
         type: string
-    Deprecation:
-      description: 非推奨の告知（RFC 9745、Proposed Standard）。値は RFC 9651 §3.3.7 の Date（`@` に続く Unix 時刻）[N]（RS-16#34）。
-      schema:
-        type: string
-        pattern: "^@-?[0-9]{1,15}$"
-    Sunset:
-      description: 提供終了の予定日時（RFC 8594、Informational）。値は HTTP-date [N]（RS-16#35）。Deprecation の日時より前にしない（RFC 9745）[N]。
-      schema:
-        type: string
+        minLength: 1
+        maxLength: 128
+      example: r-01JB9Q2W3E4R5T6Y7U8I9O0PAS
     RetryAfter:
       description: 再試行までの待ち時間（RFC 9110 §10.2.3）。429・503 で返す [N]。
       schema:
@@ -982,12 +1228,8 @@ components:
       description: AuthZEN §10.1.2 の「エラーメッセージ文字列」[N]。利用側は文字列一致に依存しない（ADR-022 D-3-2）。主体・テナント・資源の識別子を含めない [D]。
       maxLength: 512
     TenantId:
-      type: string
-      description: テナント識別子（`tid`。ADR-021 D21-12 で払い出す不透明値）。受信側の形式は CON-02 `TenantId`（`OpaqueId`、印字可能 ASCII 1〜64 文字）に揃える。払い出しの符号化は DL-71 で確定（未決（ADR-021 D21-09））。
-      minLength: 1
-      maxLength: 64
-      pattern: "^[\\x21-\\x7E]{1,64}$"
-      examples: [7hd2k9q1w8e3r6t0y5u4i2o1pa]
+      description: テナント識別子（`tid`。ADR-021 D21-12 で払い出す不透明値）。受信側の形式は CON-02 `TenantId`（`OpaqueId`、印字可能 ASCII 1〜64 文字）。払い出しの符号化は DL-71 で確定（未決（ADR-021 D21-09））。 v1.1（I-7）の同期（CON-02 HO-I7-1）で、pattern の写しをやめて CON-02 への参照にし、例の tid を払い出し規則（CON-02 IssuedTenantId）に合う値に替えた（v1.0 の例 `7hd2k9q1w8e3r6t0y5u4i2o1pa` は base32 の範囲外の 0・1・8・9 を含んでいた）。外部参照を解けない道具には 1 ファイル化した版を渡す（CON-11 kit/README.md §2.3）。
+      $ref: "./schemas/common.schema.json#/$defs/TenantId"
     EntityType:
       type: string
       description: |
@@ -1027,7 +1269,9 @@ components:
           x-on-missing: deny_indeterminate
     Subject:
       type: object
-      description: AuthZEN 1.0 §5.1 の Subject。`type`・`id` は REQUIRED、`properties` は OPTIONAL [N]。
+      description: |
+        AuthZEN 1.0 §5.1 の Subject。`type`・`id` は REQUIRED、`properties` は OPTIONAL [N]。
+        v1.1（I-5、P-06 の CON-03 側）: `type` はモデルの型名（人間の利用者は `core/user`、workload は `core/workload`）であり、token の主体類型（`ptype` の `human` など）ではない。類型は `properties.principal_type` に入れる。`ptype` から `type` への写像の正本は CON-02 の `x-subject-type-map`（v1.1 の同期で設置。human→core/user、workload→core/workload、service_account→core/client（暫定）、ai_agent は未決で PEP が拒否）である（§12 N-5）[D]。監査イベント（CON-08）の `subject.type` は `ptype` の値（`human` など）を書く別の欄で、本欄の `core/user` などと値域が違う。片方の値をもう片方に入れない（CON-08 x-handoff-v1.1 の 4）[D]。
       required: [type, id]
       properties:
         type:
@@ -1066,13 +1310,20 @@ components:
           $ref: "#/components/schemas/ResourceProperties"
     Action:
       type: object
-      description: AuthZEN 1.0 §5.3 の Action。`name` は REQUIRED、`properties` は OPTIONAL [N]。`name` は型の内側で一意な permission 名（ADR-021 D21-26、permission catalog は DL-26）[D]。
+      description: |
+        AuthZEN 1.0 §5.3 の Action。`name` は REQUIRED、`properties` は OPTIONAL [N]。`name` は型の内側で一意な permission 名（ADR-021 D21-26、permission catalog は DL-26）[D]。
+        v1.1（I-5、P-05）: `name` には、`resource.type` の型にモデル（CAM）で定義した**動詞の permission 名そのもの**（例 `read`、`update`、`share`、`read_clinical`、`manage_idp`）を入れる。ARC-05 X-2（permission は動詞）と CON-02 `ActionName` に揃えた [D]。次の書き方は使わない [D]。
+          - OAuth scope の形（`docs.document.read`）: 第三者に公開する scope（CON-02 `ExternalScope`、ADR-021 D21-28）であり permission 名ではない。型は `resource.type` で表す。区切り文字 `.`・`:`・`/` を含む値はスキーマ違反（400）になる。
+          - `can_` を前置した名前（`can_read`）: v1.0 の本書の例が使っていた書き方で、モデルに同名の permission がなければ判定宣言（§4.2）に当たらず、本番で全件 `deny_guardrail:caller_scope` になる。形式上は pattern に合うのでスキーマでは検出できない。登録済み permission との照合は判定宣言の登録時の lint と契約試験（CON-11）で行う（§12 N-3）。
+        pattern は CON-02 `NameSegment`（ASCII 小文字・数字・下線、先頭は英字、末尾は英数字、3〜64 文字）と同じである。v1.0 は長さだけを制約していたので、本変更は制約を強める変更にあたる。v1 凍結（DEC-8）前の変更なので `profile_version` の major は上げない（§2 の互換規則は凍結後に適用）[D]。
       required: [name]
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 128
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9_]{1,62}[a-z0-9]$"
+          examples: [read, update, share, read_clinical]
         properties:
           type: object
     RequestContext:
@@ -1395,6 +1646,7 @@ components:
     ResourceSearchResponse:
       type: object
       description: AuthZEN 1.0 §8.3 の Search 応答（`results` は REQUIRED、`page`・`context` は OPTIONAL）[N]。
+      x-constraint: "v1.1（P-20）: `results[].type` は要求の `resource.type` と等しい。要求に依存する規則なので JSON Schema では表せず、契約試験キット（DL-80、CON-11）と一覧ヘルパで検査する [D]。"
       required: [results]
       properties:
         results:

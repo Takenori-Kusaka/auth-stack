@@ -1,0 +1,93 @@
+{
+  "id": "CV-005",
+  "title": "未知の kid（取り直しで見つかる場合と見つからない場合）",
+  "source": [
+    "ADR-022 D-6-2 (5)",
+    "ARC-02 NV-06"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を、SUT の AUTH_OIDC_DISCOVERY_URL が指す 1 つの origin で配る",
+    "token を自前の鍵で鋳造できる（ES256、kid 付き）。header と claim を個別に上書きできる",
+    "スタブへの取得（discovery・JWKS）の記録を残す（stub_access_log）",
+    "JWKS に鍵を後から追加できる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-005a",
+      "description": "新しい鍵で署名した token を先に提示し、提示の直前に JWKS へ鍵を載せる。SUT は JWKS を取り直して受理する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "keys.publish_after",
+            "key": "A.next_unpublished",
+            "when": "before_present"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.next_unpublished"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "response_profile": "success",
+        "side_effects": {
+          "fetches": {
+            "issuer_A.jwks": 2
+          }
+        },
+        "notes": "fetches の値は上限。初回取得と取り直し 1 回"
+      }
+    },
+    {
+      "case_id": "CV-005b",
+      "description": "JWKS に一度も載らない kid",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.unknown_never_published"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "stub_access_log"
+  ],
+  "strength": "OIDC Core §10.1.1（鍵の rotation と JWKS の取り直し。ADR-022 D-10-1）。取り直しの頻度の上限は自社規範",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

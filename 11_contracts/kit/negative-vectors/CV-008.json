@@ -1,0 +1,121 @@
+{
+  "id": "CV-008",
+  "title": "cross-tenant（他テナントの実在 ID と存在しない ID）",
+  "source": [
+    "ADR-022 D-6-2 (8)",
+    "ARC-02 NV-27",
+    "ADR-024 D24-07"
+  ],
+  "roles": [
+    {
+      "role": "CR-1"
+    }
+  ],
+  "status": "required",
+  "stub_requirements": [
+    "fixture adapter（CON-11 §6.4）で 2 テナントに資源を作れる",
+    "PDP の代わりのスタブは G 段（tid の不一致は常に deny）を持つ（CON-11 §4.4）"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-008a",
+      "description": "tenant 1 の token で tenant 2 に実在する資源を要求",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t2.existing}}",
+          "route_tenant": "{{tenant.2}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "tenant_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-008b",
+      "description": "tenant 1 の token で存在しない資源 ID を要求",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.absent}}",
+          "route_tenant": "{{tenant.2}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "tenant_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-008c",
+      "description": "tenant 1 の token で、経路のテナントは 1 だが資源の正本のテナントが 2（経路と資源の不一致）",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t2.existing}}",
+          "route_tenant": "{{tenant.1}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "tenant_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit"
+  ],
+  "strength": "N: OWASP API1:2023（should）。応答の同一性は自社規範（ARC-06 §3.10、ADR-012 D12-39。既定コードは K06-4 で未決）",
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
+  "deprecated": null
+}

@@ -1,9 +1,49 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json",
-  "$comment": "文書ID: CON-02 / DL-71 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15 | 名称: 共通スキーマ（全契約が $ref で共有する識別子・tenant context・相関 ID・判定 profile・エラー形式・版情報の定義） | 対応要求: R-109, R-161（deliverables.md の DL-71 行）。関連: R-037, R-047, R-105, R-118, R-128, R-209, R-250 / G-067, G-069, G-086, G-120, G-121 | 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-71, §2.3）, 05_adr/ADR-021（D21-03, D21-09〜14c, D21-22〜28, D21-34〜39）, 05_adr/ADR-022（D-1, D-2, D-5, D-8, D-9）, 05_adr/ADR-011（D3-3, D5-5, D6-1〜D6-4, D8-2）, 05_adr/ADR-009（D09-28, D09-29）, 05_adr/ADR-016（D16-02, §2.1 表）, 04_architecture/reference-architecture-v2.md（X08）, 04_architecture/authorization-model.md（X-1, X-2, §9.1, §9.2）, 04_architecture/claims-catalog.md（§2.1, §3.6, §3.7, §4.2）, 02_requirements/operation-risk-tiers-assurance.md（5 階層）, research/standards-status.md（SS-A47, SS-C13, SS-D02, SS-I17） | 使い方: 本文書のルートは検証制約を持たず、各契約（CON-03〜CON-09）が $defs を $ref で参照する。$id の host は識別子専用ドメイン <id-domain> が未決（ADR-021 K21-6）のため RFC 2606 の予約 TLD .invalid で仮置きし、K21-6 の決裁後に置き換える。互換規則: 本スキーマは SemVer（ADR-016 N-8）。非互換変更では $id の major（/v1/）を上げる（ADR-016 §2.1 表の DL-71 行）。拡張: x-negative-examples は本書固有の注釈キーワード（JSON Schema 2020-12 では未知キーワードは注釈として扱われ検証に影響しない）。各 $defs の examples は正例、x-negative-examples は負例とその拒否理由。負例のうち理由に「スキーマ上は受理」「CI で拒否」と書いたものは、受信側スキーマでは検出できず、払い出し側 CI（ADR-021 D21-42）または契約試験（DL-80）で拒否するものである（受信側を緩く保つため。OpaqueId 参照）。それ以外の負例は本スキーマの検証で拒否される（起草時に jsonschema 4.26.0 の Draft202012Validator で正例 0 件不合格・負例の判定を確認）。作成方法: AI エージェント（Claude）が起草。作成者以外のエージェントによる独立レビューを 2026-10-15 に実施し、指摘を本書に反映した（記録: 11_contracts/review-notes/CON-02.md）。人による照合は未実施（CONVENTIONS §8）。根拠の書式: [N] 規範原典、[D] 設計推論、RS-xx#n は research の検証済み項目。research 未収録で本書起草時（2026-10-15）に原典を取得したもの: RFC 9457 §3.1、AuthZEN 1.0 §5.1〜§5.5 と §10.1.3、W3C Trace Context Level 1 §3.2.2。 レビュー時（2026-10-15）に同じ 3 原典を再取得し、§3.1〜§3.2、§5.1〜§5.5・§10.1.3、§3.2.2 の文言と本書の写しを照合した。",
+  "$comment": "文書ID: CON-02 / DL-71 / 版: 0.3.0 / 状態: draft / 最終更新: 2026-10-15 | 改版: v0.3.0（v1.1 の同期。v1.1（I-5）・v1.1（I-9）の申し送りの反映）で、ルートに x-subject-type-map（ptype → AuthZEN Subject.type の写像の正本。CON-03 §12 N-5、CON-08 x-handoff-v1.1 の 4、INT-02 HO11-2）を、$defs に JobRunId（CON-05 §9 HO-02）を加え、ProblemCode の採用範囲に CON-05 の受付記録の登録のコードを記した。ActionName が CON-03 Action.name と同じ NameSegment であることを確かめた（CON-03 §12 N-5。CON-03 は凍結前に本書の ActionName を $ref で参照できる）。追加のみのため minor [D]。v0.2.0（v1.1（I-7）。13_integration-trial/report.md の P-09「tid 形式と tier 表記が契約ごとに違う」への対応）で、tid と操作階層（tier）の表記の正本を本書に一本化した。追加: $defs の TenantIdSegment・IssuedTenantId・OperationTierClass、ルートの x-notation-canon（表記の正本と各契約の参照先の表）と x-handover-v1.1（他文書への申し送り（v1.1））。既存の $defs の形は変えていない（追加のみのため minor。ADR-016 N-8）[D]。凍結区分キーの読替え（I-7 の前半）は本書の担当外で、ContractStatus は変えていない。v1.1 の改訂は AI エージェント（Claude）が行い、独立レビュー・人による照合は未実施（CONVENTIONS §8） | 名称: 共通スキーマ（全契約が $ref で共有する識別子・tenant context・相関 ID・判定 profile・エラー形式・版情報の定義） | 対応要求: R-109, R-161（deliverables.md の DL-71 行）。関連: R-037, R-047, R-105, R-118, R-128, R-209, R-250 / G-067, G-069, G-086, G-120, G-121 | 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-71, §2.3）, 05_adr/ADR-021（D21-03, D21-09〜14c, D21-22〜28, D21-34〜39）, 05_adr/ADR-022（D-1, D-2, D-5, D-8, D-9）, 05_adr/ADR-011（D3-3, D5-5, D6-1〜D6-4, D8-2）, 05_adr/ADR-009（D09-28, D09-29）, 05_adr/ADR-016（D16-02, §2.1 表）, 04_architecture/reference-architecture-v2.md（X08）, 04_architecture/authorization-model.md（X-1, X-2, §9.1, §9.2）, 04_architecture/claims-catalog.md（§2.1, §3.6, §3.7, §4.2）, 02_requirements/operation-risk-tiers-assurance.md（5 階層）, research/standards-status.md（SS-A47, SS-C13, SS-D02, SS-I17） | 使い方: 本文書のルートは検証制約を持たず、各契約（CON-03〜CON-09）が $defs を $ref で参照する。$id の host は識別子専用ドメイン <id-domain> が未決（ADR-021 K21-6）のため RFC 2606 の予約 TLD .invalid で仮置きし、K21-6 の決裁後に置き換える。互換規則: 本スキーマは SemVer（ADR-016 N-8）。非互換変更では $id の major（/v1/）を上げる（ADR-016 §2.1 表の DL-71 行）。拡張: x-negative-examples は本書固有の注釈キーワード（JSON Schema 2020-12 では未知キーワードは注釈として扱われ検証に影響しない）。各 $defs の examples は正例、x-negative-examples は負例とその拒否理由。負例のうち理由に「スキーマ上は受理」「CI で拒否」と書いたものは、受信側スキーマでは検出できず、払い出し側 CI（ADR-021 D21-42）または契約試験（DL-80）で拒否するものである（受信側を緩く保つため。OpaqueId 参照）。それ以外の負例は本スキーマの検証で拒否される（起草時に jsonschema 4.26.0 の Draft202012Validator で正例 0 件不合格・負例の判定を確認）。作成方法: AI エージェント（Claude）が起草。作成者以外のエージェントによる独立レビューを 2026-10-15 に実施し、指摘を本書に反映した（記録: 11_contracts/review-notes/CON-02.md）。人による照合は未実施（CONVENTIONS §8）。根拠の書式: [N] 規範原典、[D] 設計推論、RS-xx#n は research の検証済み項目。research 未収録で本書起草時（2026-10-15）に原典を取得したもの: RFC 9457 §3.1、AuthZEN 1.0 §5.1〜§5.5 と §10.1.3、W3C Trace Context Level 1 §3.2.2。 レビュー時（2026-10-15）に同じ 3 原典を再取得し、§3.1〜§3.2、§5.1〜§5.5・§10.1.3、§3.2.2 の文言と本書の写しを照合した。",
   "title": "共通スキーマ（CON-02）",
-  "description": "全連携契約が共有する定義。主体・テナント・リソース識別子（ADR-021）、tenant context、decision_id、txn、trace 参照、model/policy revision、consistency token、エラー形式（RFC 9457 を採用）、版情報。",
+  "description": "全連携契約が共有する定義。主体・テナント・リソース識別子（ADR-021）、tenant context、decision_id、txn、trace 参照、model/policy revision、consistency token、エラー形式（RFC 9457 を採用）、版情報。v1.1（I-7）: tid と操作階層（tier）の表記の正本（x-notation-canon）。",
+  "x-notation-canon": {
+    "$comment": "v1.1（I-7）。tid と操作階層（tier）の表記の正本。13_integration-trial/report.md の P-09 では、tid の受信側 pattern が CON-02・CON-03（印字可能 ASCII 1〜64 文字）と CON-04（英数字・_・- 1〜64 文字）で異なり、CON-03 の例の tid（7hd2k9q1w8e3r6t0y5u4i2o1pa）が払い出し規則（IssuedOpaqueId）に合わず、tier が CON-02・CON-06（read-sensitive、privileged/T など副区分付き）、CON-08（read-sensitive、副区分なし）、CON-04（read_sensitive・break_glass と下線、副区分なし）の 3 通りに分かれていた [D]。CON-03 の PepPdpProfileRequest.operation_tier（CON-02 OperationTier）は「permission に登録された階層」を registry（CON-04）から引くため、CON-04 の表記が違うと facade が写像を持つ必要があった [D]。以後、各契約は値の形をここに挙げた $defs への参照で表し、pattern・enum を写さない。参照の方法は、OpenAPI・AsyncAPI では相対パスの $ref（例: ./schemas/common.schema.json#/$defs/OperationTier）、JSON Schema では $id の URL による $ref（CON-13 と同じ）とする。モック・SDK 生成で外部参照を解けない道具には、redocly bundle 等で 1 ファイルにまとめた配布物を渡す（CON-11 への申し送り）[D]。",
+    "tid": {
+      "names": {
+        "claim_and_property": "tid（token の claim、Txn-Token の tctx.tid、AuthZEN の subject.properties.tid・resource.properties.tid、イベント・監査の項目。統合・分割の事象は source_tid・target_tid）",
+        "path_parameter": "tenant_id（URL path の変数名。値は tid と同一の文字列で、変換・正規化・大小同一視をしない）"
+      },
+      "forms": [
+        {"def": "#/$defs/TenantId", "use": "受信側の検証（既定）。印字可能 ASCII 1〜64 文字。解析しない", "used_by": "CON-03 subject/resource.properties.tid、CON-08 tid、CON-12・CON-13 の tid・source_tid・target_tid・merged_into、CON-14 の tenant_id 欄、TenantContext・FederatedIdentityRef"},
+        {"def": "#/$defs/TenantIdSegment", "use": "URL path の変数、relationship store の object ID として書く位置。英数字で始まり英数字・_・- の 1〜64 文字。TenantId の部分集合で、IssuedTenantId の全値を含む", "used_by": "CON-04 の path tenant_id・ModelPin.tenant_id（v1.1 で $ref 済み）"},
+        {"def": "#/$defs/IssuedTenantId", "use": "払い出し側（基盤）の CI、token 発行側の検証、契約の例・試験ベクタの値。符号化 2 候補（IssuedOpaqueId）", "used_by": "CON-06 の tid（発行側 profile）、全契約の examples・x-negative-examples・CON-11 のベクタ"}
+      ],
+      "invariant": "IssuedTenantId ⊂ TenantIdSegment ⊂ TenantId。基盤が払い出す tid はどの位置でも受理され、位置によって受理・拒否が分かれる値は払い出されない [D]。"
+    },
+    "tier": {
+      "names": {
+        "property": "tier（CON-04 の permission 定義・shadow の層、CON-06 の tctx.tier、CON-08 の tier）。CON-03 の要求項目名 operation_tier は v1.0 のまま（名前の変更は破壊的変更のため本改訂では行わない）"
+      },
+      "forms": [
+        {"def": "#/$defs/OperationTier", "use": "個々の操作・permission の階層（副区分付き）。値: public / read-sensitive / write / privileged/T / privileged/P / break-glass/B / break-glass/P", "used_by": "CON-03 operation_tier、CON-04 CamPermission.tier（v1.1 で $ref 済み）、CON-05 の tctx.tier の例、CON-06 tctx.tier（public を除く部分集合）"},
+        {"def": "#/$defs/OperationTierClass", "use": "集計・抽出の単位（5 分類、副区分なし）。値: public / read-sensitive / write / privileged / break-glass。OperationTier から先頭の / までを取ったもの", "used_by": "CON-08 tier、CON-04 の shadow の sampling のキーと ShadowStratum.tier（v1.1 で $ref 済み）"}
+      ],
+      "rules": [
+        "語の区切りはハイフン（read-sensitive、break-glass）。下線（read_sensitive、break_glass）・大文字・略記は使わない [D]。",
+        "副区分は / の後に T（1 テナント内）・P（基盤・テナント横断）・B（テナント内の業務データへの例外アクセス）を付ける。privileged と break-glass は、判定・登録の位置では副区分を必ず付ける（OperationTier）。集計の位置では付けない（OperationTierClass）[D]。",
+        "JSON のオブジェクトのキーに階層を使う場合も同じ表記にする（例: sampling の read-sensitive）[D]。"
+      ]
+    }
+  },
+  "x-subject-type-map": {"$comment": "v1.1 の同期（I-5。CON-03 §12 N-5、CON-08 x-handoff-v1.1 の 4、INT-02 §9.2 HO11-2、INT-03 §16.4 HO-V11-6）。token の主体種別 ptype（CON-06 principalType）から AuthZEN の Subject.type（CON-03 Subject.type、本書 AuthzenSubject.type）への写像の正本である。v1.0 では写像が CON-06 の $comment（「変換表なしで写す」）・CON-03 の例・CON-08・INT-02 §3.7.2・CON-16 §2.5 に分かれ、値も食い違っていた（模擬連携検証 13_integration-trial/report.md の P-06。AI による模擬であり実在の連携チームの検証ではない）[D]。他の文書の表はすべて本表の写しであり、食い違えば本表を正とする [D]。監査（CON-08）の subject.type は ptype の値をそのまま書く別の欄で、本表の写像を通さない（CON-08 x-subject-type-map）[D]。", "rows": [{"ptype": "human", "subject_type": "core/user", "status": "確定（ARC-05 §3.1）[D]"}, {"ptype": "workload", "subject_type": "core/workload", "status": "確定（ARC-05 §3.1）[D]"}, {"ptype": "service_account", "subject_type": "core/client", "status": "暫定（ARC-05 §3.1 の主体型 core/client。確定は DL-75 と CAM 生成器の対応表、ARC-15 §3.9）。v1.0 の CON-16 §2.5 の暫定値 core/workload は採らない [D]"}, {"ptype": "ai_agent", "subject_type": null, "status": "未決（ADR-017 D17-16。独立の型にするか属性で表すか）。決まるまで、sub 自体が ai_agent の token は PEP が PDP を呼ばずに拒否する（INT-02 SM-3）[D]"}], "rules": ["subject.type は本表で写す。ptype の値（human など）を subject.type に入れない。類型を PDP に渡す場合は subject.properties.principal_type に ptype の値を入れる（CON-03 Subject）[D]。", "subject_type が null（未決）の ptype と、本表にない ptype を受けた PEP は型を推測で埋めず、PDP を呼ばずに拒否し、監査に記録する（INT-02 SM-3、ADR-013 D13-23 の fail-open の禁止）[D]。", "委任（act あり）の場合、subject は sub の主体であり、写像には最上位の ptype を使う。現在の actor は context 側（CON-03）[D]。", "本表の行の追加・値の確定は minor、確定済みの値の変更は破壊的変更として扱う（ADR-016 N-8、ADR-022 D-5-1）[D]。"], "copies": ["11_contracts/schemas/audit-event.schema.json（CON-08）x-subject-type-map（監査側から見た写し）", "11_contracts/integration-essentials.md（CON-16）§2.5", "10_integration/integration-patterns.md（INT-02）§3.7.2"]},
+  "x-handover-v1.1": [
+    {"id": "HO-I7-1", "to": "11_contracts/authorization-api.openapi.yaml（CON-03）", "content": "components.schemas.TenantId を ./schemas/common.schema.json#/$defs/TenantId への $ref に置き換え、pattern の写しを削る。例の tid 7hd2k9q1w8e3r6t0y5u4i2o1pa・2bq8w1e7r4t9y3u6i0o5p2a8sd は IssuedTenantId に合わない（base32 alphabet 外の 0・1・8・9 を含む）ため、払い出し規則に合う値（例 t5wq2hzr7nmc4ka3vd6pxe2bfy）に替える。operation_tier は CON-02 OperationTier への参照のまま。"},
+    {"id": "HO-I7-2", "to": "11_contracts/schemas/audit-event.schema.json（CON-08）", "content": "$defs.tier の enum の写しを CON-02 OperationTierClass への $ref に、$defs.TenantId を CON-02 TenantId への $ref に置き換える（値の集合は同じで、表記の正本を一本化するだけ）。"},
+    {"id": "HO-I7-3", "to": "11_contracts/schemas/access-token-claims.schema.json（CON-06）", "content": "operationTier を allOf [CON-02 OperationTier, not const public] の形に、tid の opaqueId を CON-02 IssuedTenantId への $ref にする（値の集合は同じ）。"},
+    {"id": "HO-I7-4", "to": "11_contracts/lifecycle-events.asyncapi.yaml（CON-12）、11_contracts/client-registration.openapi.yaml（CON-14）", "content": "tid・source_tid・target_tid・merged_into（CON-12）と consent の tenant_id（CON-14）を、自前の OpaqueId ではなく CON-02 TenantId への $ref にする。CON-14 の項目名 tenant_id は v1 では変えない（変更は破壊的）。"},
+    {"id": "HO-I7-5", "to": "11_contracts/token-exchange.openapi.yaml（CON-05）", "content": "tctx の tier・tid の例と説明に CON-02 OperationTier・IssuedTenantId を参照先として書く。"},
+    {"id": "HO-I7-6", "to": "11_contracts/mock-contract-test-kit.md（CON-11）", "content": "(1) CON-04 が v1.1 で ./schemas/common.schema.json を外部参照するため、Prism・ajv に渡すキットは redocly bundle で 1 ファイルにした版を同梱する。(2) tid・tier の受信側試験に CON-02 の x-negative-examples（read_sensitive、break_glass、privileged、7hd2k9q1w8e3r6t0y5u4i2o1pa など）を加える。"},
+    {"id": "HO-I7-7", "to": "10_integration（INT-03 認可モデリング指針、INT-00 の連携手引き）、13_integration-trial/expense-service/model", "content": "permission の tier の記入例を read-sensitive・privileged/T の表記に改める。模擬連携の CON-04 形式の model ファイルは v1.0 固定の記録なので改めず、v1.1 での再試験時に表記を替える。"},
+    {"id": "HO-I7-8", "to": "02_requirements/operation-risk-tiers-assurance.md（REQ-03）", "content": "階層の正本は REQ-03 のまま。機械可読な表記の正本は CON-02 OperationTier・OperationTierClass である旨を REQ-03 §2 に 1 行加える。"}
+  ],
   "$defs": {
     "OpaqueId": {
       "$comment": "受信側の契約（ADR-021 D21-09）: 64 文字以下の ASCII の不透明文字列として扱い、大文字・小文字を区別して比較し、解析しない [D]。受信側の検証はこの緩い形だけにする。払い出し側の形式（IssuedOpaqueId）を受信側で検証すると、新規払出しの符号化を変えたとき（D21-09 で可逆とされた点）に受信側が壊れるためである [D]。空白・制御文字は含めない（本書の提案）[D]。UUID の推測困難性をアクセス制御の根拠にしてはならない（RFC 9562 §8、ADR-021 N-12 / D21-14）[N]。",
@@ -62,12 +102,37 @@
       ]
     },
     "TenantId": {
-      "$comment": "tid。D21-09 と同じ規則で払い出す（ADR-021 D21-12）[D]。顧客名・ドメイン名・契約番号から導かない。人が読む slug は可変の表示属性で、識別・認可に使わない [D]。1 token に 1 tid（ADR-005 V9）[D]。統合元の tid は墓石にして再利用しない（D21-29, INV-1）[D]。",
-      "description": "テナント ID（tid）。受信側は OpaqueId として扱う。",
+      "$comment": "tid。D21-09 と同じ規則で払い出す（ADR-021 D21-12）[D]。顧客名・ドメイン名・契約番号から導かない。人が読む slug は可変の表示属性で、識別・認可に使わない [D]。1 token に 1 tid（ADR-005 V9）[D]。統合元の tid は墓石にして再利用しない（D21-29, INV-1）[D]。v1.1（I-7）: tid の表記の正本は本書（ルートの x-notation-canon.tid）とし、受信側の既定の形は本定義、URL path と relationship store の object ID の位置は TenantIdSegment、払い出し側と契約の例は IssuedTenantId を使う。各契約は pattern を写さずに参照する [D]。",
+      "description": "テナント ID（tid）。受信側は OpaqueId として扱う。表記の正本（v1.1（I-7））。",
       "$ref": "#/$defs/OpaqueId",
       "examples": ["t5wq2hzr7nmc4ka3vd6pxe2bfy"],
       "x-negative-examples": [
         {"value": "acme-corp", "reason": "slug（可変の表示属性）を識別子に使っている（D21-12）。払い出し側 CI で拒否する"}
+      ]
+    },
+    "TenantIdSegment": {
+      "$comment": "v1.1（I-7）。tid を URL path の変数（CON-04 の tenant_id）や relationship store の object ID（core/tenant の ID）として書く位置の受信側の形。v1.0 では CON-04 が同じ pattern を自前で定義していた（P-09）。印字可能 ASCII 全体（TenantId）を path に許すと / ? # % などの扱いが実装で分かれ、object ID では SpiceDB・OpenFGA の文字種の共通部分（CON-04 ObjectId）を外れるため、狭い形を別名で定義する [D]。払い出し規則（IssuedTenantId）の 2 候補はどちらもこの形に収まるので、基盤が払い出す tid は TenantId と本定義の両方で受理される [D]。",
+      "description": "tid の path・object ID 用の受信側の形（TenantId の部分集合）。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+      "examples": ["t5wq2hzr7nmc4ka3vd6pxe2bfy", "3f2b8c1e-9a4d-4c7e-b1f0-6d2a9e4c5b13"],
+      "x-negative-examples": [
+        {"value": "t5wq2hzr7nmc4ka3vd6pxe2bfy/..", "reason": "/ と . を含む（path の区切り・相対参照になり得る）"},
+        {"value": "-t5wq2hzr7nmc4ka3vd6pxe2bfy", "reason": "先頭がハイフン"},
+        {"value": "t5wq2hzr7nmc4ka3vd6pxe2bfy%2F", "reason": "% を含む（percent-encoding の二重解釈を避ける）"}
+      ]
+    },
+    "IssuedTenantId": {
+      "$comment": "v1.1（I-7）。基盤が新規に払い出す tid の形。IssuedOpaqueId と同じ（ADR-021 D21-12 は D21-09 と同じ規則で払い出す）[D]。用途は、払い出し側の CI、token 発行側の検査（CON-06）、および全契約の例・試験ベクタの値である。受信側の検証には使わない（OpaqueId の $comment の理由）[D]。v1.0 の CON-03 の例 7hd2k9q1w8e3r6t0y5u4i2o1pa は本定義に合わない（P-09。CON-03 への申し送り HO-I7-1）[D]。",
+      "description": "基盤が払い出す tid の形（払い出し側・例の値の検査用）。",
+      "$ref": "#/$defs/IssuedOpaqueId",
+      "examples": ["t5wq2hzr7nmc4ka3vd6pxe2bfy", "3f2b8c1e-9a4d-4c7e-b1f0-6d2a9e4c5b13"],
+      "x-negative-examples": [
+        {"value": "7hd2k9q1w8e3r6t0y5u4i2o1pa", "reason": "26 文字だが base32 alphabet 外の 0・1・8・9 を含み、UUIDv4 でもない（v1.0 の CON-03 の例。P-09）"},
+        {"value": "acme-corp", "reason": "slug（D21-12）"},
+        {"value": "T5WQ2HZR7NMC4KA3VD6PXE2BFY", "reason": "大文字（小文字のみ払い出す。D21-09）"}
       ]
     },
     "ClientId": {
@@ -112,6 +177,7 @@
       "$ref": "#/$defs/OpaqueId",
       "examples": ["g5rz2kq7vm3xa4hd6tn2pwc7be"]
     },
+    "JobRunId": {"$comment": "v1.1 の同期（CON-05 §9 HO-02）。内部開始の受付記録（ADR-026 D26-11）への不透明な参照 job_run_id。受信側は OpaqueId として扱い解析しない。台帳の払い出しは IssuedOpaqueId の形で、CON-05 の JobRunId は base32 候補（^[a-z2-7]{26}$）を写している（IssuedOpaqueId の符号化の決定まで、CON-05 は写しを持つ）[D]。", "description": "受付記録への不透明な参照（CON-05 registerAcceptanceRecord の払い出し）。", "$ref": "#/$defs/OpaqueId", "examples": ["r6kq2wz7xm3na5tv4dh2pce7gy"]},
     "RequestId": {
       "$comment": "AuthZEN 要求 ID。要求 ID を付けることは MAY、付ける場合は HTTPS ヘッダ X-Request-ID を使うことが RECOMMENDED、ヘッダの値は任意の文字列（an arbitrary string）、要求に要求 ID が付いていれば PDP は応答に要求 ID を含める（MUST）。PEP が指定した値と同じ値を含める（MUST）（AuthZEN 1.0 §10.1.3、RS-07#66）[N]。facade は engine が返さない場合も補う（ADR-011 D5-5）[D]。自社 profile では PEP が IssuedOpaqueId 形式で採番することを推奨し、長さ 128 以下の印字可能 ASCII に制約する（本書の提案。DL-72 凍結時に確定）[D]。この制約は AuthZEN の「任意の文字列」より狭い自社 profile の制約である。profile 外の値を受けた PDP が要求を拒否するか、値を改変せずに echo して監査では別欄に退避するかは未決（DL-72 凍結前に決める。所有者: 認可・PDP チーム）。値を切り詰めて echo することは同値返却の MUST に反するため採らない [N][D]。値は相関用で、認可や証跡の真正性に使わない [D]。",
       "description": "AuthZEN 要求 ID（X-Request-ID の値）。",
@@ -262,14 +328,27 @@
       ]
     },
     "OperationTier": {
-      "$comment": "操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md（REQ-03）の 5 階層（public／read-sensitive／write／privileged／break-glass）で、privileged は作用範囲で /T（1 テナント内）と /P（それ以外）、break-glass は /B（テナント内の業務データへの例外アクセス。本基盤 PDP 上の型付き例外 core/exception で表す。ADR-029 D29-80）と /P（基盤の緊急経路。DL-46、ADR-029）に分ける（REQ-03 §2.1 の表、判定規則 J1・J2、authorization-model §9.1）[D]。判定を担う閉じた enum のため、値の追加は破壊的変更（ADR-022 D-5-1）[D]。",
-      "description": "操作階層（5 分類と下位区分）。",
+      "$comment": "操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md（REQ-03）の 5 階層（public／read-sensitive／write／privileged／break-glass）で、privileged は作用範囲で /T（1 テナント内）と /P（それ以外）、break-glass は /B（テナント内の業務データへの例外アクセス。本基盤 PDP 上の型付き例外 core/exception で表す。ADR-029 D29-80）と /P（基盤の緊急経路。DL-46、ADR-029）に分ける（REQ-03 §2.1 の表、判定規則 J1・J2、authorization-model §9.1）[D]。判定を担う閉じた enum のため、値の追加は破壊的変更（ADR-022 D-5-1）[D]。v1.1（I-7）: 操作・permission の階層の表記の正本は本定義とし（ルートの x-notation-canon.tier）、CON-04 の permission 定義（CamPermission.tier）も本定義を参照する。v1.0 の CON-04 は read_sensitive・break_glass と下線で書き副区分を持たなかったため、CON-03 の operation_tier（本定義）へ写像が要った（P-09）[D]。集計の単位には OperationTierClass を使う [D]。",
+      "description": "操作階層（5 分類と下位区分）。表記の正本（v1.1（I-7））。",
       "type": "string",
       "enum": ["public", "read-sensitive", "write", "privileged/T", "privileged/P", "break-glass/B", "break-glass/P"],
-      "examples": ["write"],
+      "examples": ["write", "read-sensitive", "privileged/T"],
       "x-negative-examples": [
         {"value": "read", "reason": "未定義の階層名（read-sensitive と public を区別する）"},
-        {"value": "privileged", "reason": "下位区分（/T か /P）がない"}
+        {"value": "privileged", "reason": "下位区分（/T か /P）がない"},
+        {"value": "read_sensitive", "reason": "下線の表記（v1.0 の CON-04 の表記。v1.1（I-7）でハイフンに統一）"},
+        {"value": "break_glass", "reason": "下線の表記で、下位区分（/B か /P）もない（v1.0 の CON-04 の表記）"}
+      ]
+    },
+    "OperationTierClass": {
+      "$comment": "v1.1（I-7）。操作階層の 5 分類（副区分なし）。集計・抽出の単位（監査イベント CON-08 の tier、CON-04 の shadow の sampling・ShadowStratum.tier）に使う。値は OperationTier の値から先頭の / までを取ったもの（privileged/T・privileged/P → privileged、break-glass/B・break-glass/P → break-glass、他はそのまま）[D]。判定・登録の位置（permission の階層、PEP–PDP profile の operation_tier、Txn-Token の tctx.tier）には使わない（副区分で要件が変わるため。REQ-03 J1・J2）[D]。値の追加は破壊的変更（OperationTier と同じ）[D]。",
+      "description": "操作階層の 5 分類（集計用、副区分なし）。",
+      "type": "string",
+      "enum": ["public", "read-sensitive", "write", "privileged", "break-glass"],
+      "examples": ["read-sensitive", "privileged"],
+      "x-negative-examples": [
+        {"value": "read_sensitive", "reason": "下線の表記（v1.1（I-7）でハイフンに統一）"},
+        {"value": "privileged/T", "reason": "副区分付きの値は OperationTier で表す（集計の単位には副区分を付けない）"}
       ]
     },
     "TenantContext": {
@@ -516,7 +595,7 @@
       ]
     },
     "ProblemCode": {
-      "$comment": "機械可読の安定したエラーコード（RFC 9457 の拡張メンバ code の値）。エラーコードの意味の変更・コードの変更は破壊的変更（ADR-022 D-5-1）[D]。判定を担わない応答の enum として開いた列挙とし、値の追加は後方互換、consumer は未知の値を deny 側に倒して扱う（ADR-022 D-5-2）[D]。初期値の登録は本書の提案で、各契約（CON-03〜CON-09）が追加を登録する [D]。read-sensitive 以上では、存在・テナント不一致・権限なしをエラー応答の差で区別させない（REQ-03 J4、RS-07#78）ため、テナント不一致は not_found または access_denied に寄せ、tenant_mismatch のようなコードを外部に返さない [D]。",
+      "$comment": "機械可読の安定したエラーコード（RFC 9457 の拡張メンバ code の値）。エラーコードの意味の変更・コードの変更は破壊的変更（ADR-022 D-5-1）[D]。判定を担わない応答の enum として開いた列挙とし、値の追加は後方互換、consumer は未知の値を deny 側に倒して扱う（ADR-022 D-5-2）[D]。初期値の登録は本書の提案で、各契約（CON-03〜CON-09）が追加を登録する [D]。v1.1 の同期（CON-05 §9 HO-02）: CON-05 の受付記録の登録（registerAcceptanceRecord）の AcceptanceProblemCode（invalid_request, unauthenticated, access_denied, conflict, service_unavailable）を本書の Problem の採用範囲に登録した。unauthenticated は CON-05 が加えた値である [D]。read-sensitive 以上では、存在・テナント不一致・権限なしをエラー応答の差で区別させない（REQ-03 J4、RS-07#78）ため、テナント不一致は not_found または access_denied に寄せ、tenant_mismatch のようなコードを外部に返さない [D]。",
       "description": "安定エラーコード（開いた列挙）。",
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]{2,63}$",

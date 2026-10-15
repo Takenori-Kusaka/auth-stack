@@ -1,6 +1,6 @@
 # 連携パターン集（P-01〜P-27）
 
-> 文書ID: INT-02 / 版: 0.6（凍結前是正 FZ-035: §10.1 に CON-13 版 0.2.0 の注意 4 点を置き、始められないものを 4 つにした（INT-00 §6.1・INT-06 FQ-02 と揃えた）。版 0.5 はラウンド 8: P-08 に ADR-017 D17-07 (a)〜(c) の実行単位分離・tid 一致検査・配備禁止と負例 NP08-7〜NP08-9（TC-017-15）を反映。版 0.4 は PoC/R7反映: P-16・P-22 と §5.1 I-01 に POC-02 と CON-14 版 0.3.0・0.3.1 を反映。版 0.3 は模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-02 / 版: 0.8（v1.1 の同期: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§2.2 の経費精算の行、§3.2 の Txn-Token のない write、§3.7.2 の写像の正本、P-05・P-24 の受付記録の登録、§10.1 の入口と照会 API の参照。記録は §9.3。版 0.7: v1.1 改訂。模擬連携検証 13_integration-trial/report.md の改善提案 I-5・I-6・I-12 を反映: §3.7 AuthZEN 要求の `subject.type` と `action.name` の書き方（I-5）、§3.8 PP-2 の一覧候補生成と NP09-4 の判定方法（I-6）、§3.9 業務通知の送信経路（I-12）を新設し、P-01・P-04・P-05・P-06・P-09・P-14・P-15・P-18・P-19・P-20・P-24 と §2.1 Q15・§2.2 の 14・§10.3 の行を合わせた。残課題 13 を追加。他文書への申し送りは §9.2。末尾「レビュー記録」の「v1.1 改訂」。版 0.6 は凍結前是正 FZ-035: §10.1 に CON-13 版 0.2.0 の注意 4 点を置き、始められないものを 4 つにした（INT-00 §6.1・INT-06 FQ-02 と揃えた）。版 0.5 はラウンド 8: P-08 に ADR-017 D17-07 (a)〜(c) の実行単位分離・tid 一致検査・配備禁止と負例 NP08-7〜NP08-9（TC-017-15）を反映。版 0.4 は PoC/R7反映: P-16・P-22 と §5.1 I-01 に POC-02 と CON-14 版 0.3.0・0.3.1 を反映。版 0.3 は模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
 > 対応要求: G-098, G-099, G-100, G-106, G-135, G-136, G-138, G-139, R-059, R-100, R-163, R-206（DL-64 の主な対応要求）、R-058（G-135・G-136 経由）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-64、§6.3）, 05_adr/README.md, 05_adr/ADR-001〜ADR-029, 05_adr/reconciliation-notes.md, 04_architecture/（token-profile.md, pep-contract.md, authorization-model.md, revocation-continuous-evaluation.md, workload-identity-delegation.md, data-outside-pep.md, claims-catalog.md, fail-mode-matrix.md, audit-privacy.md, reference-architecture-v2.md, cell-blast-radius.md）, 11_contracts/（authorization-api.openapi.yaml, relationship-model-registry.openapi.yaml, token-exchange.openapi.yaml, scim.openapi.yaml, ssf-caep.openapi.yaml, schemas/*.json, README.md（CON-00、DL-69）, mock-contract-test-kit.md（CON-11、DL-80））, 10_integration/dependency-tiers.md（INT-01、DL-63）, 10_integration/authz-modeling-guide.md（INT-03、DL-65）, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/identity-lifecycle.md, 02_requirements/principal-catalog.md, 03_threat-model/threat-catalog.md, 03_threat-model/fraud-abuse-controls.md, 06_controls/applicability.md, 07_slo/numeric-contracts.md, 01_governance/assumptions-register.md, research/RS-17-integration-patterns-modeling.md, research/RS-06-workload-identity-delegation-agents.md, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・契約・調査ノートを読み、連携パターンの正式定義（P-ID の定義場所。deliverables.md §8）として起草した。本書は ADR の決定を決め直さない。食い違いがあれば ADR を正とし、本書を直す [D]。版 0.2 は、作成者と別の AI エージェント（Claude）が ADR・上流文書・RS-17 等の調査ノートと照合し、RFC 9421 の原典を再取得して独立レビューした版である（末尾「レビュー記録」）。人による照合と実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、CON-14 §9 の申し送り H-9 を反映し、§5.1 に I-16（workload の登録エントリ）・I-17（交換可能な組）を、§5.2 にその列を加え、P-03 のチェックリストを登録手段の契約（CON-14 §4A）に結び付けた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
@@ -101,7 +101,7 @@
 | Q12 | 外部からの HTTP 通知（Webhook）を受ける、または外部へ通知を送る | **P-06** | |
 | Q13 | 入力制約のある端末・共有端末・IoT 機器から使う | **P-23** | |
 | Q14 | WebSocket・SSE・gRPC streaming・push 通知で長時間つなぐ | **P-14** | 接続確立は P-01／P-02 等の token で行う |
-| Q15 | メール・SMS で招待・承認・再設定のリンクを送る | **P-19** | リンクだけで login させることは禁止 |
+| Q15 | メール・SMS で招待・承認・再設定のリンクを送る | **P-19** | リンクだけで login させることは禁止。v1.1（I-12）: 依存サービスが自分の業務で送る通知（承認依頼・差戻し・完了など）は P-19 ではなく §3.9（P-24＋P-04）。P-19 は基盤（AS）の招待・回復の通知だけ |
 | Q16 | 定期・長時間・バッチの処理を動かす | **P-05** | 利用者の名で動くか、ジョブ自身の権限で動くかを型 A2／A3 で宣言する |
 | Q17 | キュー・イベントを発行する | **P-24** | 受信側は Q18 |
 | Q18 | キュー・イベントを受けて処理する | **P-04** | |
@@ -140,13 +140,13 @@
 | 11 | データ基盤（DWH、ETL、ML） | P-15（＋P-10） | Tier 3 | テナント横断の学習（data-outside-pep K57-3 の決裁まで不可） | 分析基盤 |
 | 12 | 検索・一覧 | P-09 | 呼出し元を継ぐ | 列挙・索引の結果をそのまま返す形（ADR-025 D25-04） | 文書検索 |
 | 13 | ファイル・オブジェクトストレージ・署名付き URL・CDN | P-18（＋P-10） | 呼出し元を継ぐ | 要配慮個人情報・決済関連情報への署名付き URL（data-outside-pep PX-06） | 添付ファイル配信 |
-| 14 | メール・SMS で送る操作リンク | P-19 | Tier 3 | **禁止 D-3**: リンクの所持だけで認証済み session を作る形（SP 800-63B-4 は電子メールを out-of-band 認証に使うことを SHALL NOT とする [N][^42]（RS-13#7）） | 招待、承認依頼、再設定 |
+| 14 | メール・SMS で送る操作リンク（v1.1（I-12）: 依存サービスの業務通知は §3.9） | P-19 | Tier 3 | **禁止 D-3**: リンクの所持だけで認証済み session を作る形（SP 800-63B-4 は電子メールを out-of-band 認証に使うことを SHALL NOT とする [N][^42]（RS-13#7）） | 招待、承認依頼、再設定 |
 | 15 | リアルタイム（WebSocket、gRPC streaming、push） | P-14 | Tier 2 | token を URL の query に載せる形（ADR-006 D6-14） | チャット、通知 |
 | 16 | 第三者連携アプリ（inbound OAuth client） | P-07 | Tier 2 | 利用者本人による高リスク scope の同意（token-profile §6、ADR-005 D7-2） | 会計 SaaS 連携 |
 | 17 | 外部 SaaS への outbound 連携 | P-21 | Tier 3 | 他社資格情報の平文保管・サービスごとの散在（KD64-2） | CRM への同期 |
 | 18 | AI エージェント（自社、顧客側、tool サーバー） | P-08（端末の STDIO MCP は P-02） | Tier 2 | 受け取った token の tool・下流への中継（MCP の MUST NOT [N][^25]（RS-17#68）、ADR-017 D17-15） | 社内アシスタント、MCP server |
 | 19 | 管理コンソール・support tool・コールセンター | P-11 | Tier 2（障害時の受付は Tier X の NX-09） | 事業者要員の常設権限、impersonation（ADR-029 D29-02・D29-51） | 顧客管理画面、support tool |
-| 20 | 従業員向けの社内業務システム | P-01（＋P-11 の該当操作） | BIA で決める | — | 経費精算 |
+| 20 | 従業員向けの社内業務システム | P-01（＋P-11 の該当操作） | BIA で決める | — | 経費精算（認可モデルと承認経路の通し例は INT-03 §9.7。v1.1 の同期で参照を追加。INT-03 §16.4 HO-V11-5） |
 | 21 | レガシー・パッケージ製品 | P-20 | 呼出し元を継ぐ | **禁止 D-4**: gateway を迂回できる網構成で未署名ヘッダだけを信頼する形（OB-01、RS-17#79） | 既製の業務パッケージ |
 | 22 | 顧客 IdP 連携と SCIM | P-12・P-13 | 基盤の機能（D23-21） | IdP 起点 SAML の新規受付、email による自動 linking（ADR-004） | 顧客の Entra ID・Okta |
 | 23 | 外部共有・ゲスト・テナント越境 | P-16 | 呼出し元を継ぐ | **禁止 D-5**: home 側 token を資源側でそのまま受ける相互信頼型（ADR-024 D24-03） | 取引先との共同案件 |
@@ -211,6 +211,7 @@
 | request_id | PEP SDK が全要求に付与（X-Request-ID） | PDP 呼出しに付け、echo を確認する | — |
 | jti_ref | 発行台帳と同じ鍵付き HMAC（DL-77） | 生の jti を記録しない | 生の token・jti のログ出力（T-057） |
 
+- v1.1 の同期（CON-08 x-handoff-v1.1 の 2、v1.1（I-3・I-9））: write 以上の要求で Txn-Token が無い、または検証できない場合、依存サービスは業務として処理せず拒否する（ADR-005 D9-3 の「txn 必須」に従う。fail-closed）[D]。監査イベント（CON-08）には `txn` を書かず `corr.txn_absence` を記録する。CON-08 v1.1 が「`txn` か `txn_absence` のどちらかを必須」としたのは記録の形の規則であり、Txn-Token なしで write を処理してよいという意味ではない [D]。`txn` は Txn-Token を検証してから読む。検証鍵は CON-05 v1.1（I-9）の TTS の JWK Set から取り、期待値（TTS の issuer・aud）は CON-11 §11.4 の差し替え点（`AUTH_TTS_ISSUER`・`AUTH_TTS_AUDIENCE`・`AUTH_TTS_JWKS_URL`）から読む。手順は CON-16 §1.6 にある [D]。ADR-005 D9-3 と pep-contract §3.8 の記述の調整は 04_architecture・05_adr の所有者に残る（本同期の範囲外）[D]。
 - `txn` の発行範囲は write 以上で、read-sensitive への拡大は **未決（ADR-005 §2.15 U2、reconciliation-notes U-02）** である [D]。依存サービスの義務は「Txn-Token があれば検証して伝播する」であり、結論が変わっても変わらない [D]（pep-contract §3.8）。
 - Transaction Tokens は draft-ietf-oauth-transaction-tokens-11（WG Consensus: Waiting for Write-Up、IESG 未提出、2027-01-31 失効予定、確認日 2026-10-03）であり、RFC ではない [N][^12]（RS-17#26、standards-status SS-B04）。失効・大改訂時は ADR-022 D-8-5 の自社形式へ退避する [D]。
 
@@ -279,6 +280,147 @@
 | チェックリスト | （DL-64 固有。IC-01〜IC-12 に加えて行うこと） |
 | 関連 | ADR、脅威（T-xxx）、損失シナリオ（S-xx）、KRI（K-xx） |
 
+### 3.7 AuthZEN 要求の主体と操作の書き方（v1.1（I-5））
+
+模擬連携検証では、`action.name` の書き方が文書ごとに 3 通りあった（CON-03 の例 `can_read`、本書版 0.6 の P-01 の `docs.document.read`、INT-03 N-24 の `read`）[D]。`subject.type` も、CON-03 の例 `core/user` と CON-06 の `ptype` の値 `human`（「変換表なしで写す」）が食い違っていた（13_integration-trial/report.md P-05・P-06）[D]。CON-03 §4.2 の判定宣言 `caller_scope` は宣言外の permission を deny にするので、取り違えると本番では全件が deny になる [D]。汎用モックは値を検査しないので、モックでは検出できない [D]。v1.1 では本節の規則に統一する。本書の §4 の例もこの規則に合わせた [D]。
+
+#### 3.7.1 `action.name`
+
+| # | 規則 | 正しい例・誤った例 | 根拠 |
+|---|---|---|---|
+| AN-1 | `action.name` には、資源型の CAM モジュールの permission catalog に操作階層を付けて載せた動詞の permission の名前だけを入れる | 正: `read`、`update`、`submit`、`approve` | INT-03 N-24。CON-03 の Action.name の定義は「型の内側で一意な permission 名」（ADR-021 D21-26）[D] |
+| AN-2 | 型名・名前空間を連結しない。型は `resource.type` で渡す | 正: `resource.type="docs/document"` と `action.name="read"`。誤: `docs.document.read`、`orders/order.confirm` | 同上。INT-03 N-19（主体・資源は `(type, id)` の組）[D] |
+| AN-3 | relation 名（名詞。`viewer`・`member`・`sender`）と保持者集合（`viewers`・`editors`）を渡さない | 誤: `viewer`、`editors` | INT-03 N-8・N-23・N-24 [D] |
+| AN-4 | `can_` などの接頭辞を付けない。CON-03 の v1.0 の例 `can_read` を写さない（v1.1 で動詞に改める。§9.2 HO11-1） | 誤: `can_read`、`can_approve` | INT-03 N-8（`can_approve` を誤りの例に挙げる）[D] |
+| AN-5 | コードが渡す `action.name` の集合を、自サービスの判定宣言（CON-03 §4.2）に登録する集合と一致させる。自チームの CI で「コードが渡す値 ⊆ catalog の動詞の permission」を検査する | 模擬連携検証の試験 `INT-03 N-24: action names the app sends are catalog verbs only`（13_integration-trial/expense-service/test/01-model-and-schemas.test.js） | CON-03 §4.2、IC-01 [D] |
+
+- 汎用モック（Prism）は `action.name` の値を検査しない。AN-1〜AN-4 に違反してもモックの正例試験は通るので、AN-5 の静的検査で検出する [D]（report P-05）。
+
+#### 3.7.2 `subject.type`
+
+| 内部 token の `ptype`（CON-06 `principalType`） | AuthZEN の `subject.type`（CON-03） | 状態 |
+|---|---|---|
+| `human` | `core/user` | ARC-05 §3.1 の主体の型に対応する [D] |
+| `workload` | `core/workload` | 同上 [D] |
+| `service_account` | `core/client`（暫定） | v1.1 の同期で CON-02 `x-subject-type-map` に暫定値として置かれた。確定は DL-75 と CAM 生成器の対応表（ARC-15 §3.9）[D] |
+| `ai_agent` | 未決（`core/user` と分けた型にするか、属性で表すか） | ARC-05 §3.1・ADR-017 で未決 [D] |
+
+| # | 規則 | 根拠 |
+|---|---|---|
+| SM-1 | `subject.type` には `<名前空間コード>/<型名>` の型名を入れる。`ptype` の値（`human` など）をそのまま入れない。CON-06 の `$comment` にある「変換表なしで写す」は CON-03 の `EntityType` と食い違うため、v1.1 では上の表で写す（§9.2 HO11-2） | CON-03 `EntityType`（ADR-021 D21-26）、ARC-05 §3.1 [D] |
+| SM-2 | `subject.id` には `sub` をそのまま入れ、型の接頭辞を付けない。`sub` の文字列から種別を推論しない | INT-03 N-19、ADR-021 D21-10 [D] |
+| SM-3 | 写像が未決の `ptype` や未知の `ptype` を受けたら、PEP は型を推測で埋めない。PDP を呼ばずに拒否し（IC-02 の判定不能）、監査に記録する | IC-02、ADR-013 D13-23（fail-open の禁止）[D] |
+| SM-4 | 写像は自サービスの 1 か所（設定か定数表）に置き、PEP・一覧・非同期の consumer で共有する。正本は CON-02（common.schema.json）の `x-subject-type-map` であり（v1.1 の同期で設置。§9.2 HO11-2）、上の表はその写しである。食い違えば CON-02 を正とする | I-5。本書は契約を決め直さない [D] |
+| SM-5 | 監査イベント（CON-08）の `subject.type` は主体種別（`human`・`workload` など。CON-08 `PrincipalType`）であり、AuthZEN の `subject.type`（`core/user` など）とは値の範囲が違う。同じ欄名なので取り違えない | CON-08 `$defs/PrincipalType` [D] |
+
+### 3.8 PP-2 の一覧の候補生成と NP09-4 の判定（v1.1（I-6））
+
+版 0.6 の P-09 は PEP 配置を「PP-1 の `list()`」だけとし、searchResources を「SDK の一覧ヘルパ内部専用」としていた [D]。このため、SDK を使わない PP-2 が一覧の候補をどう作るか、searchResources を呼んでよいか、NP09-4 をどう判定するかが分からなかった（report P-07）[D]。模擬連携検証の PP-2 実装は、searchResources を候補生成に呼んでいた（13_integration-trial/expense-service/src/pdp.js の `searchCandidates`）[D]。
+
+#### 3.8.1 候補生成に使ってよいもの
+
+| 手段 | PP-1 | PP-2 | 条件 | 根拠 |
+|---|---|---|---|---|
+| 自サービスの DB・検索エンジンを、テナント条件を付けて検索する（方式 L2） | 可（一覧ヘルパに候補を渡す） | **可** | 最初にテナントで絞る。返すページの資源だけを post-check する | ADR-025 D25-04〜D25-06 [D] |
+| 自サービスが持つ業務上の関係の列（例: 申請者 ID）や、自サービスが書いた tuple の写し（例: workflow が書いた `approver`）で絞る | 可 | **可** | 候補の手掛かりにだけ使い、認可の根拠にしない。写しの遅れと欠けは post-check と `completeness` で扱う | D25-04 [D] |
+| ACL 反映索引（方式 L3。listRelationshipChanges の変更購読で自分が作る索引） | 可 | **可（preview）** | listRelationshipChanges は `x-stability: preview` なので、使う理由を DoR に書く（FQ-03）。索引はテナント別にし（ADR-012 D12-26）、PEP 外経路台帳に登録する（P-15、FQ-59） | D25-05 の L3、CON-04 [D] |
+| searchResources（`POST /access/v1/search/resource`） | SDK の一覧ヘルパの内部だけ。アプリコードからは不可 | **不可** | — | CON-03 の `x-callers`、ADR-025 D25-03 [D] |
+| engine の ListObjects・LookupResources などと、AuthZEN の subject search・action search | 不可 | 不可 | — | D25-03、ARC-06 SR-04 [D] |
+| 他サービスの DB・索引を直接読む | 不可 | 不可 | 他サービスの API を通す（P-03） | IC-06、ADR-012 [D] |
+
+- 方式 L1（エンジン列挙の pre-filter）は façade の searchResources に依存するので、PP-2 では選べない [D]。L1 が要る資源型（アクセスできる件数が少なく、自 DB では候補を絞れない型）は、次のどれかにする [D]。(a) その一覧だけ PP-1（SDK）を採る。(b) L2 で候補を作り、許可割合が低いときはページの打切り（`completeness=incomplete`、理由 `budget_exhausted`）を受け入れる。(c) 例外を申請する（GOV-07）。
+- どの手段でも、返すページの各資源を evaluateAccessBatch（`execute_all`）で返却の直前に評価し、allow のものだけを返す（D25-04）[D]。候補を広く取ると post-check の件数が増える。そこで 1 ページあたりの評価件数に上限を置き、上限で打ち切った場合は `completeness=incomplete` と理由を返す（D25-07・D25-21）[D]。
+- 例（経費精算。模擬連携検証のモデル）: 申請者の一覧は申請者 ID の列で、承認者の一覧は workflow が書いた `approver` の写しで、経理担当の一覧は台帳内の全件（テナントで絞る）で候補を作り、いずれも `expense/report` の `view` で post-check する [D]。
+
+#### 3.8.2 PP-2 が自前で作る一覧の外形
+
+PP-2 は SDK の一覧ヘルパと同じ外形を自前で作る（FQ-04 と同じ考え方）[D]。
+
+| 項目 | 内容 | 根拠 |
+|---|---|---|
+| 入力 | 主体、動詞の permission（§3.7）、資源型、不透明な cursor、件数上限 | ADR-025 D25-21 [D] |
+| 出力 | `items`（post-check で allow のものだけ）、`next_cursor`、`completeness`（`complete` か、`incomplete` とその理由）。総件数は返さない | D25-13・D25-21 [D] |
+| post-check ができないとき | 空の一覧ではなく「利用不可」を返す | D25-19 [D] |
+| 監査 | E2 をページ単位で記録し、decision_id を複数持たせる | P-09 の監査行 [D] |
+
+#### 3.8.3 NP09-4 の判定方法
+
+façade は呼出し元を mTLS の SPIFFE ID で認証する（CON-03 §4.2）[D]。そのため、同じ workload の中の SDK とアプリコードを区別できない [D]。CON-03 は受付制御の方式（workload ID の許可リストなど）を未決とし、許可されない呼出し元には 403 を返すとしている [D]。そこで NP09-4 は 3 つに分け、依存サービスが出す合否は静的検査と申告で判定する [D]。
+
+| # | 確かめること | 対象 | 判定方法 | 合格条件 | 時期 |
+|---|---|---|---|---|---|
+| NP09-4a | アプリコードが search と engine の列挙を呼ばない | PP-1 と PP-2 のアプリコード（PP-1 は SDK の領域を除く） | 自チームの CI の静的検査。`/access/v1/search/`、`searchResources`、engine の client ライブラリの import と呼出しを検出する（ARC-06 SR-04 と同じ観点） | 検出 0 件 | 今から。キットの検査器（DL-120）が提供されたら置き換える |
+| NP09-4b | PP-2 が search を使う設定を持たない | PP-2 の判定宣言の申請、DoR の申告、出口の許可リスト | 申請・申告・設定を見る | search の path と operation がない | DoR（INT-05） |
+| NP09-4c | façade が許可外の呼出し元の search を拒否する | façade（基盤側） | 基盤の契約試験（CON-11、DL-80） | 403 | 基盤側の試験。依存サービスは sandbox の提供後に任意で確かめる |
+
+- 汎用モック（Prism）は受付制御を持たず、search に 200 を返す [D]。モックで 200 が返っても NP09-4 の不合格ではなく、合格の証拠にもならない [D]（report P-07）。
+
+### 3.9 業務通知の送信経路（v1.1（I-12））
+
+模擬連携検証では、承認依頼の通知の送り先の契約がなかった（report P-16）[D]。版 0.6 は P-19 の適用条件に「承認依頼の通知」を含めながら、その契約 API を「AS の招待・回復機能（依存サービスは呼ばない）」とし、依存サービスについては「通知の送信だけを行う場合は P-24 のイベント」とだけ書いていた [D]。誰が送るか、宛先の連絡先をどう得るか、送信の直前に何を確かめるかが書かれていなかった [D]。
+
+#### 3.9.1 範囲と結論
+
+- 本節の業務通知は、依存サービスが自分の業務のために利用者へ知らせるものを指す（承認依頼、差戻し、承認完了、期限の督促、処理結果）[D]。基盤の招待・回復の通知（P-19）、ライフサイクル事象（CON-12・CON-13）、非推奨の告知（FQ-72）は含まない [D]。
+- **本基盤は業務通知の送信 API と契約を提供しない** [D]。11_contracts に業務通知の契約はなく、AS の招待・回復機能は依存サービスから呼べない（P-19）[D]。送信の手段（メール、SMS、push、アプリ内通知）は、依存サービス自身か社内の通知基盤（本基盤の範囲外）が持つ [D]。
+- 経路は P-24（発行）と P-04（送信を担う consumer）の重ね掛けとする [D]。業務の状態変更と通知の発行を同じトランザクションの outbox で結び（P-24 の失敗時挙動）、要求の処理中には送信しない [D]。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as 申請者（ブラウザ・BFF）
+  participant S as 業務 API（PEP）
+  participant P as PDP façade
+  participant O as outbox・broker
+  participant N as 通知の consumer（P-04）
+  participant T as TTS
+  participant M as 送信手段（本基盤の外）
+  participant R as 宛先の利用者
+  U->>S: 操作（例 submit）
+  S->>P: evaluateAccess（action.name=submit）
+  S->>O: 業務の更新と同じトランザクションで通知事象（参照だけ）
+  O->>N: 配送
+  N->>T: 内部開始の Txn-Token（job_run_id）
+  N->>N: 業務状態・テナント・宛先の状態を確認
+  N->>P: 起点主体と起点の操作で再 Check
+  N->>M: 最小の本文と通常の画面 URL
+  M-->>R: 通知
+  R->>S: URL を開く（P-01 の login と PEP の判定を経て閲覧）
+```
+
+#### 3.9.2 規則（BN-1〜BN-9）
+
+| # | 規則 | 根拠 |
+|---|---|---|
+| BN-1 | 通知事象（outbox・メッセージ）には参照だけを入れる。入れてよいのは tid、通知の種別、資源型と資源 ID、宛先主体の `sub`、起点の `txn`、`job_run_id` である。token、権限の一覧、連絡先（メールアドレス・電話番号）、本文は入れない | ADR-026 D26-11、P-24 の NP24-1・NP24-3 [D]。CloudEvents 1.0.2 は context attributes に機微情報を載せるべきでない（SHOULD NOT）とする [N][^13] |
+| BN-2 | 宛先は業務ロジック（workflow）が決め、通知事象に `sub` で書く。通知の consumer が宛先を推測しない（例: 承認依頼の宛先は、workflow が `approver` の tuple を書いた主体）。承認経路の決め方は INT-03 が扱う（I-4） | [D] |
+| BN-3 | 送信の直前に P-04 の再 Check を行う。内部開始の Txn-Token を得て、起点主体の権限で、通知を起こした操作の動詞の permission（例: 申請者の `submit`）を評価する。拒否か判定不能なら送らず、デッドレターと監査に回す | P-04、ADR-026 D26-02・D26-09・D26-10 [D] |
+| BN-4 | 送信の直前に業務状態とライフサイクルを確かめる。対象がまだ通知すべき状態か（例: 承認待ちのままか）、テナントが停止・削除の途中でないか、宛先の主体が削除・無効になっていないか（CON-12 の受信で反映した状態）を見て、当てはまれば送らない | CON-12、CON-11 の CR-9（ライフサイクル事象の受信者）[D] |
+| BN-5 | 本文は最小にする。載せるのは通知の種別、サービス名、参照番号、通常の画面 URL である。業務の中身（金額、申請者名、品目など）と個人データは載せず、宛先が URL を開いて P-01 の login と PEP の判定（例: `view`）を経てから表示する | P-14（push の payload に個人データ・token を載せない）[D] |
+| BN-6 | URL は通常の画面 URL とし、token、受諾 token、session を作る値を含めない。URL を開いただけで login や操作が完了してはならない（禁止 D-3）。金融の規制プロファイルでは、本文にログインリンクを入れない方式を FA の決裁事項 15 に従って選ぶ（P-19 のチェックリスト ②） | SP 800-63B-4 は電子メールを out-of-band 認証に使うことを SHALL NOT とする [N][^42]。監督指針はメール・SMS にログインリンクを記載しないことを着眼点に挙げる [N][^35] |
+| BN-7 | 連絡先は送信の直前に解決し、通知事象とログに残さない。`sub` から連絡先を引く経路の契約は 11_contracts にない（未決。§9.2 HO11-4）。決まるまでは (a) アプリ内通知（宛先が login して自サービスの画面で見る）を既定にし、(b) 自サービスが利用者本人から正当に得て保持している連絡先がある場合に限ってメール・SMS を使う | [D] |
+| BN-8 | 送信の失敗は jitter 付きの backoff と回数上限で再試行し、上限を超えたらデッドレターに送って業務側へ知らせる。重複送信は (source, id) の冪等キーで防ぐ。送信記録（通知の種別、資源 ID、宛先 `sub` の参照、起点の `txn`、結果）を残し、本文の全文と連絡先はログに残さない | IC-10、ADR-028 D28-59、P-04 [D] |
+| BN-9 | 通知事象の tid は受付記録を引く参照であり、実行時のテナントは Txn-Token の `tctx` から設定する。宛先は同じテナントの主体に限る（越境共有のゲストは、資源側のテナントの主体として扱う） | FQ-24、ADR-024 D24-07 [D] |
+
+- BN-5 で本文を最小にする理由: 送信時に宛先の閲覧権限を評価するには、token の主体と別の主体（宛先）を `subject` にした照会が要る [D]。この照会は、CON-03 §4.3 の `subject_binding` が必須になると（時期は未決）deny になり得る [D]。v1.1 では本文の最小化を既定とし、宛先の権限を送信時に評価する設計は §9.2 HO11-5 の結論が出るまで採らない [D]。
+
+#### 3.9.3 監査
+
+- 元の操作の E2（相関 8 欄。write は `txn` が必須）、送信を担う consumer の再 Check の E2（decision_id）、BN-8 の送信記録を残す [D]。送信記録は業務ログであり、監査イベント（CON-08）の族を新設しない [D]。
+
+#### 3.9.4 負例（仮番。DL-80 で正式に採番）
+
+| ID | 負例 | 確かめ方 |
+|---|---|---|
+| NP24-4 | 通知事象・outbox・ログに連絡先、token、本文がないこと | スキーマ検査と静的検査 [D] |
+| NP24-5 | 本文の URL に token と受諾 token がなく、URL だけでは session ができないこと | 単体試験 [D] |
+| NP24-6 | テナント停止（`tenant.suspended`）や宛先の削除の後には通知が送られないこと | ライフサイクル事象を注入する試験（模擬連携検証の試験 `tenant.suspended (via lifecycle) stops async notification work` と同じ形）[D] |
+| NP24-7 | 再 Check が deny か判定不能のときは送られず、デッドレターと監査に残ること | PDP・TTS の注入試験 [D] |
+
+#### 3.9.5 例（経費精算の承認依頼）
+
+申請者の `submit`（write）→ workflow が `approver` の tuple を書く → 同じトランザクションの outbox に `expense.approval.requested`（tid、report の ID、宛先の `sub`、起点の `txn`）を書く → 通知の consumer が Txn-Token を得て、申請者の `submit` を再 Check し、承認待ちであることとテナント・宛先の状態を確かめる → 「承認依頼が 1 件あります（参照番号）」と画面 URL をアプリ内通知で送る → 承認者が URL を開くと、P-01 で `view` と `approve` が判定される [D]。
+
 ---
 
 ## 4. パターン定義
@@ -319,8 +461,8 @@ sequenceDiagram
 | token・grant・委任 | BFF は C1: authorization_code＋PKCE S256＋PAR、private_key_jwt か mTLS。外部 AT は opaque（ADR-005 D1-7。H-02・H-04 不合格なら K-1 で内部 JWT に切り替わる条件付きの判断）。edge が aud＝呼出し先の内部 JWT に交換（`act` なし）。refresh は client 認証に束縛し AS session に連動 |
 | テナント文脈 | 1 token 1 テナント。複数所属（3% [A-015]）はテナント切替で token を取り直す。route テナントは edge が確かめ、PEP が L0 で三者一致 |
 | 契約 API | OIDC/OAuth profile（authorize・PAR・token・revocation・back-channel logout。token-profile §11 の版付き profile。CON-00 は OpenAPI を持たない標準 profile として扱う。back-channel logout の契約上の位置は未決（ADR-006 L6-2））／`POST /access/v1/evaluation`（evaluateAccess）・`POST /access/v1/evaluations`（evaluateAccessBatch）／監査スキーマ（CON-08） |
-| PEP 配置 | edge（E1）＋業務 API の PP-1（SDK）または PP-2（自前実装） |
-| 認可モデル例 | `docs/document#viewer: [core/user, core/group#member] or editor`。操作 `docs.document.read` は read-sensitive、`docs.document.update` は write |
+| PEP 配置 | edge（E1）＋業務 API の PP-1（SDK）または PP-2（自前実装）。v1.1（I-6）: PP-2 で一覧を返す場合の候補生成は §3.8 |
+| 認可モデル例 | relation `viewer: [core/user, core/group#member]`・`editor` と permission `read = viewer \| editor`・`update = editor`（資源型 `docs/document`）。PEP は `resource.type="docs/document"` と `action.name="read"`（read-sensitive）／`"update"`（write）で判定する。v1.1（I-5）: 版 0.6 までの `docs.document.read` という書き方は誤りで、`action.name` には型名を付けない動詞の permission だけを入れる（§3.7） |
 | 整合性 | read-sensitive は `at_least_as_fresh`（内容に保存した consistency token）、write 以上は `fully_consistent` |
 | キャッシュ | BFF の session はサーバー側に暗号化して保持。HTTP 応答は read-sensitive 以上で `Cache-Control: private`／`no-store`。allow の cache なし（§3.4） |
 | 失効の反映 | 外部経路は毎要求の E1 照会で D_w＋Δ＋C_edge（revocation §6.1）。BFF は RP として back-channel logout（K7）を受けて session を破棄 |
@@ -328,7 +470,7 @@ sequenceDiagram
 | 監査 | AS が E3（login）・E5（session）、façade が E1、業務 API が E2。相関 8 欄。write 以上は `txn` 必須 |
 | 契約試験・負例 | NP01-1 cookie 属性の欠落を CI で検出／NP01-2 サブドメインからの CSRF の拒否（RFC 10017 は SameSite=Strict だけでは同一 site の他アプリからの CSRF に不十分な場合を述べる [N][^1]（RS-17#3））／NP01-3 ブラウザ storage・URL に token が出ないこと／NP01-4 他 RS 宛て内部 JWT の拒否（RFC 9700 の MUST [N][^7]（RS-17#19））／NP01-5 ID Token を access token として提示した要求の拒否（token-profile §10.2 の NV 系）／NP01-6 他テナント資源への応答が不存在と同一 |
 | アンチパターン | localStorage に token を置く SPA（禁止 D-1）／参照実装を使わない BFF の自作（例外審査。ADR-005 D6-2）／同一 site に別アプリを同居させ CSRF 対策を SameSite だけに頼る／token を query string に載せる |
-| チェックリスト | ① 参照実装の BFF を使うか例外承認を得た ② cookie 4 属性と CSRF 対策を実装した ③ 業務 API は IC-02 の順で判定する ④ テナント切替で token を取り直す ⑤ logout で refresh を RFC 7009 で失効させる ⑥ 一覧は P-09、ファイルは P-18 を重ねた |
+| チェックリスト | ① 参照実装の BFF を使うか例外承認を得た ② cookie 4 属性と CSRF 対策を実装した ③ 業務 API は IC-02 の順で判定する ④ テナント切替で token を取り直す ⑤ logout で refresh を RFC 7009 で失効させる ⑥ 一覧は P-09、ファイルは P-18 を重ねた ⑦ v1.1（I-5）: `subject.type` を §3.7 の写像で、`action.name` を catalog の動詞の permission で渡す ⑧ v1.1（I-12）: 利用者へ送る業務通知は §3.9 の経路にした |
 | 関連 | ADR-005、ADR-020、ADR-012／T-011、T-012、T-013、T-014、T-020、T-021／S-01、S-18／K-01、K-11 |
 
 ### P-02 ネイティブアプリ・CLI クライアント
@@ -444,7 +586,7 @@ sequenceDiagram
 | テナント文脈 | DB 文脈は `tctx` の tid から `SET LOCAL`。メッセージの `tid` は受付記録を引く参照で、三者一致しなければ拒否（pep-contract §3.11） |
 | 契約 API | `POST /txn-token`（requestTxnToken、CON-05、preview）／evaluateAccess／ライフサイクル事象の受信（ADR-022 D-2 のイベント配送。CON-12 lifecycle-events.asyncapi.yaml・CON-13 schemas/lifecycle-event.schema.json、draft。封筒・type 名・冪等と順序は GA、個別 data は preview。DL-117・DL-118。モックはキット本体 DL-120 の配布待ち） |
 | PEP 配置 | PP-5（consumer の PEP）。型（A1〜A4）の宣言がない consumer は未登録 entry point |
-| 認可モデル例 | 請求書発行イベントを受けた通知サービスは、起点主体が `notify/channel#sender` を持つかを実行時に判定する |
+| 認可モデル例 | 請求書発行イベントを受けた通知サービスは、起点主体が `notify/channel` の動詞の permission `send`（relation `sender` から計算）を持つかを実行時に判定する。v1.1（I-5）: 判定に渡すのは relation 名（`sender`）ではなく動詞の permission（`send`）（§3.7）。業務通知の経路全体は §3.9（v1.1（I-12）） |
 | 整合性 | read-sensitive は max(受付時の整合性トークン, 剥奪フェンス)。フェンス有効化までは最新を強制（L06-11）。write 以上は最新 |
 | キャッシュ | 判定の cache なし（write 以上）。受付時の判定結果を実行時に使わない |
 | 失効の反映 | 実行時の再判定で反映する。剥奪・テナント停止時に該当メッセージを破棄・保留する機能を基盤ライブラリに持つ（ADR-012 D12-34） |
@@ -483,9 +625,9 @@ sequenceDiagram
 | 主体・認証 | 実行主体はジョブ用 workload（PC-14、SVID）。A2 は代理される利用者（`sub`）、A3 はジョブ主体 |
 | token・grant・委任 | 利用者の `offline_access` refresh token をジョブに持たせない（ADR-026）。OIDC Core は offline access に同意を MUST とする [N][^10]（RS-17#24）ので、同意は委任 grant（台帳）で持つ。段ごとに短命 token を新規発行し、寿命を延ばさない。Txn-Token は長時間処理でも短命のままとする（草案 [N][^12]（RS-17#26）） |
 | テナント文脈 | TTS が台帳から `tctx` の tid を入れる。ジョブ定義のテナントは不変 |
-| 契約 API | requestTxnToken（preview）／exchangeToken（下流が別サービスの場合）／evaluateAccess／ライフサイクル事象の受信（CON-12・CON-13、draft） |
+| 契約 API | requestTxnToken（preview）／exchangeToken（下流が別サービスの場合）／evaluateAccess／ライフサイクル事象の受信（CON-12・CON-13、draft）／受付記録の登録（SDK を使わない場合は CON-05 の `registerAcceptanceRecord`（v1.1（I-9）、preview）。内部開始の Txn-Token は `subject_token_type` に `urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173` を使う。v1.1 の同期。CON-05 §9 HO-08） |
 | PEP 配置 | PP-5（各実行単位）。ジョブ登録 API は PP-1 |
-| 認可モデル例 | `reports/schedule#owner`（人）と `reports/schedule#runner`（PC-14）を分ける。実行時の判定は A2 なら代理される利用者で `reports/dataset#viewer` を見る |
+| 認可モデル例 | `reports/schedule` の relation `owner`（人）と `runner`（PC-14）を分ける。実行時の判定は A2 なら代理される利用者を主体にし、`reports/dataset` の動詞の permission `read` で判定する（v1.1（I-5）: relation `viewer` を `action.name` に渡さない。§3.7） |
 | 整合性 | write 以上は処理項目ごとに `fully_consistent`。read-sensitive は処理単位（件数・時間上限。ADR-012 D12-35 で TBD）ごと |
 | キャッシュ | 判定の cache なし。実行時間が R(t) を超えるジョブは I_job(t) ≤ R(t) の間隔で再認可（revocation §6.7） |
 | 失効の反映 | 利用者の停止・削除で委任 grant を失効させ、移転しない。所有者（人）の退職の既定は principal-catalog 決裁案 3 (c) を推奨（write 以上は停止、read は期限付き継続）。黙って失敗させない |
@@ -525,7 +667,7 @@ sequenceDiagram
 | テナント文脈 | 受信: 連携登録（1 テナントに束縛）から tid を決める。payload の tid は参照であり、登録と一致しなければ拒否。送信: 購読は 1 テナントに束縛 |
 | 契約 API | 受信 handler・送信 worker とも evaluateAccess／監査スキーマ。**Webhook 署名 profile は 11_contracts に未作成**（KD64-1 の決裁後に DL-69 へ追加） |
 | PEP 配置 | edge（送信元認証）＋PP-5（受信 handler・送信 worker） |
-| 認可モデル例 | `integrations/subscription#owner` を持つ主体が、対象資源（例: `orders/order#viewer`）のイベント受信権を持つかを配信直前に判定する |
+| 認可モデル例 | `integrations/subscription` の relation `owner` を持つ主体が、対象資源（例: `orders/order`）の動詞の permission `read` を持つかを配信直前に判定する（v1.1（I-5）: 版 0.6 の `orders/order#viewer` は relation であり `action.name` に渡す値ではない。§3.7） |
 | 整合性 | 送信の再 Check は read-sensitive として `at_least_as_fresh`（フェンス有効化までは最新）。受信後の write は `fully_consistent` |
 | キャッシュ | 送信元の公開鍵は (送信元, keyid) で cache。判定の cache なし |
 | 失効の反映 | 購読者の剥奪後は配信しない（直前の再 Check）。送信元の連携停止で受信を拒否 |
@@ -645,16 +787,16 @@ sequenceDiagram
 | token・grant・委任 | 主パターンに従う |
 | テナント文脈 | 候補生成はテナント別 index・collection（ADR-012 D12-26）。候補の段でもテナントを越えない |
 | 契約 API | `POST /access/v1/evaluations`（evaluateAccessBatch、`execute_all`）／`POST /access/v1/search/resource`（searchResources、preview、SDK の一覧ヘルパ内部専用。依存サービスの直接呼出しは CI と façade で拒否。D25-03）／`GET /v1/tenants/{tenant_id}/relationship-changes`（listRelationshipChanges。ローカル索引を作る場合） |
-| PEP 配置 | PP-1 の `list()`（一覧ヘルパ） |
+| PEP 配置 | PP-1 の `list()`（一覧ヘルパ）。v1.1（I-6）: PP-2（自前実装）は一覧ヘルパと同じ外形を自前で作り、候補生成に searchResources を使わない（§3.8） |
 | 認可モデル例 | 資源型ごとに方式を宣言する。対象が多く割合が低い型（Google Drive 型）は「changes API のローカル索引＋最後の Check」（OpenFGA の推奨 [V][^18]（RS-17#43））、対象が少ない型は search を候補生成に使う |
 | 整合性 | post-check は read-sensitive の `at_least_as_fresh`（フェンス有効化までは最新） |
 | キャッシュ | 一覧結果・件数を主体をまたいで cache しない。索引は候補だけ |
 | 失効の反映 | 索引の遅延 L_idx は post-check で吸収する（索引に残っても返さない）。剥奪直後に結果へ出続ける時間を実測する（RS-17 §5.3 の 4） |
 | 失敗時挙動 | post-check ができなければ空の一覧ではなく「利用不可」（D25-19）。打切りは `completeness=incomplete` と理由（D25-07・D25-21） |
 | 監査 | E1 は façade が判定ごと、E2 はページ単位（decision_id を複数記録） |
-| 契約試験・負例 | NP09-1 剥奪直後の検索結果に出ないこと／NP09-2 件数・ファセット・自動補完から見えない資源を推測できないこと（総件数は返さない。D25-13）／NP09-3 打切りを「完全」と返さないこと／NP09-4 searchResources の直接呼出しの拒否／NP09-5 ページング中の変更で他テナント資源が混入しないこと |
+| 契約試験・負例 | NP09-1 剥奪直後の検索結果に出ないこと／NP09-2 件数・ファセット・自動補完から見えない資源を推測できないこと（総件数は返さない。D25-13）／NP09-3 打切りを「完全」と返さないこと／NP09-4 searchResources の直接呼出しの拒否（v1.1（I-6）: 依存サービス側の合否は CI の静的検査で出す。façade の 403 は基盤側の試験で、汎用モックでは判定できない。判定方法は §3.8.3）／NP09-5 ページング中の変更で他テナント資源が混入しないこと／NP09-6（v1.1（I-6）、仮番）候補段の結果（自 DB の検索・索引）に含まれても post-check で deny の資源が返らないこと |
 | アンチパターン | ListObjects の結果をそのまま返す／総件数を返す／cursor で全件を辿る（P-10 として扱う。D25-02） |
-| チェックリスト | ① 資源型の方式（L1〜L3）を model registry に宣言 ② 一覧ヘルパ以外で列挙しない ③ 「利用不可」「不完全」を UI に表示 |
+| チェックリスト | ① 資源型の方式（L1〜L3）を model registry に宣言 ② 一覧ヘルパ以外で列挙しない ③ 「利用不可」「不完全」を UI に表示 ④ v1.1（I-6）: PP-2 は L2 か L3 を宣言し、候補生成に使ってよいもの（§3.8.1 の表）だけを使う |
 | 関連 | ADR-025、ADR-010、ADR-012 D12-26／T-031、T-076、T-078／S-01／K-03 |
 
 ### P-10 エクスポート・大量読取り
@@ -843,7 +985,7 @@ sequenceDiagram
 | テナント文脈 | 接続は 1 テナント。購読ごとに三者一致 |
 | 契約 API | 接続確立は主パターンの契約／evaluateAccess（接続・購読・メッセージ）／失効状態の配布（SDK 内部） |
 | PEP 配置 | PP-7（接続と購読を別々に数える）。終端を基盤の E4 に寄せるかは **未決（revocation KA9-2）** |
-| 認可モデル例 | `chat/channel#member` を接続時と購読開始時に判定し、read-sensitive の配信は I_conn(rs) ごとに再判定 |
+| 認可モデル例 | `chat/channel` の動詞の permission（例 `read`。relation `member` から計算）を接続時と購読開始時に判定し、read-sensitive の配信は I_conn(rs) ごとに再判定（v1.1（I-5）: relation `member` を `action.name` に渡さない。§3.7） |
 | 整合性 | write 以上のメッセージ・購読開始は `fully_consistent`。read-sensitive は I_conn(rs) ごと |
 | キャッシュ | 接続中に認可を保持しない（期限と epoch で切る） |
 | 失効の反映 | RFC 6455 は handshake での client 認証方法を規定しない [N][^22]（RS-17#51）ので、認可は本パターンの SDK 側で持つ。最大存続 min(exp, L_conn(t))、失効購読で Δ_conn 以内に切断。Amazon API Gateway の接続上限 2 時間 [V][^37]（RS-17#55）は剥奪の上限として当てにしない |
@@ -880,7 +1022,7 @@ sequenceDiagram
 | テナント文脈 | テナント間の境界は dataset・index・collection の分離で担い、行ポリシーはテナント内の細粒度だけに使う（ADR-012 D12-22・D12-26・D12-28） |
 | 契約 API | requestTxnToken（抽出ジョブ）／evaluateAccessBatch（返却時の post-check）／`POST /v1/relationship-exports`（認可関係の写しを作る場合。PX-10）／ライフサイクル事象の受信（CON-12・CON-13、draft）。削除伝播の完了報告は CON-12 の deletionReports |
 | PEP 配置 | 返却経路の PP-1（RM-1・RM-2）。返らない経路は区画と JIT（RM-3） |
-| 認可モデル例 | 分析結果を利用者に返す場合は、結果に含まれる資源ごとに `domain/resource#viewer` を post-check |
+| 認可モデル例 | 分析結果を利用者に返す場合は、結果に含まれる資源ごとに資源型の動詞の permission（例 `domain/resource` の `read`）を post-check（v1.1（I-5）: §3.7） |
 | 整合性 | 返却時の post-check は read-sensitive の `at_least_as_fresh` |
 | キャッシュ | 写しは PX-09・PX-10 の扱い。判定結果を持ち出さない |
 | 失効の反映 | ACL 反映遅延 L_idx と削除伝播時間 Del(p) は TBD（TC-057-01〜06 で実測） |
@@ -996,7 +1138,7 @@ sequenceDiagram
 | テナント文脈 | URL は 1 object・1 テナント・1 操作に束縛。生成用資格情報は区画に限った IAM 条件付き（ADR-012 D12-24） |
 | 契約 API | evaluateAccess／PEP SDK の `storage_credentials`（pep-contract §4.2 #8。基盤内部 API で、11_contracts の外部契約ではない）／監査 |
 | PEP 配置 | URL を発行する業務 API の PP-1。object storage 側は区画の短命資格情報（二層目） |
-| 認可モデル例 | `files/file#viewer` の判定後にだけ URL を発行 |
+| 認可モデル例 | `files/file` の動詞の permission `read` の判定後にだけ URL を発行（v1.1（I-5）: relation `viewer` ではなく動詞 `read` を渡す。§3.7） |
 | 整合性 | 発行時の判定は read-sensitive の `at_least_as_fresh` |
 | キャッシュ | CDN は read-sensitive 以上をキーにテナントと主体を含められる構成だけ。署名付き URL の応答を CDN に置く場合はキャッシュ寿命を URL の残り寿命以下にする（data-outside-pep PX-06） |
 | 失効の反映 | 剥奪から実効的な拒否までの上限は URL の残り寿命で決まる。L_url(t) は TBD（KD64-5） |
@@ -1027,13 +1169,13 @@ sequenceDiagram
 
 | 項目 | 内容 |
 |---|---|
-| 適用条件 | 招待、承認依頼の通知、パスワード・認証器の再設定・回復の通知（G-135 の 14） |
+| 適用条件 | 基盤（AS）が送る招待、パスワード・認証器の再設定・回復の通知（G-135 の 14）。v1.1（I-12）: 依存サービスが自分の業務で送る通知（承認依頼・差戻し・完了・督促など）は本パターンではなく §3.9（P-24＋P-04）。版 0.6 までは「承認依頼の通知」を本行に含めていたが、AS の機能は依存サービスから呼べないため、業務通知の送り先がない状態になっていた |
 | 主体・認証 | 受諾者はリンクを開いた後に AS で認証する。回復は ADR-003 の回復区分（R-A〜R-D）に従う |
 | token・grant・委任 | 受諾 token は単回・推測不能・期限付き。値は 128 bit 以上の乱数で、基盤には hash だけを保存（ADR-024 D24-06 のリンク秘密と同じ扱い）。リンクで session を作らない（禁止 D-3） |
 | テナント文脈 | 招待は所属先テナントに束縛。SSO を強制するテナントでは検証済みドメインの規則に従う（identity-lifecycle I-03） |
-| 契約 API | AS の招待・回復機能（OIDC/OAuth profile の外。**11_contracts に契約なし。基盤の UI 機能であり依存サービスは呼ばない**）。依存サービスが通知の送信だけを行う場合は P-24 のイベント |
+| 契約 API | AS の招待・回復機能（OIDC/OAuth profile の外。**11_contracts に契約なし。基盤の UI 機能であり依存サービスは呼ばない**）。依存サービスが通知の送信だけを行う場合は §3.9 の経路（P-24 のイベント＋P-04 の consumer。v1.1（I-12）） |
 | PEP 配置 | AS |
-| 認可モデル例 | 招待権限（テナント設定、既定案は IL-D7）を `core/tenant#inviter` で判定。管理者ロールを付与する招待は保護操作と同じ保証 |
+| 認可モデル例 | 招待権限（テナント設定、既定案は IL-D7）を `core/tenant` の relation `inviter` から計算した動詞の permission で判定（判定は AS が行う。core の permission 名は CON-04 の core モジュールに従う）。管理者ロールを付与する招待は保護操作と同じ保証 |
 | 整合性 | 付与は write（`fully_consistent`） |
 | キャッシュ | なし |
 | 失効の反映 | 招待の取消しで token を無効化。期限切れは自動失効 |
@@ -1070,7 +1212,7 @@ sequenceDiagram
 | テナント文脈 | gateway が tid を署名付きで渡す。製品がテナントを解さない場合はテナントごとに配備を分ける |
 | 契約 API | OIDC/OAuth profile（gateway 側）／evaluateAccess（PP-3 の sidecar が呼ぶ）／SAML 互換層は token-profile §11 の federation profile |
 | PEP 配置 | PP-3（期限付き例外。object 単位の coverage は数えず、例外台帳に未網羅として登録） |
-| 認可モデル例 | 機能単位（`legacy/app#user`）だけを sidecar で判定。object 単位は未網羅として残余リスクに登録 |
+| 認可モデル例 | 機能単位（`legacy/app` の動詞の permission、例 `use`。relation `user` から計算）だけを sidecar で判定。object 単位は未網羅として残余リスクに登録（v1.1（I-5）: §3.7） |
 | 整合性 | 機能単位の判定は操作階層どおり |
 | キャッシュ | gateway の session は P-01 と同じ。製品側の独自 session の寿命は gateway の session 以下 |
 | 失効の反映 | 製品の独自 session はライフサイクル事象で無効化できない場合が多いため、gateway で session を切ることで代替し、残存は製品 session の寿命で上限を置く |
@@ -1221,15 +1363,15 @@ sequenceDiagram
 | 主体・認証 | producer・consumer は workload（SVID の mTLS）で broker に認証。broker の ACL は workload 単位の境界であり、テナントの境界ではない |
 | token・grant・委任 | メッセージに token を入れない。起点の `txn` を参照として入れる |
 | テナント文脈 | envelope に tid（参照）。topic・partition はテナント区画キーで分ける構成を推奨（区画キーは基盤のライブラリで生成） |
-| 契約 API | PEP SDK の `enqueue`（基盤内部）／evaluateAccess（元の操作）／イベント配送の区分（ADR-022 D-2。CloudEvents 1.0.2・AsyncAPI 3.x の封筒・type 命名・冪等キー）。ライフサイクル事象の受信は CON-12・CON-13（draft。封筒・type 名・冪等と順序は GA、個別 data は preview）。業務イベント自体の契約ファイルは 11_contracts にない |
+| 契約 API | PEP SDK の `enqueue`（基盤内部。SDK を使わない場合は、受付記録を CON-05 の `registerAcceptanceRecord`（v1.1（I-9）、preview）で登録し、払い出された `job_run_id` をメッセージに入れる。v1.1 の同期。CON-05 §9 HO-08）／evaluateAccess（元の操作）／イベント配送の区分（ADR-022 D-2。CloudEvents 1.0.2・AsyncAPI 3.x の封筒・type 命名・冪等キー）。ライフサイクル事象の受信は CON-12・CON-13（draft。封筒・type 名・冪等と順序は GA、個別 data は preview）。業務イベント自体の契約ファイルは 11_contracts にない（業務イベントの AsyncAPI は発行するサービスが自分で持つ。IC-01）。v1.1（I-12）: 業務通知（承認依頼など）を起こすイベントも本パターンで発行し、送信は §3.9 の経路で行う |
 | PEP 配置 | producer の PP-1（元の操作）。consumer 側は P-04 |
-| 認可モデル例 | 発行は元の操作（例: `orders/order.confirm`、write）の一部として判定 |
+| 認可モデル例 | 発行は元の操作（例: 資源型 `orders/order`、`action.name="confirm"`、write）の一部として判定。v1.1（I-5）: 版 0.6 の `orders/order.confirm` は型と動詞を連結した書き方で、`action.name` には `confirm` だけを入れる（§3.7） |
 | 整合性 | 元の操作に従う |
 | キャッシュ | — |
 | 失効の反映 | 受信側の実行時再認可で反映（P-04） |
 | 失敗時挙動 | broker 不達は transactional outbox で再送。PDP 不達は元の操作ごと拒否 |
 | 監査 | E2（元の操作）、受付記録（job_run_id、起点 txn） |
-| 契約試験・負例 | NP24-1 メッセージに token・role・権限一覧が含まれないこと（静的検査・スキーマ検査）／NP24-2 他テナントの区画への publish の拒否／NP24-3 CloudEvents の context attributes に個人データが無いこと |
+| 契約試験・負例 | NP24-1 メッセージに token・role・権限一覧が含まれないこと（静的検査・スキーマ検査）／NP24-2 他テナントの区画への publish の拒否／NP24-3 CloudEvents の context attributes に個人データが無いこと／NP24-4〜NP24-7（v1.1（I-12）、仮番）業務通知の負例（§3.9.4） |
 | アンチパターン | Auth Context 拡張の `authclaims` を認可の根拠にする（拡張自身が保護目的ではないと述べる [N][^14]）／全テナント共通 topic に業務データを平文で流す |
 | チェックリスト | ① AsyncAPI で operation を宣言（IC-01）② enqueue ヘルパを使う ③ outbox |
 | 関連 | ADR-026、ADR-012 D12-31・D12-33、ADR-022 D-2／T-024／S-01、S-07／K-01 |
@@ -1550,12 +1692,53 @@ sequenceDiagram
   - traceability/open-items.md（TRC-11）OI-G10 (4): 照合対象の INT-02 §10.1 が版 0.6 で注記済みになったので、INT-00 §6.1・INT-02 §10.1・INT-06 FQ-02 の 3 文書の照合を本書の改訂の担当以外の者が行う（INT-06 S10-1 と同件。統括者へ）[D]。
 - CON-00 §3 の I-14 の記載は CON-03・CON-04・CON-07 だけを挙げるが、CON-09（ssf-caep.openapi.yaml）にも 429 の定義がある（2026-10-15 に grep で確認）[M]。CON-00 の所有者へ申し送る [D]。
 
+### 9.2 他文書への申し送り（v1.1）
+
+v1.1 で §3.7〜§3.9 を新設した（I-5・I-6・I-12）。次の点は本書の担当外なので申し送る [D]。v1.1 は複数の文書を並行して改訂しているため、各宛先で既に反映済みのものは確認だけでよい [D]。
+
+| # | 宛先 | 内容 | 理由 |
+|---|---|---|---|
+| HO11-1 | 11_contracts/authorization-api.openapi.yaml（CON-03） | (a) examples の `action.name: can_read` を動詞の permission（`read`）に改める（I-5）。(b) `Action.name` の description に「型名・名前空間を連結しない。relation 名と保持者集合を入れない」（本書 AN-2・AN-3）を加える | 本書 §3.7.1 と INT-03 N-24 に揃える。取り違えは `caller_scope` で本番だけ全件 deny になる（report P-05） |
+| HO11-2 | 11_contracts/schemas/access-token-claims.schema.json（CON-06）`principalType`、および v1.1 で写像を置く契約（CON-02 か CON-08） | (a) 「AuthZEN の subject.type へ変換表なしで写す」を改め、`ptype` → `subject.type` の写像の正本を 1 か所に置く（I-5）。(b) `service_account`・`ai_agent` の写像を決めるか、未決と明記して「未決の値は PEP が拒否する」（本書 SM-3）を書く。(c) 置き場所が決まったら、本書 §3.7.2 はその表の写しであると注記を改める | report P-06。本書 §3.7.2 は暫定の写しで、正本は契約である（SM-4） |
+| HO11-3 | CON-03 の `/access/v1/search/resource` の description と §4.2、11_contracts/mock-contract-test-kit.md（CON-11） | (a) PP-2（契約適合の自前実装）は searchResources を呼べないことと、façade は同じ workload の SDK とアプリコードを区別できないことを明記する。(b) NP09-4 の判定の分担（本書 §3.8.3 の NP09-4a〜NP09-4c）を CON-11 の負例に取り込み、NP09-4a の静的検査器をキット（DL-120）に入れる。(c) 汎用モックで search が 200 になる点を CON-11 の汎用モックの制約に加える | report P-07。I-6 |
+| HO11-4 | 02_requirements/identity-lifecycle.md の所有者、CON-00（11_contracts/README.md）の所有者 | 業務通知の宛先の連絡先を `sub` から引く経路（基盤が属性を提供するか、社内の通知基盤に解決を任せるか、提供しないか）を決め、契約にするか「提供しない」と明記する | 本書 BN-7 の暫定（アプリ内通知を既定）を解くため。report P-16・I-12 |
+| HO11-5 | CON-03 §4.3（`subject_binding`）、ADR-011 の未決事項 | token の主体と別の主体（通知の宛先、承認者の候補など）を `subject` にする照会を、`subject_binding` の必須化の後にも許すか、許すなら判定宣言の属性で許すかを決める | 本書 BN-5 の制約（送信時に宛先の権限を評価しない）を解くかどうかの判断材料 |
+| HO11-6 | 10_integration/authz-modeling-guide.md（INT-03） | (a) N-24 と本書 AN-1〜AN-5 の一致を確かめる。(b) 承認経路の通し例（I-4）で、通知の宛先を workflow が決める形（本書 BN-2）と矛盾しないことを確かめる | 同じ規則を 2 か所で述べるため |
+| HO11-7 | 10_integration/README.md（INT-00）、10_integration/definition-of-ready.md（INT-05） | (a) INT-00 の入口から §3.7〜§3.9 を案内する。(b) INT-05 の DoR に「PP-2 の一覧の方式（L2・L3）と searchResources を使わない申告（NP09-4b）」「業務通知の経路（§3.9）と連絡先の扱い（BN-7）」の確認を加える | 連携開発者が最初に読む文書から辿れるようにするため |
+| HO11-8 | 04_architecture/pep-contract.md（ARC-06）SR-04 | NP09-4a（アプリコードの search・engine 列挙の静的検査）が SR-04 と同じ観点であることを注記し、PP-2 にも適用することを書く | ARC-06 の SR-04 は PP-1 の SDK を前提に読める |
+| HO11-9 | traceability（DL-80 の採番の担当） | 仮番 NP09-6、NP24-4〜NP24-7 を正式に採番する | 本書の NPxx-n は仮番（§1.3） |
+| HO11-10 | 10_integration/developer-faq.md（INT-06） | FQ-79〜FQ-81 を加え、FQ-57 を本書 §3.8 に合わせる | v1.1 で同じ担当が反映済み（INT-06 版 0.4）。確認だけでよい |
+
 ---
+
+### 9.3 v1.1 の同期の記録
+
+他文書の v1.1 改訂が本書に宛てた申し送りと、§9.2 の申し送りの宛先での反映状況を、v1.1 の同期作業（AI エージェント。人による照合は未実施）で次のとおり記録する [D]。
+
+| 出所 | 内容 | 反映 |
+|---|---|---|
+| INT-03 §16.4 HO-V11-5 | §2.2 の経費精算の行に INT-03 §9.7 | §2.2 |
+| CON-08 x-handoff-v1.1 の 2 | write 以上で Txn-Token が無い・検証できない場合の扱い、TTS の JWKS | §3.2。業務は拒否、監査は `txn_absence` |
+| CON-08 x-handoff-v1.1 の 8 | 監査の節から CON-08 の拡張への参照 | INT-00 §5.2 の (4) の行と CON-11 §4.8 に置いた（本書 §3.2 は相関の欄だけを扱う） |
+| CON-05 §9 HO-08 | enqueue に `registerAcceptanceRecord` | P-24・P-05 の契約 API の行 |
+| CON-03 §12 N-3 | `docs.document.read` を操作としている記述の書き分け | 版 0.7 の P-01 の認可モデル例の行と §3.7.1 AN-2 で反映済みを確かめた。判定宣言の登録時の lint は INT-03 §15.2 S-5 |
+| CON-02 HO-I7-7 | tier の記入例の表記 | 本書に `read_sensitive` 等の v1.0 の表記がないことを確かめた |
+| INT-00 申し送り（v1.1）V-3、CON-15 §8 V11-Q5、CON-12 §10.1 V11-L1・V11-L5 | §10.1 の入口・echo proxy・照会 API・再署名の参照 | §10.1 |
+| 本書 §9.2 HO11-1 | CON-03 の examples と `Action.name` | CON-03 v1.1（版 0.3）で反映済み（CON-03 §13） |
+| 本書 §9.2 HO11-2 | 写像の正本 | CON-02 `x-subject-type-map`、CON-06 の `$comment`、本書 §3.7.2（SM-4） |
+| 本書 §9.2 HO11-3 | CON-03 の search の説明、CON-11 の NP09-4 と汎用モックの制約 | CON-03 の `searchResources`、CON-11 §4.10・§6.8 CV-048〜CV-050 |
+| 本書 §9.2 HO11-4 | 業務通知の連絡先の経路 | CON-00 の残課題に登録（決裁事項。02_requirements の所有者の判断は本同期の範囲外） |
+| 本書 §9.2 HO11-5 | 主体以外を subject にする照会 | CON-03 §9 に未決として登録 |
+| 本書 §9.2 HO11-6 | INT-03 N-24 と AN-1〜AN-5、BN-2 との整合 | INT-03 §16.5 で確かめた |
+| 本書 §9.2 HO11-7 | INT-00 の入口、INT-05 の DoR | INT-00 冒頭、INT-05 RD-09・RD-10 |
+| 本書 §9.2 HO11-8・HO11-9 | ARC-06 SR-04、NPxx-n の正式採番 | 04_architecture と traceability の採番の担当の範囲で、本同期では未反映 |
+| 本書 §9.2 HO11-10 | INT-06 | INT-06 版 0.4 で反映済み |
 
 ## 10. 連携開発者の着手判定（基盤の完成を待たずに始める）
 
 ### 10.1 判定（2026-10-15、版 0.2。版 0.6 で FZ-035 を反映）
 
+- v1.1 の同期（INT-00 申し送り（v1.1）V-3）: 読み始めは INT-00 冒頭の「実装者向けの入口（1 枚）」である。本節はパターンごとの差分だけを書く。キット配布前の汎用モックは `11_contracts/kit/README.md` の手順で `kit/echo-proxy.js` を前に挟んで使い、PEP の検査を外さない。照会 API（CON-15）は単独ファイル `11_contracts/state-query.openapi.yaml`（v1.1（I-10））で、応答の扱いは CON-15 QC-9 による（CON-15 §8 V11-Q5）。CON-13 の正例の `lcsig` を署名し直す手順は CON-12 §8.1、検証できる正例は CON-12 の `x-test-signing-vectors` にある（CON-12 §10.1 V11-L5）[D]。
 - 本書と 11_contracts だけで、主パターンの選定、entry point 台帳への記載、token 検証・PEP 呼出し・exchange・監査送出の実装と単体試験は始められる [D]。契約側の着手手順の正本は CON-00 §2.5、モック・負例ベクタ・sandbox の正本は CON-11 §16 であり、本節はパターンごとの差分だけを書く [D]。
 - 始められないもの（4 つ。INT-00 §0 の 3・INT-06 FQ-02 と同じ）: (1) 自チームの CI で合否を出す契約試験（DL-82（PoC 基盤）は納品済みだが、キット本体 DL-120 が未実装。CON-11 残課題 1、期限 G3）、(2) Webhook の署名検証・署名送信（I-15 が KD64-1 の決裁待ち）、(3) 保管庫を使う outbound 連携（保管庫 API が KD64-2 の決裁待ち）、(4) ライフサイクル事象の署名検証（CON-12 RO-11）の正例の試験（検証に通る事象を受理すること）。CON-13 の正例の `lcsig` は形を示すダミーで実鍵の署名ではなく、キットの試験鍵と鍵マニフェストの配布（DL-120、G3）以降になる [D]（CON-13 `x-schema-limits`、CON-11 §4.11・§16.3、INT-00 §6.1）。
 - 条件付きで始められるもの: ライフサイクル事象の受信。CON-12・CON-13（draft）に対して、受信 consumer、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告の実装と単体試験を書ける。CON-13 の examples と `x-negative-examples` を試験データにする。封筒・type 名・冪等と順序は GA、個別 data は preview である。配送の保証に依存する結合試験はモック MK-08（CON-11 版 0.3 で仕様化。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）の提供後になり、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]（CON-00 §2.5・§2.6）。
@@ -1584,8 +1767,8 @@ sequenceDiagram
 | P | 今できる | 待つもの（所在） |
 |---|---|---|
 | P-01・P-02・P-25 | BFF 参照実装を使う前提での画面・session 処理、cookie 属性の CI 検査（NP01-1）、OS ブラウザ＋PKCE＋DPoP の client 実装（P-02）、public 宣言と session 再生成（P-25） | BFF 参照実装（ADR-005 D6-2）の提供時期（INT-00 §7.1。DCS-06 §8 の案では sandbox G3）、MK-01（開発用 AS）の配布（DL-120）、Back-Channel Logout の位置（ADR-006 L6-2） |
-| P-03・P-09・P-10・P-16・P-18 | 内部 JWT の検証（V1〜V14）、evaluateAccess／evaluateAccessBatch の呼出し、exchange の要求、Txn-Token の無改変伝播、一覧ヘルパ前提の post-check、URL 発行前の判定と寿命の設定化 | SDK の提供言語（ADR-022 NA-022-1）、MK-02・MK-03、SPIFFE trust domain の数（§9）、L_url(t) の値（KD64-5）。P-03 の workload と交換可能な組の登録（I-16・I-17）は CON-14 §4A の API とモック（DL-120、G3）。それまでは CON-14 §4A.5 の暫定手順（INT-00 §6.1） |
-| P-04・P-05・P-24 | メッセージを参照だけにする設計と静的検査（NP04-3、NP24-1）、型 A1〜A4 の宣言、デッドレターと通知、outbox | requestTxnToken（preview、draft 依存）、内部開始の `tctx` の意味（ADR-026 L26-1・L26-2）、ライフサイクル事象のモック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）・期限 T_* の値、署名検証の正例の試験に使うキットの試験鍵（DL-120、G3）（受信の実装と単体試験は CON-12・CON-13 版 0.2.0 以降に対して今できる。§10.1 の注意 4 点） |
+| P-03・P-09・P-10・P-16・P-18 | 内部 JWT の検証（V1〜V14）、evaluateAccess／evaluateAccessBatch の呼出し、exchange の要求、Txn-Token の無改変伝播、一覧ヘルパ前提の post-check（v1.1（I-6）: PP-2 は §3.8 の候補生成と自前の一覧の外形、NP09-4a の静的検査）、URL 発行前の判定と寿命の設定化 | SDK の提供言語（ADR-022 NA-022-1）、MK-02・MK-03、SPIFFE trust domain の数（§9）、L_url(t) の値（KD64-5）。P-03 の workload と交換可能な組の登録（I-16・I-17）は CON-14 §4A の API とモック（DL-120、G3）。それまでは CON-14 §4A.5 の暫定手順（INT-00 §6.1） |
+| P-04・P-05・P-24 | メッセージを参照だけにする設計と静的検査（NP04-3、NP24-1）、型 A1〜A4 の宣言、デッドレターと通知、outbox。v1.1（I-12）: 業務通知の経路（§3.9）と負例 NP24-4〜NP24-7 の単体試験 | requestTxnToken（preview、draft 依存）、内部開始の `tctx` の意味（ADR-026 L26-1・L26-2）、ライフサイクル事象のモック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）・期限 T_* の値、署名検証の正例の試験に使うキットの試験鍵（DL-120、G3）（受信の実装と単体試験は CON-12・CON-13 版 0.2.0 以降に対して今できる。§10.1 の注意 4 点） |
 | P-06 | 送信元の PC-15 登録の設計、受信の edge 経由化、payload の参照化、配信直前の再 Check | **Webhook 署名 profile（I-15、KD64-1）**。決裁までは署名方式を固定した実装をしない |
 | P-07・P-22・P-23 | private_key_jwt（`aud`＝issuer 単独）か mTLS の client 実装、scope の最小化、テナントごとの client・grant の設計 | client 登録の承認者の決裁（INT-04 ONB-R2。契約は client-registration.openapi.yaml、preview）、共有 sandbox（CON-11 §5、K11-3）、device grant の例外（KD64-3） |
 | P-08 | tool 目録の草案、RFC 9728 の metadata、tool ごとの `resource` 指定、下流の exchange、実行単位のテナント主体ごとの分離（D17-07 (a)）、`tid` 一致検査と拒否監査の実装と単体試験（NP08-7〜NP08-9） | 起点エージェント主体の欄名（ADR-017 L17-2）、`tctx` のテナント欄の名前（ADR-009 D09-29 が DL-115 に委ねる。claims-catalog の草案は `tid`）、承認 grant の画面（AS） |
@@ -1636,6 +1819,8 @@ sequenceDiagram
 10. **本書の人による照合**: 版 0.2 で作成者と別の AI エージェントが独立レビューした（末尾「レビュー記録」）。人による照合と、research ノート外の原典（[^33] RFC 9421）の人による再確認は未実施である（CONVENTIONS §4・§8）[D]。
 11. **暫定方式と提供時期の公開（G-143）**: 置き場所は INT-00 §7（機能とゲートの対応、暫定方式の要約）と DCS-06 §8（DL-42、ゲートの割当て案）になった [D]。割当ての決裁、日付（DCS-06 §5.4 の規則）、サービスごとの期限が残る。所有者: CTO。期限: DEC-8 前 [D]。
 12. **連携ハンドブック類の改訂**: DL-62（INT-00）、DL-66（INT-04）、DL-67（INT-05）、DL-68（INT-06）は 2026-10-15 に draft で作成された [D]。§10 の手順の一部（台帳の登録先、疑義の窓口）は、窓口の開設（INT-00 KD-INT00-1）まで CON-00 §2.5 の暫定経路（E0）に頼る [D]。
+
+13. **v1.1（I-5・I-6・I-12）の残り**: `service_account`・`ai_agent` の `subject.type` への写像（§3.7.2、HO11-2）、業務通知の連絡先の解決経路（BN-7、HO11-4）、宛先を主体にする照会の扱い（BN-5、HO11-5）、façade の search の受付制御の方式（NP09-4c、CON-03 で未決）が未決である [D]。§3.7〜§3.9 は AI エージェントによる模擬連携検証（実在の連携チームではない）の指摘から起草したもので、実在の連携チームによる確認と、作成者以外の照合を経ていない（CONVENTIONS §8）[D]。
 
 ---
 
@@ -1843,3 +2028,18 @@ sequenceDiagram
 
 - 根拠として確認した箇所（2026-10-15）[D]: 11_contracts/schemas/lifecycle-event.schema.json（CON-13 版 0.2.1。冒頭 `$comment`、`$defs/DeletionReport` の outcome・failure_reason の `x-known-values`、KnownTypes の description、負例 LC-NE-08・09・11、`x-handoffs` R8-H4 の status「INT-02 §10.1 は未適用」）、11_contracts/lifecycle-events.asyncapi.yaml（CON-12。RO-11・RO-13 の記載）、10_integration/README.md（INT-00 版 0.8）§0 の 3・§6.1・申し送り S-8、10_integration/developer-faq.md（INT-06 版 0.3）FQ-02・申し送り S10-1〜S10-3。新たな外部原典は用いていない（CON-12 が引く RFC 9967 などは CON-12 の脚注で検証済み）[D]。
 - 対応件数: 1 件（対応済み 1。他文書への申し送り 4 項目を §9.1 に追加）[D]。
+
+### v1.1 改訂（2026-10-15、版 0.6 → 版 0.7）
+
+> 13_integration-trial/report.md（AI エージェントが新規の依存サービス（経費精算）の開発チームを演じた模擬連携検証。実在の連携チームの検証ではない）の詰まった点と改善提案のうち、I-5・I-6・I-12 を反映した。判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 詰まった点（report） | 改善提案 | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| V11-1 | P-05（重大）`action.name` の書き方が 3 通りあり、`caller_scope` で本番だけ全件 deny になる | I-5 | §3.7.1 に AN-1〜AN-5 を置き、動詞の permission 名に統一した。本書の例（P-01 の `docs.document.read`、P-24 の `orders/order.confirm`、relation 名を判定に渡すように読める P-04・P-05・P-06・P-14・P-15・P-18・P-19・P-20 の例）を直した。CON-03 の `can_read` は HO11-1 で申し送った | §3.7.1、P-01、P-04、P-05、P-06、P-14、P-15、P-18、P-19、P-20、P-24、§9.2 |
+| V11-2 | P-06（中）`subject.type` が `core/user` と `human` で食い違う | I-5 | §3.7.2 に `ptype` → `subject.type` の写像（暫定の写し）と SM-1〜SM-5 を置いた。正本の一本化は HO11-2 で申し送った | §3.7.2、§9.2 |
+| V11-3 | P-07（中）PP-2 が searchResources を呼んでよいか不明。NP09-4 の判定方法が不明 | I-6 | §3.8 で PP-2 が候補生成に使ってよいもの（L2・L3 と自サービスの関係の写し。searchResources は不可）、自前の一覧の外形、NP09-4 を 4a（静的検査）・4b（申告）・4c（基盤側）に分けた判定方法を定めた。P-09 の PEP 配置・負例・チェックリストと P-01 の PEP 配置を合わせ、NP09-6（仮番）を加えた | §3.8、P-01、P-09、§9.2 |
+| V11-4 | P-16（中）承認依頼の通知の送り先の契約がない | I-12 | §3.9 で、業務通知は本基盤の契約外であること、経路（P-24＋P-04）、BN-1〜BN-9、監査、負例 NP24-4〜NP24-7（仮番）、経費精算の例を定めた。P-19 の適用条件から業務通知を外し、§2.1 Q15・§2.2 の 14・P-24 を合わせた | §2.1、§2.2、§3.9、P-19、P-24、§9.2 |
+
+- 根拠として確認した箇所（2026-10-15、本リポジトリ）[D]: 10_integration/authz-modeling-guide.md（INT-03）N-8・N-19・N-23・N-24、11_contracts/authorization-api.openapi.yaml（CON-03）§4.2・§4.3・`/access/v1/search/resource` の description と `x-callers`・`EntityType` の description、11_contracts/schemas/access-token-claims.schema.json（CON-06）`principalType`、11_contracts/schemas/audit-event.schema.json（CON-08）`$defs/PrincipalType`、11_contracts/relationship-model-registry.openapi.yaml（CON-04）listRelationshipChanges の `x-stability`、05_adr/ADR-025 D25-03〜D25-07・D25-13・D25-19・D25-21、04_architecture/authorization-model.md（ARC-05）§3.1、04_architecture/claims-catalog.md（ARC-15）§3.9、04_architecture/pep-contract.md（ARC-06）SR-04、13_integration-trial/expense-service/src/pdp.js・src/app.js・test/。新たな外部原典は用いていない（BN-1・BN-6 は既存の脚注 [^13]・[^35]・[^42] を引いた）[D]。
+- 閉じられなかったもの [D]: 残課題 13 のとおり、写像の一部、連絡先の解決経路、宛先を主体にする照会の扱い、façade の search の受付制御の方式は未決である。§0 の結論は変えていない。
+- 対応件数: 4 件（対応済み 4。他文書への申し送り 10 件を §9.2 に追加）[D]。

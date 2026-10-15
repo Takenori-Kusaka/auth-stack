@@ -1,6 +1,6 @@
 # 開発者 FAQ
 
-> 文書ID: INT-06 / 版: 0.3 / 状態: draft / 最終更新: 2026-10-15（0.3 追補（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。本文の回答は変えていない）: 申し送り S10-1・S10-2 に宛先での反映状況を記した（TRC-11 申し送り 72、INT-02 §9.1）。0.3: 模擬パネル ラウンド 10 の devlead 指摘により、FQ-02 と §6 のライフサイクル事象の行を CON-13 版 0.2.0 以降に合わせた。始められないものを 3 つから 4 つにし、撤回事象の扱い・failure_reason・lcsig の正例の試験の時期を書いた。末尾「レビュー記録」ラウンド 10。同じ版 0.3 で、ラウンド 10 の別の devlead 指摘により、FQ-60 に ADR-017 D17-07 (a)〜(c)（実行単位のテナント主体ごとの分離、tool 側 PEP の `tid` 一致検査、共有実行単位の本番配備の禁止）を 1 行加えた（末尾「レビュー記録」ラウンド 10 R10-2）。0.2: PoC/R7反映。FQ-76〜FQ-78 を追加し、FQ-55 に PoC の観察を加えた。末尾「レビュー記録」の「PoC/R7反映」）
+> 文書ID: INT-06 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15（0.5（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§1.3 の入口、FQ-04・FQ-43・FQ-44・FQ-79、§6 の写像の行。新しい義務は作っていない（FR-2）。末尾「v1.1 の同期」。0.4: v1.1 改訂。模擬連携検証 13_integration-trial/report.md の改善提案 I-5・I-6・I-12 を反映し、FQ-79（`action.name` と `subject.type` の書き方）、FQ-80（SDK なしの一覧の候補生成と NP09-4）、FQ-81（業務通知の送信経路）を追加し、FQ-57 を INT-02 §3.8 に合わせ、§6 に未決 3 行を加えた。他文書への申し送りは末尾「レビュー記録」の「v1.1 改訂」。0.3 追補（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。本文の回答は変えていない）: 申し送り S10-1・S10-2 に宛先での反映状況を記した（TRC-11 申し送り 72、INT-02 §9.1）。0.3: 模擬パネル ラウンド 10 の devlead 指摘により、FQ-02 と §6 のライフサイクル事象の行を CON-13 版 0.2.0 以降に合わせた。始められないものを 3 つから 4 つにし、撤回事象の扱い・failure_reason・lcsig の正例の試験の時期を書いた。末尾「レビュー記録」ラウンド 10。同じ版 0.3 で、ラウンド 10 の別の devlead 指摘により、FQ-60 に ADR-017 D17-07 (a)〜(c)（実行単位のテナント主体ごとの分離、tool 側 PEP の `tid` 一致検査、共有実行単位の本番配備の禁止）を 1 行加えた（末尾「レビュー記録」ラウンド 10 R10-2）。0.2: PoC/R7反映。FQ-76〜FQ-78 を追加し、FQ-55 に PoC の観察を加えた。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-138, G-128, G-145（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-68 を含む全行。閉じ方と状態は末尾の対応表）。関連: ADR-022 D-7-3（疑義窓口と FAQ）、ADR-016 D16-21（告知の主手段としての FAQ）、ADR-026 §6.4（非同期の FAQ 項目）、INT-01 §7.1（閲覧専用モードの推奨を本書へ委任）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-68 行）, 05_adr/README.md, 05_adr/ADR-005・ADR-006・ADR-009・ADR-011・ADR-012・ADR-013・ADR-014・ADR-016・ADR-017・ADR-021・ADR-022・ADR-023・ADR-024・ADR-025・ADR-026・ADR-027・ADR-029, 05_adr/reconciliation-notes.md, 10_integration/integration-patterns.md（INT-02）, 10_integration/dependency-tiers.md（INT-01）, 10_integration/authz-modeling-guide.md（INT-03）, 11_contracts/README.md（CON-00）, 11_contracts/compatibility-deprecation-policy.md（CON-01）, 11_contracts/mock-contract-test-kit.md（CON-11）, 11_contracts/*.openapi.yaml・schemas/*.json, 04_architecture/token-profile.md（ARC-02）, workload-identity-delegation.md（ARC-04）, authorization-model.md（ARC-05）, pep-contract.md（ARC-06）, fail-mode-matrix.md（ARC-08）, revocation-continuous-evaluation.md（ARC-09）, audit-privacy.md（ARC-10）, data-outside-pep.md（ARC-11）, capacity-model.md（ARC-13）, claims-catalog.md（ARC-15）, 07_slo/numeric-contracts.md（DL-20）, 08_operations/operating-model.md（DL-27 §8）, 01_governance/assumptions-register.md, 01_governance/exception-risk-acceptance.md（GOV-07）, 01_governance/raci-governance.md（GOV-05）, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, research/RS-04, RS-06, RS-09, RS-10, RS-13, RS-16, RS-17（各 verification 記録を含む）, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が上記の文書を通読し、連携開発者から出ると想定される問いと、その答えを正本文書から写して起草した。本書は新しい設計判断をしない。問いの選定と答えの照合は自己レビューであり、実在の CTO/CISO・連携開発者の確認を経ていない（CONVENTIONS §8）[D]。
@@ -9,7 +9,7 @@
 
 ## 0. 結論（CTO/CISO・連携開発者向け）
 
-1. **本書は 16 分野・78 問（FQ-01〜FQ-78。FQ-76〜FQ-78 は版 0.2 の PoC/R7反映で追加）の問いと答えを置き、全回答に根拠文書へのリンクを付けた** [D]。G-128 が名指しする 6 分野（token、テナント context、キャッシュ、非同期、エラー時の挙動、ローカル開発とモック）に加え、権限追加、越境共有、検索、AI エージェント、レガシー、性能、障害時、例外申請、trace id と `txn` の違い、Tier を扱う（§3）[D]。G-128 の合格判定（作成者以外のレビュアーによる確認）は未実施である [D]。
+1. **本書は 16 分野・81 問（FQ-01〜FQ-81。FQ-76〜FQ-78 は版 0.2 の PoC/R7反映、FQ-79〜FQ-81 は版 0.4 の v1.1 改訂（I-5・I-6・I-12）で追加）の問いと答えを置き、全回答に根拠文書へのリンクを付けた** [D]。G-128 が名指しする 6 分野（token、テナント context、キャッシュ、非同期、エラー時の挙動、ローカル開発とモック）に加え、権限追加、越境共有、検索、AI エージェント、レガシー、性能、障害時、例外申請、trace id と `txn` の違い、Tier を扱う（§3）[D]。G-128 の合格判定（作成者以外のレビュアーによる確認）は未実施である [D]。
 2. **答えの大半は「してはならないこと」に集約できる。§2 の 15 項目を守れば、主要な事故類型（テナント越境、剥奪の未反映、token の流出、障害時の迂回）に対する連携側の義務の大半を満たす** [D]。15 項目は INT-02 の共通義務 IC-01〜IC-12、INT-01 の M-01〜M-10、ARC-15 の DEV-1〜DEV-9、ARC-06 §4.3 の 12 項目から重複を除いて抜き出した [D]。義務の正本はそれらの文書であり、本書の要約が食い違えば正本を優先する（§1.1）[D]。
 3. **75 問のうち 28 問の答えは「値は未決」「契約は未作成」に依存する（§6）** [D]。token 寿命・PDP deadline・cache 最大齢などの数値は DL-20 で未決裁（TBD）、issuer の粒度は未決（ADR-007／ADR-021、U-01）、PoC 基盤（DL-82）は納品済みだが、契約試験キット本体（DL-120）は未実装（期限 G3）である。ライフサイクル事象の契約（G-137）は CON-12・CON-13 が draft で配置済みだが、キット本体（DL-120）が未実装で[^29]モック MK-08 を動かせず、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]。本書はこれらについて「値をコードに直書きせず設定から読む」「安全側の暫定動作で実装する」という答えを返す（§6）[D]。決まった時点で該当回答を改訂する（§4 の改訂規則）[D]。
 4. **FAQ は非規範文書とし、拘束力のある解釈は正誤表（CON-00 §5.2 の E0 経路）でだけ出す案を推奨する（決裁案 KD-FAQ-1）** [D]。約 20〜30 の組織 [A-052] が FAQ の文言を契約とみなして実装すると、FAQ の改訂が事実上の契約変更になり、契約変更審査会（RACI-20）を迂回するからである [D]。
@@ -48,6 +48,8 @@
 | SDK | PEP SDK と共通の検証器。SDK のない言語は契約適合の自前実装（ARC-06 要旨 1） |
 
 ### 1.3 読む順番
+
+- v1.1 の同期（INT-00 申し送り（v1.1）V-3）: 読み始めは INT-00（10_integration/README.md）冒頭の「実装者向けの入口（1 枚）」である。下の図はその後の流れで、入口と食い違えば入口を正とする。汎用モックの起動は `11_contracts/kit/README.md` の手順による [D]。
 
 ```mermaid
 flowchart TB
@@ -133,7 +135,7 @@ flowchart TB
 
 #### FQ-04 SDK を使わないといけないか
 - 使わなくてもよい [D]。PEP の適合は「SDK を入れたか」ではなく「契約上の記録（decision_id 付きの E2）を出し、負例ベクタに合格したか」で判定する（ADR-022 D-4-3、G-140）[D]。
-- SDK のない言語は ARC-06 §4.2 の 11 関数と同じ外形を自前実装し、台帳に登録する [D]。ADR-011 D5-4（SDK を通してだけ PDP を呼ぶ）の文言との関係は未決（ADR-011／ADR-012 L-01）であり、ARC-06 は「SDK または契約適合の自前実装」と読む [D]。
+- SDK のない言語は ARC-06 §4.2 の 11 関数と同じ外形を自前実装し、台帳に登録する [D]。連携チームが開くのは抜粋の `11_contracts/integration-essentials.md`（CON-16）で、11 関数は §2.3、token 検証の V1〜V14 は §1.3、core 型は §3 にある（v1.1 の同期。CON-16 IE-2）[D]。ADR-011 D5-4（SDK を通してだけ PDP を呼ぶ）の文言との関係は未決（ADR-011／ADR-012 L-01）であり、ARC-06 は「SDK または契約適合の自前実装」と読む [D]。
 - SDK の提供言語と時期は未定である（ADR-022 NA-022-1、DL-62）[D]。
 - 根拠: [ARC-06 要旨 1・§4.1・§4.2](../04_architecture/pep-contract.md)、05_adr/ADR-022 D-4-3
 
@@ -264,6 +266,14 @@ flowchart TB
 - write 以上は実行せず backoff で待つ（ADR-026 D26-09）[D]。業務側でバックログが溜まることは ADR-026 の残余リスク RR26-04 として事業責任者が受容する案である [D]。
 - 根拠: 05_adr/ADR-026 §6.2・§6.3、[ARC-06 §3.11](../04_architecture/pep-contract.md)
 
+#### FQ-81 承認依頼などの業務通知（メール・アプリ内通知）はどこから送るか（版 0.4、v1.1（I-12））
+- 本基盤は業務通知の送信 API・契約を提供しない [D]。AS の招待・回復の機能（INT-02 P-19）は依存サービスから呼べない [D]。送信の手段は自サービスか社内の通知基盤（本基盤の範囲外）が持つ [D]。
+- 経路は P-24（発行）と P-04（送信を担う consumer）の重ね掛けである [D]。業務の更新と同じトランザクションの outbox に、参照だけの通知事象（tid、通知の種別、資源 ID、宛先の `sub`、起点の `txn`）を書く [D]。連絡先・token・本文は入れない [D]。
+- consumer は送信の直前に、起点主体の権限で起点の操作を再 Check し（P-04）、業務状態・テナント・宛先の状態を確かめる [D]。拒否・判定不能・テナント停止・宛先の削除なら送らない [D]。
+- 本文は最小にし（種別・参照番号・通常の画面 URL）、業務の中身は宛先が login してから PEP の判定を経て見せる [D]。URL に token を入れず、URL だけで session を作らない（禁止 D-3）[D]。
+- `sub` から連絡先を引く契約はまだない（未決。§6）[D]。決まるまでは、アプリ内通知を既定にし、自サービスが本人から正当に得た連絡先がある場合に限ってメール・SMS を使う [D]。
+- 根拠: [INT-02 §3.9（BN-1〜BN-9、NP24-4〜NP24-7）・P-19・P-24・P-04](integration-patterns.md)、05_adr/ADR-026 D26-02・D26-11
+
 ### 3.6 エラー時の挙動
 
 #### FQ-29 401・403・404・503 はどう使い分けるか
@@ -364,12 +374,15 @@ flowchart TB
 #### FQ-43 PDP（認可判定）をモックするには
 - MK-03（PDP façade のモック）を使う [D]。MK-03 は tuple と制御 API の許可表で判定し、ドメインのモデルの意味論は評価しないため、アプリの契約試験が合格してもモデルの正しさは示さない [D]。モデルの正しさは engine 公式 CLI（`fga model test`、`zed validate`）で別に試験する（INT-03 §15）[D]。
 - キット配布前は CON-03 の examples から汎用モックを起動して正例だけを確かめる [D]。汎用モックが返す誤り（CON-11 §4.10）に合わせてコードを直さず、疑義は窓口へ出す [D]。
-- 根拠: [CON-11 §4.4・§16.2 #8](../11_contracts/mock-contract-test-kit.md)、[INT-03 §15](authz-modeling-guide.md)
+- v1.1 の同期（CON-11 §14.3 H11-3、CON-03 §12 N-1、CON-05 §9 HO-04）: キット配布前の汎用モックは、前に `11_contracts/kit/echo-proxy.js` を置く（X-Request-ID の写し R1、evaluations の件数 R5、PDP metadata R3、search の結果の型 R8）。返す例は `Prefer: example=<例の名前>` で選ぶ（kit の R7。CON-03 は `allowWrite`・`mixed` など、CON-05 は `hopToPayment` など）。モックに合わせて PEP の検査（echo・件数・実効モード・metadata の照合・結果の型）を外さない。手順の詳細は INT-00 §6.3 と CON-03 §11 [D]。
+- モデルの試験の CLI は openfga/cli **v0.8.1** をキットの既定とし、版と入手方法は CON-11 §6.7 と kit/README.md §6 にある（v1.1 の同期。CON-11 §14.3 H11-3）[D]。
+- 根拠: [CON-11 §4.4・§4.10・§6.7・§16.2 #8](../11_contracts/mock-contract-test-kit.md)、[kit/README.md](../11_contracts/kit/README.md)、[INT-03 §15](authz-modeling-guide.md)
 
 #### FQ-44 モックから sandbox・本番へ移るとき、何を変えてよいか
 - 環境変数で渡す差し替え点だけである [D]。discovery URL、trust anchor、PDP・STS・TTS・Registry・SSF・監査送出の endpoint、workload 資格情報の取得元、fail-mode の設定の取得先である [D]。暫定の変数名は `AUTH_OIDC_DISCOVERY_URL`、`AUTH_TRUST_ANCHOR_FILE`、`AUTHZ_PDP_BASE_URL`、`AUTH_STS_TOKEN_URL`、`AUTH_TTS_URL`、`AUTHZ_REGISTRY_BASE_URL`、`AUTH_SSF_CONFIGURATION_URL`、`AUDIT_SINK_URL`、`WORKLOAD_CREDENTIAL_SOURCE`、`AUTHZ_FAILMODE_CONFIG_URL` で、キット本体 DL-120 と SDK で凍結する [D]。
+- v1.1 の同期（CON-11 §14.3 H11-3、v1.1（I-8））: 差し替え点に、自サービスの aud `AUTH_SERVICE_AUDIENCE`、検証設定の取得先 `AUTH_VERIFIER_CONFIG_URL`、環境名 `AUTH_ENVIRONMENT`、自サービスの SPIFFE ID の期待値 `WORKLOAD_SPIFFE_ID` が加わった。設定文書（fail-mode 設定 `failmode-config/1`、token 検証設定 `verifier-config/1`）の形は CON-11 §11.6 にある。v1.1 の同期では、照会 API の timeout と Q_fresh（`LIFECYCLE_STATE_QUERY_TIMEOUT_MS`・`LIFECYCLE_STATE_QUERY_FRESH_MS`）と TTS の期待値（`AUTH_TTS_ISSUER`・`AUTH_TTS_AUDIENCE`・`AUTH_TTS_JWKS_URL`）も加えた（CON-11 §11.4）[D]。
 - 業務 API に試験用のヘッダ・パラメータを加えない [D]。加えると PoC 基盤への切替でコード差分が出て、G-123（コード差分 0）を満たせない [D]。
-- 根拠: [CON-11 §4.1 MK-P4・§11.4](../11_contracts/mock-contract-test-kit.md)
+- 根拠: [CON-11 §4.1 MK-P4・§11.4・§11.6](../11_contracts/mock-contract-test-kit.md)
 
 #### FQ-45 共有 sandbox で得た token は本番で使えるか
 - 使えない [D]。sandbox は本番と別の issuer・鍵・trust domain で運用し、sandbox の issuer を本番の allowlist に載せない（ADR-022 D-6-4）[D]。sandbox の発行物を本番相当環境に提示する負例（CV-011）は全件拒否が合格条件である [D]。
@@ -424,6 +437,13 @@ flowchart TB
 - 原則として claim を増やさず、認可に要る情報は PDP の判定で得る [D]。必要な場合は ARC-15 §6.3 の様式で契約変更審査会に申請する（ADR-016 D16-41）[D]。claim の追加・廃止は年 2 回の固定改定日に決まる [D]。
 - 根拠: [ARC-15 §6](../04_architecture/claims-catalog.md)、[CON-00 要旨 3](../11_contracts/README.md)
 
+#### FQ-79 PDP に渡す `action.name` と `subject.type` には何を入れるか（版 0.4、v1.1（I-5））
+- `action.name` には、資源型の permission catalog に載せた動詞の permission の名前だけを入れる（例: `read`、`approve`）[D]。型名を連結しない（`docs.document.read` は誤り）、relation 名（`viewer`）や保持者集合（`editors`）を渡さない、`can_read` のような接頭辞を付けない [D]。型は `resource.type` で渡す [D]。
+- 宣言外の permission は façade の判定宣言（`caller_scope`）で deny になる [D]。汎用モックは値を検査しないので、取り違えは本番で初めて全件 deny として表れる [D]。自チームの CI で「コードが渡す `action.name` ⊆ catalog の動詞」を検査する [D]。
+- `subject.type` には `ptype` の値（`human`）ではなく型名を入れる。`human` → `core/user`、`workload` → `core/workload` である [D]。`service_account` は `core/client`（暫定）、`ai_agent` は未決で、未決の値と未知の値を受けたら型を推測せず拒否する [D]。写像は自サービスの 1 か所に置き、正本は CON-02（common.schema.json）の `x-subject-type-map` とする（v1.1 の同期で正本を設置。INT-02 §3.7.2 の写しに追随。S11-1）[D]。
+- 監査イベント（CON-08）の `subject.type` は主体種別（`human` など）で、AuthZEN の `subject.type` とは値の範囲が違う [D]。
+- 根拠: [INT-02 §3.7（AN-1〜AN-5、SM-1〜SM-5）](integration-patterns.md)、[INT-03 N-8・N-19・N-24](authz-modeling-guide.md)、[CON-03 §4.2](../11_contracts/authorization-api.openapi.yaml)
+
 ### 3.10 越境共有
 
 #### FQ-54 他テナントの利用者に資源を共有するには
@@ -452,12 +472,19 @@ flowchart TB
 #### FQ-57 検索結果・一覧の認可はどうするか
 - 一覧ヘルパ（SDK の `list()`）だけを使い、返却直前のページの各資源を `evaluateAccessBatch`（`execute_all`）で post-check する（ADR-025 D25-04）[D]。検索エンジン・ACL 反映索引・engine の列挙は候補の生成器であり、認可の根拠にしない [D]。
 - AuthZEN 1.0 の search は結果が evaluation で許可になることを保証せず、ページングも原子的なスナップショットを保証しない [N][^9]（RS-17#45）。
-- `searchResources` を依存サービスが直接呼ぶことは CI と façade で拒否される（D25-03）[D]。
+- `searchResources` を依存サービスが直接呼ぶことは CI と façade で拒否される（D25-03）[D]。SDK を使わない自前実装（PP-2）は searchResources を候補生成にも使えない。候補の作り方と NP09-4 の判定方法は FQ-80 に書いた（v1.1（I-6））[D]。
 - 根拠: [INT-02 P-09](integration-patterns.md)、[ARC-05 §7](../04_architecture/authorization-model.md)
 
 #### FQ-58 総件数・ファセット・自動補完を返してよいか
 - 総件数は既定で返さない（D25-13）[D]。返す場合は post-check 後の件数を上限付きで返し、ファセット・補完も post-check を通った集合から作る [D]。打切りは `completeness=incomplete` と理由で返し、「完全」と偽らない [D]。
 - 根拠: [ARC-05 §7](../04_architecture/authorization-model.md)、[INT-02 P-09](integration-patterns.md)
+
+#### FQ-80 SDK を使わない自前実装（PP-2）で一覧を返すとき、候補はどう作るか。NP09-4 はどう判定するか（版 0.4、v1.1（I-6））
+- 候補は、自サービスの DB・検索をテナント条件付きで引く（方式 L2）か、自サービスが持つ関係の列・自分が書いた tuple の写しで絞るか、listRelationshipChanges で自分が作る ACL 反映索引（方式 L3。preview なので DoR に理由を書く）で作る [D]。searchResources、engine の ListObjects などの列挙、他サービスの DB は使えない [D]。
+- 方式 L1（エンジン列挙）は searchResources に依存するので PP-2 では選べない [D]。L1 が要る資源型は、その一覧だけ SDK（PP-1）を採るか、L2 で打切り（`completeness=incomplete`）を受け入れるか、例外を申請する [D]。
+- どの方式でも、返すページの各資源を `evaluateAccessBatch`（`execute_all`）で post-check し、allow だけを返す [D]。応答は `items`・`next_cursor`・`completeness` で、総件数は返さない [D]。post-check ができなければ「利用不可」を返す [D]。
+- NP09-4 は 3 つに分けて判定する [D]。4a は、アプリコードに search の path・`searchResources`・engine の client がないことを、自チームの CI の静的検査で確かめる。4b は、PP-2 の判定宣言の申請・DoR の申告・出口の許可リストに search がないことを確かめる。4c は、façade が許可外の呼出し元の search を 403 にすることで、これは基盤側の試験で確かめる [D]。façade は同じ workload の SDK とアプリコードを区別できないので、依存サービスが出す合否は 4a と 4b で決める [D]。汎用モックは search に 200 を返すので、モックの結果は NP09-4 の合否に使えない [D]。
+- 根拠: [INT-02 §3.8・P-09](integration-patterns.md)、05_adr/ADR-025 D25-03〜D25-07・D25-19・D25-21、[CON-03 search/resource の x-callers](../11_contracts/authorization-api.openapi.yaml)
 
 #### FQ-59 検索インデックスや DWH にデータを持ち出してよいか
 - PEP 外経路台帳に登録した経路だけが存在してよい [D]。利用者・エージェントへ返る経路は返却直前に post-check を必須にし、返らない経路はテナント単位の区画と JIT の特権資格情報に閉じ込める [D]。テナント間の境界は index・dataset・collection の分離で担う [D]。
@@ -682,6 +709,9 @@ flowchart LR
 | 共有 sandbox の提供時期・水準 | TBD（K11-3） | FQ-45 | — |
 | SDK の提供言語と時期 | 未定（ADR-022 NA-022-1） | FQ-04 | 自前実装の外形を ARC-06 §4.2 で示す |
 | レガシー互換層の廃止期限 | TBD（DL-31、ADR-027） | FQ-64 | 例外台帳に期限付きで登録 |
+| `service_account`・`ai_agent` の `subject.type` への写像（v1.1（I-5）） | 正本の置き場所は CON-02 `x-subject-type-map` に決まった（v1.1 の同期）。`service_account` → `core/client` は暫定（確定は DL-75・CAM 生成器）、`ai_agent` は未決（ADR-017） | FQ-79 | 推測で型を埋めず拒否。`human`・`workload`・`service_account`（暫定）を写す |
+| façade の search の受付制御の方式（v1.1（I-6）） | 未決（CON-03 `/access/v1/search/resource`、ADR-025） | FQ-80 | NP09-4 は静的検査（4a）と申告（4b）で判定 |
+| `sub` から業務通知の連絡先を引く経路、宛先を主体にする照会の扱い（v1.1（I-12）） | 契約なし・未決（INT-02 §9.2 HO11-4・HO11-5） | FQ-81 | アプリ内通知を既定。本文は最小にし、送信時に宛先の権限を評価しない |
 
 ---
 
@@ -701,7 +731,7 @@ flowchart LR
 
 1. **G-128 の作成者以外による判定**: 全 FQ の根拠リンクが答えを支えているかの照合は未実施である [D]。所有者: プラットフォームチーム長（KD-FAQ-3 の推奨案）。期限: 段階 1 [D]。
 2. **連携ハンドブック類へのリンク**: DL-62（README）、DL-66（onboarding）、DL-67（Definition of Ready）が本書の作成時点で存在しない [D]。作成後に FQ-01・FQ-03・FQ-75 へリンクを補う [D]。
-3. **TBD・未決に依存する FQ の改訂**: §6 の 20 項目が決まるたびに該当 FQ を改訂する [D]。特に DL-20 の数値（G4）と U-01（DEC-3）の影響が大きい [D]。
+3. **TBD・未決に依存する FQ の改訂**: §6 の 23 項目（版 0.4 で 3 項目を追加）が決まるたびに該当 FQ を改訂する [D]。特に DL-20 の数値（G4）と U-01（DEC-3）の影響が大きい [D]。
 4. **KD-FAQ-1〜KD-FAQ-3 の決裁**: いずれも決裁前である [D]。
 5. **G-145 の実測と確約**: パイロット 2〜3 サービス（少なくとも 1 件は報告系統の別なベンダー）での問い合わせ件数・応答時間・再発抑止の実測と、ライン長の確約が未達である（operating-model §8.7・§12）[D]。
 6. **英語版の要否**: DP-OM-8 の決裁待ちである [D]。
@@ -814,3 +844,40 @@ flowchart LR
 - 根拠として確認した箇所: ADR-017 §2.2 D17-07 (a)〜(c)・§7.1 TC-017-15、INT-02 P-08・§9.1（2026-10-15 に本リポジトリで確認）[D][^32]。本書に「D17-07」「NP08」が 0 件であることを同日 09:33Z（UTC）に文字列検索で確かめた。新たな外部原典は用いていない [D]。
 - 閉じられなかったもの [D]: §6 の表（答えが依存する未決事項）に `tctx` のテナント欄の名前（DL-115）を加えるかは判断していない。作成者以外の照合は TRC-11 OI-G13 で追跡する。
 - 対応件数: 1 件（対応済み 1、申し送り 0 件）[D]。
+
+### v1.1 改訂（2026-10-15、版 0.3 → 版 0.4）
+
+> 13_integration-trial/report.md（AI エージェントが新規の依存サービス（経費精算）の開発チームを演じた模擬連携検証。実在の連携チームの検証ではない）の改善提案 I-5・I-6・I-12 を反映した。答えは INT-02 版 0.7 の §3.7〜§3.9 を写したもので、本書で新しい義務を作っていない（FR-2）[D]。判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 詰まった点（report） | 改善提案 | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| V11-1 | P-05・P-06 `action.name` の書き方が 3 通り、`subject.type` が `core/user` と `human` で食い違う | I-5 | FQ-79 を追加した | §3.9、§6 |
+| V11-2 | P-07 PP-2 が searchResources を呼んでよいか、NP09-4 をどう判定するかが不明 | I-6 | FQ-80 を追加し、FQ-57 に PP-2 の扱いと FQ-80 への参照を加えた | §3.11、§6 |
+| V11-3 | P-16 承認依頼の通知の送り先の契約がない | I-12 | FQ-81 を追加した | §3.5、§6 |
+
+- 他文書への申し送り（v1.1）[D]:
+
+| # | 宛先 | 内容 | 理由 |
+|---|---|---|---|
+| S11-1 | 10_integration/integration-patterns.md（INT-02）§9.2 | INT-02 の申し送り HO11-1〜HO11-9 が宛先で反映されたら、FQ-79〜FQ-81 と §6 の追加 3 行を同じ改訂の単位で改める（FR-3・FR-6） | FQ-79〜FQ-81 は INT-02 §3.7〜§3.9 の写しであり、正本が変われば追随が要る |
+| S11-2 | 10_integration/README.md（INT-00） | 入口の「最初に読む FQ」に FQ-79（PDP に渡す値）を加える | 取り違えは本番だけで全件 deny として表れ、モックでは検出できないため、着手の初日に知る必要がある |
+| S11-3 | traceability/open-items.md（TRC-11） | FQ-79〜FQ-81 を、作成者以外の照合（残課題 1・9）の対象に加える | G-128 の判定者は作成者以外である（FR-7） |
+
+- 閉じられなかったもの [D]: §0 の 3（未決に依存する問いの数）と対応表の FQ の範囲（FQ-01〜FQ-75）は、版 0.2 の FQ-76〜FQ-78 と同じく、FQ-79〜FQ-81 を数えに入れていない。FQ-79〜FQ-81 はいずれも §6 の未決に依存する。
+- 根拠として確認した箇所: INT-02 版 0.7 の §3.7〜§3.9・§9.2（2026-10-15、本リポジトリ）[D]。新たな外部原典は用いていない [D]。
+- 対応件数: 3 件（対応済み 3。他文書への申し送り 3 件）[D]。
+
+### v1.1 の同期（2026-10-15、版 0.4 → 版 0.5）
+
+> AI エージェントによる同期であり、模擬パネルの判定でも実在の CTO/CISO の決裁でもない（CONVENTIONS §8）[D]。
+
+| 出所 | 内容 | 反映 |
+|---|---|---|
+| INT-00 申し送り（v1.1）V-3 | 読み始めを INT-00 冒頭の入口への参照に | §1.3 |
+| CON-16 IE-2 | ARC-06 §4.2 等の参照を CON-16 に | FQ-04 |
+| CON-11 §14.3 H11-3、CON-03 §12 N-1、CON-05 §9 HO-04 | FQ-43 の echo proxy・CLI の版、FQ-44 の差し替え点 | FQ-43、FQ-44 |
+| 本書 S11-1（INT-02 §3.7 の正本の変更への追随） | INT-02 §3.7.2 の `service_account` の行と SM-4 が v1.1 の同期で改まった | FQ-79、§6 の写像の行 |
+| 本書 S11-2 | INT-00 の入口に FQ-79 | INT-00 で反映 |
+| 本書 S11-3 | TRC-11 の照合対象に FQ-79〜FQ-81 | traceability/open-items.md の範囲で、本同期では未反映 |
+
+- FQ の数と番号は変えていない [D]。

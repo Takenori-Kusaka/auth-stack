@@ -1,0 +1,57 @@
+{
+  "logDir": "C:\\Users\\kokor\\AppData\\Local\\Temp\\rsv-prism-wlzvCe",
+  "preferEval": true,
+  "results": [
+    {
+      "step": "prism CON-03 up",
+      "ok": true
+    },
+    {
+      "step": "prism CON-05 up",
+      "ok": true
+    },
+    {
+      "step": "echo proxies up",
+      "ok": true
+    },
+    {
+      "step": "SUT start (PDP metadata via R3)",
+      "ok": true
+    },
+    {
+      "step": "EP-RSV-01 create (write, evaluation allowWrite + registerAcceptanceRecord)",
+      "ok": true,
+      "detail": "201 {\"id\":\"g37p4uq5vnbfb7udxp6izafguc\",\"status\":\"active\"}"
+    },
+    {
+      "step": "EP-RSV-02 view (read-sensitive)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "step": "EP-RSV-04 list (evaluations, R5 fills the count)",
+      "ok": true,
+      "detail": "200 {\"items\":[{\"id\":\"g37p4uq5vnbfb7udxp6izafguc\",\"start\":\"2026-10-15T00:00:00Z\",\"end\":\"2026-10-15T01:00:00Z\"},{\"id\":\"v4eni4ebo6pym7ekp7jzwfdxia\",\"start\":\"2026-10-20T01:00:00Z\",\"end\":\"2026-10-20T02:00:00Z\"}],\"next_cursor\":null,\"completeness\":\"complete\"}"
+    },
+    {
+      "step": "EP-RSV-03 cancel (write)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "step": "EP-RSV-06 reminder via Prism TTS (internal start)",
+      "ok": false,
+      "detail": "[{\"outcome\":\"dead_letter\",\"why\":\"txn_expired\"}] deadLetters=[{\"msg_id\":\"gg6wsznpx57xdtzk6bbakros5g\",\"why\":\"txn_expired\"}]"
+    },
+    {
+      "step": "audit records well-formed",
+      "ok": true,
+      "detail": "events=5 invalid=0"
+    },
+    {
+      "step": "echo proxy rewrites (CON-03)",
+      "ok": true,
+      "detail": "[\"R1-echo-drop\",\"R3-metadata\",\"R1-echo\",\"R6-decision-id\",\"R7-prefer\",\"R5-evaluations-length\",\"R6-batch-decision-id\"]"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "logDir": "C:\\Users\\kokor\\AppData\\Local\\Temp\\rsv-prism-43WhAw",
+  "preferEval": false,
+  "results": [
+    {
+      "step": "prism CON-03 up",
+      "ok": true
+    },
+    {
+      "step": "prism CON-05 up",
+      "ok": true
+    },
+    {
+      "step": "echo proxies up",
+      "ok": true
+    },
+    {
+      "step": "SUT start (PDP metadata via R3)",
+      "ok": true
+    },
+    {
+      "step": "EP-RSV-01 create (write, evaluation allowWrite + registerAcceptanceRecord)",
+      "ok": true,
+      "detail": "201 {\"id\":\"cgowpf3anshlvtu3v4baqp2ld2\",\"status\":\"active\"}"
+    },
+    {
+      "step": "EP-RSV-02 view (read-sensitive)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "step": "EP-RSV-04 list (evaluations, R5 fills the count)",
+      "ok": false,
+      "detail": "503 {\"code\":\"list_unavailable\"}"
+    },
+    {
+      "step": "EP-RSV-03 cancel (write)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "step": "EP-RSV-06 reminder via Prism TTS (internal start)",
+      "ok": false,
+      "detail": "[{\"outcome\":\"dead_letter\",\"why\":\"txn_expired\"}] deadLetters=[{\"msg_id\":\"5lduyjguprz3vjqy5ez6l77nf6\",\"why\":\"txn_expired\"}]"
+    },
+    {
+      "step": "audit records well-formed",
+      "ok": true,
+      "detail": "events=5 invalid=0"
+    },
+    {
+      "step": "echo proxy rewrites (CON-03)",
+      "ok": true,
+      "detail": "[\"R1-echo-drop\",\"R3-metadata\",\"R1-echo\",\"R6-decision-id\",\"R6-batch-decision-id\"]"
+    }
+  ]
+}

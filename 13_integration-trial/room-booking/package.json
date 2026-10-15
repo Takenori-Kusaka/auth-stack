@@ -1,0 +1,14 @@
+{
+  "name": "rsv-room-booking-trial",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI 模擬連携検証（v1.1 再検証）: 会議室予約サービスの最小実装。外部 npm 依存なし（Node.js 22）",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "test:model": "fga model test --tests model/rsv.fga.yaml",
+    "check:cam": "python scripts/validate-cam.py",
+    "prism": "node scripts/prism-positive.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
