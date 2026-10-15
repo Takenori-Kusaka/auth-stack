@@ -1,0 +1,36 @@
+{
+  "tc": "resilience-keys/TC-010",
+  "run_id": "20261015T025231Z-384bb2",
+  "frozen": true,
+  "purpose": "measurement-cedar",
+  "manifest_hash": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:52:31.903Z",
+  "ended_at": "2026-10-15T02:52:32.198Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "aborted:C-2",
+  "tc_id": "TC-010",
+  "group": "resilience-keys",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/resilience-keys/params/TC-010.json",
+    "sha256": "4ba316e4bd015397504a34a71128bc786a347c9e23985564076a1822b287a62d"
+  },
+  "frozen_manifest": {
+    "version": 1,
+    "manifest_sha256": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+    "frozen_at": "2026-10-15T02:50:30.112Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false
+  },
+  "code_tree_sha256": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+  "port_base": 42200,
+  "note": "self-made freeze manifest; independent witness (F-5, §2.6) not available -> provisional result (RK-DEV-01)",
+  "abort_reason": "plan differs from frozen commit"
+}

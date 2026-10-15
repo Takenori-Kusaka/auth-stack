@@ -1,0 +1,292 @@
+{
+  "evaluated_at": "2026-10-15T02:49:00.727Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-028",
+  "rows": [
+    {
+      "pattern": "P-01",
+      "kind": "positive",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "pattern": "P-01",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "pattern": "P-01",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 401,
+      "note": "同じ利用者の内部 AT（aud=tool）を file-service に直接提示"
+    },
+    {
+      "pattern": "P-01",
+      "kind": "after_revocation",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-03",
+      "kind": "positive",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "pattern": "P-03",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "pattern": "P-03",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-03",
+      "kind": "after_revocation",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-04",
+      "kind": "positive",
+      "ok": true,
+      "final": "done"
+    },
+    {
+      "pattern": "P-04",
+      "kind": "other_tenant",
+      "ok": true,
+      "final": "dlq:message_sub_or_tid_mismatch"
+    },
+    {
+      "pattern": "P-04",
+      "kind": "other_aud",
+      "ok": true,
+      "final": "dlq:tts_400:invalid_request",
+      "note": "別 workload 向けの受付記録（job_run_id）を consumer が使う"
+    },
+    {
+      "pattern": "P-04",
+      "kind": "after_revocation",
+      "ok": true,
+      "final": "dlq:deny_no_relation"
+    },
+    {
+      "pattern": "P-05",
+      "kind": "positive",
+      "ok": true,
+      "final": "done"
+    },
+    {
+      "pattern": "P-05",
+      "kind": "other_tenant",
+      "ok": true,
+      "accepted": false,
+      "reason": "deny_guardrail:g1_tenant_mismatch"
+    },
+    {
+      "pattern": "P-05",
+      "kind": "other_aud",
+      "ok": true,
+      "final": "dlq:tts_400:invalid_request",
+      "note": "別 workload 向けの受付記録（job_run_id）を consumer が使う"
+    },
+    {
+      "pattern": "P-05",
+      "kind": "after_revocation",
+      "ok": true,
+      "final": "dlq:deny_no_relation",
+      "executed_before": 3
+    },
+    {
+      "pattern": "P-07",
+      "kind": "positive",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "pattern": "P-07",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "pattern": "P-07",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 401,
+      "note": "NP07-5 外部 AT を内部 RS に直接提示"
+    },
+    {
+      "pattern": "P-07",
+      "kind": "after_revocation",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-08",
+      "kind": "positive",
+      "ok": true,
+      "status": 200,
+      "downstream_exchange": {
+        "aud": "https://svc.poc.test/s/file",
+        "act_depth": 1
+      },
+      "note": "下流は STS で取り直し（aud=file、act=tool-service）。上流 token の中継なし"
+    },
+    {
+      "pattern": "P-08",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "pattern": "P-08",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 401,
+      "note": "NP08-1 他 audience（file）の token を tool サーバーへ"
+    },
+    {
+      "pattern": "P-08",
+      "kind": "after_revocation",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-09",
+      "kind": "positive",
+      "ok": true,
+      "status": 200,
+      "items": 86
+    },
+    {
+      "pattern": "P-09",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": 404,
+      "other_tenant_items_in_own_list": 0
+    },
+    {
+      "pattern": "P-09",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 403,
+      "note": "NP09-4 一覧ヘルパ以外からの searchResources 直接呼出し"
+    },
+    {
+      "pattern": "P-09",
+      "kind": "after_revocation",
+      "ok": false,
+      "seen_before": true,
+      "returned_after": true
+    },
+    {
+      "pattern": "P-14",
+      "kind": "positive",
+      "ok": true,
+      "status": 101,
+      "messages": 11
+    },
+    {
+      "pattern": "P-14",
+      "kind": "other_tenant",
+      "ok": true,
+      "status": [
+        404,
+        404
+      ]
+    },
+    {
+      "pattern": "P-14",
+      "kind": "other_aud",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-14",
+      "kind": "extra_query_token_and_origin",
+      "ok": true,
+      "status": [
+        401,
+        403
+      ],
+      "note": "NP14-3・NP14-4（基準外の追加負例）"
+    },
+    {
+      "pattern": "P-14",
+      "kind": "after_revocation",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "pattern": "P-14",
+      "kind": "relation_revoked",
+      "ok": true,
+      "connected": true,
+      "msgs_before": 8,
+      "delivered_after_budget": 0,
+      "closed": {
+        "t": 1792032530423,
+        "code": 4003,
+        "reason": "reauthorization_denied"
+      },
+      "ms_to_close": 269
+    },
+    {
+      "pattern": "P-14",
+      "kind": "session_revoked",
+      "ok": true,
+      "connected": true,
+      "msgs_before": 8,
+      "delivered_after_budget": 0,
+      "closed": {
+        "t": 1792032534157,
+        "code": 4002,
+        "reason": "revoked"
+      },
+      "ms_to_close": 151
+    }
+  ],
+  "p14_gateway_events": 11,
+  "criteria": {
+    "positive_failures": {
+      "value": 0,
+      "n": 8,
+      "pass": true
+    },
+    "negative_accepted": {
+      "value": 1,
+      "n": 24,
+      "pass": false
+    },
+    "p14_deliveries_after_budget": {
+      "value": 0,
+      "pass": false,
+      "ms_to_close": []
+    }
+  },
+  "verdict": "不合格",
+  "extra_negatives": [
+    {
+      "pattern": "P-14",
+      "kind": "extra_query_token_and_origin",
+      "ok": true,
+      "status": [
+        401,
+        403
+      ],
+      "note": "NP14-3・NP14-4（基準外の追加負例）"
+    }
+  ],
+  "input_hashes": {
+    "requests.jsonl": "29ce47a1a99a4b80b2eefd1c8c6782c92c8150a59a9e7b0e67cf7af66ea72f68"
+  }
+}

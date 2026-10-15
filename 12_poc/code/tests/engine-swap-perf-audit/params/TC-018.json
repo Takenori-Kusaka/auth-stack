@@ -1,0 +1,22 @@
+{
+  "tc": "TC-018",
+  "title": "登録・招待・所属変更・複数所属・退職",
+  "plan_section": "preregistered-test-plan.md §4.18",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 18,
+  "dataset": { "profile": "small", "seed": 18 },
+  "engine": "openfga",
+  "state_machine_version": "02_requirements/identity-lifecycle.md（凍結コミット 151940a の版）の SM-P §4・SM-I §6・SM-M §7。参照実装 tests/engine-swap-perf-audit/lib/lifecycle.js",
+  "parameters": { "pending_ttl_ms": 1500, "deletion_grace_ms": 5000, "invite_short_ttl_ms": 1000, "probe_interval_ms": 50, "probe_max_ms": 5000, "check_delay_ms": 1000 },
+  "paths": ["BFF の既存 session（file.read）", "public client の既存 access token（DPoP、file.read）", "refresh token による再発行", "委任ジョブの Txn-Token 発行（内部開始）", "新規ログイン"],
+  "scenarios": {
+    "S1": "登録: 未確認の主体はログインできない（P-01）、確認後に有効（P-02）、期限切れの未確認は有効化できない（P-03）",
+    "S2": "招待: 転送（宛先と受諾者の確認済み連絡先の不一致 → 保留、所属は作られない）、受諾、再利用、期限後、再送後の旧 token、取消後",
+    "S3": "所属変更（mover）: 旧グループを除去してから新グループを追加し、旧グループ由来の資源への allow 0",
+    "S4": "複数所属: テナント A の session で B の route、A の AS session（SSO）で B の文脈を要求、新規ログインで B、B の所属除去（M-05）後は B の全経路拒否・A は継続（MT-6）",
+    "S5": "退職（P-08）: 全経路が拒否されること、退職から全経路拒否までの時間",
+    "S6": "状態機械の不正遷移（未確認→停止の前の…など）と停止理由の積み上げ（INV-8）、削除猶予後の取消（P-09 の期限外）"
+  },
+  "criteria": { "state_machine_deviations": 0, "old_membership_allows": 0, "other_tenant_context_entries": 0, "invitation_reuse_or_expired_success": 0, "recorded_only": ["退職から全経路拒否までの時間（DL-20 の R-191 系）"] },
+  "abort": { "C-2": "状態機械の版（identity-lifecycle.md と参照実装）が凍結時と異なる（manifest で照合）", "C-3": "S1 の有効化後のログイン、S2 の正当な受諾後のログインのいずれかが失敗" }
+}

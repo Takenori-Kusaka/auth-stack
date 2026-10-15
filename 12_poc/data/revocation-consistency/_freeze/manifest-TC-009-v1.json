@@ -1,0 +1,208 @@
+{
+  "tc": "TC-009",
+  "group": "revocation-consistency",
+  "plan_frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "files": [
+    {
+      "path": "12_poc/code/as/server.js",
+      "sha256": "15174f8afd3786ff3cfbb86181d32bb30155546e5c7d6bbe932cec1e3cb474a5"
+    },
+    {
+      "path": "12_poc/code/audit/journal.js",
+      "sha256": "45e403ad5ad2404654769d93ecf652e295302216e37489735411ba26946af2b1"
+    },
+    {
+      "path": "12_poc/code/audit/verify.js",
+      "sha256": "fceaa22b52fe8ebc6a576f98b31baa49c44757fe019c25ddeafc4491d0a38a3c"
+    },
+    {
+      "path": "12_poc/code/config/ledger.json",
+      "sha256": "05712bf60adb95a0ccfbe9f8e9840ea2eb614eafb1175d69e4d71cd8f5c6be03"
+    },
+    {
+      "path": "12_poc/code/config/ports.js",
+      "sha256": "3f37b1471f79bb45464bce62817c7e945bce79947c3d054e834acc60ae12cd14"
+    },
+    {
+      "path": "12_poc/code/data/gen-synthetic.js",
+      "sha256": "6560e4ab745b25f0aa0da3114a2c9d0389ba09edb0d3435cd12a541f5fdedc0c"
+    },
+    {
+      "path": "12_poc/code/harness/forge.js",
+      "sha256": "bafb9427586413ce7b167d451d333b81f9be7ec8127669430a2e788d7d7a5ec5"
+    },
+    {
+      "path": "12_poc/code/harness/proc.js",
+      "sha256": "860782b2f2dbb4df6441ee9f94965bd14478f6e4555f66a7f9d0f77e3392f73e"
+    },
+    {
+      "path": "12_poc/code/harness/run.js",
+      "sha256": "ca6950220bdbedad295672c5925df4388bcd3a3717cce0d632f2dcb523974d44"
+    },
+    {
+      "path": "12_poc/code/harness/stack.js",
+      "sha256": "43dfcf8c0850ca3b83d6a06b4259264991179c3ee84385459043b762d8559f9e"
+    },
+    {
+      "path": "12_poc/code/inject/proxy.js",
+      "sha256": "39742bf0a3ab7ee7dc6cc038a2e667028966d327872e731e75d0f65507cc6ac5"
+    },
+    {
+      "path": "12_poc/code/lib/audit.js",
+      "sha256": "c7991b6c0ec1a5f1f68a69ff00a6f2a224080f3ccc74a97e8f740efd9edae799"
+    },
+    {
+      "path": "12_poc/code/lib/canon.js",
+      "sha256": "aeeb86e0deb4265779c8b2262eb0049f74f8cc89935e866ea31042f4163ce23c"
+    },
+    {
+      "path": "12_poc/code/lib/dpop.js",
+      "sha256": "9e5d4bab8894cc10740c8a401b9bbfefc716de486b88395da74bb1ccb3c8b451"
+    },
+    {
+      "path": "12_poc/code/lib/http.js",
+      "sha256": "8b08be0255fe1002cb8586444fae811ba1f71d641d8685a9d2da03c934624065"
+    },
+    {
+      "path": "12_poc/code/lib/ids.js",
+      "sha256": "27413f1817153bd8bcee68540037ac2c5a5e5b3031c0b7375b78dc8f209a25ba"
+    },
+    {
+      "path": "12_poc/code/lib/jwt.js",
+      "sha256": "3a12fa9db1f71d6b5b35bf35c37692fcc6cb5d333c3a3d694e3e9e657a2fdd6d"
+    },
+    {
+      "path": "12_poc/code/lib/keys.js",
+      "sha256": "f3d7a4d05d0f1e4894f599cb06f81f31aed8c5ce890efbbe3a103ed94fd4b242"
+    },
+    {
+      "path": "12_poc/code/lib/oauth-client.js",
+      "sha256": "8cd5c6df928eda96bd6cbeb7f21c9fed61a63f84040c01bba86efa23a589277c"
+    },
+    {
+      "path": "12_poc/code/lib/pki.js",
+      "sha256": "c75864fd4d23c775b9c1c5f47a334a36a8259d0318eff8dc8d3698bed44277d6"
+    },
+    {
+      "path": "12_poc/code/lib/revocation.js",
+      "sha256": "fb060563be092425381ddda752a634195a8b89b0a8f43a6d3a76ae5ff45cee23"
+    },
+    {
+      "path": "12_poc/code/lib/runtime.js",
+      "sha256": "108f4f8f7c66d2c016e8e0ab4a7c6fe328146f106be06da9bfe5b69ae3f6e088"
+    },
+    {
+      "path": "12_poc/code/lib/topology.js",
+      "sha256": "5ffbed09be28fad2f09e3f75a841924f37d2ebf763502a31744ef69bf54eaeee"
+    },
+    {
+      "path": "12_poc/code/model/cam.js",
+      "sha256": "e5d3f2b44b891833dc616a8901cfed1307716e820f6a82ec4065f0c7dc9ddcd2"
+    },
+    {
+      "path": "12_poc/code/model/cam.json",
+      "sha256": "a1f0e0b124386272677fa47fa07b04deeb1325adb8d65de6c34654c2cc866b58"
+    },
+    {
+      "path": "12_poc/code/model/diff.js",
+      "sha256": "691862bf83828b5ceac2ab2523b208db60bf9054d60a38d14ab602ab8d921822"
+    },
+    {
+      "path": "12_poc/code/model/generate.js",
+      "sha256": "d6680ba085559915ec34813b23c039d5a57773cb67e8e390cb435382ef691181"
+    },
+    {
+      "path": "12_poc/code/pdp/adapters/cedar.js",
+      "sha256": "97fc93ea90cbc7a5b46bdb99bd319f5811832237aaa364eeb50fa56a39e450c7"
+    },
+    {
+      "path": "12_poc/code/pdp/adapters/openfga.js",
+      "sha256": "11b2956f44d6c94bf833fd8750c9ced1e4b82388dff21772d2d9b8b5a458ba3b"
+    },
+    {
+      "path": "12_poc/code/pdp/facade.js",
+      "sha256": "fa2992629e184a78fea0a84c7241fb4030905fbb245e25e09cdde5084cd539fe"
+    },
+    {
+      "path": "12_poc/code/pdp/guardrails.js",
+      "sha256": "f9e221c9ab5a038ca190dc1fbba213e6551c26a9ec2c7eb263f2e7143fc04f60"
+    },
+    {
+      "path": "12_poc/code/pep/sdk.js",
+      "sha256": "1d264a799b894ec04cb921142fb4a86919aa020e6c8a5103e3bd5eb144f655e7"
+    },
+    {
+      "path": "12_poc/code/ref/ref_eval.py",
+      "sha256": "40e0a58d167c398021aba9253f7af8412e4f4e174acaa97b5df08349542ea637"
+    },
+    {
+      "path": "12_poc/code/services/bff.js",
+      "sha256": "a6d0612b52334e3db31cb3a70aef296208c255c7a66865c5724504d527f246d5"
+    },
+    {
+      "path": "12_poc/code/services/edge.js",
+      "sha256": "c2d9b2c772889216a80cf2dbc76fb432cfd4aef3fc9c07b0ef57401e6d47c291"
+    },
+    {
+      "path": "12_poc/code/services/file-service.js",
+      "sha256": "b5ae3ae53c7cdc9130440ef20d731b52639eba356fd4927cfd90d9ebe95537a9"
+    },
+    {
+      "path": "12_poc/code/services/label-service.js",
+      "sha256": "f37de5e1e844feb0edd4a54d2029e9b51e165578ba4dfed991caf26450de8a4d"
+    },
+    {
+      "path": "12_poc/code/services/tool-service.js",
+      "sha256": "cd23a040ff23b6cf9b6dc60033be0fc24efb6e77eca0debb86b8ba8473f1ee67"
+    },
+    {
+      "path": "12_poc/code/smoke/smoke.js",
+      "sha256": "97202b03a4541f497cb215bc795a73bab2f92e6a21eb579971f3af8c4dbfa480"
+    },
+    {
+      "path": "12_poc/code/state/server.js",
+      "sha256": "18b627b0e3773e1031bb909ae01ff8d6b50eef1115c2dcc6053c883877e04d00"
+    },
+    {
+      "path": "12_poc/code/sts/server.js",
+      "sha256": "cf44bbfc41c27a853856b56a176d3c219638e87a709178f744e0ac8620674ae1"
+    },
+    {
+      "path": "12_poc/code/test/engines-diff.test.js",
+      "sha256": "efb25338b7754c7cb9bf29ae2bb43dc818a6db4b2d50ead4190bfe99b315f3a4"
+    },
+    {
+      "path": "12_poc/code/tests/revocation-consistency/TC-009.js",
+      "sha256": "3aafe41515140df9d6f1cc3ce6537fc6f7a2ec8ef416c8998b3d06e45e40ee7c"
+    },
+    {
+      "path": "12_poc/code/tests/revocation-consistency/common.js",
+      "sha256": "b2cf741fe490f13efccf817b4c105347b8179389caee54f24d85c0867f374d9a"
+    },
+    {
+      "path": "12_poc/code/tests/revocation-consistency/eval-TC-009.js",
+      "sha256": "212efc6d8521200d70762b3fa1ab23b843dc8fb5b37d0bd547d2a7050fa50bf5"
+    },
+    {
+      "path": "12_poc/code/tests/revocation-consistency/params/TC-009.json",
+      "sha256": "b7049b64142392de06f84a93974b04b749f2005fc1439b8af5fd9f34fd2b2782"
+    }
+  ],
+  "tools": {
+    "openfga": {
+      "sha256": "6868a2314e89099c2874ca382b607c78f50aa8551ddfa2fc05edff787738ce8c"
+    },
+    "cedar_wasm": "4.13.0",
+    "oidc-provider": "9.12.2",
+    "jose": "6.2.12",
+    "fast-check": "4.10.0",
+    "node": "v22.23.2"
+  },
+  "manifest_sha256": "350046b10944b867dd45acf52dd602c87603dddfceb3ab42b86223f89f497a70",
+  "version": 1,
+  "frozen_at": "2026-10-15T02:55:29.112Z",
+  "reason": "initial freeze before any TC-009 measurement",
+  "changed_since_previous": [],
+  "previous": null,
+  "witness": null
+}

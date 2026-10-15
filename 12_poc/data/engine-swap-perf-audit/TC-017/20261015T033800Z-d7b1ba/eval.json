@@ -1,0 +1,1924 @@
+{
+  "evaluated_at": "2026-10-15T04:12:30.529Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-017",
+  "results": [
+    {
+      "key": "K1",
+      "condition": "OpenFGA 直接 Check（façade なし、Check cache なし）",
+      "level": "L25",
+      "rate_per_s": 19,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:38:06.079Z",
+      "wall_ms": 107170,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 15.235,
+      "p99": 44.937,
+      "p999": "標本不足",
+      "max": 70.718,
+      "p99_all_incl_failed": 44.937,
+      "max_send_lag_ms": 12.974,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        43.204,
+        50.267
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.2884749999923165,
+      "foreign_cpu": {
+        "foreign_cpu_s": 70.7,
+        "share": 0.04123304387888402,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 27.41
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 8.89
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 5.36
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 3.83
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 3.64
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 3.13
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 1.98
+          },
+          {
+            "pid": 30428,
+            "name": "chrome",
+            "cpu_s": 1.3
+          }
+        ]
+      },
+      "samples_csv": "samples/K1-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K1",
+      "condition": "OpenFGA 直接 Check（façade なし、Check cache なし）",
+      "level": "L50",
+      "rate_per_s": 38,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:39:54.251Z",
+      "wall_ms": 265616,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 16.951,
+      "p99": 93.759,
+      "p999": 682.613,
+      "max": 881,
+      "p99_all_incl_failed": 93.759,
+      "max_send_lag_ms": 15.625,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        86.719,
+        108.048
+      ],
+      "p999_ci95": [
+        622.942,
+        753.936
+      ],
+      "host_cpu_util_mean": 0.31210450989604815,
+      "foreign_cpu": {
+        "foreign_cpu_s": 168.66,
+        "share": 0.03968516815628577,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 54.67
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 23.69
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 11.16
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 9.47
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 9.42
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 7.36
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 4.03
+          },
+          {
+            "pid": 46380,
+            "name": "chrome",
+            "cpu_s": 3.52
+          }
+        ]
+      },
+      "samples_csv": "samples/K1-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K1",
+      "condition": "OpenFGA 直接 Check（façade なし、Check cache なし）",
+      "level": "L75",
+      "rate_per_s": 56,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:44:23.953Z",
+      "wall_ms": 35641,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 20.711,
+      "p99": 336.189,
+      "p999": "標本不足",
+      "max": 656.127,
+      "p99_all_incl_failed": 336.189,
+      "max_send_lag_ms": 28.338,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        174.76,
+        472.811
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.4186353930629877,
+      "foreign_cpu": {
+        "foreign_cpu_s": 25.17,
+        "share": 0.04414135931932325,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 8.83
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 3.25
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 1.95
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 1.41
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 1.38
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1.05
+          },
+          {
+            "pid": 10728,
+            "name": "claude",
+            "cpu_s": 0.58
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 0.56
+          }
+        ]
+      },
+      "samples_csv": "samples/K1-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K2",
+      "condition": "façade → OpenFGA（Check cache なし）",
+      "level": "L25",
+      "rate_per_s": 19,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:45:00.748Z",
+      "wall_ms": 104723,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 18.472,
+      "p99": 55.472,
+      "p999": "標本不足",
+      "max": 99.753,
+      "p99_all_incl_failed": 55.472,
+      "max_send_lag_ms": 12.868,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        48.978,
+        65.848
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.31553781038129713,
+      "foreign_cpu": {
+        "foreign_cpu_s": 87.55,
+        "share": 0.05224907315011984,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 40.22
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 9.58
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 5.52
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 4.13
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 4.03
+          },
+          {
+            "pid": 32620,
+            "name": "chrome",
+            "cpu_s": 3.39
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 2.77
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 2.16
+          }
+        ]
+      },
+      "samples_csv": "samples/K2-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K2",
+      "condition": "façade → OpenFGA（Check cache なし）",
+      "level": "L50",
+      "rate_per_s": 38,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:46:46.514Z",
+      "wall_ms": 264901,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 19.572,
+      "p99": 78.764,
+      "p999": 148.772,
+      "max": 335.464,
+      "p99_all_incl_failed": 78.764,
+      "max_send_lag_ms": 17.953,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        73.713,
+        81.276
+      ],
+      "p999_ci95": [
+        119.171,
+        185.386
+      ],
+      "host_cpu_util_mean": 0.37470712598208533,
+      "foreign_cpu": {
+        "foreign_cpu_s": 219.67,
+        "share": 0.05182876692613467,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 104.45
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 24.34
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 13.23
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 10.23
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 9.97
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 7.22
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 5.38
+          },
+          {
+            "pid": 30428,
+            "name": "chrome",
+            "cpu_s": 4.27
+          }
+        ]
+      },
+      "samples_csv": "samples/K2-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K2",
+      "condition": "façade → OpenFGA（Check cache なし）",
+      "level": "L75",
+      "rate_per_s": 56,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:51:14.931Z",
+      "wall_ms": 36533,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 23.269,
+      "p99": 94.075,
+      "p999": "標本不足",
+      "max": 183.018,
+      "p99_all_incl_failed": 94.075,
+      "max_send_lag_ms": 12.069,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        87.383,
+        101.58
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.3866033637759973,
+      "foreign_cpu": {
+        "foreign_cpu_s": 26.16,
+        "share": 0.04474764254235896,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 9.47
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 3.02
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 1.7
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1.52
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 1.27
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 1.25
+          },
+          {
+            "pid": 37380,
+            "name": "chrome",
+            "cpu_s": 1.08
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 0.59
+          }
+        ]
+      },
+      "samples_csv": "samples/K2-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "L1",
+      "condition": "login（BFF: PAR＋PKCE＋private_key_jwt、証明書束縛 opaque AT）",
+      "level": "L25",
+      "rate_per_s": 30,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:51:52.438Z",
+      "wall_ms": 68696,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 11.475,
+      "p99": 25.177,
+      "p999": "標本不足",
+      "max": 129.651,
+      "p99_all_incl_failed": 25.177,
+      "max_send_lag_ms": 12.879,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        23.841,
+        26.902
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.1603321811690462,
+      "foreign_cpu": {
+        "foreign_cpu_s": 43.81,
+        "share": 0.039860854343775474,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 15.31
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 5.59
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 2.8
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 2.55
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 2.3
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 2.23
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1.28
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 0.92
+          }
+        ]
+      },
+      "samples_csv": "samples/L1-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "L1",
+      "condition": "login（BFF: PAR＋PKCE＋private_key_jwt、証明書束縛 opaque AT）",
+      "level": "L50",
+      "rate_per_s": 60,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:53:02.100Z",
+      "wall_ms": 165071,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 9.507,
+      "p99": 23.263,
+      "p999": 30.187,
+      "max": 36.68,
+      "p99_all_incl_failed": 23.263,
+      "max_send_lag_ms": 13.13,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        22.802,
+        23.552
+      ],
+      "p999_ci95": [
+        29.03,
+        30.72
+      ],
+      "host_cpu_util_mean": 0.18801455955089372,
+      "foreign_cpu": {
+        "foreign_cpu_s": 102.14,
+        "share": 0.03867298957721223,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 35.41
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 13.81
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 6.27
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 5.67
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 5.56
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 4.25
+          },
+          {
+            "pid": 45128,
+            "name": "chrome",
+            "cpu_s": 2.59
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 2.14
+          }
+        ]
+      },
+      "samples_csv": "samples/L1-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "L1",
+      "condition": "login（BFF: PAR＋PKCE＋private_key_jwt、証明書束縛 opaque AT）",
+      "level": "L75",
+      "rate_per_s": 90,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:55:50.531Z",
+      "wall_ms": 22077,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 8.304,
+      "p99": 23.687,
+      "p999": "標本不足",
+      "max": 30.238,
+      "p99_all_incl_failed": 23.687,
+      "max_send_lag_ms": 12.787,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        21.847,
+        24.422
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.11503509116695,
+      "foreign_cpu": {
+        "foreign_cpu_s": 9.72,
+        "share": 0.027513786972867688,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 2.06
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 1.22
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 1
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.75
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.59
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.58
+          },
+          {
+            "pid": 11920,
+            "name": "NVIDIA Overlay",
+            "cpu_s": 0.27
+          },
+          {
+            "pid": 30428,
+            "name": "chrome",
+            "cpu_s": 0.25
+          }
+        ]
+      },
+      "samples_csv": "samples/L1-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K3",
+      "condition": "OpenFGA 直接 Check（Check cache あり）",
+      "level": "L25",
+      "rate_per_s": 19,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:56:20.604Z",
+      "wall_ms": 101540,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 13.967,
+      "p99": 45.426,
+      "p999": "標本不足",
+      "max": 96.544,
+      "p99_all_incl_failed": 45.426,
+      "max_send_lag_ms": 13.238,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        42.412,
+        51.153
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.14498047148313978,
+      "foreign_cpu": {
+        "foreign_cpu_s": 44.88,
+        "share": 0.027621503840850894,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 8.55
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 4.78
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 3.14
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 2.86
+          },
+          {
+            "pid": 34064,
+            "name": "chrome",
+            "cpu_s": 2.84
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 2.59
+          },
+          {
+            "pid": 49540,
+            "name": "node",
+            "cpu_s": 2.47
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 2.34
+          }
+        ]
+      },
+      "samples_csv": "samples/K3-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K3",
+      "condition": "OpenFGA 直接 Check（Check cache あり）",
+      "level": "L50",
+      "rate_per_s": 38,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T03:58:03.103Z",
+      "wall_ms": 262913,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 15.83,
+      "p99": 62.018,
+      "p999": 94.916,
+      "max": 113.697,
+      "p99_all_incl_failed": 62.018,
+      "max_send_lag_ms": 13.468,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        60.146,
+        64.214
+      ],
+      "p999_ci95": [
+        84.901,
+        101.234
+      ],
+      "host_cpu_util_mean": 0.21891784748773177,
+      "foreign_cpu": {
+        "foreign_cpu_s": 123.19,
+        "share": 0.029284283203949595,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 22.58
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 21.42
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 9.3
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 8.98
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 8.38
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 7.91
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 2.84
+          },
+          {
+            "pid": 29664,
+            "name": "chrome",
+            "cpu_s": 2.81
+          }
+        ]
+      },
+      "samples_csv": "samples/K3-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K3",
+      "condition": "OpenFGA 直接 Check（Check cache あり）",
+      "level": "L75",
+      "rate_per_s": 56,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:02:29.282Z",
+      "wall_ms": 37519,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 17.9,
+      "p99": 69.336,
+      "p999": "標本不足",
+      "max": 94.263,
+      "p99_all_incl_failed": 69.336,
+      "max_send_lag_ms": 12.691,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        65.059,
+        72.942
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.26912979804191045,
+      "foreign_cpu": {
+        "foreign_cpu_s": 18.72,
+        "share": 0.031182117727018312,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 3.47
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 1.56
+          },
+          {
+            "pid": 23476,
+            "name": "msedgewebview2",
+            "cpu_s": 1.45
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 1.38
+          },
+          {
+            "pid": 30428,
+            "name": "chrome",
+            "cpu_s": 1.33
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 1.03
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 0.59
+          }
+        ]
+      },
+      "samples_csv": "samples/K3-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K4",
+      "condition": "façade → OpenFGA（Check cache あり）",
+      "level": "L25",
+      "rate_per_s": 19,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:03:07.686Z",
+      "wall_ms": 110762,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 16.31,
+      "p99": 44.174,
+      "p999": "標本不足",
+      "max": 60.475,
+      "p99_all_incl_failed": 44.174,
+      "max_send_lag_ms": 12.754,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        40.42,
+        45.917
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.12360758959594793,
+      "foreign_cpu": {
+        "foreign_cpu_s": 38.05,
+        "share": 0.021468822226937037,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 8.64
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 3.27
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 3.2
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 3.11
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 2.63
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 2.39
+          },
+          {
+            "pid": 30428,
+            "name": "chrome",
+            "cpu_s": 1.3
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 1.02
+          }
+        ]
+      },
+      "samples_csv": "samples/K4-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K4",
+      "condition": "façade → OpenFGA（Check cache あり）",
+      "level": "L50",
+      "rate_per_s": 38,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:04:59.334Z",
+      "wall_ms": 264765,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 17.645,
+      "p99": 58.977,
+      "p999": 94.127,
+      "max": 118.014,
+      "p99_all_incl_failed": 58.977,
+      "max_send_lag_ms": 13.468,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        56.642,
+        60.441
+      ],
+      "p999_ci95": [
+        82.991,
+        100.641
+      ],
+      "host_cpu_util_mean": 0.21849795970464028,
+      "foreign_cpu": {
+        "foreign_cpu_s": 116.7,
+        "share": 0.02754875195928465,
+        "top": [
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 21.28
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 20.44
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 9.13
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 8.5
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 7.41
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 6.72
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 2.83
+          },
+          {
+            "pid": 9608,
+            "name": "chrome",
+            "cpu_s": 2.78
+          }
+        ]
+      },
+      "samples_csv": "samples/K4-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K4",
+      "condition": "façade → OpenFGA（Check cache あり）",
+      "level": "L75",
+      "rate_per_s": 56,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:09:27.551Z",
+      "wall_ms": 36421,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 25.093,
+      "p99": 587.428,
+      "p999": "標本不足",
+      "max": 938.044,
+      "p99_all_incl_failed": 587.428,
+      "max_send_lag_ms": 12.523,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        413.922,
+        663.013
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.5784051843201483,
+      "foreign_cpu": {
+        "foreign_cpu_s": 53.56,
+        "share": 0.09191555009472557,
+        "top": [
+          {
+            "pid": 40056,
+            "name": "grep",
+            "cpu_s": 20.19
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 13.8
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 3.48
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 2.73
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 1.91
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 1.69
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 1.59
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1.45
+          }
+        ]
+      },
+      "samples_csv": "samples/K4-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K7",
+      "condition": "cold cache: OpenFGA と façade の再起動直後（façade → OpenFGA、Check cache あり）",
+      "level": "cold",
+      "rate_per_s": 38,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:10:08.399Z",
+      "wall_ms": 52233,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 20.892,
+      "p99": 74.269,
+      "p999": "標本不足",
+      "max": 103.535,
+      "p99_all_incl_failed": 74.269,
+      "max_send_lag_ms": 12.767,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        68.672,
+        76.659
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.41412454084750083,
+      "foreign_cpu": {
+        "foreign_cpu_s": 43.64,
+        "share": 0.05221869435988743,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 16.94
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 4.89
+          },
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 4.69
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 2.5
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 2.11
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 2
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 1.5
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 1.02
+          }
+        ]
+      },
+      "samples_csv": "samples/K7-cold.csv",
+      "csv_rows": 2000,
+      "cold": "openfga と pdp の再起動直後から計測",
+      "first_k": {
+        "k": 500,
+        "p50": 21.262,
+        "p99": 80.89,
+        "max": 98.621
+      }
+    },
+    {
+      "key": "K6",
+      "condition": "façade → Cedar",
+      "level": "L25",
+      "rate_per_s": 200,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:11:07.504Z",
+      "wall_ms": 10114,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 5.084,
+      "p99": 26.915,
+      "p999": "標本不足",
+      "max": 81.593,
+      "p99_all_incl_failed": 26.915,
+      "max_send_lag_ms": 12.524,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        18.203,
+        29.493
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.3235574927064467,
+      "foreign_cpu": {
+        "foreign_cpu_s": 20.78,
+        "share": 0.12841883774965393,
+        "top": [
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 10.34
+          },
+          {
+            "pid": 51848,
+            "name": "chrome",
+            "cpu_s": 3.11
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 2.81
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 0.95
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.55
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.48
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.41
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.22
+          }
+        ]
+      },
+      "samples_csv": "samples/K6-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K6",
+      "condition": "façade → Cedar",
+      "level": "L50",
+      "rate_per_s": 400,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:11:18.517Z",
+      "wall_ms": 24777,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 6.753,
+      "p99": 46.845,
+      "p999": 94.495,
+      "max": 126.04,
+      "p99_all_incl_failed": 46.845,
+      "max_send_lag_ms": 12.122,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        44.949,
+        47.881
+      ],
+      "p999_ci95": [
+        87.778,
+        112.201
+      ],
+      "host_cpu_util_mean": 0.3628347876441786,
+      "foreign_cpu": {
+        "foreign_cpu_s": 43.14,
+        "share": 0.10882225703273196,
+        "top": [
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 24.97
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 7.03
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 2.41
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 1.03
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.98
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.86
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.61
+          },
+          {
+            "pid": 6164,
+            "name": "Orca",
+            "cpu_s": 0.48
+          }
+        ]
+      },
+      "samples_csv": "samples/K6-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K6",
+      "condition": "façade → Cedar",
+      "level": "L75",
+      "rate_per_s": 600,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:11:46.731Z",
+      "wall_ms": 4403,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 596.804,
+      "p99": 1259.276,
+      "p999": "標本不足",
+      "max": 1479.519,
+      "p99_all_incl_failed": 1259.276,
+      "max_send_lag_ms": 6.292,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        1198.931,
+        1294.257
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.3556968743683961,
+      "foreign_cpu": {
+        "foreign_cpu_s": 8.11,
+        "share": 0.11511150068135363,
+        "top": [
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 4.67
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 1.02
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 0.58
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.53
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.23
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.19
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 0.11
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.09
+          }
+        ]
+      },
+      "samples_csv": "samples/K6-L75.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K8",
+      "condition": "cold cache: façade の再起動直後（façade → Cedar、PIP スナップショットの再読込み）",
+      "level": "cold",
+      "rate_per_s": 400,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:11:52.496Z",
+      "wall_ms": 5414,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 10.198,
+      "p99": 142.829,
+      "p999": "標本不足",
+      "max": 202.599,
+      "p99_all_incl_failed": 142.829,
+      "max_send_lag_ms": 12.718,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        97.416,
+        145.237
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.3134967739715552,
+      "foreign_cpu": {
+        "foreign_cpu_s": 9.34,
+        "share": 0.10786560306612487,
+        "top": [
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 5.78
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 1.36
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 0.63
+          },
+          {
+            "pid": 25260,
+            "name": "MicrosoftSecurityApp",
+            "cpu_s": 0.2
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.2
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.17
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.17
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.13
+          }
+        ]
+      },
+      "samples_csv": "samples/K8-cold.csv",
+      "csv_rows": 2000,
+      "cold": "pdp の再起動直後から計測（PIP スナップショット再読込み）",
+      "first_k": {
+        "k": 500,
+        "p50": 43.036,
+        "p99": 184.44,
+        "max": 202.599
+      }
+    },
+    {
+      "key": "K5",
+      "condition": "Cedar 直接（façade なし、in-process adapter）",
+      "level": "L25",
+      "rate_per_s": 300,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:11:59.056Z",
+      "wall_ms": 7187,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 1.841,
+      "p99": 15.896,
+      "p999": "標本不足",
+      "max": 24.719,
+      "p99_all_incl_failed": 15.896,
+      "max_send_lag_ms": 15.601,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        15.057,
+        16.295
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.2561917649500446,
+      "foreign_cpu": {
+        "foreign_cpu_s": 12.55,
+        "share": 0.10911085118964797,
+        "top": [
+          {
+            "pid": 51924,
+            "name": "grep",
+            "cpu_s": 7.44
+          },
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 1.98
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 0.59
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.41
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.27
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.27
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.23
+          },
+          {
+            "pid": 10728,
+            "name": "claude",
+            "cpu_s": 0.19
+          }
+        ]
+      },
+      "samples_csv": "samples/K5-L25.csv",
+      "csv_rows": 2000
+    },
+    {
+      "key": "K5",
+      "condition": "Cedar 直接（façade なし、in-process adapter）",
+      "level": "L50",
+      "rate_per_s": 600,
+      "n": 10000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:12:07.199Z",
+      "wall_ms": 17198,
+      "ok": 10000,
+      "failed": 0,
+      "p50": 1.356,
+      "p99": 17.238,
+      "p999": 21.161,
+      "max": 22.832,
+      "p99_all_incl_failed": 17.238,
+      "max_send_lag_ms": 14.483,
+      "p99_valid": true,
+      "p999_valid": true,
+      "p99_ci95": [
+        16.735,
+        17.662
+      ],
+      "p999_ci95": [
+        20.784,
+        21.948
+      ],
+      "host_cpu_util_mean": 0.18591892860165565,
+      "foreign_cpu": {
+        "foreign_cpu_s": 13.3,
+        "share": 0.04832275191882777,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 3.97
+          },
+          {
+            "pid": 26332,
+            "name": "chrome",
+            "cpu_s": 2.91
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 1.59
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.58
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.56
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.44
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.36
+          },
+          {
+            "pid": 27640,
+            "name": "chrome",
+            "cpu_s": 0.22
+          }
+        ]
+      },
+      "samples_csv": "samples/K5-L50.csv",
+      "csv_rows": 10000
+    },
+    {
+      "key": "K5",
+      "condition": "Cedar 直接（façade なし、in-process adapter）",
+      "level": "L75",
+      "rate_per_s": 900,
+      "n": 2000,
+      "attempt": 0,
+      "started_at": "2026-10-15T04:12:27.816Z",
+      "wall_ms": 2436,
+      "ok": 2000,
+      "failed": 0,
+      "p50": 1.903,
+      "p99": 12.036,
+      "p999": "標本不足",
+      "max": 17.381,
+      "p99_all_incl_failed": 12.036,
+      "max_send_lag_ms": 10.566,
+      "p99_valid": true,
+      "p999_valid": false,
+      "p99_ci95": [
+        11.298,
+        12.64
+      ],
+      "p999_ci95": null,
+      "host_cpu_util_mean": 0.16118998080291888,
+      "foreign_cpu": {
+        "foreign_cpu_s": 1.77,
+        "share": 0.04530031301313629,
+        "top": [
+          {
+            "pid": 30244,
+            "name": "claude",
+            "cpu_s": 0.59
+          },
+          {
+            "pid": 16704,
+            "name": "herdr",
+            "cpu_s": 0.3
+          },
+          {
+            "pid": 12280,
+            "name": "Orca",
+            "cpu_s": 0.19
+          },
+          {
+            "pid": 21800,
+            "name": "Orca",
+            "cpu_s": 0.19
+          },
+          {
+            "pid": 22492,
+            "name": "Orca",
+            "cpu_s": 0.11
+          },
+          {
+            "pid": 17660,
+            "name": "claude",
+            "cpu_s": 0.06
+          },
+          {
+            "pid": 34716,
+            "name": "Discord",
+            "cpu_s": 0.05
+          },
+          {
+            "pid": 8040,
+            "name": "herdr",
+            "cpu_s": 0.05
+          }
+        ]
+      },
+      "samples_csv": "samples/K5-L75.csv",
+      "csv_rows": 2000
+    }
+  ],
+  "host_aborts": [],
+  "facade_added_ms_p50_L50": {
+    "openfga_nocache": 2.6209999999999987,
+    "openfga_cache": 1.8149999999999995,
+    "cedar": 5.397,
+    "note": "façade は G 段の所属確認と R 段の 2 回 engine を呼ぶ。直接 Check は R 段の 1 回だけ。各水準の到着率は条件ごとに異なる"
+  },
+  "harness_validity": {
+    "ok": true,
+    "rows": [
+      {
+        "key": "K1",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K1",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K1",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K2",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K2",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K2",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "L1",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "L1",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "L1",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K3",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K3",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K3",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K4",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K4",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K4",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K7",
+        "level": "cold",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K6",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K6",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K6",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K8",
+        "level": "cold",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K5",
+        "level": "L25",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K5",
+        "level": "L50",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      },
+      {
+        "key": "K5",
+        "level": "L75",
+        "all_samples_saved": true,
+        "latency_from_schedule": true,
+        "failures_counted": true
+      }
+    ]
+  },
+  "verdict": "判定保留",
+  "note": "合否を置かない TC（記録のみ）。系統 1 の遅延は相対比較にだけ使う（NA-POC-1）。tail は実測範囲外へ外挿しない（ARC-13 §9.2）",
+  "input_hashes": {
+    "levels.jsonl": "e4687e2b18d8fb76ff2dac1cb561bc750a90267a403377756e92faa67708e8c4",
+    "host.json": "5ea07c7a5da75dbbe42719d374122f177117eb9ac074fcde8b43897f4583ed29"
+  }
+}

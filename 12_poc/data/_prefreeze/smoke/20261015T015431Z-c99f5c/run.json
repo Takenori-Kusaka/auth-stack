@@ -1,0 +1,40 @@
+{
+  "tc": "smoke",
+  "run_id": "20261015T015431Z-c99f5c",
+  "frozen": false,
+  "purpose": "smoke-openfga",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T01:54:31.634Z",
+  "ended_at": "2026-10-15T01:54:39.254Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "aborted:harness_error",
+  "smoke": {
+    "engine": "openfga",
+    "steps": [
+      {
+        "name": "stack started",
+        "ok": true,
+        "note": "engine=openfga ports=42000..42019"
+      },
+      {
+        "name": "exception",
+        "ok": false,
+        "note": "login: too many redirects"
+      },
+      {
+        "name": "audit chain + reconstruction",
+        "ok": false,
+        "note": "records=0 invalid=0 txn_groups=0 findings=1"
+      },
+      {
+        "name": "3-hop txn reconstructed from audit only",
+        "ok": false,
+        "hops": []
+      }
+    ]
+  }
+}

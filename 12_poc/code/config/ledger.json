@@ -1,0 +1,265 @@
+{
+  "$comment": "entry point 台帳（pep-contract.md §6.1、OB-03）の PoC 版。PEP SDK・edge・TTS が同じ版を読む。op は Txn-Token の scope に入る操作 ID（token-exchange.openapi.yaml TxnTokenRequest.scope）。scope は外部 OAuth scope（TTS の T06 判定と STS の scope 上限に使う）。kind は L0 の資源種別（EXISTING / CREATE_CHILD / CREATE_ROOT / COLLECTION, pep-contract §3.3）。",
+  "version": "2026-10-15.1",
+  "services": {
+    "file-service": {
+      "audience_key": "file",
+      "workload": "file-service"
+    },
+    "tool-service": {
+      "audience_key": "tool",
+      "workload": "tool-service"
+    },
+    "label-service": {
+      "audience_key": "label",
+      "workload": "label-service"
+    }
+  },
+  "entry_points": [
+    {
+      "id": "file.read",
+      "service": "file-service",
+      "method": "GET",
+      "path": "/t/:tid/files/:id",
+      "op": "op.file.read",
+      "tier": "read-sensitive",
+      "permission": "read",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.read",
+      "downstream": [
+        {
+          "service": "label-service",
+          "entry_point": "label.read",
+          "scope": "files.read",
+          "when": "query labels=1"
+        }
+      ]
+    },
+    {
+      "id": "file.write",
+      "service": "file-service",
+      "method": "PUT",
+      "path": "/t/:tid/files/:id",
+      "op": "op.file.write",
+      "tier": "write",
+      "permission": "write",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.write"
+    },
+    {
+      "id": "file.delete",
+      "service": "file-service",
+      "method": "DELETE",
+      "path": "/t/:tid/files/:id",
+      "op": "op.file.delete",
+      "tier": "write",
+      "permission": "delete",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.write"
+    },
+    {
+      "id": "file.create",
+      "service": "file-service",
+      "method": "POST",
+      "path": "/t/:tid/folders/:id/files",
+      "op": "op.file.create",
+      "tier": "write",
+      "permission": "write",
+      "resource_type": "files/folder",
+      "kind": "CREATE_CHILD",
+      "scope": "files.write"
+    },
+    {
+      "id": "file.share",
+      "service": "file-service",
+      "method": "POST",
+      "path": "/t/:tid/files/:id/share",
+      "op": "op.file.share",
+      "tier": "write",
+      "permission": "share",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.share",
+      "modifiers": [
+        "XT"
+      ]
+    },
+    {
+      "id": "file.move",
+      "service": "file-service",
+      "method": "POST",
+      "path": "/t/:tid/files/:id/move",
+      "op": "op.file.move",
+      "tier": "write",
+      "permission": "write",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.write"
+    },
+    {
+      "id": "file.signed_url",
+      "service": "file-service",
+      "method": "POST",
+      "path": "/t/:tid/files/:id/url",
+      "op": "op.file.signed_url",
+      "tier": "read-sensitive",
+      "permission": "read",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.read"
+    },
+    {
+      "id": "file.download",
+      "service": "file-service",
+      "method": "GET",
+      "path": "/dl/:token",
+      "op": "op.file.download",
+      "tier": "public",
+      "permission": null,
+      "resource_type": "files/file",
+      "kind": "SIGNED_URL",
+      "scope": null
+    },
+    {
+      "id": "folder.list",
+      "service": "file-service",
+      "method": "GET",
+      "path": "/t/:tid/folders/:id/files",
+      "op": "op.folder.list",
+      "tier": "read-sensitive",
+      "permission": "read",
+      "resource_type": "files/folder",
+      "kind": "EXISTING",
+      "list_item": {
+        "type": "files/file",
+        "permission": "read"
+      },
+      "scope": "files.read"
+    },
+    {
+      "id": "file.search",
+      "service": "file-service",
+      "method": "GET",
+      "path": "/t/:tid/files",
+      "op": "op.file.search",
+      "tier": "read-sensitive",
+      "permission": "read",
+      "resource_type": "files/file",
+      "kind": "COLLECTION",
+      "scope": "files.read"
+    },
+    {
+      "id": "tool.view",
+      "service": "tool-service",
+      "method": "GET",
+      "path": "/t/:tid/tools/:id",
+      "op": "op.tool.view",
+      "tier": "read-sensitive",
+      "permission": "view",
+      "resource_type": "proj/tool_instance",
+      "kind": "EXISTING",
+      "scope": "tools.use"
+    },
+    {
+      "id": "tool.run",
+      "service": "tool-service",
+      "method": "POST",
+      "path": "/t/:tid/tools/:id/run",
+      "op": "op.tool.run",
+      "tier": "write",
+      "permission": "use",
+      "resource_type": "proj/tool_instance",
+      "kind": "EXISTING",
+      "scope": "tools.use",
+      "downstream": [
+        {
+          "service": "file-service",
+          "entry_point": "file.read",
+          "scope": "files.read"
+        }
+      ]
+    },
+    {
+      "id": "tool.config",
+      "service": "tool-service",
+      "method": "PUT",
+      "path": "/t/:tid/tools/:id/config",
+      "op": "op.tool.config",
+      "tier": "privileged",
+      "tier_sub": "T",
+      "permission": "config",
+      "resource_type": "proj/tool_instance",
+      "kind": "EXISTING",
+      "scope": "tools.config"
+    },
+    {
+      "id": "label.read",
+      "service": "label-service",
+      "method": "GET",
+      "path": "/t/:tid/labels/:id",
+      "op": "op.label.read",
+      "tier": "read-sensitive",
+      "permission": "read",
+      "resource_type": "files/file",
+      "kind": "EXISTING",
+      "scope": "files.read"
+    }
+  ],
+  "exchange_registry": [
+    {
+      "caller": "edge",
+      "callee": "tool",
+      "max_scope": "tools.use tools.config files.read"
+    },
+    {
+      "caller": "edge",
+      "callee": "label",
+      "max_scope": "files.read"
+    },
+    {
+      "caller": "edge",
+      "callee": "file",
+      "max_scope": "files.read files.write files.share"
+    },
+    {
+      "caller": "tool-service",
+      "callee": "file",
+      "max_scope": "files.read"
+    },
+    {
+      "caller": "file-service",
+      "callee": "label",
+      "max_scope": "files.read"
+    },
+    {
+      "caller": "harness",
+      "callee": "tool",
+      "max_scope": "tools.use tools.config files.read",
+      "test_only": true
+    },
+    {
+      "caller": "harness",
+      "callee": "file",
+      "max_scope": "files.read files.write files.share",
+      "test_only": true
+    },
+    {
+      "caller": "harness",
+      "callee": "label",
+      "max_scope": "files.read",
+      "test_only": true
+    }
+  ],
+  "txn_issuance": {
+    "sync_requesters": [
+      "edge",
+      "harness"
+    ],
+    "internal_start_requesters": [
+      "tool-service"
+    ]
+  }
+}

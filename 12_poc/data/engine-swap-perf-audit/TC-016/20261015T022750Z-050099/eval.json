@@ -1,0 +1,2196 @@
+{
+  "evaluated_at": "2026-10-15T02:28:13.380Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-016",
+  "verdict": "合格",
+  "criteria": {
+    "reconstruction_rate_write_txn": {
+      "n": 55,
+      "ok": 55,
+      "rate": 1,
+      "pass": true
+    },
+    "reconstruction_rate_read_sensitive_triple": {
+      "n": 61,
+      "ok": 61,
+      "rate": 1,
+      "pass": true
+    },
+    "forged_trace_record_diffs": {
+      "value": 0,
+      "pass": true
+    },
+    "injected_gap_and_forgery_detection_rate": {
+      "value": 1,
+      "pass": true
+    },
+    "tamper_detection_rate": {
+      "value": 1,
+      "pass": true,
+      "base_snapshot_ok": true
+    },
+    "identifiers_in_trace_or_baggage": {
+      "value": 0,
+      "pass": true,
+      "detail": {
+        "internal_trace_ids_containing_ids": 0,
+        "baggage_marker_hits": 0,
+        "marker_files": [],
+        "external_trace_ids_used_internally": 0
+      }
+    },
+    "adapter_swap_consumer_diff_lines": {
+      "value": 0,
+      "pass": true,
+      "reconstruction_after_swap": {
+        "n": 12,
+        "ok": 12,
+        "rate": 1
+      },
+      "txn_formats_after_swap": [
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse",
+        "inhouse"
+      ]
+    }
+  },
+  "measures": {
+    "requests": 128,
+    "by_variant_reconstruction": {
+      "V0": {
+        "n": 44,
+        "ok": 44,
+        "rate": 1
+      },
+      "V1": {
+        "n": 20,
+        "ok": 20,
+        "rate": 1
+      },
+      "V2": {
+        "n": 32,
+        "ok": 32,
+        "rate": 1
+      },
+      "V3": {
+        "n": 32,
+        "ok": 32,
+        "rate": 1
+      }
+    },
+    "v3_distinct_internal_trace_ids": 32,
+    "v3_requests": 32,
+    "journal_records": 742,
+    "journal_records_pre_injection": 733,
+    "quarantined_records": 3,
+    "verify_summary_final": {
+      "journal_records": 742,
+      "invalid_records": 3,
+      "producers": {
+        "spiffe://poc.test/w/sts": {
+          "records": 289,
+          "last_seq": 289,
+          "ok": true,
+          "gaps": 0,
+          "breaks": 0,
+          "dups": 0
+        },
+        "spiffe://poc.test/w/pdp": {
+          "records": 225,
+          "last_seq": 225,
+          "ok": true,
+          "gaps": 0,
+          "breaks": 0,
+          "dups": 0
+        },
+        "spiffe://poc.test/w/file-service": {
+          "records": 128,
+          "last_seq": 128,
+          "ok": true,
+          "gaps": 0,
+          "breaks": 0,
+          "dups": 0
+        },
+        "spiffe://poc.test/w/tool-service": {
+          "records": 36,
+          "last_seq": 36,
+          "ok": true,
+          "gaps": 0,
+          "breaks": 0,
+          "dups": 0
+        },
+        "spiffe://poc.test/w/label-service": {
+          "records": 58,
+          "last_seq": 58,
+          "ok": true,
+          "gaps": 0,
+          "breaks": 0,
+          "dups": 0
+        },
+        "spiffe://poc.test/w/admin": {
+          "records": 6,
+          "last_seq": 9,
+          "ok": false,
+          "gaps": 1,
+          "breaks": 0,
+          "dups": 0
+        }
+      },
+      "producer_logs": {
+        "admin": {
+          "issued": 9,
+          "missing": 3,
+          "mismatch": 0,
+          "still_spooled": 0
+        },
+        "file-service": {
+          "issued": 128,
+          "missing": 0,
+          "mismatch": 0,
+          "still_spooled": 0
+        },
+        "label-service": {
+          "issued": 58,
+          "missing": 0,
+          "mismatch": 0,
+          "still_spooled": 0
+        },
+        "pdp": {
+          "issued": 225,
+          "missing": 0,
+          "mismatch": 0,
+          "still_spooled": 0
+        },
+        "sts": {
+          "issued": 289,
+          "missing": 0,
+          "mismatch": 0,
+          "still_spooled": 0
+        },
+        "tool-service": {
+          "issued": 36,
+          "missing": 0,
+          "mismatch": 0,
+          "still_spooled": 0
+        }
+      },
+      "copy": {
+        "ok": true
+      },
+      "reconstruction": {
+        "decisions": 225,
+        "enforcements": 228,
+        "e2_without_e1": 3,
+        "e1_without_e2": 3,
+        "lineage_checked": 453,
+        "lineage_broken": 0,
+        "txn_groups": 67,
+        "txn_consistent": 67,
+        "read_sensitive_triples": 86
+      },
+      "ok": false,
+      "findings": [
+        {
+          "check": "C1",
+          "producer": "spiffe://poc.test/w/admin",
+          "seq": 4,
+          "expected": 1,
+          "issue": "seq_gap"
+        },
+        {
+          "check": "C2",
+          "producer": "spiffe://poc.test/w/admin",
+          "seq": 1,
+          "issue": "missing_in_journal"
+        },
+        {
+          "check": "C2",
+          "producer": "spiffe://poc.test/w/admin",
+          "seq": 2,
+          "issue": "missing_in_journal"
+        },
+        {
+          "check": "C2",
+          "producer": "spiffe://poc.test/w/admin",
+          "seq": 3,
+          "issue": "missing_in_journal"
+        },
+        {
+          "check": "C4",
+          "issue": "schema_invalid_records",
+          "count": 3
+        },
+        {
+          "check": "R1",
+          "issue": "enforcement_without_decision",
+          "count": 3
+        },
+        {
+          "check": "R1",
+          "issue": "request_id_mismatch",
+          "count": 3
+        }
+      ]
+    },
+    "injections": [
+      {
+        "kind": "e2_missing_decision_id",
+        "event_id": "ovxhpew6gohxjtgnggpobto7f7",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "quarantined:schema"
+        ]
+      },
+      {
+        "kind": "e2_missing_decision_id",
+        "event_id": "psqnsromp6zmcnzyswxz5pct76",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "quarantined:schema"
+        ]
+      },
+      {
+        "kind": "e2_missing_decision_id",
+        "event_id": "4stbw7anux33dwdllffndghvuc",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "quarantined:schema"
+        ]
+      },
+      {
+        "kind": "e2_forged_decision_id",
+        "event_id": "7w5wqhcrukzg67x32y33mdv7gq",
+        "decision_id": "gtuvscdgu6u2ykjxz2743xvg2q",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "e2_without_e1"
+        ]
+      },
+      {
+        "kind": "e2_forged_decision_id",
+        "event_id": "lytstwpg3iitrndfyobr2xke7y",
+        "decision_id": "qkcjpazt4ccw7rdvjvnzlpp3tl",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "e2_without_e1"
+        ]
+      },
+      {
+        "kind": "e2_forged_decision_id",
+        "event_id": "i54lpn4vxnarewt4xdu4fzw5ss",
+        "decision_id": "lm7yxwksyubyq4wcbjdl3debpe",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "e2_without_e1"
+        ]
+      },
+      {
+        "kind": "e2_request_id_mismatch",
+        "event_id": "4lbpcyeq4aqmv2ptzukniegncx",
+        "decision_id": "3krvnj7kckdcofgzz3aomucaft",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "request_id_mismatch",
+          "duplicate_enforcement"
+        ]
+      },
+      {
+        "kind": "e2_request_id_mismatch",
+        "event_id": "6uxnick5ekkraclo3xmdvokmwg",
+        "decision_id": "nzeg3omhfra4qyklbbk247hdzp",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "request_id_mismatch",
+          "duplicate_enforcement"
+        ]
+      },
+      {
+        "kind": "e2_request_id_mismatch",
+        "event_id": "35valn5hgggnllqzmqdqv3pff5",
+        "decision_id": "4w5ozdzpa4a343u3mw7lqkc6ic",
+        "mode": "delivered",
+        "detected": true,
+        "by": [
+          "request_id_mismatch",
+          "duplicate_enforcement"
+        ]
+      },
+      {
+        "kind": "e1_facade_only",
+        "decision_id": "vjgbgauqiz3ylujhphc3madv4x",
+        "request_id": "4m6nioinhl4z66syxsdhisjtea",
+        "status": 200,
+        "detected": true,
+        "by": [
+          "e1_without_e2"
+        ]
+      },
+      {
+        "kind": "e1_facade_only",
+        "decision_id": "37xm5gcswq4ezw2hu7dvpdhpey",
+        "request_id": "7fjokd7bscfyzv6m2chlydjpov",
+        "status": 200,
+        "detected": true,
+        "by": [
+          "e1_without_e2"
+        ]
+      },
+      {
+        "kind": "e1_facade_only",
+        "decision_id": "wgejddvkiybiv737mht4meqjk4",
+        "request_id": "ol76bhph6sayxh6x5re7f6alqh",
+        "status": 200,
+        "detected": true,
+        "by": [
+          "e1_without_e2"
+        ]
+      }
+    ],
+    "false_positive_flags": 3,
+    "false_positive_explained_as_duplicate_of_forged_e2": 3,
+    "tamper": [
+      {
+        "variant": "journal_only",
+        "kind": "modify_one_record",
+        "target": {
+          "line": 367,
+          "event_id": "oe5xfpldwdjmomodpnddqrmekn"
+        },
+        "detected": true,
+        "checks": [
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "findings": [
+          {
+            "check": "C1",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 113,
+            "issue": "prev_fp_mismatch"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 112,
+            "issue": "content_changed"
+          },
+          {
+            "check": "C3",
+            "issue": "copy_differs"
+          }
+        ]
+      },
+      {
+        "variant": "journal_only",
+        "kind": "delete_one_record",
+        "target": {
+          "line": 367,
+          "event_id": "oe5xfpldwdjmomodpnddqrmekn"
+        },
+        "detected": true,
+        "checks": [
+          "C1",
+          "C2",
+          "C3",
+          "R1"
+        ],
+        "findings": [
+          {
+            "check": "C1",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 113,
+            "expected": 112,
+            "issue": "seq_gap"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 112,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C3",
+            "issue": "copy_differs"
+          },
+          {
+            "check": "R1",
+            "issue": "enforcement_without_decision",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "variant": "journal_only",
+        "kind": "truncate_tail",
+        "target": {
+          "removed_lines": 3,
+          "from_line": 731
+        },
+        "detected": true,
+        "checks": [
+          "C2",
+          "C3"
+        ],
+        "findings": [
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/label-service",
+            "seq": 58,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 222,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/sts",
+            "seq": 289,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C3",
+            "issue": "copy_differs"
+          }
+        ]
+      },
+      {
+        "variant": "journal_and_copy",
+        "kind": "modify_one_record",
+        "target": {
+          "line": 367,
+          "event_id": "oe5xfpldwdjmomodpnddqrmekn"
+        },
+        "detected": true,
+        "checks": [
+          "C1",
+          "C2"
+        ],
+        "findings": [
+          {
+            "check": "C1",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 113,
+            "issue": "prev_fp_mismatch"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 112,
+            "issue": "content_changed"
+          }
+        ]
+      },
+      {
+        "variant": "journal_and_copy",
+        "kind": "delete_one_record",
+        "target": {
+          "line": 367,
+          "event_id": "oe5xfpldwdjmomodpnddqrmekn"
+        },
+        "detected": true,
+        "checks": [
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "findings": [
+          {
+            "check": "C1",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 113,
+            "expected": 112,
+            "issue": "seq_gap"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 112,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "R1",
+            "issue": "enforcement_without_decision",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "variant": "journal_and_copy",
+        "kind": "truncate_tail",
+        "target": {
+          "removed_lines": 3,
+          "from_line": 731
+        },
+        "detected": true,
+        "checks": [
+          "C2"
+        ],
+        "findings": [
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/label-service",
+            "seq": 58,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/pdp",
+            "seq": 222,
+            "issue": "missing_in_journal"
+          },
+          {
+            "check": "C2",
+            "producer": "spiffe://poc.test/w/sts",
+            "seq": 289,
+            "issue": "missing_in_journal"
+          }
+        ]
+      }
+    ]
+  },
+  "reconstruction": [
+    {
+      "idx": 0,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "vp4o6qvz4qtewzcksnt66ktcnb",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 1,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "3knhoewkkfqbhwbwlfscye24ra",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 2,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "c7cgpuocozzacr7gdywaefyooh",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 3,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "4aw4fph4zcwqljy67nvjeyg4er",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 4,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "cqy5hieaaz7vqkv5ox7wd7mkth",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 5,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 6,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 7,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 8,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "cfesjp4hs56lm3uukkzhveye7f",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 9,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "2ahnegwifmhgemt62gn7fpnzy6",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 10,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "32ldbewhf7bsrswjf26aae6ljl",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 11,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 12,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 13,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "sgz324wnavyqgqsetn3ecd3n63",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 14,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "nvn33t5sdwbnn7xutk3wwnjvw7",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 15,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 16,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "754mpcdqjhkfl2m3b435l4yi76",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 17,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 18,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 19,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 20,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 21,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 22,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 23,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "5muxrlu7ptc4qqw3ymqrlf42nw",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 24,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "vuir65yafyghwvewgqtdknfnoq",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 25,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 26,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 27,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 28,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 29,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 30,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 31,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 32,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "hrnrnv7v7x2h4zrgis6ljivcsi",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 33,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "jvoo4e5flzujhu7n525t2knz4e",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 34,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "invgqobkg7ptuykfi57ybj7vu5",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 35,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "k6dh2pu4ehi6ib4g7u7jb6qxis",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 36,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "av5zitby3fdhss37fdtnv6mrye",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 37,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 38,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 39,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "tihn2lhkxsboiabr6jqaazhiwz",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 40,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 41,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "mbrjny32awiyqhsgjtmhvntryw",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 42,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 43,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "sk5rza3jrjmvq33ystpokhtspm",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 44,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 45,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "ppvuzli36qnotk6kpy7rgne75h",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 46,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "c54zpilrcfdrcef5xjsmsddopu",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 47,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 48,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 49,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "ne2vpigwwokpyifwvw43wyzqgf",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 50,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 51,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "2davlnr7ulp4th74o4mgqonu5k",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 52,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 53,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "bllfw2uprpwgextorggau4pxaa",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 54,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 55,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 56,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "edzg3ttg7pzcrh2n7urtqcok4u",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 57,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 58,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 59,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "63hatem54lhp3gz2atpiaymexj",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 60,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "n5tjyk2cdl4nkn6bvi6yekq2zm",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 61,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 62,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "qdw56qf5jxogbg4knrhpcuo7ms",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 63,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "gtwmdf4xw2bzsj4uj623zmqyym",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 64,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "ftgrwja6dhualokaazkbt4oral",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 65,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 66,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "lms5txfg4gbflqouhwb7n2mwpo",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 67,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "sx47bx4i522l47agxgygpy5cdu",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 68,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "ajqp6fkz3ktdhsnxphyrcanlcr",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 69,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "dalfhlgmontmq3fmbfxdqhd3ec",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 70,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 71,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "jqmng5nqzj4wfq7oqdqspgtouk",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 72,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 73,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V1",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 74,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 75,
+      "phase": "main",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 76,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "peiyexdwj6gd62zj5fzb5igyvt",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 77,
+      "phase": "main",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V1",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "6dtykwxfq7ndpkzvzwppbaeosh",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": 78,
+      "phase": "main",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": 79,
+      "phase": "main",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "fpqa3pslzqjomfyzbnkj2sfid5",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair0-V0",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "f5ysz2jkrgnvjdoimhdholvw4i",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair0-V2",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "7sjssahbf2k5ctll4bhguziqql",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair0-V3",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "wj43wif6lc7tasyvujdzs3ybwe",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair1-V0",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair1-V2",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair1-V3",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair2-V0",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair2-V2",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair2-V3",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair3-V0",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair3-V2",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair3-V3",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair4-V0",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "bmjuu7fbb3wpvqbz7ci5pwjn6t",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair4-V2",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "uuowccguv5bg6pklmeldkyn75m",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair4-V3",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "ykmdugicadvqwchy7lwsmt5ie2",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair5-V0",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair5-V2",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair5-V3",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair6-V0",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "t2tfbs5hpj6rwgaxvot6sgkerf",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair6-V2",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "fc2vsfwbzzubhcougejulicupv",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair6-V3",
+      "phase": "pairs",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "nhlkro2wmc4u4dsrrfb6xclfqf",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair7-V0",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair7-V2",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair7-V3",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair8-V0",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair8-V2",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair8-V3",
+      "phase": "pairs",
+      "kind": "file.read+labels",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 2,
+      "hops_expected": 2,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair9-V0",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair9-V2",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V2",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair9-V3",
+      "phase": "pairs",
+      "kind": "file.read",
+      "tier": "read-sensitive",
+      "variant": "V3",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "reconstructed": true
+    },
+    {
+      "idx": "pair10-V0",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "7vvpivpdjadbymh4imcfdpnbw5",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair10-V2",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "dchaqnqfqdjnf6igzc3xzeyioj",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair10-V3",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "4vrn5k2dwsj2qsuksxb4o2cyz3",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair11-V0",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "lm5ewqe6ogroyyoqz3n2ehxnmy",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair11-V2",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V2",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "zq3lgdinqvybawozzjge3qwg27",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "pair11-V3",
+      "phase": "pairs",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V3",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "awnww7fzhiwgmogtv7nt46qpq2",
+      "txn_format": "opaque",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap0",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "1f4ebc90-2c52-4a9e-a4a2-6c8233f4f77b",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap1",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "b144ade6-c373-4014-bb3c-661f791a7acf",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap2",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "a3c19236-0e2d-4635-a49e-e5093d85f43c",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap3",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "1f716a68-3d0c-40c7-a642-a674faa7fa8d",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap4",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "8a07192c-bf34-4694-a1ea-771b7668667f",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap5",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "fe623955-1fb4-49b2-a9b9-3cbfc9c8fcd8",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap6",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "a24e9de6-2919-4d6d-b199-b598f873d3fe",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap7",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "bd51a485-8dfb-4cf2-bbf6-9650cbcdc8d8",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap8",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "91661d01-a778-497a-8684-0e73e683665d",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap9",
+      "phase": "swap",
+      "kind": "file.write",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 1,
+      "hops_expected": 1,
+      "why": [],
+      "txn": "4e9ba74b-df8c-4a08-b5f7-489192a39557",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap10",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "81c0324e-d658-462c-9945-7c3664bc7715",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    },
+    {
+      "idx": "swap11",
+      "phase": "swap",
+      "kind": "tool.run",
+      "tier": "write",
+      "variant": "V0",
+      "hops_found": 3,
+      "hops_expected": 3,
+      "why": [],
+      "txn": "34e39f28-5b72-4a60-9dbc-fbe64e8845c7",
+      "txn_format": "inhouse",
+      "tts_issued": true,
+      "reconstructed": true
+    }
+  ],
+  "pair_diffs": [],
+  "notes": [
+    "sampler: PoC の部品は OpenTelemetry の sampler を持たない。sampled=00 の外部 traceparent（V1）で sampler DROP を模した（監査記録の有無が trace の sampling に依存しない構造であることの確認）"
+  ],
+  "input_hashes": {
+    "requests.jsonl": "f98c3b6694b99bac8856d74dbb1267bb6d49f171d826234d3bd06846e5be5a05",
+    "plan.json": "0922a8b8bce24da2ae6031cdf041aeca0d0d311b536c1515d32cb51889948b60",
+    "inject.jsonl": "77d1efe817b1ad9417547e3e01effe6ebea0376d65ba712e53702be7f1275c92",
+    "audit/journal.jsonl": "c3dcc1f654a30b1656a78094417ad162e8ae15289761e9f1bc2b09b9b15cd947",
+    "audit-copy/journal.jsonl": "c3dcc1f654a30b1656a78094417ad162e8ae15289761e9f1bc2b09b9b15cd947",
+    "audit-verify.json": "d938ba3fff6643289d359e77b5dbe82c3c3e5758764317b58f0cc1c802e488d1"
+  }
+}

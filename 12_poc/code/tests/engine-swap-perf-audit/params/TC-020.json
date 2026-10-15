@@ -1,0 +1,24 @@
+{
+  "tc": "TC-020",
+  "title": "回復・認証器・step-up の鮮度",
+  "plan_section": "preregistered-test-plan.md §4.20",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 20,
+  "dataset": { "profile": "small", "seed": 20 },
+  "engine": "openfga",
+  "rules_version": "05_adr/ADR-003-account-recovery-authenticators.md（凍結コミット 151940a）の RC2〜RC7、02_requirements/identity-lifecycle.md §10・§11、ADR-002 の step-up。参照実装 tests/engine-swap-perf-audit/lib/recovery.js",
+  "parameters": { "wait_ms": 1500, "restrict_ms": 1500, "new_address_quarantine_ms": 2000, "max_age_ms": 2000, "probe_interval_ms": 50 },
+  "scenarios": {
+    "R1": "三択を満たさない回復（回復コード 1 つだけ、同じ方法の 2 つ、本人確認していないアカウントでの (c)、送付先と同じ宛てだけの通知）と、三択それぞれの正例",
+    "R2": "待機中と回復後制限期間中の否認で取消し: SEC 停止・回復で束縛した認証器の失効・全 session 失効。取消し後の旧回復による認証とログイン",
+    "R3": "helpdesk の操作者権限での認証器のリセット・移転・代理登録、回復コードの参照、通知先の変更、待機の短縮、SEC 保留の解除",
+    "R4": "管理者アカウントの回復（R-B）の単独承認、申請者＝承認者、helpdesk 担当者の承認、事業者要員の承認",
+    "R5": "認証器の追加（低い方の AAL、PR アカウントの fallback 禁止、通知失敗で束縛しない）、最後の 1 個の削除",
+    "R6": "新しく登録した回復用アドレスを待機期間内に送付先に使う",
+    "F1": "step-up（AS の合成ログイン amr=fido → acr L2-PR）で acr・auth_time が更新され、refresh では更新されない。L2 の token で privileged 操作（tool.config）が 401、step-up 後は 200",
+    "F2": "max_age を超えた認証で +SEC 操作（認証器の削除）が通らない。refresh した token でも通らない。新しい認証では通る"
+  },
+  "criteria": { "irregular_recovery_success": 0, "auth_with_cancelled_recovery": 0, "helpdesk_changes": 0, "fallbacks": 0, "freshness_rule_deviations": 0, "recorded_only": ["取消しから全 session 失効の完了までの時間（DL-20）"] },
+  "not_covered": ["passkey の実機・signal メソッド（TC-113）", "SIM 変更の兆候による待機延長（TC-03-10 の後半。兆候の入力源が系統 1 にない）", "helpdesk へのソーシャルエンジニアリング（DL-59）"],
+  "abort": { "rules_version_changed": "参照実装の規則の版が ADR-003 の凍結参照と異なる（manifest で照合）", "C-3": "三択の正例 (a)(b)(c) のいずれかが不成立" }
+}

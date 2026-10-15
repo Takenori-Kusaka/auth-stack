@@ -1,0 +1,74 @@
+{
+  "tc": "smoke",
+  "run_id": "20261015T022933Z-7377fd",
+  "frozen": false,
+  "purpose": "smoke-openfga",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:29:33.685Z",
+  "ended_at": "2026-10-15T02:29:46.334Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "smoke": {
+    "engine": "openfga",
+    "steps": [
+      {
+        "name": "stack started",
+        "ok": true,
+        "note": "engine=openfga ports=42000..42019"
+      },
+      {
+        "name": "login via BFF (PAR+PKCE+private_key_jwt, cert-bound opaque AT)",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "file read (edge -> STS exchange -> PEP -> PDP façade -> file-service)",
+        "ok": true,
+        "status": 200,
+        "decision_id": "gp6mmpgdir7e2kcyiis5bbak6a"
+      },
+      {
+        "name": "cross-tenant read denied (sanity)",
+        "ok": true,
+        "status_route_a": 404,
+        "status_route_b": 404
+      },
+      {
+        "name": "test setup: grant operator viewer on file",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "tool.run 3-service chain A->B->C (edge -> tool-service -> file-service -> label-service; STS re-exchange per hop, act nesting, one Txn-Token)",
+        "ok": true,
+        "status": 200,
+        "decision_id": "4r6if7qykkgeh42olcurkvmjaw",
+        "downstream_decision_id": "cb5pg4uouefb3h4u6ncmqnsthp",
+        "label_decision_id": "szqiu4nr54x4ctabl7khvbsddp"
+      },
+      {
+        "name": "public CLI client with DPoP (nonce) read",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "audit chain + reconstruction",
+        "ok": true,
+        "note": "records=17 invalid=0 txn_groups=1 findings=0"
+      },
+      {
+        "name": "3-hop (A->B->C) txn reconstructed from audit only",
+        "ok": true,
+        "hops": [
+          "use@proj/tool_instance:permitted",
+          "read@files/file:permitted",
+          "read@files/file:permitted"
+        ]
+      }
+    ]
+  }
+}

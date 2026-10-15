@@ -1,0 +1,182 @@
+{
+  "evaluated_at": "2026-10-15T06:27:53.313Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-013",
+  "phases": {},
+  "injections": {
+    "cedar": {
+      "wrong_request_id": {
+        "mode": "wrong_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_request_id": {
+        "mode": "drop_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_decision_id": {
+        "mode": "drop_decision_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      }
+    },
+    "openfga": {
+      "wrong_request_id": {
+        "mode": "wrong_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_request_id": {
+        "mode": "drop_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_decision_id": {
+        "mode": "drop_decision_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      }
+    },
+    "metadata_mixup": {
+      "n": 10,
+      "status": {
+        "503": 10
+      },
+      "served_2xx": 0,
+      "facade_decisions_from_file_service_during_mixup": 0,
+      "recovery_status_after_clear": 200
+    }
+  },
+  "abort": null,
+  "verdict": "合格",
+  "criteria": {
+    "consumer_code_diff_lines": {
+      "value": 0,
+      "pass": true
+    },
+    "contract_tests_all_pass": {
+      "value": {
+        "total": 435,
+        "failed": 0
+      },
+      "pass": true
+    },
+    "request_id_echo_rate": {
+      "value": 1,
+      "pass": true,
+      "detail": {
+        "pep_calls_normal": 234,
+        "pep_echo_failures_normal": 0,
+        "direct_calls": 36,
+        "direct_echo_ok": 36,
+        "injected_mismatch_or_missing_used": 0
+      }
+    },
+    "metadata_mismatch_uses": {
+      "value": 0,
+      "pass": true
+    },
+    "engine_decision_diffs": {
+      "value": 0,
+      "pass": true,
+      "intended": []
+    },
+    "representability": {
+      "value": 0.75,
+      "pass": null,
+      "note": "記録のみ（目標値 TBD）"
+    }
+  },
+  "measures": {
+    "suite_cases_per_phase": 133,
+    "facade_cases_per_phase": 12,
+    "switch_ms": 3485,
+    "service_pids": {
+      "A": {
+        "tool-service": 45912,
+        "file-service": 45480,
+        "label-service": 44136,
+        "edge": 39460,
+        "bff": 4512,
+        "sts": 50824,
+        "as-a": 34804
+      },
+      "B": {
+        "tool-service": 45912,
+        "file-service": 45480,
+        "label-service": 44136,
+        "edge": 39460,
+        "bff": 4512,
+        "sts": 50824,
+        "as-a": 34804
+      },
+      "C": {
+        "tool-service": 45912,
+        "file-service": 45480,
+        "label-service": 44136,
+        "edge": 39460,
+        "bff": 4512,
+        "sts": 50824,
+        "as-a": 34804
+      },
+      "unchanged_across_switch": true
+    },
+    "proceeded_on_false_decision": 0,
+    "list_items_not_permitted_by_ref": 0,
+    "catalog": {
+      "entries": 32,
+      "representable_verified": 24,
+      "partial_verified": 5,
+      "not_representable": 3,
+      "verification_failed": 0,
+      "engine_disagreements": 0,
+      "alternatives_for_non_representable": true
+    }
+  },
+  "failures": {
+    "contract": {
+      "A": [],
+      "B": [],
+      "C": []
+    },
+    "facade": {
+      "A": [],
+      "B": [],
+      "C": []
+    },
+    "diffs": [],
+    "list_violations": []
+  },
+  "observations": [
+    "façade（adapter）経由の評価では request context として current_time だけが渡る。AC-09・AC-17・AC-18・AC-24 の条件は engine 単体では評価できるが、AuthZEN profile の現行 adapter からは request context を渡せない（PoC の実装範囲）"
+  ],
+  "input_hashes": {
+    "requests.jsonl": "a6608c4c1fe1d5a1fdd521de0b3e09c577204a8721436920bd53c07fbbef902d",
+    "facade-contract.jsonl": "4716ced3ea2838787d44b9f9a48cf31cce3441ce92eb98d9f62c4252998764a8",
+    "inject.jsonl": "017d8b6d0ba46a72e409450ff1ffdd510a3ea4b242881b536c483ec0dca2733a",
+    "code-diff.json": "ef64318cd812cf3efe9198ec3a5dc7d283c394a517ae92111ea44bafbd288ee3",
+    "catalog-results.json": "7f49dcdea4e8b9e54eba4d02d706fcf8144dabf57ec7ae234fa6aaa28cc99215",
+    "suite.json": "ecb884e202dddfb876b12fa907f4b83b4106a6f655b06a5ff924c406ff70d3a8",
+    "pdp/decisions.jsonl": "c11c370f620f9cf75b0de91b42532cd2f13852d3fbd79b506cfd8c49682a304f"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$comment": "TC-008 frozen parameters (test plan §4.8). Values the plan leaves open (trial count, q, condition levels, C-3 limit) are fixed here before any measurement; they are disclosed as deviations RC-DEV-02..04 in README.md of this directory.",
+  "seed": 8,
+  "profile": "small",
+  "probe_interval_ms": 100,
+  "trials_per_condition": 20,
+  "post_revocation_observe_extra_ms": 3000,
+  "warmup_min_consecutive_allows": 3,
+  "warmup_extra_ms": 5000,
+  "examples_per_condition": 10,
+  "raw_iterations_per_condition": 20,
+  "c3_max_control_failure_ratio": 0.1,
+  "conditions": [
+    { "id": "A", "openfga_check_cache_ttl": null, "facade_fence": false, "sdk_cache_ms": 0 },
+    { "id": "B", "openfga_check_cache_ttl": "2s", "facade_fence": false, "sdk_cache_ms": 0 },
+    { "id": "C", "openfga_check_cache_ttl": "10s", "facade_fence": false, "sdk_cache_ms": 0 },
+    { "id": "D", "openfga_check_cache_ttl": "10s", "facade_fence": true, "sdk_cache_ms": 0 },
+    { "id": "E", "openfga_check_cache_ttl": null, "facade_fence": false, "sdk_cache_ms": 2000 },
+    { "id": "F", "openfga_check_cache_ttl": "10s", "facade_fence": true, "sdk_cache_ms": 2000 }
+  ],
+  "streams": {
+    "rs": { "count": 3, "tier": "read-sensitive", "endpoint": "GET /t/:tid/files/:id", "grant": "files/file#viewer (harness write, no content token)" },
+    "rs_tok": { "count": 1, "tier": "read-sensitive", "endpoint": "GET /t/:tid/files/:id", "grant": "file.share by the file owner (outbox stores the consistency token with the file)" },
+    "w": { "count": 1, "tier": "write", "endpoint": "PUT /t/:tid/files/:id", "grant": "files/file#editor" },
+    "p": { "count": 1, "tier": "privileged", "endpoint": "PUT /t/:tid/tools/:id/config", "grant": "proj/project#owner (config = parent->admin)" }
+  },
+  "pass_rules": {
+    "write_privileged_stale_allow": "0 probes with status 200 sent after the revocation ack (T0) on streams w and p, all conditions",
+    "examples_leak_enforced_paths": "0 leaks on enforced paths: service path with content token (CT-2/K-3), façade with fence, all conditions",
+    "read_after_write": "0 inconsistencies (façade with write token; service share path with stored token)",
+    "fence_rollback": "0 accepted older/invalid fence tokens (fence conditions)",
+    "rs_bound": "per trial and rs/rs_tok stream: T_last - T0 <= configured cache max age on the path + q + epsilon; configured max age = sdk_cache_ms + openfga ttl for rs without token/fence; sdk_cache_ms only when fence on (rs) ; 0 for rs_tok (token bypasses SDK cache and OpenFGA cache)"
+  },
+  "epsilon_rule": "epsilon = TC-001 calibration value if a frozen TC-001 calib.json exists at evaluation time; otherwise the in-run measurement error = max(prober send lateness) over the condition (deviation RC-DEV-05)"
+}

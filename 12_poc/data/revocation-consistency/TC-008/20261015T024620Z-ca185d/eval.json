@@ -1,0 +1,92 @@
+{
+  "tc": "TC-008",
+  "condition": {
+    "id": "E",
+    "openfga_check_cache_ttl": null,
+    "facade_fence": false,
+    "sdk_cache_ms": 2000
+  },
+  "run": "20261015T024620Z-ca185d",
+  "manifest_version": 3,
+  "manifest_sha256": "bdbe6d77f26c22b0de7ce9ffa1f8dc4fc2fbc6b93fd1504f8b64b258ae53b4fb",
+  "evaluated_at": "2026-10-15T02:55:08.846Z",
+  "epsilon": {
+    "value_ms": 31.699,
+    "source": "in-run (max prober send lateness)",
+    "in_run_ms": 31.699
+  },
+  "q_ms": 100,
+  "control": {
+    "failed_streams": 0,
+    "total_streams": 120,
+    "c3_abort": false,
+    "example_control_failures": 0,
+    "raw_control_failures": 0
+  },
+  "metrics": {
+    "write_stale_allows": 0,
+    "privileged_stale_allows": 0,
+    "rs_stale_ms": {
+      "n": 60,
+      "min": 1124.654,
+      "p50": 1598.644,
+      "p99": 1764.78,
+      "max": 1764.78
+    },
+    "rs_tok_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "w_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "p_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "rs_trials_with_stale_allow": 60,
+    "rs_trials": 60,
+    "rs_out_of_bound": 0,
+    "examples": {
+      "iterations": 20,
+      "leaks_enforced_paths": 0,
+      "leaks_non_enforced_paths_info": 0,
+      "enforced_paths": [
+        "service",
+        "facade_token"
+      ]
+    },
+    "read_after_write_inconsistencies": 0,
+    "raw_iterations": 20,
+    "fence_rollback_accepted": 0,
+    "fence_rollback_attempts": 0,
+    "old_token_replay_allows": 0
+  },
+  "verdict": {
+    "write_privileged_stale_allow_0": true,
+    "examples_leak_0_enforced": true,
+    "read_after_write_0": true,
+    "fence_rollback_0": true,
+    "rs_within_configured_bound": true
+  },
+  "result": "pass",
+  "inputs": {
+    "requests.jsonl": "0211ca0b8535d1ca3ec2917c7f85c5f415fb01f8c8849acff9ccd43722b3f21b",
+    "trials.jsonl": "2a64bb8a2f17e018d55a3f51f137877d53ee62b5990b145589a87ae02b9918dd",
+    "examples.jsonl": "72e2d6d815ba36ba963e39d0777897cb92fd8047e3f22aff76106a97566f2ddd",
+    "raw.jsonl": "fc2bf6aca90d842018f392a897be1b7c37849fdc49eedca16ff52711f512d896",
+    "inject.jsonl": "4da0af1ad8739fbd160ea83c2e927fb216283124bba053c329288508eb541ec1",
+    "run.json": "b8ada43383b532edbc548fee8abaa2bc6dd0d5381a7aa678ca4d7e6ca1845abc",
+    "layers.json": "015a98faba09f5b075bbc8a5be359876b86d167d9186d8764b58e570b96284c6"
+  }
+}

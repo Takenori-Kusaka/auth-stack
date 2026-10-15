@@ -1,0 +1,739 @@
+{
+  "cam": {
+    "entityTypes": {
+      "rel": {
+        "memberOfTypes": [
+          "rel"
+        ]
+      }
+    },
+    "actions": {
+      "core/tenant#belongs": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::tenant"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/tenant#manage": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::tenant"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/tenant#manage_roles": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::tenant"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/tenant#view_audit": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::tenant"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/tenant#revoke_session": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::tenant"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/unit#manage": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::unit"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/unit#view_directory": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::unit"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "core/unit#manage_membership": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "core::unit"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#editors": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#viewers": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#restricted_inherited": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#read": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#write": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/folder#share": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::folder"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#editors": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#viewers": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#read": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#write": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#delete": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "files/file#share": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "files::file"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/project#members": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::project"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/project#view": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::project"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/project#admin": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::project"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/tool_instance#use": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::tool_instance"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/tool_instance#view": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::tool_instance"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "proj/tool_instance#config": {
+        "appliesTo": {
+          "principalTypes": [
+            "core::user"
+          ],
+          "resourceTypes": [
+            "proj::tool_instance"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      }
+    }
+  },
+  "core": {
+    "entityTypes": {
+      "user": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "workload": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "client": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "tenant": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_member": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_external_member": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_admin": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_role_manager": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_security_admin": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            }
+          }
+        }
+      },
+      "unit": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_admin": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_member": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_manage": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "ttu_parent__manage": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_admin_scope__delegate": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            }
+          }
+        }
+      },
+      "admin_scope": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "group": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "role": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "external_grant": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      }
+    },
+    "actions": {}
+  },
+  "files": {
+    "entityTypes": {
+      "folder": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_editor": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_owner": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_viewer": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_editors": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_restricted_external": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_viewers": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "ttu_parent__editors": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__viewers": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__restricted_inherited": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            }
+          }
+        }
+      },
+      "file": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_editor": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_owner": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_viewer": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_editors": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_viewers": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "ttu_parent__editors": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__viewers": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__restricted_inherited": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__owner": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    "actions": {}
+  },
+  "proj": {
+    "entityTypes": {
+      "project": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_member": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_owner": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_members": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "rel_guest": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "ttu_ancestor__manage": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            }
+          }
+        }
+      },
+      "tool_instance": {
+        "memberOfTypes": [
+          "cam::rel"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "rel_operator": {
+              "type": "Entity",
+              "name": "cam::rel",
+              "required": true
+            },
+            "ttu_parent__members": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__view": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            },
+            "ttu_parent__admin": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "cam::rel"
+              },
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    "actions": {}
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "tc": "resilience-keys/TC-010",
+  "run_id": "20261015T062821Z-ec0267",
+  "frozen": true,
+  "purpose": "reference-after-fix-cedar",
+  "manifest_hash": "9c392a87bcb843064923404541ed70a77c5e0aae7147f07b8dba45238cf7adfa",
+  "git_commit": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "git_dirty": true,
+  "started_at": "2026-10-15T06:28:21.241Z",
+  "ended_at": "2026-10-15T06:28:59.986Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "tc_id": "TC-010",
+  "group": "resilience-keys",
+  "repo_head": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "params": {
+    "file": "12_poc/code/tests/resilience-keys/params/TC-010.ref.json",
+    "sha256": "dd7c6101476e762ea2c3e255054ea95a9d7d310628b402331a4215fbf1ad9c08"
+  },
+  "frozen_manifest": {
+    "version": 3,
+    "manifest_sha256": "9c392a87bcb843064923404541ed70a77c5e0aae7147f07b8dba45238cf7adfa",
+    "frozen_at": "2026-10-15T03:02:47.601Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false,
+    "working_tree_differs": true
+  },
+  "code_tree_sha256": "9c392a87bcb843064923404541ed70a77c5e0aae7147f07b8dba45238cf7adfa",
+  "port_base": 42200,
+  "note": "self-made freeze manifest; independent witness (F-5, §2.6) not available -> provisional result (RK-DEV-01)",
+  "engine": "cedar",
+  "eval_summary": {
+    "engine": "cedar",
+    "requests": 324,
+    "windows_completed": 4,
+    "windows_missing": [],
+    "checks": {
+      "write_plus_allow": {
+        "value": 6,
+        "threshold": 0,
+        "pass": false
+      },
+      "indeterminate_to_allow": {
+        "value": 12,
+        "threshold": 0,
+        "pass": false
+      },
+      "bypass": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "samples": 0,
+        "note": "not applicable (no separate authorization store process in the Cedar configuration)"
+      },
+      "empty_list_in_outage": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "rs_allow_in_outage": {
+        "value": 6,
+        "threshold": 0,
+        "pass": false
+      },
+      "alarm_all_allow": {
+        "value": "0/0",
+        "pass": null
+      }
+    },
+    "harness_rows_excluded": 0,
+    "matrix_deviation": 24,
+    "public_denied": 0,
+    "pre_detection_correct_allows": 0,
+    "verdict": "fail",
+    "non_target_unhealthy_samples": 0
+  }
+}

@@ -1,0 +1,1384 @@
+{
+  "tc": "TC-010",
+  "summary": {
+    "engine": "openfga",
+    "requests": 1260,
+    "windows_completed": 17,
+    "windows_missing": [],
+    "checks": {
+      "write_plus_allow": {
+        "value": 16,
+        "threshold": 0,
+        "pass": false
+      },
+      "indeterminate_to_allow": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "bypass": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "samples": 151
+      },
+      "empty_list_in_outage": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "rs_allow_in_outage": {
+        "value": 24,
+        "threshold": 0,
+        "pass": false
+      },
+      "alarm_all_allow": {
+        "value": "2/2",
+        "pass": true
+      }
+    },
+    "harness_rows_excluded": 7,
+    "matrix_deviation": 84,
+    "public_denied": 0,
+    "pre_detection_correct_allows": 4,
+    "verdict": "fail",
+    "non_target_unhealthy_samples": 0
+  },
+  "per_window": {
+    "W1": {
+      "class": "U",
+      "fm": "FM-01",
+      "fault": "inj-pep delay 5000 ms (> D(t) = 3000 ms)",
+      "n": 72,
+      "allowed": 42,
+      "by_status": {
+        "200": 42,
+        "404": 30
+      },
+      "write_plus_allow": 12,
+      "rs_allow": 24,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W2": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep blackhole",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W3": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep reset",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W4": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "façade process killed",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W5": {
+      "class": "U",
+      "fm": "FM-01",
+      "fault": "inj-engine delay 5000 ms (> façade engine timeout 1500 ms)",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W6": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-engine blackhole",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W7": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-engine status 500",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W8": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "OpenFGA process killed",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W9": {
+      "class": "I",
+      "fm": "evaluation error",
+      "fault": "inj-engine status 400 (condition / CEL evaluation error as returned by OpenFGA)",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W10": {
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade allow_all",
+      "n": 72,
+      "allowed": 17,
+      "by_status": {
+        "200": 17,
+        "503": 55
+      },
+      "write_plus_allow": 2,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 2
+    },
+    "W11": {
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade deny_all",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "404": 17,
+        "503": 49
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W12": {
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade stale_revision",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W13": {
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "inj-engine allow_all (engine answers allowed=true)",
+      "n": 72,
+      "allowed": 16,
+      "by_status": {
+        "200": 16,
+        "503": 56
+      },
+      "write_plus_allow": 2,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 2
+    },
+    "W14": {
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "inj-engine deny_all",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "404": 29,
+        "503": 37
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W15": {
+      "class": "U",
+      "fm": "FM-02 (no decision_id)",
+      "fault": "façade drop_decision_id",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W16": {
+      "class": "U",
+      "fm": "FM-02 (request id echo mismatch)",
+      "fault": "façade wrong_request_id",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "W17": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "façade answers 503 unavailable",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    }
+  },
+  "fm13_detection": {
+    "W10": {
+      "detect_ms": 203,
+      "alarms": 3,
+      "services": [
+        "file-service",
+        "label-service",
+        "tool-service"
+      ],
+      "reasons": [
+        "known_deny_allowed"
+      ]
+    },
+    "W11": {
+      "detect_ms": 46,
+      "alarms": 3,
+      "services": [
+        "file-service",
+        "label-service",
+        "tool-service"
+      ],
+      "reasons": [
+        "known_allow_denied"
+      ]
+    },
+    "W12": {
+      "detect_ms": 81,
+      "alarms": 3,
+      "services": [
+        "file-service",
+        "label-service",
+        "tool-service"
+      ],
+      "reasons": [
+        "model_revision_regressed"
+      ]
+    },
+    "W13": {
+      "detect_ms": 150,
+      "alarms": 3,
+      "services": [
+        "file-service",
+        "label-service",
+        "tool-service"
+      ],
+      "reasons": [
+        "known_deny_allowed"
+      ]
+    },
+    "W14": {
+      "detect_ms": 198,
+      "alarms": 3,
+      "services": [
+        "file-service",
+        "label-service",
+        "tool-service"
+      ],
+      "reasons": [
+        "known_allow_denied"
+      ]
+    }
+  },
+  "facade_reason_codes": {
+    "W1": {
+      "allow": 162,
+      "deny_no_relation": 30
+    },
+    "W2": {},
+    "W3": {},
+    "W4": {},
+    "W5": {
+      "deny_unavailable": 81
+    },
+    "W6": {
+      "deny_unavailable": 84
+    },
+    "W7": {
+      "deny_unavailable": 108
+    },
+    "W8": {
+      "deny_unavailable": 120
+    },
+    "W9": {
+      "deny_indeterminate": 120
+    },
+    "W10": {
+      "allow": 68
+    },
+    "W11": {
+      "deny_no_relation": 55
+    },
+    "W12": {
+      "allow": 29,
+      "deny_no_relation": 27
+    },
+    "W13": {
+      "allow": 50
+    },
+    "W14": {
+      "deny_guardrail:g1_not_member": 65,
+      "allow": 1
+    },
+    "W15": {
+      "allow": 60,
+      "deny_no_relation": 54
+    },
+    "W16": {
+      "allow": 58,
+      "deny_no_relation": 52
+    },
+    "W17": {}
+  },
+  "violations": [
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:47.899Z",
+      "mono_us": 64894746250,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:42.799Z",
+      "ms": 5099,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:47.913Z",
+      "mono_us": 64894760979,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.read.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:42.798Z",
+      "ms": 5115,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:47.931Z",
+      "mono_us": 64894778822,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:42.799Z",
+      "ms": 5132,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:47.949Z",
+      "mono_us": 64894796656,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "w.file.write.owner",
+      "rep": 0,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:42.799Z",
+      "ms": 5150,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:47.992Z",
+      "mono_us": 64894839261,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.folder.list.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:42.798Z",
+      "ms": 5194,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.222Z",
+      "mono_us": 64895069274,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:42.798Z",
+      "ms": 5424,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.297Z",
+      "mono_us": 64895144302,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.read.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.222Z",
+      "ms": 75,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.307Z",
+      "mono_us": 64895155125,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.222Z",
+      "ms": 85,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:48.353Z",
+      "mono_us": 64895200223,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.223Z",
+      "ms": 129,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:48.365Z",
+      "mono_us": 64895212321,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "w.file.write.owner",
+      "rep": 1,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.223Z",
+      "ms": 142,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.403Z",
+      "mono_us": 64895250414,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.folder.list.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:48.222Z",
+      "ms": 181,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.606Z",
+      "mono_us": 64895453467,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:48.222Z",
+      "ms": 384,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.678Z",
+      "mono_us": 64895525747,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.read.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.606Z",
+      "ms": 72,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.694Z",
+      "mono_us": 64895541936,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.606Z",
+      "ms": 88,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:48.750Z",
+      "mono_us": 64895597484,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.607Z",
+      "ms": 143,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:48.772Z",
+      "mono_us": 64895619463,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "w.file.write.owner",
+      "rep": 2,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:48.607Z",
+      "ms": 165,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:48.801Z",
+      "mono_us": 64895648856,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.folder.list.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:48.606Z",
+      "ms": 195,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.032Z",
+      "mono_us": 64895879996,
+      "window": "W1",
+      "class": "U",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:48.606Z",
+      "ms": 426,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.121Z",
+      "mono_us": 64895968843,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.read.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.033Z",
+      "ms": 88,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.126Z",
+      "mono_us": 64895973456,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.033Z",
+      "ms": 93,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.165Z",
+      "mono_us": 64896012302,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.034Z",
+      "ms": 131,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.180Z",
+      "mono_us": 64896028118,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "w.file.write.owner",
+      "rep": 0,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.034Z",
+      "ms": 146,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.187Z",
+      "mono_us": 64896035068,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.folder.list.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.033Z",
+      "ms": 154,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.403Z",
+      "mono_us": 64896250828,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.033Z",
+      "ms": 370,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.526Z",
+      "mono_us": 64896373991,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.404Z",
+      "ms": 122,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.545Z",
+      "mono_us": 64896392738,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.405Z",
+      "ms": 140,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.553Z",
+      "mono_us": 64896400439,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "w.file.write.owner",
+      "rep": 1,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.404Z",
+      "ms": 149,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.555Z",
+      "mono_us": 64896402799,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.read.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.404Z",
+      "ms": 151,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.621Z",
+      "mono_us": 64896469069,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.folder.list.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.404Z",
+      "ms": 217,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.838Z",
+      "mono_us": 64896685745,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.404Z",
+      "ms": 434,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.912Z",
+      "mono_us": 64896760110,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.read.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.838Z",
+      "ms": 74,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:49.918Z",
+      "mono_us": 64896765932,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.839Z",
+      "ms": 79,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.947Z",
+      "mono_us": 64896794833,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.840Z",
+      "ms": 107,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:50:49.988Z",
+      "mono_us": 64896835441,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "w.file.write.owner",
+      "rep": 2,
+      "tier": "write",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:50:49.839Z",
+      "ms": 149,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:50.015Z",
+      "mono_us": 64896862481,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.folder.list.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.839Z",
+      "ms": 176,
+      "status": 200,
+      "items": 3
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:50:50.273Z",
+      "mono_us": 64897120683,
+      "window": "W1",
+      "class": "U",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:50:49.839Z",
+      "ms": 434,
+      "status": 200,
+      "items": 18
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:03.754Z",
+      "mono_us": 64970601438,
+      "window": "W10",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.file.read.restricted_guest",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:03.648Z",
+      "ms": 106,
+      "status": 200
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:03.767Z",
+      "mono_us": 64970614680,
+      "window": "W10",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.file.read.none",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:03.647Z",
+      "ms": 120,
+      "status": 200
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:03.773Z",
+      "mono_us": 64970620517,
+      "window": "W10",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.tool.view.none",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:03.647Z",
+      "ms": 126,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:52:03.778Z",
+      "mono_us": 64970625935,
+      "window": "W10",
+      "class": "F",
+      "batch": "A",
+      "op": "pT.tool.config.none",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:03.648Z",
+      "ms": 130,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:52:03.792Z",
+      "mono_us": 64970639789,
+      "window": "W10",
+      "class": "F",
+      "batch": "A",
+      "op": "w.file.write.none",
+      "rep": 0,
+      "tier": "write",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:03.647Z",
+      "ms": 145,
+      "status": 200
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:12.468Z",
+      "mono_us": 64979315939,
+      "window": "W13",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.tool.view.none",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:12.362Z",
+      "ms": 106,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:52:12.499Z",
+      "mono_us": 64979346437,
+      "window": "W13",
+      "class": "F",
+      "batch": "A",
+      "op": "pT.tool.config.none",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:12.362Z",
+      "ms": 137,
+      "status": 200
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:12.501Z",
+      "mono_us": 64979348441,
+      "window": "W13",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.file.read.restricted_guest",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:12.362Z",
+      "ms": 139,
+      "status": 200
+    },
+    {
+      "kind": "rs_wrong_allow_before_detection",
+      "t": "2026-10-15T02:52:12.511Z",
+      "mono_us": 64979358334,
+      "window": "W13",
+      "class": "F",
+      "batch": "A",
+      "op": "rs.file.read.none",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:12.361Z",
+      "ms": 149,
+      "status": 200
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:52:12.520Z",
+      "mono_us": 64979367409,
+      "window": "W13",
+      "class": "F",
+      "batch": "A",
+      "op": "w.file.write.none",
+      "rep": 0,
+      "tier": "write",
+      "expected_normal": "deny",
+      "list": false,
+      "sent_at": "2026-10-15T02:52:12.362Z",
+      "ms": 158,
+      "status": 200
+    }
+  ],
+  "violations_total": 46,
+  "evaluated_at": "2026-10-15T02:54:56.117Z",
+  "evaluator": {
+    "file": "12_poc/code/tests/resilience-keys/TC-010.js",
+    "sha256": "8aed05336a35b9002d1c582a1eac78a9286ca59116e3bd6a04d438ebdfc1c44c"
+  },
+  "inputs": [
+    {
+      "file": "as-a/as-events.jsonl",
+      "sha256": "39e7669e7b47950ef47fa6e4df5954b0058b316e43e13d467f38a6a4f84c4ee4"
+    },
+    {
+      "file": "audit/journal.jsonl",
+      "sha256": "a3534a0855bc3ca3a7d807886015dab348c3b65a6df0d9adf56a14886aee4825"
+    },
+    {
+      "file": "audit-copy/journal.jsonl",
+      "sha256": "a3534a0855bc3ca3a7d807886015dab348c3b65a6df0d9adf56a14886aee4825"
+    },
+    {
+      "file": "audit-producers/file-service.produced.jsonl",
+      "sha256": "95273ca72a617cde006f1b998e0f32f76578a91d09e724da6b5e42b365c00822"
+    },
+    {
+      "file": "audit-producers/file-service.state.json",
+      "sha256": "c999918b026a19fa86cc6ddab62f321689b8fb6375c0680e9ca3eba0f84f2d44"
+    },
+    {
+      "file": "audit-producers/pdp.produced.jsonl",
+      "sha256": "f261dd9ce3de316c0c419c09df413e870e7669102e1055c5ffc1878160ef56b6"
+    },
+    {
+      "file": "audit-producers/pdp.state.json",
+      "sha256": "bfb478b48f124a99a350ce7463afa4e6ac4f01adaf24524160156488df645908"
+    },
+    {
+      "file": "audit-producers/sts.produced.jsonl",
+      "sha256": "e6144c60bb222291c9445d3d47798eb504529dfc7a819173513cff066c879a74"
+    },
+    {
+      "file": "audit-producers/sts.state.json",
+      "sha256": "fa587159d691b57578130df5e73362867df9b1de30d26455f88cdd69ed4fbdb5"
+    },
+    {
+      "file": "audit-producers/tool-service.produced.jsonl",
+      "sha256": "30e8a16657cae34655646395a0656b1a4666a99c6f30c8d0a0ba5915120801d1"
+    },
+    {
+      "file": "audit-producers/tool-service.state.json",
+      "sha256": "0e34e83c15702e02d2926f79a34aad53a0e19ee96fb8c569f34f662ac71b59a2"
+    },
+    {
+      "file": "bff/bff-events.jsonl",
+      "sha256": "179d6b35d01140a72ebd6c2468fba1992db1a985f5e5948f45fdeba73e276462"
+    },
+    {
+      "file": "dataset.json",
+      "sha256": "fc2e68b53cde263c0ec2d8bfe0162982b55c047f964250d1ae911a3316267b7a"
+    },
+    {
+      "file": "edge/edge-requests.jsonl",
+      "sha256": "ebba09398744362381af8f3e3f1a278e70b43ab012d445f1bbcddc7c6fca092d"
+    },
+    {
+      "file": "env.json",
+      "sha256": "2acc185a99b7b7e45ab670047e130f62d0732092419c0b9715b4e0671164d9a7"
+    },
+    {
+      "file": "health.jsonl",
+      "sha256": "08ba536067765ca8e09921de654826311f7fb1394a0ec5034a51db65e86ffa40"
+    },
+    {
+      "file": "inject/inj-engine.jsonl",
+      "sha256": "ea3a4cd348f6fe2f9f8e1a596e97167d6f799c881b573d99df8ea503edad1c07"
+    },
+    {
+      "file": "inject/inj-pep.jsonl",
+      "sha256": "ac600dc9984299293a923f3b1b164621d07cc93edeed23aafcd4f2e2dafde3d1"
+    },
+    {
+      "file": "inject.jsonl",
+      "sha256": "eb9a5bb00afbf47737deb9e3de7decaacbb134fe24284a098d9e59d7b7f47a83"
+    },
+    {
+      "file": "logs/as-a.log",
+      "sha256": "cbc626b965e42ac8725093d6425ff87ad97ea353a3a62338a2ad3f8cb3f39bd4"
+    },
+    {
+      "file": "logs/as-b.log",
+      "sha256": "28b8ca70e08e7c1e3ba672765f71c6e582215849115743297580429ab751ee64"
+    },
+    {
+      "file": "logs/bff.log",
+      "sha256": "2b989e0ae6a57069646a252940c40689e35797d1dcab7eeb71bf8116286d33eb"
+    },
+    {
+      "file": "logs/edge.log",
+      "sha256": "6cbd9c7eae1a82159604699d4b1aa90488ff96218021f6c29b8e42812e171f77"
+    },
+    {
+      "file": "logs/file-service.log",
+      "sha256": "78971a2e71e7d3234a2367adf0563850aa689e12c54eb9d135df83d0a4855b9a"
+    },
+    {
+      "file": "logs/inj-engine.log",
+      "sha256": "a2375d6618581b4939678c73ff78765291f0a6538fa85fe17f7a0de49ffa9bc2"
+    },
+    {
+      "file": "logs/inj-pep.log",
+      "sha256": "798e1ea51f9e0700649e8b5fc609442506bdb857706ddd87c39863321d0830a1"
+    },
+    {
+      "file": "logs/journal.log",
+      "sha256": "69ae94e74be7a1d11b5d039c8975d90c4f7a4218b578deb6c82d70f6a5d10609"
+    },
+    {
+      "file": "logs/label-service.log",
+      "sha256": "5de918be30ee32a512d53e37b1d838d1dd7f10ce589c148b83941957d104b794"
+    },
+    {
+      "file": "logs/openfga.log",
+      "sha256": "89400551b2b40ea1e3bdf861c0223e05d47141eb5a8e20fbc82054148b4b2fa8"
+    },
+    {
+      "file": "logs/pdp.log",
+      "sha256": "03847d9fe40339f8d10c7f1d8becd9aa0afea0b1dab18e988377bef1bef09b04"
+    },
+    {
+      "file": "logs/state-store.log",
+      "sha256": "031603df86706e5f4ac6a0bcfd214d6b8092ba5ec1377048300bf6a2944e30f2"
+    },
+    {
+      "file": "logs/sts.log",
+      "sha256": "14734a8ffecb9d039c024e84cd50610debd2a82f2570c213a5bee03c21b806f2"
+    },
+    {
+      "file": "logs/tool-service.log",
+      "sha256": "da7ac35e0b6da04e3a9a50ba5a89bb1c87ceff043dd138f8582a39da1338133f"
+    },
+    {
+      "file": "netstat.jsonl",
+      "sha256": "db15b10af33f59ba75de931ffd82022d8e3783461e31768687fafbe206d01ed8"
+    },
+    {
+      "file": "pdp/decisions.jsonl",
+      "sha256": "69d486eab496783c45698911e3cdc1d2b7198d601178110944ab5368a22cb878"
+    },
+    {
+      "file": "pdp/object-tenant.jsonl",
+      "sha256": "97bb51a037fe99c64f2999c74519cc916327a1c17623aeb3dbd5a972a5f7b31e"
+    },
+    {
+      "file": "pdp/openfga-store.json",
+      "sha256": "69a439a551add3006eea14c80572081f07a1c37bd87e94852b88f7de20381c4b"
+    },
+    {
+      "file": "pdp/write-seq",
+      "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    },
+    {
+      "file": "pdp/writes.jsonl",
+      "sha256": "0afea60eb49f5bb4c8bf558150ed6a4de30ee36d4f73cfc37b188bcc582f1677"
+    },
+    {
+      "file": "pep/file-service-alarms.jsonl",
+      "sha256": "d702a035b24b6312ba7988cbdd492c2b8c395cc945ab0ffcd3b48f85b9c42edc"
+    },
+    {
+      "file": "pep/file-service-enforce.jsonl",
+      "sha256": "54ee58882cb4ad3b64b4224619b5096c5239032f89ad695232511787bc67cc10"
+    },
+    {
+      "file": "pep/file-service-probe.jsonl",
+      "sha256": "a504c20b069259b7066813745b0412593988caf9ee647e1e46fefe43505e6a60"
+    },
+    {
+      "file": "pep/label-service-alarms.jsonl",
+      "sha256": "a7f458925456180bbff01553daa93904c40b48bdec0306f00d9873a940108745"
+    },
+    {
+      "file": "pep/label-service-probe.jsonl",
+      "sha256": "6e840e190e279059315ec2c117e4638f75a1a43bc181787d5c80ea0a76a8f01c"
+    },
+    {
+      "file": "pep/tool-service-alarms.jsonl",
+      "sha256": "398c69fb8558be9f56b120d6a3ee86aeff83f57c7e753850e95f64532155672a"
+    },
+    {
+      "file": "pep/tool-service-enforce.jsonl",
+      "sha256": "98b797c0eb84c3fa9d69fa382d9047251dd928ebcd9015a6d985611213973b8c"
+    },
+    {
+      "file": "pep/tool-service-probe.jsonl",
+      "sha256": "3986d88c34d6c65dd4d2e1461fca919fcafb9a2610eb16dc59d594ea327ed0b0"
+    },
+    {
+      "file": "requests.jsonl",
+      "sha256": "6a456112ebab70ef332e83f54ccbe3345f7d1728ab869a4fddc3c6685b8037cd"
+    },
+    {
+      "file": "roles.json",
+      "sha256": "2b6baff82d606f35685e13517ff2357c9df4b9d011c66295fd08aaa6185e7100"
+    },
+    {
+      "file": "run.json",
+      "sha256": "880b1d6d8ebf242f4baba07c89dc969757541903a003a56887ddedcf646e91b5"
+    },
+    {
+      "file": "sts/issuance-ledger.jsonl",
+      "sha256": "41772f2d468dd082db06a2cc5d90c6a14002d5fd55d2bde77abfacf686b21e23"
+    },
+    {
+      "file": "windows.jsonl",
+      "sha256": "1559aeb72ad4e800eb497819bf51add2254ac682f047755b87445e19ee83aca4"
+    }
+  ]
+}

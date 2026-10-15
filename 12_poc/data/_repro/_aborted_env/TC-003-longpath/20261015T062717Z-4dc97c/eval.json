@@ -1,0 +1,122 @@
+{
+  "tc": "TC-003",
+  "evaluator": "tests/tenant-isolation/TC-003.eval.js",
+  "evaluated_at": "2026-10-15T06:27:33.858Z",
+  "run_id": "20261015T062717Z-4dc97c",
+  "manifest_hash": "69dc520e9044563d538165c986ad32d82c98beb49463d1357e27499925b67ef6",
+  "verdict": "不合格",
+  "abort": [],
+  "criteria": [
+    {
+      "id": "K1",
+      "text": "受理 0 件",
+      "observed": 2,
+      "detail": [
+        {
+          "engine": "openfga",
+          "accepted_requests": 0,
+          "persisted_effects": 1
+        },
+        {
+          "engine": "cedar",
+          "accepted_requests": 0,
+          "persisted_effects": 1
+        }
+      ],
+      "met": false
+    },
+    {
+      "id": "K2",
+      "text": "許されない属性の返却 0 件",
+      "observed": 0,
+      "met": true
+    }
+  ],
+  "ledger_check": {
+    "ledger_version": "2026-10-15.1",
+    "ledger_ops": [
+      "file.create",
+      "file.delete",
+      "file.download",
+      "file.move",
+      "file.read",
+      "file.search",
+      "file.share",
+      "file.signed_url",
+      "file.write",
+      "folder.list",
+      "label.read",
+      "tool.config",
+      "tool.run",
+      "tool.view"
+    ],
+    "implemented_ops": [
+      "file.create",
+      "file.delete",
+      "file.download",
+      "file.move",
+      "file.read",
+      "file.search",
+      "file.share",
+      "file.signed_url",
+      "file.write",
+      "folder.list",
+      "label.read",
+      "tool.config",
+      "tool.run",
+      "tool.view"
+    ],
+    "missing_in_impl": [],
+    "missing_in_ledger": [],
+    "match": true
+  },
+  "engines": [
+    {
+      "engine": "openfga",
+      "negatives": 0,
+      "negatives_by_class": {},
+      "negatives_by_case": {},
+      "effect_based_cases": 0,
+      "accepted": 0,
+      "accepted_examples": [],
+      "effect_findings": [
+        {
+          "finding": "effects not recorded"
+        }
+      ],
+      "exposures": 0,
+      "exposure_examples": [],
+      "positives": 0,
+      "positive_failures": [],
+      "status_by_case": {},
+      "operations_covered": [],
+      "coverage_by_operation": {},
+      "effects": null,
+      "store": null
+    },
+    {
+      "engine": "cedar",
+      "negatives": 0,
+      "negatives_by_class": {},
+      "negatives_by_case": {},
+      "effect_based_cases": 0,
+      "accepted": 0,
+      "accepted_examples": [],
+      "effect_findings": [
+        {
+          "finding": "effects not recorded"
+        }
+      ],
+      "exposures": 0,
+      "exposure_examples": [],
+      "positives": 0,
+      "positive_failures": [],
+      "status_by_case": {},
+      "operations_covered": [],
+      "coverage_by_operation": {},
+      "effects": null,
+      "store": null
+    }
+  ],
+  "input_sha256": {}
+}

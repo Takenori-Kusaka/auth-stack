@@ -1,0 +1,149 @@
+{
+  "evaluated_at": "2026-10-15T06:29:21.931Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-020",
+  "scenarios": {
+    "R1": {
+      "only_one_stored": {
+        "t": 1792045748932,
+        "ok": false,
+        "why": "three_choice_not_met",
+        "stored": 1,
+        "issued": 0
+      },
+      "two_stored_same_method": {
+        "t": 1792045748933,
+        "ok": false,
+        "why": "three_choice_not_met",
+        "stored": 2,
+        "issued": 0
+      },
+      "reproof_unproofed": {
+        "t": 1792045748933,
+        "ok": false,
+        "why": "three_choice_not_met",
+        "stored": 0,
+        "issued": 0
+      },
+      "notify_only_destination": {
+        "t": 1792045748933,
+        "ok": false,
+        "why": "no_independent_notification_target"
+      },
+      "positive": {
+        "a": true,
+        "b": true,
+        "c": true
+      }
+    },
+    "R2": {
+      "waiting": {
+        "stage": "waiting",
+        "started": true,
+        "cancelled": true,
+        "before_status": 404,
+        "ms_cancel_to_session_denied": 7,
+        "complete_after_cancel": false,
+        "auth_with_recovered_authenticator": false,
+        "login_after_cancel": false,
+        "refresh_after_cancel": 400,
+        "account_state": "suspended_sec"
+      },
+      "restricted": {
+        "stage": "restricted",
+        "started": true,
+        "cancelled": true,
+        "before_status": 404,
+        "ms_cancel_to_session_denied": 5,
+        "complete_after_cancel": false,
+        "auth_with_recovered_authenticator": false,
+        "login_after_cancel": false,
+        "refresh_after_cancel": 400,
+        "account_state": "suspended_sec"
+      }
+    },
+    "R3": {
+      "reset_authenticator": false,
+      "transfer_authenticator": false,
+      "proxy_register": false,
+      "read_recovery_codes": false,
+      "change_notification_target": false,
+      "shorten_waiting": false,
+      "release_sec_hold": false
+    },
+    "R4": {
+      "single_approval": false,
+      "requester_is_approver": false,
+      "helpdesk_approver": false,
+      "provider_staff_approver": false,
+      "positive_two_tenant_admins": true
+    },
+    "R5": {
+      "pr_account_add_with_totp": false,
+      "pr_account_add_with_passkey": true,
+      "add_with_notification_failure": false,
+      "add_passkey_with_password_lower_aal": false,
+      "add_passkey_with_totp": true,
+      "remove_last": false
+    },
+    "R6": {
+      "used_within_quarantine": false,
+      "used_after_quarantine": true
+    },
+    "F1": {
+      "l2_acr": "L2",
+      "l2_auth_time": 1792045753,
+      "l2_config_status": 401,
+      "stepup_acr": "L2-PR",
+      "stepup_auth_time": 1792045754,
+      "stepup_config_status": 200,
+      "refreshed_status": 200,
+      "refreshed_acr": "L2",
+      "refreshed_auth_time": 1792045753,
+      "refreshed_config_status": 401
+    },
+    "F2": {
+      "stale_ok": false,
+      "stale_why": "max_age_exceeded",
+      "refreshed_auth_time_changed": false,
+      "via_refresh_ok": false,
+      "fresh_ok": true
+    }
+  },
+  "criteria": {
+    "irregular_recovery_success": {
+      "value": 0,
+      "pass": true
+    },
+    "auth_with_cancelled_recovery": {
+      "value": 0,
+      "pass": true
+    },
+    "helpdesk_changes": {
+      "value": 0,
+      "pass": true
+    },
+    "fallbacks": {
+      "value": 0,
+      "pass": true
+    },
+    "freshness_rule_deviations": {
+      "value": 0,
+      "pass": true
+    }
+  },
+  "verdict": "合格",
+  "recorded": {
+    "ms_cancel_to_session_denied": {
+      "waiting": 7,
+      "restricted": 5
+    }
+  },
+  "not_covered": [
+    "passkey の実機・signal メソッド（TC-113）",
+    "SIM 変更の兆候による待機延長（TC-03-10 の後半。兆候の入力源が系統 1 にない）",
+    "helpdesk へのソーシャルエンジニアリング（DL-59）"
+  ],
+  "input_hashes": {}
+}

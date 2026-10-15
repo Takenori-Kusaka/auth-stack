@@ -1,0 +1,129 @@
+{
+  "tc": "resilience-keys/TC-014",
+  "run_id": "20261015T062900Z-5c21e8",
+  "frozen": true,
+  "purpose": "measurement",
+  "manifest_hash": "f2aea08c5d830f2459e0966f39f87bd340a8ef83a650075bf75e0f34009e5442",
+  "git_commit": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "git_dirty": true,
+  "started_at": "2026-10-15T06:29:00.861Z",
+  "ended_at": "2026-10-15T06:40:59.150Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "tc_id": "TC-014",
+  "group": "resilience-keys",
+  "repo_head": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "params": {
+    "file": "12_poc/code/tests/resilience-keys/params/TC-014.json",
+    "sha256": "df9a065711c96b249eb2a4e67e5a827207a247e378ac798e66f0c289519b494a"
+  },
+  "frozen_manifest": {
+    "version": 2,
+    "manifest_sha256": "f2aea08c5d830f2459e0966f39f87bd340a8ef83a650075bf75e0f34009e5442",
+    "frozen_at": "2026-10-15T06:29:00.390Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false,
+    "working_tree_differs": true
+  },
+  "code_tree_sha256": "f2aea08c5d830f2459e0966f39f87bd340a8ef83a650075bf75e0f34009e5442",
+  "port_base": 42280,
+  "note": "self-made freeze manifest; independent witness (F-5, §2.6) not available -> provisional result (RK-DEV-01)",
+  "eval_summary": {
+    "checks": {
+      "old_kid_accepted_after_epoch_applied": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "verification_failures_during_planned_rotation": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "cycles_completed": 12,
+        "verifications": 47997
+      },
+      "retain_key_removal_not_blocked": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "attempts": 3
+      },
+      "fake_jwks_accepted": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "issuance_errors_at_key_age_hard_limit": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "hard_limit_events": [
+          "at:hard_limit_switch",
+          "at:hard_limit_no_next_sev1",
+          "txn:hard_limit_switch",
+          "txn:hard_limit_no_next_sev1"
+        ]
+      }
+    },
+    "emergency_latency_ms": {
+      "push_verifiers": {
+        "n": 30,
+        "p50": 97,
+        "p99": 186,
+        "max": 186
+      },
+      "nopush_verifiers": {
+        "n": 30,
+        "p50": 4027,
+        "p99": 14062,
+        "max": 14062
+      },
+      "real_pep": {
+        "n": 5,
+        "p50": 61,
+        "p99": 155,
+        "max": 155
+      }
+    },
+    "emergency_user_failures": 4,
+    "mistaken_removal": {
+      "removal_status": 200,
+      "inflight_verifications": 2004,
+      "inflight_rejected": 1584,
+      "pep_inflight_rejected": 180,
+      "detection_alarm_files": 0,
+      "detected": false
+    },
+    "other_removal_attempts": [
+      {
+        "what": "remove_active",
+        "status": 409
+      },
+      {
+        "what": "remove_in_use_checked",
+        "status": 409
+      },
+      {
+        "what": "mistaken_removal",
+        "status": 200
+      }
+    ],
+    "outage_user_failures": 0,
+    "hardlimit": {
+      "user": 54,
+      "pep_failures": 0,
+      "verifier_rejects": 0
+    },
+    "removals": {
+      "at:200": 14,
+      "txn:200": 12,
+      "at:409": 5
+    },
+    "verdict": "pass"
+  }
+}

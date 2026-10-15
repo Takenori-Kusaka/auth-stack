@@ -1,0 +1,194 @@
+{
+  "evaluated_at": "2026-10-15T02:43:27.952Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-023",
+  "scenarios": {
+    "P0": {
+      "accepted": true,
+      "final": "done",
+      "steps": 5,
+      "executed": 5,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": null,
+      "ms_last_exec_after_revocation": null
+    },
+    "J1a": {
+      "accepted": true,
+      "revoke_status": 200,
+      "final": "dlq:deny_no_relation",
+      "steps": 1,
+      "executed": 0,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": 1002,
+      "ms_last_exec_after_revocation": null,
+      "first_denial_reason": "deny_no_relation"
+    },
+    "J1b": {
+      "accepted": true,
+      "revoke_status": 200,
+      "final": "dlq:tts_400:invalid_request",
+      "steps": 1,
+      "executed": 0,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": 1003,
+      "ms_last_exec_after_revocation": null,
+      "first_denial_reason": "tts_400:invalid_request"
+    },
+    "J2": {
+      "accepted": true,
+      "act_status": 200,
+      "final": "dlq:deny_no_relation",
+      "steps": 6,
+      "executed": 5,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": 300,
+      "ms_last_exec_after_revocation": null,
+      "first_denial_reason": "deny_no_relation",
+      "user": "syngvi76kqzausbc3dd6jesd4b"
+    },
+    "J3": {
+      "accepted": true,
+      "act_status": 200,
+      "final": "dlq:tts_400:invalid_request",
+      "steps": 6,
+      "executed": 5,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": 305,
+      "ms_last_exec_after_revocation": null,
+      "first_denial_reason": "tts_400:invalid_request",
+      "user": "synzs4e3jy7q6qaya2zixof7be"
+    },
+    "J3b": {
+      "accepted": true,
+      "act_status": 200,
+      "final": "dlq:tts_400:invalid_request",
+      "steps": 6,
+      "executed": 5,
+      "executed_after_revocation_any": 0,
+      "violations_beyond_bound": 0,
+      "ms_revocation_to_first_denial": 309,
+      "ms_last_exec_after_revocation": null,
+      "first_denial_reason": "tts_400:invalid_request",
+      "user": "synsstl3mief7ekihorovtsjcf",
+      "tts_after_suspension": {
+        "issued": false,
+        "error": "tts_400:invalid_request"
+      }
+    },
+    "J4": {
+      "cases": [
+        {
+          "name": "tid_rewritten",
+          "final": "dlq:message_sub_or_tid_mismatch",
+          "executed": 0,
+          "reason": "message_sub_or_tid_mismatch"
+        },
+        {
+          "name": "sub_rewritten",
+          "final": "dlq:message_sub_or_tid_mismatch",
+          "executed": 0,
+          "reason": "message_sub_or_tid_mismatch"
+        },
+        {
+          "name": "job_run_id_swapped",
+          "final": "dlq:message_sub_or_tid_mismatch",
+          "executed": 0,
+          "reason": "message_sub_or_tid_mismatch"
+        },
+        {
+          "name": "params_rewritten",
+          "final": "dlq:params_hash_mismatch",
+          "executed": 0,
+          "reason": "params_hash_mismatch"
+        },
+        {
+          "name": "unknown_job_run_id",
+          "final": "dlq:unknown_job_run_id",
+          "executed": 0,
+          "reason": "unknown_job_run_id"
+        }
+      ],
+      "accepted": 0,
+      "controls_executed": [
+        "done",
+        "done"
+      ]
+    },
+    "J6": {
+      "final": "done",
+      "steps_attempted": 13,
+      "executed_total": 6,
+      "attempts_during_outage": 7,
+      "executed_during_outage": 0,
+      "waiting_reasons": [
+        "pdp_unreachable:ECONNREFUSED"
+      ]
+    },
+    "J7": {
+      "final": "dlq:tts_400:invalid_request",
+      "steps_attempted": 11,
+      "executed_total": 2,
+      "attempts_during_outage": 7,
+      "executed_during_outage": 0,
+      "waiting_reasons": [
+        "tts_unreachable:ECONNREFUSED"
+      ]
+    },
+    "J5": {
+      "scanned": "jobs/（queue pending・done・dlq、job-ledger、job-events、job-output）",
+      "token_hits": 0,
+      "files": []
+    }
+  },
+  "criteria": {
+    "allow_after_revocation": {
+      "value": 0,
+      "pass": true
+    },
+    "steps_executed_after_revocation": {
+      "value": 0,
+      "pass": true
+    },
+    "tamper_accepted": {
+      "value": 0,
+      "pass": true
+    },
+    "tokens_detected": {
+      "value": 0,
+      "pass": true
+    },
+    "fail_open": {
+      "value": 0,
+      "pass": true
+    }
+  },
+  "verdict": "合格",
+  "recorded": {
+    "I_job_ms": 300,
+    "revocation_to_first_denial_ms": {
+      "J2": 300,
+      "J3": 305,
+      "J3b": 309
+    },
+    "last_execution_after_revocation_ms": {
+      "J2": null,
+      "J3": null,
+      "J3b": null
+    }
+  },
+  "limitations": [
+    "façade は actor（実行主体）の権限・停止状態を判定しない（D26-04a の actor 判定は PoC の範囲外。subject の現在の権限と G 段だけで判定）",
+    "委任 grant は AS の grant（gref）で代用し、ジョブ定義 ID・許可する実行主体の項目は持たない"
+  ],
+  "input_hashes": {
+    "inject.jsonl": "c96596f0a44839b339fe8fd399986cff16063c29851c6e3f05a8a3f640c2c152",
+    "jobs/job-events.jsonl": "dce81b07c580e6247c97d021a2ac5247dc494235a76ca83c2f76b11dbf2212a2",
+    "jobs/job-ledger.jsonl": "2284dce49a5d6c1a87f02c7f37f1929c35ad41c0c7c31d30aed0cc26a0f75690"
+  }
+}

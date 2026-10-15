@@ -1,0 +1,92 @@
+{
+  "tc": "TC-008",
+  "condition": {
+    "id": "B",
+    "openfga_check_cache_ttl": "2s",
+    "facade_fence": false,
+    "sdk_cache_ms": 0
+  },
+  "run": "20261015T062650Z-0169df",
+  "manifest_version": 4,
+  "manifest_sha256": "8bb2324391ba9cba3925df265de2d44b9b9a9e7c40b2e2cd4675bc3a91de73f7",
+  "evaluated_at": "2026-10-15T06:48:53.733Z",
+  "epsilon": {
+    "value_ms": 25.015,
+    "source": "in-run (max prober send lateness)",
+    "in_run_ms": 25.015
+  },
+  "q_ms": 100,
+  "control": {
+    "failed_streams": 0,
+    "total_streams": 120,
+    "c3_abort": false,
+    "example_control_failures": 0,
+    "raw_control_failures": 0
+  },
+  "metrics": {
+    "write_stale_allows": 0,
+    "privileged_stale_allows": 0,
+    "rs_stale_ms": {
+      "n": 60,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "rs_tok_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "w_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "p_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "rs_trials_with_stale_allow": 0,
+    "rs_trials": 60,
+    "rs_out_of_bound": 0,
+    "examples": {
+      "iterations": 20,
+      "leaks_enforced_paths": 0,
+      "leaks_non_enforced_paths_info": 0,
+      "enforced_paths": [
+        "service",
+        "facade_token"
+      ]
+    },
+    "read_after_write_inconsistencies": 0,
+    "raw_iterations": 20,
+    "fence_rollback_accepted": 0,
+    "fence_rollback_attempts": 0,
+    "old_token_replay_allows": 0
+  },
+  "verdict": {
+    "write_privileged_stale_allow_0": true,
+    "examples_leak_0_enforced": true,
+    "read_after_write_0": true,
+    "fence_rollback_0": true,
+    "rs_within_configured_bound": true
+  },
+  "result": "pass",
+  "inputs": {
+    "requests.jsonl": "5c383a9d083a15a17c897f8dc08540bb1684fdb9299159ea650571af1d3e6fef",
+    "trials.jsonl": "a5b8a34a1f11c5e1d067dd7fc2fb556730b44b17dfb6803588b6f4d9c1ddc222",
+    "examples.jsonl": "5a24252b5cab88bdef5526e911d96c935d9c783c22ebed2cab2a9813d8f2e680",
+    "raw.jsonl": "c8eff9cbf2c54be0502e86760e4885c57dd953c0ae70ff216527a66106538ae5",
+    "inject.jsonl": "5d4c8bd2147492ab8dcc4039ca75b6b66abc48e4fc0bef398519b10e38d28e76",
+    "run.json": "e18987f86476d2f812bcc6d66c5f4c6768ab777bd5f45a280e1eb8ba6a5a2930",
+    "layers.json": "613a6a539f6f469695c64059804a4bc76933287cd5e55e887f8273e80dba2dc2"
+  }
+}

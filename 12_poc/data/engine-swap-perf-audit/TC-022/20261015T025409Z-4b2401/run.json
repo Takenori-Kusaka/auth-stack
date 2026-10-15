@@ -1,0 +1,34 @@
+{
+  "tc": "engine-swap-perf-audit/TC-022",
+  "run_id": "20261015T025409Z-4b2401",
+  "frozen": true,
+  "purpose": "reference-execution-without-witness (C-8)",
+  "manifest_hash": "bcc2a2caec944ae083acba92cf336a0b976f258ff608004e0eb4e1c05d5f3aed",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:54:09.085Z",
+  "ended_at": "2026-10-15T02:54:09.379Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 22,
+  "status": "aborted:C-2",
+  "tc_id": "TC-022",
+  "group": "engine-swap-perf-audit",
+  "params": {
+    "file": "12_poc/code/tests/engine-swap-perf-audit/params/TC-022.json",
+    "sha256": "f130c2078f538d2bd5725dd473ff608b45e1b6aa21e0dc01e2995872a72287b6"
+  },
+  "frozen_manifest": {
+    "version": 1,
+    "manifest_sha256": "bcc2a2caec944ae083acba92cf336a0b976f258ff608004e0eb4e1c05d5f3aed",
+    "frozen_at": "2026-10-15T02:54:08.568Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false
+  },
+  "code_tree_sha256": "bcc2a2caec944ae083acba92cf336a0b976f258ff608004e0eb4e1c05d5f3aed",
+  "port_base": 43440,
+  "abort_reason": "plan differs from frozen commit"
+}

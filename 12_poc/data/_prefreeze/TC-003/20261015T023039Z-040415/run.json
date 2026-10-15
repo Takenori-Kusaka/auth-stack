@@ -1,0 +1,30 @@
+{
+  "tc": "TC-003",
+  "run_id": "20261015T023039Z-040415",
+  "frozen": false,
+  "purpose": "prefreeze harness check (§2.5)",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:30:39.562Z",
+  "ended_at": "2026-10-15T02:31:22.474Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 4003,
+  "status": "completed",
+  "group": "tenant-isolation",
+  "prefreeze": true,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "freeze_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "sha256": "5aa62b5452fd04eba290189f9d4bb0afc83cd1c522bc01e605058fba2b9ef56d"
+  },
+  "code_dir": "E:\\Github\\auth-stack\\12_poc\\code",
+  "code_tree_sha256": "9a1446522310eadf056ed28a6efb5d3a5a8aa895e4b24d9c421d5f09a464c3ea",
+  "engines": [
+    {
+      "engine": "openfga",
+      "status": "completed"
+    }
+  ]
+}

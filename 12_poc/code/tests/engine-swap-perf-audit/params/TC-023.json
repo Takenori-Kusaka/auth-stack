@@ -1,0 +1,34 @@
+{
+  "tc": "TC-023",
+  "title": "非同期・委任ジョブの再認可",
+  "plan_section": "preregistered-test-plan.md §4.23",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 23,
+  "dataset": { "profile": "small", "seed": 23 },
+  "engine": "openfga",
+  "queue": { "implementation": "tests/engine-swap-perf-audit/lib/jobs.js（ファイルベース）", "delivery_guarantee": "at-least-once、enqueue 時刻順、処理後に done/ または dlq/ へ明示 ack。認可拒否は再試行せず dlq（ADR-026 D26-08）、判定が得られない（PDP・TTS 不達）は同じ段を backoff で再試行し判定なしでは実行しない（D26-09）", "message_fields": ["job_run_id", "tid", "sub", "params", "enqueued_at"] },
+  "executor": "tool-service の workload 資格情報（config/ledger.json の txn_issuance.internal_start_requesters に登録済み）",
+  "step_interval_ms": 300,
+  "propagation_bound_ms": { "relation_revocation": 0, "state_store_events": 400, "note": "関係の剥奪は write 階層の fully_consistent 判定なので境界 0。委任 grant の失効・利用者停止・テナント停止は状態ストアの配布周期 revocationPollMs=200 ms の 2 周期を PoC の構成上の反映境界とする。この境界より後に認可を始めた段の allow・実行を違反として数える" },
+  "scenarios": {
+    "P0": "正例（剥奪なし、5 段）",
+    "J1a": "enqueue → 関係の剥奪（editor tuple の削除）→ 1 秒後に実行",
+    "J1b": "enqueue → 委任 grant の失効（AS の grant 失効＝gref の失効状態配布）→ 1 秒後に実行",
+    "J2": "20 段のジョブの 5 段目の後に関係を剥奪",
+    "J3": "20 段のジョブの 5 段目の後にテナントを停止",
+    "J3b": "20 段のジョブの 5 段目の後に代理される利用者を停止（AS の利用者停止＋状態ストアの主体停止）。以後 TTS が Txn-Token を発行しないこと",
+    "J4": "改ざんメッセージ 5 種（tid 書換え、sub 書換え、job_run_id を他人の run に差替え、params 書換え、存在しない job_run_id）",
+    "J5": "broker（queue の全ファイル）・ジョブ台帳・事象記録・出力に token（JWT 形式と利用者の access token の文字列）が含まれないこと",
+    "J6": "6 段の write ジョブの 2 段目の後に PDP（façade）を停止し 2 秒後に再起動",
+    "J7": "6 段の write ジョブの 2 段目の後に TTS（STS プロセス）を停止し 2 秒後に再起動"
+  },
+  "criteria": {
+    "allow_after_revocation": 0,
+    "steps_executed_after_revocation": 0,
+    "tamper_accepted": 0,
+    "tokens_detected": 0,
+    "fail_open": 0,
+    "recorded_only": ["I_job（段の再認可間隔）", "剥奪から最初の拒否までの時間", "取消し時間"]
+  },
+  "abort": { "queue_guarantee_changed": "キューの配送保証が本ファイルの記述と異なる", "C-3_positive_control_max_failure_rate": 0, "C-3_positive_control_definition": "P0 の 5 段すべての実行" }
+}

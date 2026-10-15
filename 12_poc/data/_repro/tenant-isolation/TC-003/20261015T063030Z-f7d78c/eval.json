@@ -1,0 +1,315 @@
+{
+  "tc": "TC-003",
+  "evaluator": "tests/tenant-isolation/TC-003.eval.js",
+  "evaluated_at": "2026-10-15T06:31:52.240Z",
+  "run_id": "20261015T063030Z-f7d78c",
+  "manifest_hash": "69dc520e9044563d538165c986ad32d82c98beb49463d1357e27499925b67ef6",
+  "verdict": "合格",
+  "abort": [],
+  "criteria": [
+    {
+      "id": "K1",
+      "text": "受理 0 件",
+      "observed": 0,
+      "detail": [
+        {
+          "engine": "openfga",
+          "accepted_requests": 0,
+          "persisted_effects": 0
+        },
+        {
+          "engine": "cedar",
+          "accepted_requests": 0,
+          "persisted_effects": 0
+        }
+      ],
+      "met": true
+    },
+    {
+      "id": "K2",
+      "text": "許されない属性の返却 0 件",
+      "observed": 0,
+      "met": true
+    }
+  ],
+  "ledger_check": {
+    "ledger_version": "2026-10-15.1",
+    "ledger_ops": [
+      "file.create",
+      "file.delete",
+      "file.download",
+      "file.move",
+      "file.read",
+      "file.search",
+      "file.share",
+      "file.signed_url",
+      "file.write",
+      "folder.list",
+      "label.read",
+      "tool.config",
+      "tool.run",
+      "tool.view"
+    ],
+    "implemented_ops": [
+      "file.create",
+      "file.delete",
+      "file.download",
+      "file.move",
+      "file.read",
+      "file.search",
+      "file.share",
+      "file.signed_url",
+      "file.write",
+      "folder.list",
+      "label.read",
+      "tool.config",
+      "tool.run",
+      "tool.view"
+    ],
+    "missing_in_impl": [],
+    "missing_in_ledger": [],
+    "match": true
+  },
+  "engines": [
+    {
+      "engine": "openfga",
+      "negatives": 146,
+      "negatives_by_class": {
+        "auth": 67,
+        "bola": 26,
+        "function": 53
+      },
+      "negatives_by_case": {
+        "e1_no_token": 14,
+        "e2_garbage_token": 14,
+        "e3_token_in_query": 13,
+        "e4_expired_internal_token_direct": 13,
+        "a3_signed_url_object_swapped": 1,
+        "b3_signed_url_operation_changed": 1,
+        "a1_bola_other_users_object_edge": 12,
+        "a2_bola_other_users_object_direct": 12,
+        "b2_http_method_change": 44,
+        "b1_function_without_permission": 7,
+        "a4_collection_stranger_items": 1,
+        "e5_expired_access_token_edge": 13,
+        "b4_method_override_header_post": 1
+      },
+      "effect_based_cases": 10,
+      "accepted": 0,
+      "accepted_examples": [],
+      "effect_findings": [],
+      "exposures": 0,
+      "exposure_examples": [],
+      "positives": 14,
+      "positive_failures": [],
+      "status_by_case": {
+        "e1_no_token 401": 13,
+        "e2_garbage_token 401": 13,
+        "e3_token_in_query 401": 13,
+        "e4_expired_internal_token_direct 401": 13,
+        "e1_no_token 404": 1,
+        "e2_garbage_token 404": 1,
+        "p0_positive 200": 12,
+        "p0_positive 204": 1,
+        "p0_positive 201": 1,
+        "a3_signed_url_object_swapped 404": 1,
+        "b3_signed_url_operation_changed 404": 1,
+        "a1_bola_other_users_object_edge 404": 12,
+        "a2_bola_other_users_object_direct 404": 11,
+        "b2_http_method_change 404": 44,
+        "b1_function_without_permission 404": 7,
+        "a4_collection_stranger 200": 1,
+        "a4_collection_stranger_items undefined": 1,
+        "a2_bola_other_users_object_direct 401": 1,
+        "e5_expired_access_token_edge 401": 13,
+        "b4_method_override_header 200": 3,
+        "b4_method_override_query 200": 1,
+        "b4_method_override_header_post 404": 1,
+        "c1_mass_assignment_write 400": 1,
+        "c2_mass_assignment_create 201": 1,
+        "c3_mass_assignment_share_relation 200": 1,
+        "c4_mass_assignment_move 200": 1,
+        "c5_mass_assignment_tool_config 400": 1,
+        "c6_mass_assignment_tool_run 200": 1
+      },
+      "operations_covered": [
+        "file.create",
+        "file.delete",
+        "file.download",
+        "file.move",
+        "file.read",
+        "file.search",
+        "file.share",
+        "file.signed_url",
+        "file.write",
+        "folder.list",
+        "label.read",
+        "tool.config",
+        "tool.run",
+        "tool.view"
+      ],
+      "coverage_by_operation": {
+        "file.read": "abe",
+        "file.write": "abce",
+        "file.delete": "abe",
+        "file.create": "abce",
+        "file.share": "abce",
+        "file.move": "abce",
+        "file.signed_url": "abe",
+        "folder.list": "abe",
+        "file.search": "abe",
+        "tool.view": "abe",
+        "tool.run": "abce",
+        "tool.config": "abce",
+        "label.read": "abe",
+        "file.download": "abe"
+      },
+      "effects": {
+        "s_share_on_x": false,
+        "s_write_on_x": false,
+        "s_write_on_created": false,
+        "x_version_before": 4,
+        "x_version_after": 5
+      },
+      "store": {
+        "x": {
+          "id": "synn4cjj7bpgm2yg4krteuytnm",
+          "tid": "syn6kcghvvr7cb4yb4z7ofgrqz",
+          "folder": "synbkx5vhwwfqpgjp3xlgxat4g",
+          "owner": "synrsi5u3ubjwtxjvhzwt3ktzg",
+          "version": 5
+        },
+        "created_by_mass_assignment": {
+          "id": "synnr5jzmnxxotabtygzqxdmm2",
+          "tid": "syn6kcghvvr7cb4yb4z7ofgrqz",
+          "folder": "synu7kqjylqrx6732zd4qylfrz",
+          "owner": "synrsi5u3ubjwtxjvhzwt3ktzg"
+        },
+        "forced_id_row_exists": false
+      }
+    },
+    {
+      "engine": "cedar",
+      "negatives": 146,
+      "negatives_by_class": {
+        "auth": 67,
+        "bola": 26,
+        "function": 53
+      },
+      "negatives_by_case": {
+        "e1_no_token": 14,
+        "e2_garbage_token": 14,
+        "e3_token_in_query": 13,
+        "e4_expired_internal_token_direct": 13,
+        "a3_signed_url_object_swapped": 1,
+        "b3_signed_url_operation_changed": 1,
+        "a1_bola_other_users_object_edge": 12,
+        "a2_bola_other_users_object_direct": 12,
+        "b2_http_method_change": 44,
+        "b1_function_without_permission": 7,
+        "a4_collection_stranger_items": 1,
+        "e5_expired_access_token_edge": 13,
+        "b4_method_override_header_post": 1
+      },
+      "effect_based_cases": 10,
+      "accepted": 0,
+      "accepted_examples": [],
+      "effect_findings": [],
+      "exposures": 0,
+      "exposure_examples": [],
+      "positives": 14,
+      "positive_failures": [],
+      "status_by_case": {
+        "e1_no_token 401": 13,
+        "e2_garbage_token 401": 13,
+        "e3_token_in_query 401": 13,
+        "e4_expired_internal_token_direct 401": 13,
+        "e1_no_token 404": 1,
+        "e2_garbage_token 404": 1,
+        "p0_positive 200": 12,
+        "p0_positive 204": 1,
+        "p0_positive 201": 1,
+        "a3_signed_url_object_swapped 404": 1,
+        "b3_signed_url_operation_changed 404": 1,
+        "a1_bola_other_users_object_edge 404": 12,
+        "a2_bola_other_users_object_direct 404": 11,
+        "b2_http_method_change 404": 44,
+        "b1_function_without_permission 404": 7,
+        "a4_collection_stranger 200": 1,
+        "a4_collection_stranger_items undefined": 1,
+        "a2_bola_other_users_object_direct 401": 1,
+        "e5_expired_access_token_edge 401": 13,
+        "b4_method_override_header 200": 3,
+        "b4_method_override_query 200": 1,
+        "b4_method_override_header_post 404": 1,
+        "c1_mass_assignment_write 400": 1,
+        "c2_mass_assignment_create 201": 1,
+        "c3_mass_assignment_share_relation 200": 1,
+        "c4_mass_assignment_move 200": 1,
+        "c5_mass_assignment_tool_config 400": 1,
+        "c6_mass_assignment_tool_run 200": 1
+      },
+      "operations_covered": [
+        "file.create",
+        "file.delete",
+        "file.download",
+        "file.move",
+        "file.read",
+        "file.search",
+        "file.share",
+        "file.signed_url",
+        "file.write",
+        "folder.list",
+        "label.read",
+        "tool.config",
+        "tool.run",
+        "tool.view"
+      ],
+      "coverage_by_operation": {
+        "file.read": "abe",
+        "file.write": "abce",
+        "file.delete": "abe",
+        "file.create": "abce",
+        "file.share": "abce",
+        "file.move": "abce",
+        "file.signed_url": "abe",
+        "folder.list": "abe",
+        "file.search": "abe",
+        "tool.view": "abe",
+        "tool.run": "abce",
+        "tool.config": "abce",
+        "label.read": "abe",
+        "file.download": "abe"
+      },
+      "effects": {
+        "s_share_on_x": false,
+        "s_write_on_x": false,
+        "s_write_on_created": false,
+        "x_version_before": 4,
+        "x_version_after": 5
+      },
+      "store": {
+        "x": {
+          "id": "synn4cjj7bpgm2yg4krteuytnm",
+          "tid": "syn6kcghvvr7cb4yb4z7ofgrqz",
+          "folder": "synbkx5vhwwfqpgjp3xlgxat4g",
+          "owner": "synrsi5u3ubjwtxjvhzwt3ktzg",
+          "version": 5
+        },
+        "created_by_mass_assignment": {
+          "id": "synqhiirkgks3p4qrk66wartap",
+          "tid": "syn6kcghvvr7cb4yb4z7ofgrqz",
+          "folder": "synu7kqjylqrx6732zd4qylfrz",
+          "owner": "synrsi5u3ubjwtxjvhzwt3ktzg"
+        },
+        "forced_id_row_exists": false
+      }
+    }
+  ],
+  "input_sha256": {
+    "configs/openfga/requests.jsonl": "8096a3bf188f4ac5217d4c58790f87305be6bb8cb7d0bcdf84837ee1b41f4476",
+    "configs/openfga/effects.jsonl": "fe464fb4a895991301e481d51ca774f2c65b46590fd8d09fec1cea372b5b8d7f",
+    "configs/cedar/requests.jsonl": "ab10e0af186b7023aba8167675295e25f0ef353629462fa03a35c438bc2e0570",
+    "configs/cedar/effects.jsonl": "79b90975c525a52fbb20dc7f521abc01668bc77597b18e158211622db972872c"
+  }
+}

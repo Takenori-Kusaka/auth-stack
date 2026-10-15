@@ -1,0 +1,145 @@
+{
+  "$comment": "CAM（正規認可モデル、ADR-011 D2-1）の PoC 版。形式は 11_contracts/relationship-model-registry.openapi.yaml の CamModule（types[].relations は直接付与だけ、permissions は式）に従う。内容は 04_architecture/authorization-model.md §3.1・§3.6（RS-18 反映: containment は parent に統一、core/unit・core/admin_scope、ancestor 閉包）・§8.2〜§8.4・§8.6 を写した。§8 の relation 式（例: editor: [...] | owner | parent->editor）は CamRelation が式を持てないため、直接付与の relation と計算 permission（editors・viewers・members）に分けた。この分割は判定の意味を変えない。",
+  "cam_version": "0.1.0",
+  "guardrail_catalog_version": "g-1",
+  "conditions": {
+    "c.not_expired": {
+      "expression": "current_time < expires_at",
+      "parameters": { "current_time": "timestamp", "expires_at": "timestamp" },
+      "request_context": ["current_time"]
+    }
+  },
+  "types": [
+    { "name": "core/user" },
+    { "name": "core/workload" },
+    { "name": "core/client" },
+    {
+      "name": "core/tenant",
+      "relations": [
+        { "name": "member", "directly_related": ["core/user"] },
+        { "name": "external_member", "directly_related": ["core/user"] },
+        { "name": "admin", "directly_related": ["core/user"] },
+        { "name": "security_admin", "directly_related": ["core/user"] },
+        { "name": "role_manager", "directly_related": ["core/user", "core/role#assignee"] }
+      ],
+      "permissions": [
+        { "name": "belongs", "expression": "member | external_member", "tier": "read_sensitive" },
+        { "name": "manage", "expression": "admin", "tier": "privileged" },
+        { "name": "manage_roles", "expression": "role_manager | admin", "tier": "privileged" },
+        { "name": "view_audit", "expression": "security_admin | admin", "tier": "privileged", "marks": ["tenant_delegable"] },
+        { "name": "revoke_session", "expression": "security_admin | admin", "tier": "privileged" }
+      ]
+    },
+    {
+      "name": "core/unit",
+      "relations": [
+        { "name": "parent", "directly_related": ["core/unit", "core/tenant"], "max_depth": 5 },
+        { "name": "admin", "directly_related": ["core/user", "core/group#member"] },
+        { "name": "member", "directly_related": ["core/user", "core/group#member"] },
+        { "name": "admin_scope", "directly_related": ["core/admin_scope"] }
+      ],
+      "permissions": [
+        { "name": "manage", "expression": "admin | parent->manage", "tier": "privileged" },
+        { "name": "view_directory", "expression": "member | manage", "tier": "read_sensitive" },
+        { "name": "manage_membership", "expression": "manage | admin_scope->delegate", "tier": "privileged" }
+      ]
+    },
+    {
+      "name": "core/admin_scope",
+      "relations": [
+        { "name": "delegate", "directly_related": ["core/user", "core/group#member"] },
+        { "name": "owner_unit", "directly_related": ["core/unit", "core/tenant"] }
+      ]
+    },
+    {
+      "name": "core/group",
+      "relations": [
+        { "name": "member", "directly_related": ["core/user", "core/group#member"], "max_depth": 3 },
+        { "name": "owner_unit", "directly_related": ["core/unit", "core/tenant"] }
+      ]
+    },
+    {
+      "name": "core/role",
+      "relations": [
+        { "name": "assignee", "directly_related": ["core/user", "core/group#member"] }
+      ]
+    },
+    {
+      "name": "core/external_grant",
+      "relations": [
+        { "name": "grantee", "directly_related": ["core/user"], "conditions": ["c.not_expired"] }
+      ]
+    },
+    {
+      "name": "files/folder",
+      "list_method": "L1",
+      "relations": [
+        { "name": "parent", "directly_related": ["files/folder"], "max_depth": 5 },
+        { "name": "owner", "directly_related": ["core/user"] },
+        { "name": "editor", "directly_related": ["core/user", "core/group#member", "core/role#assignee"] },
+        { "name": "viewer", "directly_related": ["core/user", "core/group#member", "core/role#assignee", "core/external_grant#grantee"] },
+        { "name": "restricted_external", "directly_related": ["core/tenant#external_member"] }
+      ],
+      "permissions": [
+        { "name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive" },
+        { "name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive" },
+        { "name": "restricted_inherited", "expression": "restricted_external | parent->restricted_inherited", "tier": "read_sensitive" },
+        { "name": "read", "expression": "viewers - restricted_external - parent->restricted_inherited", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"] },
+        { "name": "write", "expression": "editors - restricted_external", "tier": "write", "marks": ["tenant_delegable"] },
+        { "name": "share", "expression": "owner", "tier": "write" }
+      ]
+    },
+    {
+      "name": "files/file",
+      "list_method": "L1",
+      "relations": [
+        { "name": "parent", "directly_related": ["files/folder"] },
+        { "name": "owner", "directly_related": ["core/user"] },
+        { "name": "editor", "directly_related": ["core/user", "core/group#member"] },
+        { "name": "viewer", "directly_related": ["core/user", "core/group#member", "core/external_grant#grantee"] }
+      ],
+      "permissions": [
+        { "name": "editors", "expression": "editor | owner | parent->editors", "tier": "read_sensitive" },
+        { "name": "viewers", "expression": "viewer | editors | parent->viewers", "tier": "read_sensitive" },
+        { "name": "read", "expression": "viewers - parent->restricted_inherited", "tier": "read_sensitive", "marks": ["tenant_delegable", "external_grantable"] },
+        { "name": "write", "expression": "editors - parent->restricted_inherited", "tier": "write", "marks": ["tenant_delegable"] },
+        { "name": "delete", "expression": "owner | parent->owner", "tier": "write" },
+        { "name": "share", "expression": "owner | parent->owner", "tier": "write" }
+      ]
+    },
+    {
+      "name": "proj/project",
+      "list_method": "L1",
+      "relations": [
+        { "name": "parent", "directly_related": ["core/unit", "core/tenant"] },
+        { "name": "ancestor", "directly_related": ["core/unit", "core/tenant"] },
+        { "name": "owner", "directly_related": ["core/user"] },
+        { "name": "member", "directly_related": ["core/user", "core/group#member", "core/role#assignee"] },
+        { "name": "guest", "directly_related": ["core/external_grant#grantee"] }
+      ],
+      "permissions": [
+        { "name": "members", "expression": "member | owner", "tier": "read_sensitive" },
+        { "name": "view", "expression": "members | guest | ancestor->manage", "tier": "read_sensitive" },
+        { "name": "admin", "expression": "owner", "tier": "privileged" }
+      ]
+    },
+    {
+      "name": "proj/tool_instance",
+      "relations": [
+        { "name": "parent", "directly_related": ["proj/project"] },
+        { "name": "operator", "directly_related": ["core/user", "core/role#assignee"] }
+      ],
+      "permissions": [
+        { "name": "use", "expression": "parent->members | operator", "tier": "write" },
+        { "name": "view", "expression": "parent->view", "tier": "read_sensitive" },
+        { "name": "config", "expression": "parent->admin", "tier": "privileged" }
+      ]
+    }
+  ],
+  "write_declarations": [
+    { "writer": "file-service", "types": ["files/folder", "files/file", "core/external_grant", "core/tenant#external_member"] },
+    { "writer": "tool-service", "types": ["proj/tool_instance"] },
+    { "writer": "admin", "types": ["*"] },
+    { "writer": "harness", "types": ["*"] }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "tc": "revocation-consistency/TC-009",
+  "run_id": "20261015T025529Z-6a1aca",
+  "frozen": true,
+  "purpose": "TC-009 engine config nocache",
+  "manifest_hash": "350046b10944b867dd45acf52dd602c87603dddfceb3ab42b86223f89f497a70",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:55:29.258Z",
+  "ended_at": "2026-10-15T02:55:29.502Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 9,
+  "status": "aborted:C-2",
+  "tc_id": "TC-009",
+  "group": "revocation-consistency",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/revocation-consistency/params/TC-009.json",
+    "sha256": "b7049b64142392de06f84a93974b04b749f2005fc1439b8af5fd9f34fd2b2782"
+  },
+  "frozen_manifest": {
+    "version": 1,
+    "manifest_sha256": "350046b10944b867dd45acf52dd602c87603dddfceb3ab42b86223f89f497a70",
+    "frozen_at": "2026-10-15T02:55:29.112Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false
+  },
+  "code_tree_sha256": "350046b10944b867dd45acf52dd602c87603dddfceb3ab42b86223f89f497a70",
+  "port_base": 42180,
+  "abort_reason": "plan differs from frozen commit"
+}

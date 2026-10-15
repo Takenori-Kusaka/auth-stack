@@ -1,0 +1,24 @@
+{
+  "tc": "TC-019",
+  "title": "federation・linking・SCIM・IdP 停止（OIDC の範囲）",
+  "plan_section": "preregistered-test-plan.md §4.19",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 19,
+  "dataset": { "profile": "small", "seed": 19 },
+  "engine": "openfga",
+  "upstream_idps": { "IdP-1": "port +14（被害者テナント T1 の IdP）", "IdP-2": "port +15（攻撃者テナント T2 の IdP）", "kind": "OIDC の ID Token（ES256）を発行するモック 2 種。JWKS を HTTP で公開し、停止できる" },
+  "scim": { "port": "+16", "credentials": "テナントごとの bearer（資格情報からテナントを導く）" },
+  "parameters": { "protected_op_max_age_ms": 5000, "concurrent_posts": 10, "concurrent_patches": 6, "probe_interval_ms": 50, "il_d4_option": "a（一般利用者の代替ログインを開かない。既定）" },
+  "scenarios": {
+    "F1": "nOAuth 型: 攻撃者テナントの IdP が被害者の email・username を設定した ID Token でログイン",
+    "F2": "テナント管理者による 2 つ目の IdP の追加（保護操作）と username 一致の利用者のログイン",
+    "F3": "既存アカウントの IdP 付替え（re-link）",
+    "F4": "linking 規則の変更（email 一致の結合を有効にする試み、その他の変更）",
+    "S1": "SCIM の同時 POST（同じ externalId）、JIT と SCIM の同時到着（同じ tenant+iss+sub）、If-Match ありの同時 PATCH、If-Match なしの PATCH",
+    "S2": "他テナントの ID の指定（path・body）、tenant header の不一致、他テナントの資源への PATCH",
+    "S3": "SCIM の active=false で全手段（BFF・CLI・refresh・新規ログイン）が失効すること、失効時間",
+    "O1": "上流 IdP（IdP-1）の停止中のログインと代替ログインの有無"
+  },
+  "criteria": { "mutable_attribute_links": 0, "impersonation_success": 0, "protected_op_record_missing": 0, "duplicate_accounts": 0, "cross_tenant_writes": 0, "revocation_misses": 0, "alternative_logins": 0, "recorded_only": ["active=false から全手段の失効までの時間（p50・p99 は試行 1 回のため最大値のみ）"] },
+  "abort": { "idp_config_changed": "上流 IdP 役の設定（本ファイルと lib/federation.js）が凍結時と異なる（manifest で照合）", "C-3": "IdP-1 経由の被害者の正規ログインが失敗" }
+}

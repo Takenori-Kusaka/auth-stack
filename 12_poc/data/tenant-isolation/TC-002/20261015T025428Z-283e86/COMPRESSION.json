@@ -1,0 +1,20 @@
+{
+ "note": "files over 1 MB were gzip-compressed after evaluation for repository size; sha256 is of the original (matches SHA256SUMS); decompress with gunzip to re-run the evaluator",
+ "compressed_at": "2026-10-15T03:02:42.062Z",
+ "files": [
+  {
+   "file": "configs/C4-cedar-permitall/audit/journal.jsonl",
+   "sha256": "1b13b029b1c7be30820625266d82053054dfd5eddbe832f91735ef08a1fd0bf2",
+   "bytes": 2575482,
+   "gz_sha256": "3af2c71232fba932022f1f1ef36dd9a14e647c76681cfa486b49e411826bc214",
+   "gz_bytes": 281600
+  },
+  {
+   "file": "configs/C4-cedar-permitall/audit-copy/journal.jsonl",
+   "sha256": "1b13b029b1c7be30820625266d82053054dfd5eddbe832f91735ef08a1fd0bf2",
+   "bytes": 2575482,
+   "gz_sha256": "3af2c71232fba932022f1f1ef36dd9a14e647c76681cfa486b49e411826bc214",
+   "gz_bytes": 281600
+  }
+ ]
+}

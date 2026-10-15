@@ -1,0 +1,126 @@
+{
+  "evaluated_at": "2026-10-15T03:08:01.917Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-019",
+  "scenarios": {
+    "F1": {
+      "login_ok": true,
+      "linked_to_victim": false,
+      "created_new": true,
+      "victim_file_reads": [
+        404,
+        404
+      ],
+      "attacker_idp_into_victim_tenant": false,
+      "why": "idp_not_configured_for_tenant"
+    },
+    "F2": {
+      "add_without_reauth": false,
+      "add_with_stale_reauth": false,
+      "add_with_reauth": true,
+      "protected_op_recorded": true,
+      "username_collision_linked_to_victim": false,
+      "collision_created_new": true
+    },
+    "F3": {
+      "relink_without_protected_op": false,
+      "unprotected_attempt_login_maps_to_victim": false,
+      "relink_with_protected_op": true,
+      "protected_op_recorded": true,
+      "victim_via_new_idp": true
+    },
+    "F4": {
+      "email_rule_enabled": false,
+      "email_why": "mutable_attribute_linking_forbidden (INV-2)",
+      "change_without_reauth": false,
+      "change_with_reauth": true,
+      "notified": true
+    },
+    "S1": {
+      "concurrent_posts_created": 1,
+      "concurrent_posts_409": 9,
+      "jit_scim_race_accounts": 1,
+      "jit_ok": true,
+      "scim_race_status": 201,
+      "patches_200": 1,
+      "patches_412": 5,
+      "no_if_match_statuses": [
+        200,
+        200
+      ],
+      "duplicate_accounts": 0
+    },
+    "S2": {
+      "get_other_tenant_id": 404,
+      "patch_other_tenant_id": 404,
+      "post_body_other_tenant": 400,
+      "tenant_header_mismatch": 403,
+      "cross_tenant_writes": 0,
+      "writes_during_s2": 0,
+      "t1_user_still_active": true
+    },
+    "S3": {
+      "patch_status": 200,
+      "before": [
+        200,
+        200
+      ],
+      "after": {
+        "bff": 401,
+        "cli": 401,
+        "refresh": 400,
+        "new_login": false,
+        "broker_login_maps_to_disabled": false
+      },
+      "ms_active_false_to_all_denied": 13,
+      "patch_api_ms": 34,
+      "misses": 0
+    },
+    "O1": {
+      "login_during_outage": false,
+      "why": "upstream_idp_unavailable",
+      "alternative_login_offered": false,
+      "login_after_recovery": true
+    }
+  },
+  "criteria": {
+    "mutable_attribute_links": {
+      "value": 0,
+      "pass": true
+    },
+    "impersonation_success": {
+      "value": 0,
+      "pass": true
+    },
+    "protected_op_record_missing": {
+      "value": 0,
+      "pass": true
+    },
+    "duplicate_accounts": {
+      "value": 0,
+      "pass": true
+    },
+    "cross_tenant_writes": {
+      "value": 0,
+      "pass": true
+    },
+    "revocation_misses": {
+      "value": 0,
+      "pass": true
+    },
+    "alternative_logins": {
+      "value": 0,
+      "pass": true
+    }
+  },
+  "verdict": "合格",
+  "recorded": {
+    "ms_active_false_to_all_denied": 13
+  },
+  "limitations": [
+    "AS の合成ログインは IdP 側の認証を代行する役であり、テナントの SSO 強制（MT-4）とローカル資格情報の有無は broker で評価した。AS 自体にテナント単位の SSO 強制はない",
+    "SAML・実 IdP 製品は TC-112"
+  ],
+  "input_hashes": {}
+}

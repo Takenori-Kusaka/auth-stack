@@ -1,0 +1,25 @@
+{
+  "$comment": "TC-012 frozen parameters (test plan §4.12). Request counts, the mutant rule, the classification rule and the rollback sample are not fixed by the plan; they are fixed here before any measurement (deviation RC-DEV-02/06).",
+  "seed": 12,
+  "profile": "small",
+  "openfga": { "datastore": "sqlite", "check_query_cache": false },
+  "models": {
+    "v1": "model/cam.json as is",
+    "v2_intended": { "type": "proj/tool_instance", "permission": "view", "expression": "parent->view | operator", "note": "approved change: operators may view their tool instance" },
+    "v2w_unapproved_widening": { "base": "v2", "type": "files/file", "permission": "delete", "expression": "owner | parent->editors" },
+    "v2n_deny_direction": { "base": "v2", "type": "files/file", "permission": "share", "expression": "owner" }
+  },
+  "mutant_rule": "on top of v2, for every permission of files/folder, files/file, proj/project, proj/tool_instance, core/unit (declaration order): if the expression has an exclusion ('-'), drop the last subtrahend; otherwise union the first direct relation of the type that does not occur in the expression; skip when no such relation exists, when the result equals v2 or when the CAM does not compile",
+  "classification_rule": "per request: b = v1, i = v2 (approved change), c = candidate. c == b: no difference; c != b and c == i: intended; c allow and i deny: X (allow widening, unexplained); c deny and i allow: N (deny widening). Promotion of a candidate is blocked when X > 0. Rule-based (no human classifier); the reference evaluator (Python) provides the independent expected set",
+  "requests": { "recorded_workload_calls": 300, "recorded_users": 10, "property_requests": 3000, "property_related_bias": 0.5, "acr_for_replay": "L3" },
+  "ci": { "universes": 300, "cedar_analysis_universes": 60 },
+  "rollback": { "pairs": 50, "service_checks": 5, "effective_poll_ms": 5, "effective_timeout_ms": 5000 },
+  "pass_rules": {
+    "unapproved_widening_detected_100": "every X difference in the reference expected set (all candidates) is classified X by the façade shadow and every candidate with X > 0 is blocked",
+    "rollback_no_resurrection": "0 allows for revoked pairs after the rollback to v1 (façade with the revoke token, façade without token, service path)",
+    "ci_detects_100": "every widening candidate (v2w and mutants) submitted without approvals is reported as requiring approval with its mutated permission among widening/unproven/added, and is refused (403)",
+    "no_distribution_without_approval": "0 registrations accepted without approvals for widening candidates, including re-presented requests (old base_revision, approvals bound to another revision)",
+    "two_generators": "0 decision differences between the OpenFGA and Cedar generators of v1 and v2 over the request set (an allow-widening difference fails; narrowing differences without a recorded cause leave the item undecided)"
+  },
+  "abort": "§4.12 abort criterion (2-person classification mismatch) is not applicable: the classification is rule-based and reproduced by the reference evaluator (deviation RC-DEV-06)"
+}

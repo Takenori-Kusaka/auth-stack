@@ -1,0 +1,18 @@
+{
+  "cam_revision": "m-428d0c0ece522dfe",
+  "guardrail_catalog_version": "g-1",
+  "cam_sha256": "a1f0e0b124386272677fa47fa07b04deeb1325adb8d65de6c34654c2cc866b58",
+  "artifacts": {
+    "openfga-model.json": "8ffaf0f5a90d05ee029802df1fdd026e96f489e29393824825d8abd19aa84970",
+    "openfga-model.fga": "c04976453aee58a7f162d27da09521f638d8fa95f9ac7819c4242ad27d40036d",
+    "cedar-policies.cedar": "0b782a4c1d9ef5345a9e1cbeb19b81ea473c666af7cc02dc836e1d8eb9e4a298",
+    "cedar-schema.json": "a7997a6f2eb499dad52cc1a7da7abe09f952c5903fba9ff492bad4ca9d9c83e2"
+  },
+  "cedar_validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": 0
+  },
+  "cedar_version": "4.13.0",
+  "generated_at": "2026-10-15T02:02:28.363Z"
+}

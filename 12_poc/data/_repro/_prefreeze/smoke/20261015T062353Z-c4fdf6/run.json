@@ -1,0 +1,74 @@
+{
+  "tc": "smoke",
+  "run_id": "20261015T062353Z-c4fdf6",
+  "frozen": false,
+  "purpose": "smoke-cedar",
+  "manifest_hash": null,
+  "git_commit": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "git_dirty": true,
+  "started_at": "2026-10-15T06:23:53.200Z",
+  "ended_at": "2026-10-15T06:24:00.481Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "smoke": {
+    "engine": "cedar",
+    "steps": [
+      {
+        "name": "stack started",
+        "ok": true,
+        "note": "engine=cedar ports=42000..42019"
+      },
+      {
+        "name": "login via BFF (PAR+PKCE+private_key_jwt, cert-bound opaque AT)",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "file read (edge -> STS exchange -> PEP -> PDP façade -> file-service)",
+        "ok": true,
+        "status": 200,
+        "decision_id": "gyy4rolplojacfe3o5mivqq3bl"
+      },
+      {
+        "name": "cross-tenant read denied (sanity)",
+        "ok": true,
+        "status_route_a": 404,
+        "status_route_b": 404
+      },
+      {
+        "name": "test setup: grant operator viewer on file",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "tool.run 3-service chain A->B->C (edge -> tool-service -> file-service -> label-service; STS re-exchange per hop, act nesting, one Txn-Token)",
+        "ok": true,
+        "status": 200,
+        "decision_id": "hfkl3tfqdbntyrgmvr3d2y2qrx",
+        "downstream_decision_id": "2pbsj76hovqtzn3jvqhf6hx5vk",
+        "label_decision_id": "ybvyavfthn6iuuekzzskdvcojr"
+      },
+      {
+        "name": "public CLI client with DPoP (nonce) read",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "audit chain + reconstruction",
+        "ok": true,
+        "note": "records=17 invalid=0 txn_groups=1 findings=0"
+      },
+      {
+        "name": "3-hop (A->B->C) txn reconstructed from audit only",
+        "ok": true,
+        "hops": [
+          "use@proj/tool_instance:permitted",
+          "read@files/file:permitted",
+          "read@files/file:permitted"
+        ]
+      }
+    ]
+  }
+}

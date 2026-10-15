@@ -1,0 +1,139 @@
+{
+  "$comment": "TC-002 cross-tenant property test — parameters fixed BEFORE the first measurement run (test plan §2.2 F-3(b)). Values marked provisional are not decided by the owners named in the plan (p_max: KP-4; mutant detection lower bound: CISO, K-03(b)) and are recorded as deviations; the TC is '待（KP-4 の p_max）' in §3.4, so its pass/fail is reported as 判定保留 and the values below only define what was measured.",
+  "tc": "TC-002",
+  "version": "1.1.0",
+  "plan_section": "§4.2",
+  "dataset": {
+    "generator": "data/gen-synthetic.js",
+    "profile": "small",
+    "seed_rule": "seed = seeds.dataset_base + config.index (main) / seeds.mutant_base + mutant.index (mutants)"
+  },
+  "seeds": {
+    "dataset_base": 2000,
+    "steps_base": 702000,
+    "mutant_base": 3000,
+    "mutant_steps_base": 703000
+  },
+  "p_max_provisional": 0.0003,
+  "p_max_status": "TBD (KP-4). Provisional value chosen by the implementer from the prefreeze timing estimate only (§2.5); n = ceil(3 / p_max).",
+  "n_cross_per_config": 10000,
+  "configs": [
+    {
+      "id": "C1-openfga-correct",
+      "index": 1,
+      "engine": "openfga",
+      "model": "correct"
+    },
+    {
+      "id": "C2-cedar-correct",
+      "index": 2,
+      "engine": "cedar",
+      "model": "correct"
+    },
+    {
+      "id": "C3-openfga-permitall",
+      "index": 3,
+      "engine": "openfga",
+      "model": "permit_all"
+    },
+    {
+      "id": "C4-cedar-permitall",
+      "index": 4,
+      "engine": "cedar",
+      "model": "permit_all"
+    }
+  ],
+  "permit_all_model": "correct CAM + type dom/everyone{member: core/user}; every resource type in the domain modules files/* and proj/* gets relation everyone: [dom/everyone] and every permission P becomes 'everyone->member | (P)'. One dom/everyone object per tenant whose member set is ALL users of ALL tenants; every domain object gets an everyone tuple to its tenant's object. core/* (tenant membership, units, groups) is the platform module and is not altered (ADR-011: G stage is not written by the domain).",
+  "step_weights": {
+    "op": 8,
+    "probe_facade_eval": 28,
+    "probe_facade_batch": 8,
+    "probe_facade_search": 4,
+    "probe_edge": 37,
+    "probe_direct": 15
+  },
+  "cross_ratio": 0.75,
+  "op_weights": {
+    "grant_same": 3,
+    "grant_foreign_user": 2,
+    "revoke": 2,
+    "move_same": 2,
+    "move_cross": 1,
+    "external_share": 2,
+    "group_nest_same": 1,
+    "group_nest_cross": 1,
+    "grant_foreign_group": 1
+  },
+  "edge_entry_point_weights": {
+    "file.read": 25,
+    "file.write": 10,
+    "file.share": 6,
+    "file.move": 6,
+    "file.signed_url": 5,
+    "folder.list": 10,
+    "file.search": 6,
+    "label.read": 8,
+    "tool.view": 7,
+    "tool.run": 9,
+    "tool.config": 4,
+    "file.delete": 2,
+    "file.create": 2
+  },
+  "edge_cross_path_variant_weights": {
+    "own_tid_foreign_resource": 6,
+    "resource_tid_path": 4
+  },
+  "facade_tid_variant_weights": {
+    "honest": 4,
+    "resource_tid_lie": 2,
+    "subject_tid_lie": 3,
+    "random_tids": 1
+  },
+  "direct_entry_points": [
+    "file.read",
+    "label.read",
+    "tool.view",
+    "folder.list",
+    "file.write"
+  ],
+  "direct_tid_variant_weights": {
+    "forged_tid_own_foreign_resource": 1,
+    "forged_tid_resource_tenant": 1
+  },
+  "batch_size": 5,
+  "sessions": {
+    "home_users_per_tenant": 5,
+    "amr": "pwd,fido",
+    "include_multi_tenant_contexts": true,
+    "include_external_guests": true
+  },
+  "settings": {
+    "accessTokenTtlSec": 7200
+  },
+  "definitions": {
+    "cross_tenant_probe": "the request's tenant context (token tid / subject.properties.tid) differs from the resource's true (resource-derived) tenant, OR the subject has no internal membership in the resource's true tenant (classes X1 = context or membership mismatch without any membership in the resource tenant or with a lying tid; X2 = subject holds only an external membership in the resource tenant)",
+    "explicit_grant": "the correct-CAM reference oracle (G stage on the claimed context AND R stage of the correct CAM, external_grant with c.not_expired evaluated at probe time) allows the probe",
+    "violation_cross_tenant_allow": "a cross-tenant probe whose observed result is allow (decision true, service 2xx or 400-after-guard, or a list/search item) while explicit_grant is false; a list/search item counts per item; a façade search item whose true tenant differs from the claimed subject tid counts regardless of the oracle",
+    "positive_control": "same-tenant probe (context tid = resource true tenant = an internal membership of the subject) whose system oracle (G stage AND R stage of the active CAM) is allow",
+    "agreement_mismatch": "same-tenant probe whose observed decision (allow/deny, excluding 503) differs from the system oracle"
+  },
+  "abort": {
+    "agreement_mismatch_max_rate": 0.005,
+    "agreement_mismatch_min_probes": 200,
+    "positive_control_failure_max_rate": 0.01,
+    "distribution_z": 3.29,
+    "c1_non_synthetic_ids": 0
+  },
+  "mutants": {
+    "k_per_class": 3,
+    "engine": "openfga",
+    "model": "correct",
+    "n_cross_per_mutant": 400,
+    "detection_rule": "a mutant is detected when its run shows >= 1 cross-tenant violation (O1) or >= 1 layer-oracle violation (O2: the first denying layer for a cross-tenant probe differs from the expected layer: edge route tenant check when the path tid differs from the token tid; PEP L0 when the resource is foreign under the token tid; façade g1_tenant_mismatch / g1_not_member for façade probes) O2 is used for detection only if the baseline configuration with the same engine and model (C1-openfga-correct) shows 0 O2 violations; otherwise only O1 counts.",
+    "detection_lower_bound": "TBD (CISO, G4, K-03(b)) — recorded only"
+  },
+  "group_nesting_respects_cam": {
+    "max_depth": 3,
+    "reason": "v1.1 (after the v1.0 measurement, C-3 repair): the v1.0 generator could nest core/group cyclically; the PoC has no write-time membership cycle/depth check (authorization-model §3.6.3 assigns such checks to a platform hierarchy service that the PoC does not implement), and the Cedar engine fails closed on cyclic entity hierarchies (deny_indeterminate), so the positive-control failure rate exceeded the C-3 bound in C2/C4. v1.1 sends group nesting only when it keeps the CAM constraint (acyclic, at most max_depth groups). Criteria, n, seeds and all other weights are unchanged."
+  }
+}

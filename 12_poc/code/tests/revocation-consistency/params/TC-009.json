@@ -1,0 +1,31 @@
+{
+  "$comment": "TC-009 frozen parameters (test plan §4.9). The plan does not fix the repetitions, the fault levels or the engine cache level; they are fixed here before any measurement (deviation RC-DEV-02/03).",
+  "seed": 9,
+  "profile": "small",
+  "probe_interval_ms": 100,
+  "repetitions": 5,
+  "post_op_observe_max_ms": 8000,
+  "engine_configs": [
+    { "id": "nocache", "openfga_check_cache_ttl": null },
+    { "id": "cache10s", "openfga_check_cache_ttl": "10s" }
+  ],
+  "operations": ["create", "move", "delete", "share"],
+  "faults": [
+    { "id": "none", "fault": {} },
+    { "id": "crash_before_commit", "fault": { "crashBeforeCommit": true } },
+    { "id": "crash_after_commit", "fault": { "crashAfterCommit": true } },
+    { "id": "crash_after_deliver", "fault": { "crashAfterDeliver": true } },
+    { "id": "delay_1500", "fault": { "outboxDelayMs": 1500 } },
+    { "id": "pause_3000", "fault": { "pauseOutbox": true }, "resume_after_ms": 3000 },
+    { "id": "duplicate", "fault": { "duplicateDelivery": true } }
+  ],
+  "c3_max_control_failure_ratio": 0.1,
+  "wrong_allow_rules": {
+    "create": "allow for the non-entitled member Y on the created file (any time)",
+    "move": "after the move request: allow for V_old (viewer of the source folder only) when the file's final folder is the destination; allow for V_new (viewer of the destination only) when the file's final folder is the source",
+    "delete": "allow on the file after the delete request when the row is finally absent",
+    "share": "allow for the grantee when the share was not committed (no outbox row)"
+  },
+  "duplicate_rule": "a façade relationship write applied more than once for the same outbox idempotency key (pdp/writes.jsonl), or an outbox row whose effect is applied twice",
+  "tx_settings": "file-service txWithOutbox (BEGIN IMMEDIATE ... COMMIT, outbox row in the same transaction), PRAGMA journal_mode=WAL; covered by the manifest hash of services/file-service.js (abort criterion of §4.9 = C-2 on that file)"
+}

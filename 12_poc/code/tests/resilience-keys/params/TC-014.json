@@ -1,0 +1,49 @@
+{
+  "$comment": "TC-014 parameters (test plan §4.14). Written before any TC-014 measurement. Values the plan leaves to freeze time (q, repetitions, cache levels, waits) are set by the implementer and disclosed as deviation RK-DEV-02 (not witnessed).",
+  "tc": "TC-014",
+  "plan_section": "4.14",
+  "seed": 1,
+  "profile": "smoke",
+  "q_ms": { "in_process_verifiers": 50, "real_pep": 100, "user_traffic": 250, "note": "TC-001 calibration values were not available to this group; q is set here (RK-DEV-03)" },
+  "settings": { "accessTokenTtlSec": 3600, "internalTokenTtlSec": 10, "txnTokenTtlSec": 10, "keyRemovalInUseCheck": true },
+  "real_pep_jwks_ttl_ms": 2000,
+  "verifier_matrix": {
+    "sdk_versions": ["N (current lib/jwt.js + pep/sdk.js)"],
+    "sdk_versions_not_available": ["N-1", "N-2"],
+    "kinds": ["at", "txn"],
+    "jwks_cache_ttl_ms": [1000, 5000, 15000],
+    "revocation_push": [true, false],
+    "real_pep": "file-service PEP (SDK N, JWKS TTL 2000 ms, revocation push on), at tokens only",
+    "control_unpinned": "two extra in-process at verifiers (TTL 1000 ms, push on) WITHOUT the JWKS server identity pin, used only in the fake-JWKS phase to show that the attack reaches the cache when the pin is absent; not part of the pass criteria"
+  },
+  "emergency": { "repetitions": { "at": 5, "txn": 5 }, "pre_declaration_ms": 1000, "observe_until_all_reject_ms": 1000, "timeout_ms": 30000, "gap_ms": 2000 },
+  "planned_rotation": { "cycles": 12, "stores": ["at", "txn"], "prepublish_wait_ms": 17000, "comment": "prepublish wait = max JWKS cache TTL (15 s) + 2 s; the retiring key of the previous cycle is removed in the next cycle (>= 17 s after it stopped signing, internal token TTL 10 s)" },
+  "retain_and_removal": { "retain_removal_attempts": 3, "active_removal_attempts": 1, "in_use_removal_attempts": 1, "mistaken_removal": "one removal of a retiring key with live tokens with the in-use check switched off (orchestrator misconfiguration, Azure AD 2021 type), observed 20 s" },
+  "fake_jwks": {
+    "variants": [
+      { "id": "F1", "what": "attacker-signed tokens carrying jwk / jku / x5u / x5c header parameters (in-process verifiers and the real PEP)" },
+      { "id": "F2", "what": "JWKS address redirected to an attacker server presenting a certificate of the sandbox.test CA (untrusted CA)" },
+      { "id": "F3", "what": "JWKS address redirected to an attacker server presenting a valid SVID of another workload of the same CA (tool-service), JWKS with an attacker key under a new kid" },
+      { "id": "F4", "what": "as F3, but the attacker JWKS re-uses the currently active legitimate kid with the attacker key (kid collision)" }
+    ],
+    "observe_ms": 20000
+  },
+  "jwks_outage": { "duration_ms": 25000, "steps": "prepublish next key, wait 17 s, block JWKS fetch (redirector blackhole), activate next key during the outage, emergency-revoke the previous key during the outage, restore" },
+  "hard_limit": { "key_max_age_ms": 3000, "with_next_key_observe_ms": 8000, "without_next_key_observe_ms": 6000 },
+  "pass_criteria": {
+    "old_kid_accepted_after_epoch_applied": 0,
+    "verification_failures_during_planned_rotation": 0,
+    "retain_key_removal_not_blocked": 0,
+    "fake_jwks_accepted": 0,
+    "issuance_errors_at_key_age_hard_limit": 0
+  },
+  "record_only": ["emergency revocation time from declaration to last acceptance per verification point (p50, p99, max; R-189.5 TBD)", "JWKS outage: continued acceptance with last known good, rejection of the revoked kid during the outage", "mistaken removal: verification failures caused and whether any detection signal was raised", "user-traffic failures during emergency revocation"],
+  "definitions": {
+    "epoch_applied": "in-process push verifiers: first time the harness revocation client reports the kid as revoked; real PEP: time of its first rejection with detail kid_revoked in pep/file-service-enforce.jsonl",
+    "old_kid_accepted_after_epoch_applied": "acceptance of a token with the revoked kid whose verification started after epoch_applied of that verification point",
+    "verification_failure": "rejection of a token signed with the currently active key (in-process verifiers, real PEP) or a non-2xx answer to the authorized user's file.read / file.write during the planned-rotation phase",
+    "fake_jwks_accepted": "acceptance of an attacker-signed token by any pinned in-process verifier or by the real PEP in F1-F4",
+    "issuance_error": "non-2xx answer to the authorized user's traffic or a failed STS signing while the key-age hard limit is active"
+  },
+  "abort": { "C-3": "baseline (before any key operation) or post-check: an acceptance-expected token rejected by any verification point, or a user-traffic failure. Upper limit 0" }
+}

@@ -1,0 +1,188 @@
+{
+ "note": "files over 1 MB were gzip-compressed after evaluation for repository size; sha256 is of the original (matches SHA256SUMS); decompress with gunzip to re-run the evaluator",
+ "compressed_at": "2026-10-15T03:02:41.208Z",
+ "files": [
+  {
+   "file": "configs/C1-openfga-correct/audit/journal.jsonl",
+   "sha256": "aa159f32b57e8fc053874725f40742b2c4526e64114cea4eea22218b7887020e",
+   "bytes": 18814612,
+   "gz_sha256": "eb1714a3732beb533de12de1627d44bbbb1370787973cf57c2ff2072e57eca7c",
+   "gz_bytes": 2217200
+  },
+  {
+   "file": "configs/C1-openfga-correct/audit-copy/journal.jsonl",
+   "sha256": "aa159f32b57e8fc053874725f40742b2c4526e64114cea4eea22218b7887020e",
+   "bytes": 18814612,
+   "gz_sha256": "eb1714a3732beb533de12de1627d44bbbb1370787973cf57c2ff2072e57eca7c",
+   "gz_bytes": 2217200
+  },
+  {
+   "file": "configs/C1-openfga-correct/edge/edge-requests.jsonl",
+   "sha256": "e09b81432142129408cf639b74bed55c736ffe6e64b7eb7b2efbf6a69827d757",
+   "bytes": 1309046,
+   "gz_sha256": "cd406feaeb546c972ef205b77c58d38fadc55f028c7697ec568bca2a471dcbbf",
+   "gz_bytes": 352148
+  },
+  {
+   "file": "configs/C1-openfga-correct/pdp/decisions.jsonl",
+   "sha256": "c1c0dacffecfbeaa360b22036cc355ef5ed6e58761837392e347facd3877df6d",
+   "bytes": 7326332,
+   "gz_sha256": "d2ba8c760c95f5b04e53c9911a43faee40f44f6616e4bf60ebdc2adb26290dbb",
+   "gz_bytes": 941598
+  },
+  {
+   "file": "configs/C1-openfga-correct/pep/file-service-enforce.jsonl",
+   "sha256": "2b88e19d6d494e489f0a59c8920ff4f36b7dc85c14706e8480f2b6db2a32c020",
+   "bytes": 1031150,
+   "gz_sha256": "7303c67bcf285df8024c2800e98572afa73e58cfa3cd943d445fa656f8d9f5af",
+   "gz_bytes": 312220
+  },
+  {
+   "file": "configs/C1-openfga-correct/requests.jsonl",
+   "sha256": "5a53e19a96414ed7b4bd006b3f6989282469c5dfb008ab2e5fe633d344d27b67",
+   "bytes": 7833349,
+   "gz_sha256": "d6ac5e1b4cd164b1f62e9fe31dc8125eff0f21f02441116bae38dc9bc03ff1d9",
+   "gz_bytes": 943509
+  },
+  {
+   "file": "configs/C1-openfga-correct/sts/issuance-ledger.jsonl",
+   "sha256": "1d62824d722dfdb6424f86c14da8a85edd572a94013e6b60ff78f5887fab5273",
+   "bytes": 1570472,
+   "gz_sha256": "f93bc5c3021471992727e5958a5691169e8bd44caf11b9cd289ee0d51e1315f2",
+   "gz_bytes": 222542
+  },
+  {
+   "file": "configs/C2-cedar-correct/audit/journal.jsonl",
+   "sha256": "93ae405aedc39447dae4b6ad1192469de10dbea127b0dffa972b6db93677b669",
+   "bytes": 6076263,
+   "gz_sha256": "22c43198a057cf31c22d73e76ec8b6760c6e3a81c3be22f16a6b1f9f4ec5a408",
+   "gz_bytes": 707787
+  },
+  {
+   "file": "configs/C2-cedar-correct/audit-copy/journal.jsonl",
+   "sha256": "93ae405aedc39447dae4b6ad1192469de10dbea127b0dffa972b6db93677b669",
+   "bytes": 6076263,
+   "gz_sha256": "22c43198a057cf31c22d73e76ec8b6760c6e3a81c3be22f16a6b1f9f4ec5a408",
+   "gz_bytes": 707787
+  },
+  {
+   "file": "configs/C2-cedar-correct/pdp/decisions.jsonl",
+   "sha256": "cf00bbc49124c8952996bf74054eeb969bda30013a3c123de4e04bd519bb8cc7",
+   "bytes": 2312404,
+   "gz_sha256": "11d735c664ba7782ea655b8f3ebaaf18c52ada448f4f3b517306858440f2608f",
+   "gz_bytes": 297618
+  },
+  {
+   "file": "configs/C2-cedar-correct/requests.jsonl",
+   "sha256": "e505cda99ac0784d6e4745b9ebfc598f6cdd96a0b28c4992861866317bd0ef11",
+   "bytes": 2478161,
+   "gz_sha256": "e5361f47b9c1c590a5ff83e0939fdaedd9f771bf6d8bb44cb94303ff9c167c83",
+   "gz_bytes": 299168
+  },
+  {
+   "file": "configs/C3-openfga-permitall/audit/journal.jsonl",
+   "sha256": "668e26a072fe93087f307d71fa889e475f758bf712f04b0d21ee7e53789f6cd8",
+   "bytes": 28083775,
+   "gz_sha256": "174407719a5edfeb7a37bbb124f731919925a770363f51025911734f07961593",
+   "gz_bytes": 3045189
+  },
+  {
+   "file": "configs/C3-openfga-permitall/audit-copy/journal.jsonl",
+   "sha256": "668e26a072fe93087f307d71fa889e475f758bf712f04b0d21ee7e53789f6cd8",
+   "bytes": 28083775,
+   "gz_sha256": "174407719a5edfeb7a37bbb124f731919925a770363f51025911734f07961593",
+   "gz_bytes": 3045189
+  },
+  {
+   "file": "configs/C3-openfga-permitall/audit-producers/pdp.produced.jsonl",
+   "sha256": "181a7aa6dcb1950a31f2328e3fd6d7b9ba18cdbe22e027984c5236e400644866",
+   "bytes": 1436670,
+   "gz_sha256": "7c4d6147e05e14877d32b4bc18201a1df619709f3385c4b028e93c9b4c8fa3f0",
+   "gz_bytes": 623677
+  },
+  {
+   "file": "configs/C3-openfga-permitall/edge/edge-requests.jsonl",
+   "sha256": "f42f09c591bcfe591bf4f3688946c1f22b59cf0f7a63c8f3b8aa8a60cafa481a",
+   "bytes": 1375945,
+   "gz_sha256": "03efb6c3fd1c58e134c3f13ee05dc9be4fd962986561c962cee58ee9887e6a3f",
+   "gz_bytes": 370683
+  },
+  {
+   "file": "configs/C3-openfga-permitall/pdp/decisions.jsonl",
+   "sha256": "db457c5f664992eb9251e9d24bc1758abfe6f84c78a93ec7c4777e0fa9123814",
+   "bytes": 10227258,
+   "gz_sha256": "3fccaecc34e463595793d721cd3e4e3c920678865bab9e9f2d8461c807c99fc4",
+   "gz_bytes": 1218013
+  },
+  {
+   "file": "configs/C3-openfga-permitall/pep/file-service-enforce.jsonl",
+   "sha256": "8f2c20ce0a9f4093cca42c06b01d99d9a7aeb94eda3842798c15e094a4eef620",
+   "bytes": 1136929,
+   "gz_sha256": "cbe479ba8ed49e4b59867d040ffaf96b0ded6205668421c75d7c9929998bf824",
+   "gz_bytes": 347459
+  },
+  {
+   "file": "configs/C3-openfga-permitall/requests.jsonl",
+   "sha256": "c1f5cd1fb717e9f9b9626e5558cdadf2c4fd62151191e67aad1a14f9f438c4e6",
+   "bytes": 8454588,
+   "gz_sha256": "7aea200e7a9c9792d70c321aed81ae2c77b1106ca377a9af6319803ca8a752dc",
+   "gz_bytes": 1026841
+  },
+  {
+   "file": "configs/C3-openfga-permitall/sts/issuance-ledger.jsonl",
+   "sha256": "38bb0730d5f761b7937fda1f41b1f8719fe0be6cfa73657f1d88156159d7eeec",
+   "bytes": 1764206,
+   "gz_sha256": "68a0d2f0856ed9a08c5bc0c34b654b5bf4b7fc253686746ea62fca08561693b6",
+   "gz_bytes": 247389
+  },
+  {
+   "file": "configs/C4-cedar-permitall/audit/journal.jsonl",
+   "sha256": "2c153b275e93344b957af5537693efcd26000e4bf9c930b9c338a37f8b27468d",
+   "bytes": 16622199,
+   "gz_sha256": "0fb9b258290b77f479c93015385a72862aacd98da6dbaf90abe3417c7b1d9684",
+   "gz_bytes": 1809321
+  },
+  {
+   "file": "configs/C4-cedar-permitall/audit-copy/journal.jsonl",
+   "sha256": "2c153b275e93344b957af5537693efcd26000e4bf9c930b9c338a37f8b27468d",
+   "bytes": 16622199,
+   "gz_sha256": "0fb9b258290b77f479c93015385a72862aacd98da6dbaf90abe3417c7b1d9684",
+   "gz_bytes": 1809321
+  },
+  {
+   "file": "configs/C4-cedar-permitall/pdp/decisions.jsonl",
+   "sha256": "18db131a768a4112dbfd7ab34e63beeed24bd066c890ab2f682834b8019057ee",
+   "bytes": 6218125,
+   "gz_sha256": "929c997555c3b41a60699901a554d811a1c24ba7c972b55672bb6870a3abb357",
+   "gz_bytes": 741097
+  },
+  {
+   "file": "configs/C4-cedar-permitall/requests.jsonl",
+   "sha256": "349a98f6eea8dd5bcd780f63065d6b8a53837a3339cccadc1fbeab48256582e3",
+   "bytes": 5376774,
+   "gz_sha256": "f1e6e19d79cd91ef9f260304c5286846f0a857ac9694cc920033e631b3289a73",
+   "gz_bytes": 652730
+  },
+  {
+   "file": "configs/C4-cedar-permitall/sts/issuance-ledger.jsonl",
+   "sha256": "c5deb6af38aee716feba5d36386c5c00b07481b3ffd2c34c25146b4bdf51c183",
+   "bytes": 1059750,
+   "gz_sha256": "e9c1c259f033c30a6e7256b62b80709d9b75f03046637601dacb33b843e06754",
+   "gz_bytes": 151003
+  },
+  {
+   "file": "configs/mutant-T1-pep-sdk-no-l0-resource-tenant/audit/journal.jsonl",
+   "sha256": "e01c7fa5455bb0a5776cb6bad83bc82aa8086f7c149065b2466aa9a97d1aa04a",
+   "bytes": 1195789,
+   "gz_sha256": "8e17fabcc6b6d04fc0b274e8131917209daeb8fb39d2186defefcdb9e4fc0583",
+   "gz_bytes": 134752
+  },
+  {
+   "file": "configs/mutant-T1-pep-sdk-no-l0-resource-tenant/audit-copy/journal.jsonl",
+   "sha256": "e01c7fa5455bb0a5776cb6bad83bc82aa8086f7c149065b2466aa9a97d1aa04a",
+   "bytes": 1195789,
+   "gz_sha256": "8e17fabcc6b6d04fc0b274e8131917209daeb8fb39d2186defefcdb9e4fc0583",
+   "gz_bytes": 134752
+  }
+ ]
+}

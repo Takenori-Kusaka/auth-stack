@@ -1,0 +1,30 @@
+{
+  "tc": "TC-002",
+  "run_id": "20261015T025241Z-55e1a7",
+  "frozen": true,
+  "purpose": "measurement",
+  "manifest_hash": "6095ba3e8f3226a787877ff03930b2220062a684bc8ac2d4bfe23b0f440203ef",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": false,
+  "started_at": "2026-10-15T02:52:41.923Z",
+  "ended_at": "2026-10-15T02:54:28.483Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 2000,
+  "status": "aborted:harness_error",
+  "group": "tenant-isolation",
+  "prefreeze": false,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "freeze_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "sha256": "5aa62b5452fd04eba290189f9d4bb0afc83cd1c522bc01e605058fba2b9ef56d"
+  },
+  "code_dir": "E:\\Github\\auth-stack\\12_poc\\code\\.run\\snapshots\\TC-002-v3\\12_poc\\code",
+  "code_tree_sha256": "b296d9422b2299c114f556fba0578896688995626cbca963f68a1c2491506173",
+  "configs": [
+    {
+      "status": "aborted:harness_error",
+      "error": "read ECONNRESET"
+    }
+  ]
+}

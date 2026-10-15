@@ -1,0 +1,28 @@
+{
+  "name": "auth-stack-poc-line1",
+  "version": "0.1.0",
+  "private": true,
+  "description": "高保証 PoC 系統1 の基盤（AS・STS・TTS・PDP façade・PEP SDK・参照サービス・監査・ハーネス）",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "gen-model": "node model/generate.js",
+    "gen-data": "node data/gen-synthetic.js --profile small --seed 1 --out dataset.json",
+    "smoke": "node smoke/smoke.js --engine openfga && node smoke/smoke.js --engine cedar",
+    "verify-audit": "node audit/verify.js",
+    "selftest": "node --test test/engines-diff.test.js"
+  },
+  "dependencies": {
+    "@cedar-policy/cedar-wasm": "4.13.0",
+    "@openfga/syntax-transformer": "0.2.2",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "fast-check": "4.10.0",
+    "jose": "6.2.12",
+    "node-forge": "1.4.0",
+    "oidc-provider": "9.12.2",
+    "yaml": "2.8.4"
+  }
+}

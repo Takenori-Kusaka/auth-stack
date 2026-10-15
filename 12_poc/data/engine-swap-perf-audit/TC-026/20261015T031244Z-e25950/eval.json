@@ -1,0 +1,42 @@
+{
+  "evaluated_at": "2026-10-15T03:13:00.640Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-026",
+  "criteria": {
+    "mock_platform_mismatches": {
+      "value": 0,
+      "pass": true,
+      "vectors_run": 14,
+      "expected_misses": [],
+      "note": "補助: 期待結果との不一致（expected_misses）は 0 件であること"
+    },
+    "declarable_violation_stop_rate": {
+      "value": 1,
+      "pass": true
+    },
+    "semantic_misses": {
+      "value": 2,
+      "kinds": [
+        "M1",
+        "M2"
+      ],
+      "pass": null,
+      "note": "記録のみ（許容値 TBD）"
+    },
+    "ci_guard_reject_rate": {
+      "value": 1,
+      "pass": true,
+      "clean_tree_false_positives": 0
+    }
+  },
+  "mismatches": [],
+  "verdict": "合格",
+  "na": {
+    "CV-009": "DPoP replay → CR-1（mTLS 束縛の資源サービス）には適用しない（DPoP を受けるのは edge）。N/A"
+  },
+  "input_hashes": {
+    "vectors.jsonl": "b4f269adcc4fce2a16f27c8a76b190e59100e6a0df52ed89033bd1e309016273",
+    "results.json": "9fb56a17ab346385ad94e62f3f511bc7ee6a0fa68943a11b7cbbc2ebf0c81be6"
+  }
+}

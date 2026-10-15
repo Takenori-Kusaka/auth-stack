@@ -1,0 +1,99 @@
+model
+  schema 1.1
+
+type core/user
+
+type core/workload
+
+type core/client
+
+type core/tenant
+  relations
+    define member: [core/user]
+    define external_member: [core/user]
+    define admin: [core/user]
+    define security_admin: [core/user]
+    define role_manager: [core/user, core/role#assignee]
+    define belongs: member or external_member
+    define manage: admin
+    define manage_roles: role_manager or admin
+    define view_audit: security_admin or admin
+    define revoke_session: security_admin or admin
+
+type core/unit
+  relations
+    define parent: [core/unit, core/tenant]
+    define admin: [core/user, core/group#member]
+    define member: [core/user, core/group#member]
+    define admin_scope: [core/admin_scope]
+    define manage: admin or manage from parent
+    define view_directory: member or manage
+    define manage_membership: manage or delegate from admin_scope
+
+type core/admin_scope
+  relations
+    define delegate: [core/user, core/group#member]
+    define owner_unit: [core/unit, core/tenant]
+
+type core/group
+  relations
+    define member: [core/user, core/group#member]
+    define owner_unit: [core/unit, core/tenant]
+
+type core/role
+  relations
+    define assignee: [core/user, core/group#member]
+
+type core/external_grant
+  relations
+    define grantee: [core/user with c_not_expired]
+
+type files/folder
+  relations
+    define parent: [files/folder]
+    define owner: [core/user]
+    define editor: [core/user, core/group#member, core/role#assignee]
+    define viewer: [core/user, core/group#member, core/role#assignee, core/external_grant#grantee]
+    define restricted_external: [core/tenant#external_member]
+    define editors: editor or owner or editors from parent
+    define viewers: viewer or editors or viewers from parent
+    define restricted_inherited: restricted_external or restricted_inherited from parent
+    define read: (viewers but not restricted_external) but not restricted_inherited from parent
+    define write: editors but not restricted_external
+    define share: owner
+
+type files/file
+  relations
+    define parent: [files/folder]
+    define owner: [core/user]
+    define editor: [core/user, core/group#member]
+    define viewer: [core/user, core/group#member, core/external_grant#grantee]
+    define editors: editor or owner or editors from parent
+    define viewers: viewer or editors or viewers from parent
+    define read: viewers but not restricted_inherited from parent
+    define write: editors but not restricted_inherited from parent
+    define delete: owner or owner from parent
+    define share: owner or owner from parent
+
+type proj/project
+  relations
+    define parent: [core/unit, core/tenant]
+    define ancestor: [core/unit, core/tenant]
+    define owner: [core/user]
+    define member: [core/user, core/group#member, core/role#assignee]
+    define guest: [core/external_grant#grantee]
+    define members: member or owner
+    define view: members or guest or manage from ancestor
+    define admin: owner
+
+type proj/tool_instance
+  relations
+    define parent: [proj/project]
+    define operator: [core/user, core/role#assignee]
+    define use: members from parent or operator
+    define view: view from parent
+    define config: admin from parent
+
+condition c_not_expired(current_time: timestamp, expires_at: timestamp) {
+  current_time < expires_at
+}

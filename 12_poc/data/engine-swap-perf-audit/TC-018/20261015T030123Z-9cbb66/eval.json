@@ -1,0 +1,137 @@
+{
+  "evaluated_at": "2026-10-15T03:01:44.273Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-018",
+  "scenarios": {
+    "S1": {
+      "pending_login_succeeded": false,
+      "activation": true,
+      "active_login": true,
+      "active_search_status": 200,
+      "expired_pending_activation": false,
+      "expired_pending_why": "pending_expired",
+      "expired_pending_login_succeeded": false,
+      "transitions_ok": [
+        true,
+        true,
+        true
+      ]
+    },
+    "S2": {
+      "forwarded": {
+        "accepted": false,
+        "why": "addressee_mismatch_held",
+        "W_login_T2": false,
+        "state": "held"
+      },
+      "legit": {
+        "accepted": true,
+        "U_login_T2": true
+      },
+      "reuse_same": {
+        "accepted": false
+      },
+      "reuse_other": {
+        "accepted": false
+      },
+      "expired": {
+        "accepted": false,
+        "W_login_T2": false
+      },
+      "resent_old_token": {
+        "accepted": false
+      },
+      "revoked": {
+        "accepted": false,
+        "W_login_T2": false
+      },
+      "non_admin_create": {
+        "created": false
+      }
+    },
+    "S3": {
+      "before": {
+        "f1": 200,
+        "f2": 200
+      },
+      "after": {
+        "f1": 404,
+        "f2": 200
+      },
+      "old_allow_after_move": 0,
+      "new_allow_after_move": true
+    },
+    "S4": {
+      "A_read": 200,
+      "A_session_on_C_route": 404,
+      "A_session_C_file_on_A_route": 404,
+      "sso_reuse_C_route": 404,
+      "fresh_C_search": 200,
+      "fresh_C_read": 200,
+      "after_removal_C": {
+        "bff": 401,
+        "cli": 401,
+        "refresh": 400,
+        "new_login": 400,
+        "any_allowed": false
+      },
+      "after_removal_A_read": 200,
+      "after_removal_A_bff": 200
+    },
+    "S5": {
+      "before_any_allowed": true,
+      "after": {
+        "bff": 401,
+        "cli": 401,
+        "refresh": 400,
+        "job_tts": "refused",
+        "new_login": 400,
+        "any_allowed": false
+      },
+      "leave_api_ms": 9,
+      "ms_leave_to_all_denied": 82,
+      "probes": 2,
+      "allowed_after_check_delay": 0
+    },
+    "S6": {
+      "deviations": []
+    }
+  },
+  "criteria": {
+    "state_machine_deviations": {
+      "value": 0,
+      "pass": true
+    },
+    "old_membership_allows": {
+      "value": 0,
+      "pass": true,
+      "controls": {
+        "mover_new_group_allowed": true,
+        "other_membership_continues": [
+          200,
+          200
+        ]
+      }
+    },
+    "other_tenant_context_entries": {
+      "value": 0,
+      "pass": true
+    },
+    "invitation_reuse_or_expired_success": {
+      "value": 0,
+      "pass": true
+    }
+  },
+  "verdict": "合格",
+  "recorded": {
+    "ms_leave_to_all_denied": 82,
+    "leave_api_ms": 9
+  },
+  "transitions": 34,
+  "limitations": [
+    "SSO 強制テナントの IdP 経由受諾（I-03 の後段）と RISC identifier-recycled（I-05）は系統 1 の AS に該当機能がなく対象外",
+    "複数所属の MT-4（テナント B が SSO を強制）は上流 IdP 役が要るため TC-019 で扱う。本 TC は「A の AS session から B の文脈を得られない」ことを確かめた"
+  ],
+  "input_hashes": {}
+}

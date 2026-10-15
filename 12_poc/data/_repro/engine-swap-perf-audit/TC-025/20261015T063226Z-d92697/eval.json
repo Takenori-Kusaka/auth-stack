@@ -1,0 +1,70 @@
+{
+  "evaluated_at": "2026-10-15T06:32:38.315Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-025",
+  "criteria": {
+    "accepted": {
+      "value": 0,
+      "pass": true
+    },
+    "grant_attempt_detection_rate": {
+      "value": 1,
+      "pass": true,
+      "detections": [
+        {
+          "name": "sandbox_client_client_credentials",
+          "detected": true,
+          "events": [
+            "grant.error:invalid_client"
+          ]
+        },
+        {
+          "name": "prod_client_client_credentials",
+          "detected": true,
+          "events": [
+            "grant.error:unsupported_grant_type"
+          ]
+        }
+      ]
+    }
+  },
+  "positives": {
+    "prod_token_on_prod_edge": 200,
+    "sandbox_token_active_in_sandbox": true,
+    "prod_id_token_at_rp": "accepted"
+  },
+  "presentations": {
+    "P1": 401,
+    "P2": 400,
+    "P3": 401,
+    "P4": "rejected:ERR_JWKS_NO_MATCHING_KEY",
+    "P5": {
+      "sts_token": "tls_refused:ECONNRESET",
+      "pdp_evaluation": "tls_refused:ECONNRESET",
+      "state_revocations": "tls_refused:ECONNRESET",
+      "file_service": "tls_refused:ECONNRESET"
+    },
+    "P6": {
+      "par_unknown_sandbox_client": 401,
+      "token_prod_client_id_sandbox_key": 401
+    },
+    "P7": {
+      "sandbox_client_client_credentials": {
+        "status": 401,
+        "error": "invalid_client",
+        "issued": false
+      },
+      "prod_client_client_credentials": {
+        "status": 400,
+        "error": "unsupported_grant_type",
+        "issued": false
+      }
+    }
+  },
+  "verdict": "合格",
+  "input_hashes": {
+    "results.json": "57ba5d9a636c8f33190ee060640271614a95736664974f2d19420e41915d8fa0",
+    "as-a/as-events.jsonl": "c6ef020bb967359426ea88cfb6e12d2c376688824f2a90a779f7d0b125e716f1"
+  }
+}

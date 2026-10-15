@@ -1,0 +1,91 @@
+{
+  "tc": "TC-002",
+  "run_id": "20261015T063152Z-c2e5b0",
+  "frozen": true,
+  "purpose": "measurement",
+  "manifest_hash": "dc2db445232a05eb7f3b887a5a09dacedbffd439b88ecd57592bec23030fbd1c",
+  "git_commit": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "git_dirty": false,
+  "started_at": "2026-10-15T06:31:52.763Z",
+  "ended_at": "2026-10-15T06:48:29.738Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 2000,
+  "status": "completed",
+  "group": "tenant-isolation",
+  "prefreeze": false,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "freeze_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "sha256": "5aa62b5452fd04eba290189f9d4bb0afc83cd1c522bc01e605058fba2b9ef56d"
+  },
+  "code_dir": "R:\\auth-stack\\12_poc\\code\\.run\\snapshots\\TC-002-v2\\12_poc\\code",
+  "code_tree_sha256": "c03188ad702f675d8c27ebaf276f7f0bb1c13c7d7be1fb44b83b2199249babaa",
+  "configs": [
+    {
+      "status": "completed",
+      "config": "C1-openfga-correct",
+      "mutant": null
+    },
+    {
+      "status": "completed",
+      "config": "C2-cedar-correct",
+      "mutant": null
+    },
+    {
+      "status": "completed",
+      "config": "C3-openfga-permitall",
+      "mutant": null
+    },
+    {
+      "status": "completed",
+      "config": "C4-cedar-permitall",
+      "mutant": null
+    },
+    {
+      "status": "completed",
+      "config": "M-P1-file-service-no-pep",
+      "mutant": "P1-file-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-P2-label-service-no-pep",
+      "mutant": "P2-label-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-P3-tool-service-no-pep",
+      "mutant": "P3-tool-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-T1-pep-sdk-no-l0-resource-tenant",
+      "mutant": "T1-pep-sdk-no-l0-resource-tenant"
+    },
+    {
+      "status": "completed",
+      "config": "M-T2-facade-no-g1-tenant-match",
+      "mutant": "T2-facade-no-g1-tenant-match"
+    },
+    {
+      "status": "completed",
+      "config": "M-T3-edge-no-route-tenant",
+      "mutant": "T3-edge-no-route-tenant"
+    },
+    {
+      "status": "completed",
+      "config": "M-D1-file-list-no-tid-condition",
+      "mutant": "D1-file-list-no-tid-condition"
+    },
+    {
+      "status": "completed",
+      "config": "M-D2-file-move-no-target-tenant",
+      "mutant": "D2-file-move-no-target-tenant"
+    },
+    {
+      "status": "completed",
+      "config": "M-D3-file-lookup-trusts-route-tenant",
+      "mutant": "D3-file-lookup-trusts-route-tenant"
+    }
+  ]
+}

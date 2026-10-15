@@ -1,0 +1,14 @@
+{
+  "tc": "TC-024",
+  "title": "署名付き URL・ヘッダ偽装・device code",
+  "plan_section": "preregistered-test-plan.md §4.24",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "status_in_plan": "待（L_url）。剥奪後の取得の上限 L_url が TBD のため TC 全体は凍結できず、合否判定のための実行もできない（要旨 4）。本群は構成値で手順を実行し、値を記録する（判定保留）。他の基準（期限切れ・他テナント・改変の取得 0、偽装ヘッダ・迂回の受理 0、未承認コードの利用 0）の値も記録する",
+  "seed": 24,
+  "dataset": { "profile": "small", "seed": 24 },
+  "settings": { "signedUrlTtlSec": 2, "note": "PoC の構成値（L_url の候補ではない）" },
+  "signed_url": { "negatives": ["本文の 1 文字改変", "MAC の改変", "他テナントへの付替え（本文の t を書換え）", "他の資源への付替え（本文の f を書換え）", "期限後の取得（TTL＋1 秒後）", "操作の付替え（op を書換え）"], "revocation": "発行後に発行者の read を剥奪し、期限まで 250 ms 間隔で取得を試みる。最後に成功した時刻 − 発行時刻を記録する" },
+  "headers": { "negatives": ["token なしで偽装ヘッダ（x-user-id・x-tenant-id・x-forwarded-user・x-authenticated-user）だけを付けて file-service に直接", "利用者 A の有効な内部 token に B を名乗る偽装ヘッダを足して直接（A として扱われ B の資源に届かない）", "edge を迂回して外部 opaque token で file-service に直接", "クライアント証明書なしで file-service に直接（mTLS）", "edge に偽装ヘッダを付けた要求（edge は未署名ヘッダを下流に渡さない）"] },
+  "device_code": { "negatives": ["承認前の device_code で token を要求", "存在しない device_code で token を要求", "別 client の device_code を使う"] },
+  "criteria": { "expired_other_tenant_tampered_success": 0, "post_revocation_success_within_issue_plus_L_url": "TBD（L_url）。値の記録のみ", "spoofed_or_bypass_accepted": 0, "unapproved_code_use": 0 }
+}

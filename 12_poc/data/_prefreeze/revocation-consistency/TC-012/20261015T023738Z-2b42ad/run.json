@@ -1,0 +1,30 @@
+{
+  "tc": "revocation-consistency/TC-012",
+  "run_id": "20261015T023738Z-2b42ad",
+  "frozen": false,
+  "purpose": "TC-012",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:37:38.887Z",
+  "ended_at": "2026-10-15T02:37:58.694Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 12,
+  "status": "aborted:harness_error",
+  "tc_id": "TC-012",
+  "group": "revocation-consistency",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/revocation-consistency/params/TC-012.json",
+    "sha256": "32392109db61ba014008885e60c1beb094ebe4a77b6c5e57f3299c47d6f5c762"
+  },
+  "frozen_manifest": null,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": true
+  },
+  "code_tree_sha256": "2fb0f7518f61d467ecbe96d2abe9d0767041a546d81c26568713458b739aa5ab",
+  "port_base": 42240
+}

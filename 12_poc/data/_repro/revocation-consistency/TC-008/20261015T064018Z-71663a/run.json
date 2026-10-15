@@ -1,0 +1,44 @@
+{
+  "tc": "revocation-consistency/TC-008",
+  "run_id": "20261015T064018Z-71663a",
+  "frozen": true,
+  "purpose": "TC-008 condition E",
+  "manifest_hash": "8bb2324391ba9cba3925df265de2d44b9b9a9e7c40b2e2cd4675bc3a91de73f7",
+  "git_commit": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "git_dirty": true,
+  "started_at": "2026-10-15T06:40:18.080Z",
+  "ended_at": "2026-10-15T06:42:51.398Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 8,
+  "status": "completed",
+  "tc_id": "TC-008",
+  "group": "revocation-consistency",
+  "repo_head": "a15514874bd09766d30ed7915eabdd887c814e3f",
+  "params": {
+    "file": "12_poc/code/tests/revocation-consistency/params/TC-008.json",
+    "sha256": "101a97687f7ea2528940d9a720ff088ffc0c257dae89f9ba799c45f9f2762588"
+  },
+  "frozen_manifest": {
+    "version": 4,
+    "manifest_sha256": "8bb2324391ba9cba3925df265de2d44b9b9a9e7c40b2e2cd4675bc3a91de73f7",
+    "frozen_at": "2026-10-15T06:25:15.558Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "governing": "frozen commit blob",
+    "working_tree_identical_to_frozen": false
+  },
+  "code_tree_sha256": "8bb2324391ba9cba3925df265de2d44b9b9a9e7c40b2e2cd4675bc3a91de73f7",
+  "port_base": 42160,
+  "condition": {
+    "id": "E",
+    "openfga_check_cache_ttl": null,
+    "facade_fence": false,
+    "sdk_cache_ms": 2000
+  },
+  "trials": 20,
+  "probe_interval_ms": 100,
+  "w32tm_end": "unavailable: Command failed: w32tm /query /status"
+}

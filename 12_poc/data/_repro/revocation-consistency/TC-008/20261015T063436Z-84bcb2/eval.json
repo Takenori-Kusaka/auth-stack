@@ -1,0 +1,93 @@
+{
+  "tc": "TC-008",
+  "condition": {
+    "id": "D",
+    "openfga_check_cache_ttl": "10s",
+    "facade_fence": true,
+    "sdk_cache_ms": 0
+  },
+  "run": "20261015T063436Z-84bcb2",
+  "manifest_version": 4,
+  "manifest_sha256": "8bb2324391ba9cba3925df265de2d44b9b9a9e7c40b2e2cd4675bc3a91de73f7",
+  "evaluated_at": "2026-10-15T06:48:53.835Z",
+  "epsilon": {
+    "value_ms": 111.729,
+    "source": "in-run (max prober send lateness)",
+    "in_run_ms": 111.729
+  },
+  "q_ms": 100,
+  "control": {
+    "failed_streams": 0,
+    "total_streams": 120,
+    "c3_abort": false,
+    "example_control_failures": 0,
+    "raw_control_failures": 0
+  },
+  "metrics": {
+    "write_stale_allows": 0,
+    "privileged_stale_allows": 0,
+    "rs_stale_ms": {
+      "n": 60,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "rs_tok_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "w_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "p_stale_ms": {
+      "n": 20,
+      "min": 0,
+      "p50": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "rs_trials_with_stale_allow": 0,
+    "rs_trials": 60,
+    "rs_out_of_bound": 0,
+    "examples": {
+      "iterations": 20,
+      "leaks_enforced_paths": 0,
+      "leaks_non_enforced_paths_info": 0,
+      "enforced_paths": [
+        "service",
+        "facade_token",
+        "facade_notoken"
+      ]
+    },
+    "read_after_write_inconsistencies": 0,
+    "raw_iterations": 20,
+    "fence_rollback_accepted": 0,
+    "fence_rollback_attempts": 40,
+    "old_token_replay_allows": 0
+  },
+  "verdict": {
+    "write_privileged_stale_allow_0": true,
+    "examples_leak_0_enforced": true,
+    "read_after_write_0": true,
+    "fence_rollback_0": true,
+    "rs_within_configured_bound": true
+  },
+  "result": "pass",
+  "inputs": {
+    "requests.jsonl": "4dca9b2f886f8bdc38dd8fad034d51a2fcac55e651396c56773dacc494cb3ac9",
+    "trials.jsonl": "777f0f2e5a7cc120f3be294f06b18f5c00a7b0ad9f4fd585d340713904019556",
+    "examples.jsonl": "1b6edb3ccc8baf3102f046a29b6c46889480ed3bb4181f6e4407f1be206f33be",
+    "raw.jsonl": "f626a8cd7f7750298e1926cbdb5869db066ebec7fa9eb0d346ee394809e9a25a",
+    "inject.jsonl": "dc86487afdab1d1c879d9b2f20ceefee8fef7b3cbf37e441526aaa065c6b2216",
+    "run.json": "3e46db809143aa1517478e8ec3e7652016b3b8b64c349d37b59caf6e3a219d39",
+    "layers.json": "08d1977f0c4de9c13d1be287b0efc47e3b3a7b8d4609613d2037f74087f87133"
+  }
+}

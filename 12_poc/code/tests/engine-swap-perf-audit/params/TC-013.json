@@ -1,0 +1,46 @@
+{
+  "tc": "TC-013",
+  "title": "AuthZEN adapter による 2 エンジン差替え",
+  "plan_section": "preregistered-test-plan.md §4.13",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 13,
+  "dataset": { "profile": "small", "seed": 13 },
+  "phases": ["A:openfga", "B:cedar", "C:openfga"],
+  "switch_method": "façade の環境変数 PDP_ENGINE だけを変えて pdp プロセスを再起動する。参照サービス（tool/file/label）・edge・BFF・STS は再起動しない（PID を記録）。Cedar への切替時は façade の関係書込 API で合成データの tuple を Cedar の PIP スナップショットへ投入する（OpenFGA の store は sqlite に残る）",
+  "suite": {
+    "tenants_used": 3,
+    "files_per_tenant": 3,
+    "folders_per_tenant": 2,
+    "tools_per_tenant": 1,
+    "login_amr": "pwd,otp",
+    "privileged_login_amr": "fido",
+    "expected_value_source": "Python 参照評価器（ref/ref_eval.py）の R 段判定。G 段は「同一テナントの member、acr は階層の下限以上」の主体だけを正例・同一テナント負例に使うことで固定する",
+    "status_mapping": { "allow": "2xx", "deny": "404 (応答本文は存在しない ID への応答と同一)" },
+    "lifecycle_per_phase": ["file.create", "file.read", "file.share", "shared read", "file.move", "file.delete", "read after delete"]
+  },
+  "facade_contract_cases": ["F01 metadata", "F02 evaluation allow", "F03 evaluation deny_no_relation", "F04 cross-tenant guardrail", "F05 unsupported_profile", "F06 tid missing", "F07 evaluations execute_all", "F08 deny_on_first_deny", "F09 permit_on_first_permit on privileged -> 400", "F10 consistency downgrade on write", "F11 search schema + page token bound to subject + limit>100", "F12 invalid body -> 400"],
+  "injections": {
+    "per_injection_requests": 10,
+    "modes": ["wrong_request_id", "drop_request_id", "drop_decision_id", "metadata_mixup"],
+    "engines_for_request_id_injection": ["cedar", "openfga"],
+    "metadata_mixup": "façade の fault を metadata_mixup にした状態で file-service を再起動し（PEP が起動時に metadata を照合する）、要求を流す。終了後に fault を解除し file-service を再起動して復帰を確認する"
+  },
+  "criteria": {
+    "consumer_code_diff_lines": 0,
+    "contract_failures": 0,
+    "request_id_echo_rate": 1.0,
+    "metadata_mismatch_uses": 0,
+    "engine_decision_diffs_excluding_intended": 0,
+    "intended_diffs": [],
+    "representability_rate": "記録のみ（目標値 TBD: 所有者 CTO、期限 G4）"
+  },
+  "abort": {
+    "C-2": "Cedar wasm 配布物（@cedar-policy/cedar-wasm のパッケージ版と cedar_wasm_bg.wasm の SHA-256）が凍結 manifest と一致しない",
+    "C-3_positive_control_max_failure_rate": 0,
+    "C-3_positive_control_definition": "phase A（OpenFGA）の正例（所有者による自分のファイルの読取り）と F01・F02"
+  },
+  "catalog": {
+    "file": "tests/engine-swap-perf-audit/params/TC-013-catalog.json",
+    "judgement": "CAM で記述でき、OpenFGA（v1.21.0、memory、Check API に request context を直接渡す）と Cedar（4.13.0 wasm、CedarAdapter の PIP スナップショット＋要求文脈）の両方で全検査が期待どおりなら「表せる（検証済み）」。CAM で書けないものは「表せない」とし代替手段を記録する。机上判定と食い違えば併記する"
+  }
+}

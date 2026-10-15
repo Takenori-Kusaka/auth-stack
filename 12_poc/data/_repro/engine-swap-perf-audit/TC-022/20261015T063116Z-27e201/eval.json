@@ -1,0 +1,218 @@
+{
+  "evaluated_at": "2026-10-15T06:31:34.309Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-022",
+  "negatives": {
+    "N01": {
+      "succeeded": false,
+      "reason": "no_elevation_grant"
+    },
+    "N02": {
+      "succeeded": false,
+      "reason": "status 400"
+    },
+    "N03": {
+      "succeeded": false,
+      "reason": "deny_guardrail:g1_not_member"
+    },
+    "N04": {
+      "succeeded": false,
+      "reason": "approver_not_qualified"
+    },
+    "N04b": {
+      "succeeded": false,
+      "reason": "self_approval",
+      "requested": true
+    },
+    "N05": {
+      "succeeded": false,
+      "reason": "same_pair_consecutive",
+      "first_two_approved": [
+        true,
+        true
+      ]
+    },
+    "N06a": {
+      "succeeded": false,
+      "reason": "scope_change_after_approval"
+    },
+    "N06b": {
+      "succeeded": false,
+      "reason": "resource_outside_grant",
+      "note": "承認範囲外の資源"
+    },
+    "N06b_op": {
+      "succeeded": false,
+      "note": "承認範囲外の操作"
+    },
+    "N09": {
+      "succeeded": false,
+      "reason": "auth_secret_never_viewable"
+    },
+    "N07": {
+      "succeeded": false,
+      "reason": "grant_expired",
+      "before_ok": true,
+      "session_end_lag_ms": 66
+    },
+    "N08": {
+      "succeeded": false,
+      "reason": "grant_closed",
+      "session_reason": "case_closed"
+    },
+    "N10": {
+      "succeeded": false,
+      "reason": "audit_unavailable",
+      "grant_active": true
+    },
+    "N11": {
+      "succeeded": false,
+      "reason": "ai_agent_cannot_request"
+    },
+    "N12": {
+      "succeeded": false,
+      "reason": "ai_agent_cannot_approve"
+    },
+    "N13": {
+      "succeeded": false,
+      "reason": "ai_agent_cannot_break_glass"
+    },
+    "N14": {
+      "succeeded": false,
+      "reason": "oob_record_failed"
+    },
+    "N15": {
+      "succeeded": false,
+      "reason": "same_person_both_approvals"
+    },
+    "N16": {
+      "succeeded": false,
+      "reason": "provider_staff_cannot_customer_approve"
+    },
+    "N17": {
+      "succeeded": false,
+      "reason": "device_bound_reauth_required"
+    }
+  },
+  "positives": {
+    "jit_access": {
+      "steps": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "access_ok": true
+    },
+    "break_glass": {
+      "ok": true,
+      "seq": 1
+    }
+  },
+  "criteria": {
+    "reach_without_grant": {
+      "value": 0,
+      "pass": true
+    },
+    "negatives_succeeded": {
+      "value": 0,
+      "n": 20,
+      "pass": true
+    },
+    "success_after_expiry": {
+      "value": 0,
+      "pass": true
+    },
+    "tamper_detection_rate": {
+      "value": 1,
+      "base_ok": true,
+      "pass": true
+    },
+    "alarm_missing": {
+      "value": 0,
+      "pass": true
+    },
+    "e7_records_quarantined": {
+      "value": 0,
+      "pass": true,
+      "note": "補助（E7 記録がスキーマに適合して記録されたこと）"
+    }
+  },
+  "tamper": [
+    {
+      "variant": "journal_only",
+      "kind": "modify",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C1",
+        "C2",
+        "C3"
+      ]
+    },
+    {
+      "variant": "journal_only",
+      "kind": "delete",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C1",
+        "C2",
+        "C3"
+      ]
+    },
+    {
+      "variant": "journal_only",
+      "kind": "truncate",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C2",
+        "C3"
+      ]
+    },
+    {
+      "variant": "journal_and_copy",
+      "kind": "modify",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "variant": "journal_and_copy",
+      "kind": "delete",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "variant": "journal_and_copy",
+      "kind": "truncate",
+      "detected": true,
+      "alarm": true,
+      "checks": [
+        "C2"
+      ]
+    }
+  ],
+  "recorded": {
+    "session_end_lag_after_time_limit_ms": 66
+  },
+  "reference_result": "基準を満たす（参考）",
+  "verdict": "中止",
+  "abort": {
+    "code": "C-8",
+    "reason": "立会人不在（本 TC は立会いを合否条件にする）。手順は参考として実行した"
+  },
+  "input_hashes": {
+    "requests.jsonl": "a397226b7bf010ec4d8b5a76441340541fca1444741a9d131045d4f792d91d20",
+    "audit/journal.jsonl": "cf0ae5f3ad3176583924aeeb830653bb4355b8b849d3df2db9660c56f6e109a7"
+  }
+}

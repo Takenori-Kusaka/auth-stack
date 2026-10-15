@@ -1,0 +1,331 @@
+{
+  "tc": "TC-022",
+  "group": "engine-swap-perf-audit",
+  "plan_frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "files": [
+    {
+      "path": "12_poc/preregistered-test-plan.md",
+      "sha256": "d6324f3e4e25bf0daddad4f499500e77633d172d9af5cd3aad68272bf21b1a3f"
+    },
+    {
+      "path": "12_poc/code/as/server.js",
+      "sha256": "15174f8afd3786ff3cfbb86181d32bb30155546e5c7d6bbe932cec1e3cb474a5"
+    },
+    {
+      "path": "12_poc/code/audit/journal.js",
+      "sha256": "45e403ad5ad2404654769d93ecf652e295302216e37489735411ba26946af2b1"
+    },
+    {
+      "path": "12_poc/code/audit/verify.js",
+      "sha256": "fceaa22b52fe8ebc6a576f98b31baa49c44757fe019c25ddeafc4491d0a38a3c"
+    },
+    {
+      "path": "12_poc/code/config/ledger.json",
+      "sha256": "05712bf60adb95a0ccfbe9f8e9840ea2eb614eafb1175d69e4d71cd8f5c6be03"
+    },
+    {
+      "path": "12_poc/code/config/ports.js",
+      "sha256": "3f37b1471f79bb45464bce62817c7e945bce79947c3d054e834acc60ae12cd14"
+    },
+    {
+      "path": "12_poc/code/data/gen-synthetic.js",
+      "sha256": "6560e4ab745b25f0aa0da3114a2c9d0389ba09edb0d3435cd12a541f5fdedc0c"
+    },
+    {
+      "path": "12_poc/code/harness/forge.js",
+      "sha256": "bafb9427586413ce7b167d451d333b81f9be7ec8127669430a2e788d7d7a5ec5"
+    },
+    {
+      "path": "12_poc/code/harness/proc.js",
+      "sha256": "860782b2f2dbb4df6441ee9f94965bd14478f6e4555f66a7f9d0f77e3392f73e"
+    },
+    {
+      "path": "12_poc/code/harness/run.js",
+      "sha256": "ca6950220bdbedad295672c5925df4388bcd3a3717cce0d632f2dcb523974d44"
+    },
+    {
+      "path": "12_poc/code/harness/stack.js",
+      "sha256": "43dfcf8c0850ca3b83d6a06b4259264991179c3ee84385459043b762d8559f9e"
+    },
+    {
+      "path": "12_poc/code/inject/proxy.js",
+      "sha256": "a35cb3f35e08d802a79380cedfbab91a40e8b2e8505c408f2f5b47846b48d82b"
+    },
+    {
+      "path": "12_poc/code/lib/audit.js",
+      "sha256": "c7991b6c0ec1a5f1f68a69ff00a6f2a224080f3ccc74a97e8f740efd9edae799"
+    },
+    {
+      "path": "12_poc/code/lib/canon.js",
+      "sha256": "aeeb86e0deb4265779c8b2262eb0049f74f8cc89935e866ea31042f4163ce23c"
+    },
+    {
+      "path": "12_poc/code/lib/dpop.js",
+      "sha256": "9e5d4bab8894cc10740c8a401b9bbfefc716de486b88395da74bb1ccb3c8b451"
+    },
+    {
+      "path": "12_poc/code/lib/http.js",
+      "sha256": "54d0c0b0b1e6c5c81071d2eadb096e3871793f58eeffad02437539b6e564c14c"
+    },
+    {
+      "path": "12_poc/code/lib/ids.js",
+      "sha256": "27413f1817153bd8bcee68540037ac2c5a5e5b3031c0b7375b78dc8f209a25ba"
+    },
+    {
+      "path": "12_poc/code/lib/jwt.js",
+      "sha256": "3a12fa9db1f71d6b5b35bf35c37692fcc6cb5d333c3a3d694e3e9e657a2fdd6d"
+    },
+    {
+      "path": "12_poc/code/lib/keys.js",
+      "sha256": "f3d7a4d05d0f1e4894f599cb06f81f31aed8c5ce890efbbe3a103ed94fd4b242"
+    },
+    {
+      "path": "12_poc/code/lib/oauth-client.js",
+      "sha256": "8cd5c6df928eda96bd6cbeb7f21c9fed61a63f84040c01bba86efa23a589277c"
+    },
+    {
+      "path": "12_poc/code/lib/pki.js",
+      "sha256": "c75864fd4d23c775b9c1c5f47a334a36a8259d0318eff8dc8d3698bed44277d6"
+    },
+    {
+      "path": "12_poc/code/lib/revocation.js",
+      "sha256": "fb060563be092425381ddda752a634195a8b89b0a8f43a6d3a76ae5ff45cee23"
+    },
+    {
+      "path": "12_poc/code/lib/runtime.js",
+      "sha256": "108f4f8f7c66d2c016e8e0ab4a7c6fe328146f106be06da9bfe5b69ae3f6e088"
+    },
+    {
+      "path": "12_poc/code/lib/topology.js",
+      "sha256": "5ffbed09be28fad2f09e3f75a841924f37d2ebf763502a31744ef69bf54eaeee"
+    },
+    {
+      "path": "12_poc/code/model/cam.js",
+      "sha256": "e5d3f2b44b891833dc616a8901cfed1307716e820f6a82ec4065f0c7dc9ddcd2"
+    },
+    {
+      "path": "12_poc/code/model/cam.json",
+      "sha256": "a1f0e0b124386272677fa47fa07b04deeb1325adb8d65de6c34654c2cc866b58"
+    },
+    {
+      "path": "12_poc/code/model/diff.js",
+      "sha256": "691862bf83828b5ceac2ab2523b208db60bf9054d60a38d14ab602ab8d921822"
+    },
+    {
+      "path": "12_poc/code/model/generate.js",
+      "sha256": "d6680ba085559915ec34813b23c039d5a57773cb67e8e390cb435382ef691181"
+    },
+    {
+      "path": "12_poc/code/package.json",
+      "sha256": "27ec363c0472eac5e7ba0e81926f41fda9e9a1713c0b5769341dce4bdf82c9a2"
+    },
+    {
+      "path": "12_poc/code/pdp/adapters/cedar.js",
+      "sha256": "ff5af42a46c6d34394b07e0644ade405038b28696e920bad213fed0f8815f20f"
+    },
+    {
+      "path": "12_poc/code/pdp/adapters/openfga.js",
+      "sha256": "11b2956f44d6c94bf833fd8750c9ced1e4b82388dff21772d2d9b8b5a458ba3b"
+    },
+    {
+      "path": "12_poc/code/pdp/facade.js",
+      "sha256": "fa2992629e184a78fea0a84c7241fb4030905fbb245e25e09cdde5084cd539fe"
+    },
+    {
+      "path": "12_poc/code/pdp/guardrails.js",
+      "sha256": "f9e221c9ab5a038ca190dc1fbba213e6551c26a9ec2c7eb263f2e7143fc04f60"
+    },
+    {
+      "path": "12_poc/code/pep/sdk.js",
+      "sha256": "1d264a799b894ec04cb921142fb4a86919aa020e6c8a5103e3bd5eb144f655e7"
+    },
+    {
+      "path": "12_poc/code/ref/ref_eval.py",
+      "sha256": "40e0a58d167c398021aba9253f7af8412e4f4e174acaa97b5df08349542ea637"
+    },
+    {
+      "path": "12_poc/code/services/bff.js",
+      "sha256": "a6d0612b52334e3db31cb3a70aef296208c255c7a66865c5724504d527f246d5"
+    },
+    {
+      "path": "12_poc/code/services/edge.js",
+      "sha256": "c2d9b2c772889216a80cf2dbc76fb432cfd4aef3fc9c07b0ef57401e6d47c291"
+    },
+    {
+      "path": "12_poc/code/services/file-service.js",
+      "sha256": "b5ae3ae53c7cdc9130440ef20d731b52639eba356fd4927cfd90d9ebe95537a9"
+    },
+    {
+      "path": "12_poc/code/services/label-service.js",
+      "sha256": "f37de5e1e844feb0edd4a54d2029e9b51e165578ba4dfed991caf26450de8a4d"
+    },
+    {
+      "path": "12_poc/code/services/tool-service.js",
+      "sha256": "cd23a040ff23b6cf9b6dc60033be0fc24efb6e77eca0debb86b8ba8473f1ee67"
+    },
+    {
+      "path": "12_poc/code/smoke/smoke.js",
+      "sha256": "97202b03a4541f497cb215bc795a73bab2f92e6a21eb579971f3af8c4dbfa480"
+    },
+    {
+      "path": "12_poc/code/state/server.js",
+      "sha256": "18b627b0e3773e1031bb909ae01ff8d6b50eef1115c2dcc6053c883877e04d00"
+    },
+    {
+      "path": "12_poc/code/sts/server.js",
+      "sha256": "cf44bbfc41c27a853856b56a176d3c219638e87a709178f744e0ac8620674ae1"
+    },
+    {
+      "path": "12_poc/code/test/engines-diff.test.js",
+      "sha256": "efb25338b7754c7cb9bf29ae2bb43dc818a6db4b2d50ead4190bfe99b315f3a4"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-001.js",
+      "sha256": "0225d0117eb83e60e41551282e683c211fbb3205e7371cac1720991405aa3e13"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-013.js",
+      "sha256": "1a84fba67d1252747103e24eb042850a98e2a46a039649f2a6f604e8ace00773"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-016.js",
+      "sha256": "403e3f0d0fe6f9345805cadbc83b89dc95b6f7b05e3af53435feb715d297d175"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-017-prerun.js",
+      "sha256": "7c1df91a06051cd8ec1deb3899ea7fff2cc4c0be6ac9c28597e32f1c813fc0f7"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-017.js",
+      "sha256": "a9d200a5d014c86e37a590329be9b5d19ba2557f0511ecb6c6e034ec673ebd6b"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-022.js",
+      "sha256": "a223475dfea539fcdb94b04802c6b3c0e1805047785cff1133738141def59057"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-023.js",
+      "sha256": "f39d7807b56dbda7ac1aa504100d9d1cd126941a3b5f9fb5f5d2c3b8626aa008"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-027.js",
+      "sha256": "238e464a1a07022ac1cc5c4f78489f16562df60792d19434ed269674b6832b63"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/TC-028.js",
+      "sha256": "bffd5d2c66de99f9b88f23028ad35b146cc94897e4cb49a2094990efbe313eb4"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/common.js",
+      "sha256": "93f5342ddbb132325c09a56d9c9d987960d6a0c5499ed77f6e8f6b99545ed630"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/freeze.js",
+      "sha256": "0d8d6919ea8e4389643978d3f40dbd9ce34fd4a1b6bfa1056e00efcd7168f936"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/harness-check-eps.js",
+      "sha256": "e0571cd1d787774b9a9c795708e95c3c9396b59e25bb83df7b0edf1398b9b47f"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/harness-check.js",
+      "sha256": "a33f2d5ca9456e37ed9daec1002205a8b3fe7eb4e216ac9fba097402e1713e83"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/catalog.js",
+      "sha256": "996167d7db620ef77caf18fd6c493a4fb869bf8bbd48c831f039d5c9dcadce9f"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/cli.js",
+      "sha256": "bfa0f4f339688ef524a39b69b461930f89ea59a36ba34b096a333d01d25c73d0"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/clock-echo.js",
+      "sha256": "08bf6b1196de8ff8ea0fc3260199256266a8fc8e40330ea1d31bcd486e5d64e5"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/helpers.js",
+      "sha256": "1e06542d0507b86f68115f2bcc002d737c9b2d4037a7699b83eeb501dc753e94"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/jobs.js",
+      "sha256": "14c6c9be57020a3cf6024148e3baddf05877453a6e778a6d55cf42dbd5ecac1b"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/load.js",
+      "sha256": "b5422a375ddd08b2130f24e58dd30ac319273aa191202beb108f80c4740a5791"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/oob-recorder.js",
+      "sha256": "a52cc5a79836a7508dab302600183997e2b938a6dbbf17cc127fd3380c40cfed"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/priv.js",
+      "sha256": "0b64bc584581c332375a5055f8a77abbb94d125a658265a0585e18cc7c75ab5d"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/stream.js",
+      "sha256": "e244db04a7a89db25546b8ae391aa7e2f9a8522724d764f0fd18d7522af9b022"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/lib/tc017-targets.js",
+      "sha256": "676cb093d3abf6bb713615f28331296cd095cb7f571b93368ca1cc5d111aa769"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-001.json",
+      "sha256": "117d8ca4666c13ef659a5c7c3f93b7e214ceafc03225b5efddee6781c87a8e9b"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-013-catalog.json",
+      "sha256": "5fbbf7ebfcf37e8eec7abc17d633dae635b622378a60abb779723c5cf67718e7"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-013.json",
+      "sha256": "6560e68d0f84fc6bf5025c31e1cf99c770abc72389a9988e3127f760577dd867"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-016.json",
+      "sha256": "59896d3bcb79a99cba789abf600fddb5b8af5a57e3d8e9d61a7fc9845ac95064"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-017.json",
+      "sha256": "2e55acaaad996a20a54cea0bdfb98e40fa1a1590e66a8eec6ca35844da7d7cba"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-022.json",
+      "sha256": "f130c2078f538d2bd5725dd473ff608b45e1b6aa21e0dc01e2995872a72287b6"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-023.json",
+      "sha256": "787c2d110c26df4c343dda297dc5155c6ab76f3c4dc45fb3a7ba2aa8f465118a"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-027.json",
+      "sha256": "d5b9c4f4aa3b3d03eaf7ae6e7f763539fdc6460648040e50c1e988671f2c6474"
+    },
+    {
+      "path": "12_poc/code/tests/engine-swap-perf-audit/params/TC-028.json",
+      "sha256": "141ad8f04b3c0b06acf65a34fe73fac87f9ee7ff5b6ddf7db58638fa2d70c295"
+    }
+  ],
+  "tools": {
+    "openfga": {
+      "path": "12_poc/tools/openfga/openfga.exe",
+      "sha256": "6868a2314e89099c2874ca382b607c78f50aa8551ddfa2fc05edff787738ce8c"
+    },
+    "cedar_wasm": {
+      "version": "4.13.0",
+      "wasm_sha256": "9ed10461f45bceabbe2c364330500378b71f641b28f7c2a1f6e033c9be2f1d9a"
+    },
+    "oidc-provider": "9.12.2",
+    "jose": "6.2.12",
+    "fast-check": "4.10.0",
+    "node": "v22.23.2"
+  },
+  "manifest_sha256": "bcc2a2caec944ae083acba92cf336a0b976f258ff608004e0eb4e1c05d5f3aed",
+  "version": 1,
+  "frozen_at": "2026-10-15T02:54:08.568Z",
+  "reason": "initial freeze",
+  "previous": null,
+  "witness": null
+}

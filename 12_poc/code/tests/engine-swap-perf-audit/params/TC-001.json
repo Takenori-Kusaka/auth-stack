@@ -1,0 +1,15 @@
+{
+  "tc": "TC-001",
+  "title": "時計・probe・測定器の較正",
+  "plan_section": "preregistered-test-plan.md §4.1",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 1,
+  "repetitions": 2,
+  "clock": { "processes": 5, "exchanges_per_process": 200, "method": "NTP 型の往復（t1 送信・子の壁時計 tc・t2 受信、offset = tc − (t1+t2)/2、誤差の上限 = rtt/2）。壁時計は performance.timeOrigin + performance.now()（ミリ秒未満）と Date.now()（ミリ秒）の両方。単調時計（hrtime）と壁時計のずれを TC 全体の時間で比べる" },
+  "delay_injection": { "levels_ms": [0, 5, 10, 50, 100, 200, 500], "samples_per_level": 200, "path": "harness → inject/proxy.js（http モード、delay）→ clock-echo。誤差 e = 測定遅延 − 注入遅延 − proxy 通過の基準遅延（pass 水準の中央値）" },
+  "probe": { "q_candidates_ms": [10, 20, 50, 100, 200, 500], "intervals": "各 q で min(200, ceil(10000/q)) 回", "method": "setTimeout による周期 probe の実効間隔（単調時計）" },
+  "log_write": { "lines": 5000, "method": "fs.appendFileSync で JSONL 1 行（約 200 byte）を書く所要時間（部品のログ・監査写しと同じ書き方）" },
+  "time_measuring_tcs_reference_units_ms": { "TC-008/TC-023 失効状態の配布周期 revocationPollMs": 200, "TC-008 M_rev（PoC 構成値）": 5000, "TC-028 Δ_conn": "構成値（TC-028 の凍結値）", "TC-012 rollback 時間・TC-014 緊急失効の所要時間": "記録のみ" },
+  "criteria": { "pass_fail": "ε＋q が時間を測る TC の最小時間単位に対して無視できる比率以下。比率は TBD（所有者 SRE 責任者）→ 判定保留（値の記録のみ）" },
+  "abort": { "unstable_rule": "2 回の反復で、注入遅延の誤差 |e| の p99 が 2 倍超かつ 2 ms 超異なる、または時計 offset の上限（rtt/2 の p99）が 2 倍超かつ 1 ms 超異なる場合は測定系が不安定として中止（§4.1 中止基準。規則は本ファイルで凍結）" }
+}

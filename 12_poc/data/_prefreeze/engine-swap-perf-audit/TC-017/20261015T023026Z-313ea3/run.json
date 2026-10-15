@@ -1,0 +1,15 @@
+{
+  "tc": "engine-swap-perf-audit/TC-017",
+  "run_id": "20261015T023026Z-313ea3",
+  "frozen": false,
+  "purpose": "prerun",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:30:26.191Z",
+  "ended_at": "2026-10-15T02:31:35.494Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 17,
+  "status": "completed"
+}

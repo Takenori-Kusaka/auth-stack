@@ -1,0 +1,79 @@
+{
+  "tc": "resilience-keys/TC-010",
+  "run_id": "20261015T025031Z-5418a7",
+  "frozen": true,
+  "purpose": "measurement-openfga",
+  "manifest_hash": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:50:31.732Z",
+  "ended_at": "2026-10-15T02:52:31.462Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "tc_id": "TC-010",
+  "group": "resilience-keys",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/resilience-keys/params/TC-010.json",
+    "sha256": "4ba316e4bd015397504a34a71128bc786a347c9e23985564076a1822b287a62d"
+  },
+  "frozen_manifest": {
+    "version": 1,
+    "manifest_sha256": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+    "frozen_at": "2026-10-15T02:50:30.112Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": true
+  },
+  "code_tree_sha256": "24dac5b4c509f5c3def80a6ed03b2e63aef296927c7d7faa86e5425827c6ff50",
+  "port_base": 42200,
+  "note": "self-made freeze manifest; independent witness (F-5, §2.6) not available -> provisional result (RK-DEV-01)",
+  "engine": "openfga",
+  "eval_summary": {
+    "requests": 1260,
+    "windows_completed": 17,
+    "windows_missing": [],
+    "checks": {
+      "write_plus_allow": {
+        "value": 16,
+        "threshold": 0,
+        "pass": false
+      },
+      "indeterminate_to_allow": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "bypass": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "samples": 151
+      },
+      "empty_list_in_outage": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true
+      },
+      "rs_allow_in_outage": {
+        "value": 24,
+        "threshold": 0,
+        "pass": false
+      },
+      "alarm_all_allow": {
+        "value": "2/2",
+        "pass": true
+      }
+    },
+    "harness_rows_excluded": 7,
+    "matrix_deviation": 84,
+    "public_denied": 0,
+    "pre_detection_correct_allows": 4,
+    "verdict": "fail",
+    "non_target_unhealthy_samples": 0
+  }
+}

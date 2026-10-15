@@ -1,0 +1,182 @@
+{
+  "evaluated_at": "2026-10-15T02:21:31.669Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-013",
+  "phases": {},
+  "injections": {
+    "cedar": {
+      "wrong_request_id": {
+        "mode": "wrong_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_request_id": {
+        "mode": "drop_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_decision_id": {
+        "mode": "drop_decision_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      }
+    },
+    "openfga": {
+      "wrong_request_id": {
+        "mode": "wrong_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_request_id": {
+        "mode": "drop_request_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      },
+      "drop_decision_id": {
+        "mode": "drop_decision_id",
+        "n": 10,
+        "status": {
+          "503": 10
+        },
+        "used": 0
+      }
+    },
+    "metadata_mixup": {
+      "n": 10,
+      "status": {
+        "503": 10
+      },
+      "served_2xx": 0,
+      "facade_decisions_from_file_service_during_mixup": 0,
+      "recovery_status_after_clear": 200
+    }
+  },
+  "abort": null,
+  "verdict": "不合格",
+  "criteria": {
+    "consumer_code_diff_lines": {
+      "value": 0,
+      "pass": true
+    },
+    "contract_tests_all_pass": {
+      "value": {
+        "total": 435,
+        "failed": 0
+      },
+      "pass": true
+    },
+    "request_id_echo_rate": {
+      "value": 0.996309963099631,
+      "pass": false,
+      "detail": {
+        "pep_calls_normal": 235,
+        "pep_echo_failures_normal": 1,
+        "direct_calls": 36,
+        "direct_echo_ok": 36,
+        "injected_mismatch_or_missing_used": 0
+      }
+    },
+    "metadata_mismatch_uses": {
+      "value": 0,
+      "pass": true
+    },
+    "engine_decision_diffs": {
+      "value": 0,
+      "pass": true,
+      "intended": []
+    },
+    "representability": {
+      "value": 0.75,
+      "pass": null,
+      "note": "記録のみ（目標値 TBD）"
+    }
+  },
+  "measures": {
+    "suite_cases_per_phase": 133,
+    "facade_cases_per_phase": 12,
+    "switch_ms": 3331,
+    "service_pids": {
+      "A": {
+        "tool-service": 27176,
+        "file-service": 6560,
+        "label-service": 32920,
+        "edge": 35964,
+        "bff": 33524,
+        "sts": 24656,
+        "as-a": 39764
+      },
+      "B": {
+        "tool-service": 27176,
+        "file-service": 6560,
+        "label-service": 32920,
+        "edge": 35964,
+        "bff": 33524,
+        "sts": 24656,
+        "as-a": 39764
+      },
+      "C": {
+        "tool-service": 27176,
+        "file-service": 6560,
+        "label-service": 32920,
+        "edge": 35964,
+        "bff": 33524,
+        "sts": 24656,
+        "as-a": 39764
+      },
+      "unchanged_across_switch": true
+    },
+    "proceeded_on_false_decision": 0,
+    "list_items_not_permitted_by_ref": 0,
+    "catalog": {
+      "entries": 32,
+      "representable_verified": 24,
+      "partial_verified": 5,
+      "not_representable": 3,
+      "verification_failed": 0,
+      "engine_disagreements": 0,
+      "alternatives_for_non_representable": true
+    }
+  },
+  "failures": {
+    "contract": {
+      "A": [],
+      "B": [],
+      "C": []
+    },
+    "facade": {
+      "A": [],
+      "B": [],
+      "C": []
+    },
+    "diffs": [],
+    "list_violations": []
+  },
+  "observations": [
+    "façade（adapter）経由の評価では request context として current_time だけが渡る。AC-09・AC-17・AC-18・AC-24 の条件は engine 単体では評価できるが、AuthZEN profile の現行 adapter からは request context を渡せない（PoC の実装範囲）"
+  ],
+  "input_hashes": {
+    "requests.jsonl": "bd2738919a27b97a6918903d1d67bda57024206a9a65d85b28d78560d4dc3396",
+    "facade-contract.jsonl": "2d0251dda8e1f2fd59d4ae7f8e7fbcae98d0a12b054679059654c12f9d553160",
+    "inject.jsonl": "0defb5963d21ce67425b8e30e7650a1635f077526f903b334d0060dc71835548",
+    "code-diff.json": "ef64318cd812cf3efe9198ec3a5dc7d283c394a517ae92111ea44bafbd288ee3",
+    "catalog-results.json": "7f49dcdea4e8b9e54eba4d02d706fcf8144dabf57ec7ae234fa6aaa28cc99215",
+    "suite.json": "4cb7a95085e0b5584f8b826592b721d0ef00d825e6ab0a93b1baddb75a431468",
+    "pdp/decisions.jsonl": "0849b99b52301c34e185a0b9cb8920584442da36390abcc93fd41f73a95eafd2"
+  }
+}

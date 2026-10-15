@@ -1,0 +1,69 @@
+{
+  "tc": "TC-002",
+  "run_id": "20261015T021911Z-86cc44",
+  "frozen": false,
+  "purpose": "prefreeze-timing (§2.5: duration only, no pass/fail metrics)",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:19:11.358Z",
+  "ended_at": "2026-10-15T02:20:33.232Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 2000,
+  "status": "aborted:harness_error",
+  "group": "tenant-isolation",
+  "prefreeze": true,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "freeze_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "sha256": "5aa62b5452fd04eba290189f9d4bb0afc83cd1c522bc01e605058fba2b9ef56d"
+  },
+  "code_tree_sha256": "60c32441f756749e2a7379cf2f540c1f698e8e79219bc28fbefa12902cc66d11",
+  "configs": [
+    {
+      "status": "completed",
+      "config": "M-P1-file-service-no-pep",
+      "mutant": "P1-file-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-P2-label-service-no-pep",
+      "mutant": "P2-label-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-P3-tool-service-no-pep",
+      "mutant": "P3-tool-service-no-pep"
+    },
+    {
+      "status": "completed",
+      "config": "M-T1-pep-sdk-no-l0-resource-tenant",
+      "mutant": "T1-pep-sdk-no-l0-resource-tenant"
+    },
+    {
+      "status": "completed",
+      "config": "M-T2-facade-no-g1-tenant-match",
+      "mutant": "T2-facade-no-g1-tenant-match"
+    },
+    {
+      "status": "completed",
+      "config": "M-T3-edge-no-route-tenant",
+      "mutant": "T3-edge-no-route-tenant"
+    },
+    {
+      "status": "completed",
+      "config": "M-D1-file-list-no-tid-condition",
+      "mutant": "D1-file-list-no-tid-condition"
+    },
+    {
+      "status": "completed",
+      "config": "M-D2-file-move-no-target-tenant",
+      "mutant": "D2-file-move-no-target-tenant"
+    },
+    {
+      "status": "aborted:harness_error",
+      "error": "mutant D3-file-lookup-trusts-route-tenant: pattern occurs 0 times in services/file-service.js:   return { tid: row.tid };\n};"
+    }
+  ]
+}

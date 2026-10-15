@@ -1,0 +1,50 @@
+{
+  "tc": "TC-026",
+  "title": "契約試験・モック一致・CI ガード",
+  "plan_section": "preregistered-test-plan.md §4.26",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 26,
+  "dataset": { "profile": "small", "seed": 26 },
+  "engine": "openfga",
+  "kit": { "version": "tests/engine-swap-perf-audit/lib/kit.js（MK-02・MK-03・MK-07 の最小実装）と本ファイルのベクタ定義。契約試験キット（DL-80、contract-kit/）は基盤に未作成のため本群で最小限を作った（逸脱 DEV-26a）", "role": "CR-1（資源サービス。参照サービス file-service と PEP SDK）" },
+  "vectors": {
+    "POS": "正例（自分宛て・有効な token、許可あり）→ 受理",
+    "CV-001": "aud の誤り（aud=tool の token を file-service へ）→ 拒否",
+    "CV-002": "typ の取違え（txntoken+jwt、secevent+jwt、JWT（ID Token 型））→ 拒否",
+    "CV-003": "issuer mix-up（別 issuer の署名）→ 拒否",
+    "CV-004": "alg=none、allowlist 外の alg（ES384 鍵）、alg と鍵種別の不一致（header=ES256、鍵=ES384）→ 拒否",
+    "CV-005": "未知の kid: 取り直しで見つかる（新鍵の事前公開）→ 受理、見つからない → 拒否",
+    "CV-006": "未知の crit → 拒否",
+    "CV-007": "期限切れ → 拒否",
+    "CV-008": "cross-tenant（他テナントの実在 ID と存在しない ID）→ 拒否、2 つの応答が同一",
+    "CV-009": "DPoP replay → CR-1（mTLS 束縛の資源サービス）には適用しない（DPoP を受けるのは edge）。N/A",
+    "CV-010": "Txn-Token を Authorization で提示 → 拒否",
+    "CV-011": "sandbox 役（別 issuer・別鍵）の正規署名 token → 拒否",
+    "CV-012": "PDP の timeout・503・deny・decision_id 欠落・X-Request-ID 不一致・失効 → 判定が得られない扱い（503）または拒否（404）。fail-open 0",
+    "CV-013": "未知 claim の注入 → 受理して続行（互換試験）",
+    "CV-014": "凍結版より古い major の profile 版（ver=0.9）→ 拒否"
+  },
+  "comparison": "各ベクタについて、PoC 基盤（実 STS 鍵・実 façade）とモック（MK-02 の試験鍵・MK-03）で同じ consumer に流し、判定（受理・拒否・判定が得られない）と観測できる応答（状態コード・応答本文）を比べる",
+  "contract_prs": {
+    "D1": "既定値の変更（authorization-api: EvaluationsRequest.options.evaluations_semantic の default）",
+    "D2": "既定値の追加（access-token-claims: ver に default）",
+    "E1": "閉じた enum への値の追加（Completeness.status に partial）",
+    "E2": "閉じた enum への値の追加（ConsistencyMode に eventual）",
+    "M1": "claim の意味の変更（tid の description だけを変える）",
+    "M2": "claim の意味の変更（Reason の description だけを変える）",
+    "C1": "制約を強める claim の追加（internalAccessTokenClaims に必須 device_id）",
+    "C2": "制約を強める（ProfileDecision の required に obligations）",
+    "F1": "field 削除（ProfileDecision.decision_id）",
+    "F2": "field 削除（PageResponse.count）",
+    "declarable": ["D1", "D2", "E1", "E2", "C1", "C2", "F1", "F2"],
+    "semantic_only": ["M1", "M2"]
+  },
+  "code_prs": {
+    "G1a": "file-service が OpenFGA adapter を import", "G1b": "tool-service が OpenFGA の check を直接呼ぶ",
+    "G2a": "file-service が searchResources を一覧ヘルパ外で直接呼ぶ", "G2b": "label-service が list-objects を呼ぶ",
+    "G3a": "サービスが email を鍵に引く", "G3b": "サービスが不透明 ID を split で解析",
+    "G4a": "ドメイン module が予約名前空間 core/ の型を宣言", "G4b": "ドメイン module が既存の型名（files/file）と衝突"
+  },
+  "criteria": { "mock_platform_mismatches": 0, "declarable_violation_stop_rate": 1.0, "semantic_misses": "記録（許容値 TBD: 所有者 CTO、期限 G4）", "ci_guard_reject_rate": 1.0 },
+  "abort": { "kit_version_changed": "契約試験キットの版（lib/kit.js と本ファイル）が凍結時と異なる（manifest で照合）", "C-3": "POS が基盤またはモックで受理されない" }
+}

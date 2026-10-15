@@ -1,0 +1,13 @@
+{
+  "tc": "TC-021",
+  "title": "認可 graph シナリオ",
+  "plan_section": "preregistered-test-plan.md §4.21",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "status_in_plan": "待（KP-4 の p_max）。n = ⌈3/p_max⌉ が決まらないため凍結できず、合否判定のための実行もできない（要旨 4）。本群は暫定の n で手順を実行し値を記録する（判定保留）",
+  "seed": 21,
+  "dataset": { "profile": "small", "seed": 21 },
+  "property_test": { "library": "fast-check 4.10.0", "sequences_provisional_n": 120, "ops_per_sequence": "1〜8", "checks_per_op": 16, "ops": ["move（file の親 folder の付替え: 旧親の削除→新親の追加）", "share_external（他テナントの主体に外部付与（期限内・期限切れ）を folder へ）", "nest_group（グループの入れ子の追加・除去。深さ ≤3、循環なし）", "grant / revoke（folder・file の viewer・editor の直接付与と剥奪）", "custom_role（core/role の作成と assignee、folder の viewer に role#assignee）", "concurrent（2 つの操作を並行に投入）"], "engines": "OpenFGA v1.21.0（memory、Check API）と Cedar 4.13.0（CedarAdapter）。期待値は Python 参照評価器" },
+  "escalation_negatives": ["予約 permission（manage・config・view_audit）を含む custom role の作成", "作成者が持たない permission を含む custom role の作成", "他テナントの role の割当て", "外部主体への管理者ロール（基盤定義の tenant 管理者ロール）の割当て", "外部主体を core/tenant の admin にする tuple のドメイン writer（file-service）からの書込み"],
+  "paging": { "trials": 5, "files": 150, "page_limit": 50, "method": "主体に 150 件の直接 viewer を付け、1 頁目を取った後に残り全件を剥奪し、以降の頁を取る" },
+  "criteria": { "allow_expansion_diffs": "0（n 回の範囲。p_max は KP-4、TBD）", "escalation_success": 0, "revoked_returned_in_paging": 0, "deny_expansion_diffs": "全件説明可能であること（記録）" }
+}

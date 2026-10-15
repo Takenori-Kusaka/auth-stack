@@ -1,0 +1,52 @@
+{
+  "tc": "TC-002",
+  "run_id": "20261015T024038Z-fb388e",
+  "frozen": false,
+  "purpose": "harness-check (tenant-isolation)",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": false,
+  "started_at": "2026-10-15T02:40:38.786Z",
+  "ended_at": "2026-10-15T02:40:51.346Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "checks": [
+    {
+      "check": "direct forged write (owner)",
+      "status": 200,
+      "body": "{\"id\":\"syn6dtixxkeg66zuawfk65zmdq\",\"folder\":\"synrhsfqk5n4qibixhbs7d4iya\",\"content\":\"x\",\"version\":2}"
+    },
+    {
+      "check": "edge GET /t/<id>/files/<id>",
+      "status": 200,
+      "body": "{\"id\":\"syn6dtixxkeg66zuawfk65zmdq\",\"folder\":\"synrhsfqk5n4qibixhbs7d4iya\",\"content\":\"x\",\"version\":2,\"decision_id\":\"rb57r7jf4ruajxjgcvhwrwz2zb\"}"
+    },
+    {
+      "check": "edge PUT /t/<id>/files/<id>",
+      "status": 200,
+      "body": "{\"id\":\"syn6dtixxkeg66zuawfk65zmdq\",\"folder\":\"synrhsfqk5n4qibixhbs7d4iya\",\"content\":\"y\",\"version\":3}"
+    },
+    {
+      "check": "edge POST /t/<id>/files/<id>/url",
+      "status": 200,
+      "body": "{\"url\":\"/dl/eyJmIjoic3luNmR0aXh4a2VnNjZ6dWF3Zms2NXptZHEiLCJ0Ijoic3ludXZ3Z3Y1eXpuYmU1YWI2N2thbnV1cG8iLCJvcCI6InJlYWQiLCJpYXQiOjE3OTIwMzIwNDY4NzksImV4cCI6MTc5MjAz"
+    },
+    {
+      "check": "edge GET /t/<id>/folders/<id>/files",
+      "status": 200,
+      "body": "{\"items\":[{\"id\":\"syn35u6xevjhmve3xrvl6ez4g7\",\"folder\":\"synrhsfqk5n4qibixhbs7d4iya\",\"content\":\"synthetic content syn35u6xevjhmve3xrvl6ez4g7\",\"version\":1},{\"id\":\""
+    },
+    {
+      "check": "edge GET /t/<id>/files?limit=50",
+      "status": 200,
+      "body": "{\"items\":[{\"id\":\"syn2hol2rmspai7lyppfx6wkad\"},{\"id\":\"syn2vw5xjfvkt4gtq4gbxzwfex\"},{\"id\":\"syn35u6xevjhmve3xrvl6ez4g7\"},{\"id\":\"syn3ahd2nw4uubcgc7ci6bucem\"},{\"id\":"
+    },
+    {
+      "check": "edge GET /t/<id>/labels/<id>",
+      "status": 200,
+      "body": "{\"id\":\"syn6dtixxkeg66zuawfk65zmdq\",\"labels\":[\"CUS\",\"PII\"],\"decision_id\":\"3b7afigql4kaznvvf5vwd5ongb\"}"
+    }
+  ]
+}

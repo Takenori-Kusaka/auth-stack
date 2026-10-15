@@ -1,0 +1,372 @@
+{
+  "tc": "TC-009",
+  "engine_config": {
+    "id": "nocache",
+    "openfga_check_cache_ttl": null
+  },
+  "run": "20261015T030120Z-2ff4d6",
+  "manifest_version": 2,
+  "manifest_sha256": "b90fe1ea0d14d3104ad0093afec7b9ee3ed139db3b92f08f6b1fa4907ee15f6c",
+  "evaluated_at": "2026-10-15T03:22:07.452Z",
+  "control": {
+    "failures": 0,
+    "iterations": 140,
+    "c3_abort": false
+  },
+  "metrics": {
+    "wrong_allows_one_sided": 0,
+    "duplicate_applications": 0,
+    "duplicates": [],
+    "outbox_keys": 155,
+    "k4_repairs": 5,
+    "by_op_fault": {
+      "create/none": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 211.877,
+          "p50": 216.114,
+          "p99": 223.679,
+          "max": 223.679
+        }
+      },
+      "move/none": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 22.025,
+          "p50": 28.014,
+          "p99": 37.347,
+          "max": 37.347
+        }
+      },
+      "delete/none": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/none": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 41.622,
+          "p50": 42.862,
+          "p99": 45.634,
+          "max": 45.634
+        }
+      },
+      "create/crash_before_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "move/crash_before_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "delete/crash_before_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/crash_before_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "create/crash_after_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 534.183,
+          "p50": 572.421,
+          "p99": 583.71,
+          "max": 583.71
+        }
+      },
+      "move/crash_after_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 521.839,
+          "p50": 543.277,
+          "p99": 547.867,
+          "max": 547.867
+        }
+      },
+      "delete/crash_after_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/crash_after_commit": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 551.357,
+          "p50": 553.658,
+          "p99": 665.376,
+          "max": 665.376
+        }
+      },
+      "create/crash_after_deliver": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 407.398,
+          "p50": 431.348,
+          "p99": 495.037,
+          "max": 495.037
+        }
+      },
+      "move/crash_after_deliver": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 423.937,
+          "p50": 433.614,
+          "p99": 438.131,
+          "max": 438.131
+        }
+      },
+      "delete/crash_after_deliver": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/crash_after_deliver": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 433.082,
+          "p50": 436.667,
+          "p99": 449.927,
+          "max": 449.927
+        }
+      },
+      "create/delay_1500": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 213.915,
+          "p50": 215.051,
+          "p99": 224.456,
+          "max": 224.456
+        }
+      },
+      "move/delay_1500": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": -0.62,
+          "p50": 27.657,
+          "p99": 29.66,
+          "max": 29.66
+        }
+      },
+      "delete/delay_1500": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/delay_1500": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 46.036,
+          "p50": 49.12,
+          "p99": 61.972,
+          "max": 61.972
+        }
+      },
+      "create/pause_3000": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 3314.677,
+          "p50": 3322.022,
+          "p99": 3337.084,
+          "max": 3337.084
+        }
+      },
+      "move/pause_3000": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 3249.917,
+          "p50": 3347.326,
+          "p99": 3357.047,
+          "max": 3357.047
+        }
+      },
+      "delete/pause_3000": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/pause_3000": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 3264.846,
+          "p50": 3278.906,
+          "p99": 3374.955,
+          "max": 3374.955
+        }
+      },
+      "create/duplicate": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 214,
+          "p50": 220.236,
+          "p99": 223.646,
+          "max": 223.646
+        }
+      },
+      "move/duplicate": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": 30.986,
+          "p50": 33.549,
+          "p99": 49.238,
+          "max": 49.238
+        }
+      },
+      "delete/duplicate": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "share/duplicate": {
+        "iterations": 5,
+        "wrong_allows": 0,
+        "control_failures": 0,
+        "entitled_first_allow_ms": {
+          "n": 5,
+          "min": -12.899,
+          "p50": 61.912,
+          "p99": 66.019,
+          "max": 66.019
+        }
+      }
+    }
+  },
+  "verdict": {
+    "wrong_allow_0": true,
+    "duplicate_0": true
+  },
+  "result": "pass",
+  "inputs": {
+    "ops.jsonl": "24ff7c3f7468ed8f316e29f3f65eeec8e3c4b53e6ffe19c6ca8c8db152fca3ed",
+    "requests.jsonl": "385c83ad7f14583a76747bcf1eca5a1683c68592ca459e344a0cc492a314ef9d",
+    "pdp/writes.jsonl": "bd0088d4a8b45ca958b83e3a90ce9daf1b017f7ede670caac051279d72a93da7",
+    "run.json": "e4d375ab071aeeed685fe2e1549347ae6ea66ec3d50d90c64c722481cb1d2adb"
+  }
+}

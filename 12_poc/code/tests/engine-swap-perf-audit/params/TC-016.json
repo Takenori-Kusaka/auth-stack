@@ -1,0 +1,48 @@
+{
+  "tc": "TC-016",
+  "title": "txn・decision_id・trace_id による一貫リクエスト証跡の再構成",
+  "plan_section": "preregistered-test-plan.md §4.16",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 16,
+  "dataset": { "profile": "small", "seed": 16 },
+  "engine": "openfga",
+  "traffic": {
+    "tool_run_3hop": 24,
+    "file_write_1hop": 16,
+    "file_read_1hop": 24,
+    "file_read_labels_2hop": 16,
+    "trace_variants": {
+      "V0": "外部 traceparent（sampled=01）だけ",
+      "V1": "外部 traceparent の sampled=00（sampler DROP 相当）",
+      "V2": "sampled flag の偽造（01）＋巨大な tracestate（32 member・各 15 文字以上、計 512 文字前後）＋識別子を入れた baggage（user・tenant・file の ID と一意の marker）",
+      "V3": "全要求で同じ外部 trace-id（衝突）"
+    },
+    "variant_assignment": "要求 i に V[i mod 4] を割り当てる。全要求を DPoP の public client（edge へ直接）で送る（BFF は traceparent 以外の trace ヘッダを転送しないため）",
+    "pair_templates": 12,
+    "pair_design": "同じ主体・同じ資源・同じ操作の要求を V0 と V2・V3 で 1 回ずつ送り、監査記録（E1・E2）の内容を揮発欄（event_id・時刻・integrity・corr の trace_id/request_id/decision_id/jti_ref/txn・record_stage）を除いて比べる"
+  },
+  "adapter_swap": { "writes_after_swap": 12, "method": "STS の POST /admin/settings {txnIdFormat:'inhouse'}（CH-ESPA-03）。参照サービス・PEP SDK のコードは変えない" },
+  "injections": {
+    "e2_missing_decision_id": 3,
+    "e2_forged_decision_id_not_from_facade": 3,
+    "e2_request_id_mismatch_on_real_decision": 3,
+    "e1_facade_only_without_enforcement": 3,
+    "rogue_producer": "登録済み workload 'admin' の producer（自分の producer_id で正しく連鎖させた偽の E2）"
+  },
+  "tamper": {
+    "base": "注入前に取った監査の写し（audit/・audit-copy/・audit-producers/）",
+    "kinds": ["modify_one_record (E1 の detail.decision と reason を書換え)", "delete_one_record (中ほどの 1 行)", "truncate_tail (末尾 3 行)"],
+    "variants": ["journal_only (原本だけを改変)", "journal_and_copy (原本と独立複写の両方を同じに改変)"],
+    "detector": "audit/verify.js（C1 producer 連鎖、C2 producer 発行ログとの突合、C3 複写の一致）"
+  },
+  "criteria": {
+    "reconstruction_rate_write_txn": 1.0,
+    "reconstruction_rate_read_sensitive_triple": 1.0,
+    "forged_trace_record_diffs": 0,
+    "injected_gap_and_forgery_detection_rate": 1.0,
+    "tamper_detection_rate": 1.0,
+    "identifiers_in_trace_or_baggage": 0,
+    "adapter_swap_consumer_diff_lines": 0
+  },
+  "abort": { "C-6": "監査ジャーナルの独立複写（audit-copy/journal.jsonl）が無い、または評価開始時に原本と一致しない（改ざん試験は写しで行い、原本と複写には手を入れない）", "C-3_positive_control_max_failure_rate": 0, "C-3_positive_control_definition": "V0 の要求の業務応答（2xx）" }
+}

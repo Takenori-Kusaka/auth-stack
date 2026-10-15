@@ -1,0 +1,85 @@
+{
+  "evaluated_at": "2026-10-15T06:38:48.789Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-021",
+  "verdict": "判定保留",
+  "note": "計画 §3.4 で「待（KP-4）」。p_max が決まらず n を凍結できないため、合否判定のための実行ではない（要旨 4）。暫定 n で値を記録した",
+  "values": {
+    "sequences": 120,
+    "checks": 8064,
+    "ref_allows": 1664,
+    "allow_expansion_diffs": 0,
+    "deny_expansion_diffs": 15,
+    "engine_errors": 0,
+    "diffs_total": 15,
+    "residual_rate_upper_95_if_zero": 0.025,
+    "escalation_success": 1,
+    "escalation": {
+      "reserved_permission": false,
+      "creator_lacks_permission": false,
+      "other_tenant_role_assign_service": false,
+      "other_tenant_role_tuple_via_facade": true,
+      "external_gets_admin_role": false,
+      "external_tenant_admin_via_domain_writer": false
+    },
+    "escalation_controls": {
+      "valid_role_created": true,
+      "internal_assignment": true
+    },
+    "revoked_returned_in_paging": 0,
+    "paging": [
+      {
+        "trial": 0,
+        "first_page": 50,
+        "revoked": 50,
+        "still_readable_otherwise": 43,
+        "returned_after": 43,
+        "revoked_returned": 0
+      },
+      {
+        "trial": 1,
+        "first_page": 50,
+        "revoked": 50,
+        "still_readable_otherwise": 1,
+        "returned_after": 1,
+        "revoked_returned": 0
+      },
+      {
+        "trial": 2,
+        "first_page": 50,
+        "revoked": 50,
+        "still_readable_otherwise": 43,
+        "returned_after": 43,
+        "revoked_returned": 0
+      },
+      {
+        "trial": 3,
+        "first_page": 50,
+        "revoked": 50,
+        "still_readable_otherwise": 4,
+        "returned_after": 4,
+        "revoked_returned": 0
+      },
+      {
+        "trial": 4,
+        "first_page": 50,
+        "revoked": 50,
+        "still_readable_otherwise": 0,
+        "returned_after": 0,
+        "revoked_returned": 0
+      }
+    ]
+  },
+  "reference_against_criteria": {
+    "allow_expansion_0": true,
+    "escalation_0": false,
+    "revoked_returned_0": true,
+    "deny_expansion_explained": "要説明（diffs.jsonl）"
+  },
+  "input_hashes": {
+    "property-sequences.json": "73ab44b7001e04778ea2c804c9343b629c77849693381cd6abebb44b47991ad7",
+    "escalation-paging.json": "f861341ebac7a60e6d84f0f2d02c0745211041b1ed01e97387fbca9baf196d48",
+    "diffs.jsonl": "ddf9566f198dc2b43316f83040635250e950b4b26e9bdcda4d0e9063ca3a4553"
+  }
+}

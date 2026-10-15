@@ -1,0 +1,55 @@
+{
+ "note": "files over 1 MB were gzip-compressed after evaluation for repository size; sha256 is of the original (matches SHA256SUMS); decompress with gunzip to re-run the evaluator",
+ "compressed_at": "2026-10-15T03:02:41.999Z",
+ "files": [
+  {
+   "file": "configs/C2-cedar-correct/audit/journal.jsonl",
+   "sha256": "1d534d97a80c550779437cb5e6b56451cee31132ac55e9be61477092b7ff8cb2",
+   "bytes": 18588799,
+   "gz_sha256": "d710c0657b272ba9abeb5ecace3d54f7fed346221dc8b2ab50adbff86b3eeeab",
+   "gz_bytes": 2170522
+  },
+  {
+   "file": "configs/C2-cedar-correct/audit-copy/journal.jsonl",
+   "sha256": "1d534d97a80c550779437cb5e6b56451cee31132ac55e9be61477092b7ff8cb2",
+   "bytes": 18588799,
+   "gz_sha256": "d710c0657b272ba9abeb5ecace3d54f7fed346221dc8b2ab50adbff86b3eeeab",
+   "gz_bytes": 2170522
+  },
+  {
+   "file": "configs/C2-cedar-correct/edge/edge-requests.jsonl",
+   "sha256": "0e8f175c961ff17d61ba11bd3158fd677e9d3d4ceefce14ff67d39ba72209048",
+   "bytes": 1333903,
+   "gz_sha256": "a63615fd7db8c208e5d8b9bf608d85e165a104f616de53886b6b59b33e5c1fe9",
+   "gz_bytes": 357833
+  },
+  {
+   "file": "configs/C2-cedar-correct/pdp/decisions.jsonl",
+   "sha256": "21513c4b4b32120978f253fb15bd6ace2571b07374e949880ba6f39470363b6d",
+   "bytes": 7079670,
+   "gz_sha256": "6c0cb692138421925b83180597a7448faaefdb687e0a2dcdd7dc0d283dfa9355",
+   "gz_bytes": 913902
+  },
+  {
+   "file": "configs/C2-cedar-correct/pep/file-service-enforce.jsonl",
+   "sha256": "3efc6ffcf4cc9b8ec9e7cb8e594e41997b5b1668bf441e97caa6fdda9ea07432",
+   "bytes": 1030047,
+   "gz_sha256": "ca8a3b56a1dcf36033e5645d8074580078902f3776a7a709e06a6e7d83b401ac",
+   "gz_bytes": 311186
+  },
+  {
+   "file": "configs/C2-cedar-correct/requests.jsonl",
+   "sha256": "648296e868ae817e42af2147be366c2fc082a69ffc9f87017f74a25f6ee8ae20",
+   "bytes": 7688388,
+   "gz_sha256": "eeaf510416a542b09a5b363ae2796e4756fc3f86a76be443a51afeb7d7619c9e",
+   "gz_bytes": 923169
+  },
+  {
+   "file": "configs/C2-cedar-correct/sts/issuance-ledger.jsonl",
+   "sha256": "dc1c633b2cec32889aad525da5e8d158bb878972f71a88c004bd7cd4d4cc516a",
+   "bytes": 1594680,
+   "gz_sha256": "a9e219d995961a0501c2f4994595a430ab5b5f67cf413f2d648250516458e693",
+   "gz_bytes": 229586
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+  "tc": "engine-swap-perf-audit/harness-check",
+  "run_id": "20261015T021605Z-99bcf0",
+  "frozen": false,
+  "purpose": "harness-check-eps-openfga",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:16:06.011Z",
+  "ended_at": "2026-10-15T02:16:16.242Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "engine": "openfga"
+}

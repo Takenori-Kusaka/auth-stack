@@ -1,0 +1,21 @@
+{
+  "tc": "TC-025",
+  "title": "sandbox と本番の信頼分離",
+  "plan_section": "preregistered-test-plan.md §4.25",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "note_on_ownership": "試験群 token-misuse が同じ TC を実施する場合に備え、本群のポート区画（43500〜）とデータ置き場で独立に実施する",
+  "seed": 25,
+  "dataset": { "profile": "small", "seed": 25 },
+  "presentations": {
+    "P1": "sandbox 役 AS（issuer B）が発行した外部 access token（opaque、DPoP 束縛）を本番役の edge に提示",
+    "P2": "sandbox 役 AS の外部 access token を本番役の STS の exchange の subject_token に（edge の資格情報で）",
+    "P3": "sandbox 役の鍵（別 issuer）で署名した内部 JWT を本番の SDK（file-service の PEP）に提示",
+    "P4": "sandbox 役 AS の ID Token を、本番役 AS（issuer A）を信頼する第三者 RP の模擬（jose、issuer A の JWKS を固定）に提示",
+    "P5": "sandbox の workload 証明書（trust domain sandbox.test の SVID）で本番の STS・PDP・state store・file-service に mTLS 接続",
+    "P6": "sandbox 専用の client 資格情報（本番に未登録の鍵で作った private_key_jwt）で本番役 AS の token endpoint・PAR を呼ぶ",
+    "P7": "app-only 権限の付与の試行: 本番役 AS に client_credentials grant を要求（sandbox の client、本番の client）"
+  },
+  "detection": "付与の試行（P6・P7）ごとに、本番側の記録（AS の as-events.jsonl の grant.error 等）に 1 件以上の拒否記録が残ること",
+  "criteria": { "accepted": 0, "grant_attempt_detection_rate": 1.0 },
+  "abort": { "C-3": "同じ区画内の正例（本番役 AS の token を本番の edge で、sandbox 役 AS の token の introspection を sandbox 役 AS で）が失敗" }
+}

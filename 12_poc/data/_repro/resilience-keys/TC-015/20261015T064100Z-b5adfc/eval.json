@@ -1,0 +1,378 @@
+{
+  "tc": "TC-015",
+  "summary": {
+    "checks": {
+      "code_and_config_diff_files": {
+        "value": 0,
+        "files": [],
+        "pass": true
+      },
+      "service_restarts": {
+        "value": 0,
+        "pass": true
+      },
+      "verification_failures_in_procedure": {
+        "value": 0,
+        "n": 16128,
+        "detail": {
+          "verifier_rejects": 0,
+          "pep_failures": 0,
+          "user_failures": 0,
+          "by_phase": {}
+        },
+        "pass": true
+      },
+      "downgrade_or_negative_accepted": {
+        "value": 0,
+        "old_cp_statuses": [
+          409,
+          409
+        ],
+        "pass": true
+      }
+    },
+    "rollbacks": [
+      {
+        "pass": "P1",
+        "command_to_issuer_switch_ms": 5,
+        "command_to_first_all_accept_ms": 60
+      },
+      {
+        "pass": "P2",
+        "command_to_issuer_switch_ms": 6,
+        "command_to_first_all_accept_ms": 44
+      }
+    ],
+    "inflight_during_rollback": {
+      "n": 510,
+      "rejected": 0
+    },
+    "passes_completed": [
+      "P1",
+      "P2"
+    ],
+    "verdict": "pass"
+  },
+  "negatives": {
+    "P1:S7-published_retired_alg": {
+      "verifier_n": 102,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 102
+      },
+      "pep_n": 37,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 37
+      }
+    },
+    "P1:S7-after_old_cp": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 0,
+      "pep_accepted": 0,
+      "pep_statuses": {}
+    },
+    "P1:S7-alg_key_mismatch": {
+      "verifier_n": 102,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 102
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P1:S7-alg_none": {
+      "verifier_n": 96,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 96
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P1:S7-hs256_public_key_as_secret": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 18,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 18
+      }
+    },
+    "P1:S7-foreign_rs256_active_kid": {
+      "verifier_n": 102,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 102
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-published_retired_alg": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 37,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 37
+      }
+    },
+    "P2:S7-after_old_cp": {
+      "verifier_n": 96,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 96
+      },
+      "pep_n": 0,
+      "pep_accepted": 0,
+      "pep_statuses": {}
+    },
+    "P2:S7-alg_key_mismatch": {
+      "verifier_n": 102,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 102
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-alg_none": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-hs256_public_key_as_secret": {
+      "verifier_n": 102,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 102
+      },
+      "pep_n": 18,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 18
+      }
+    },
+    "P2:S7-foreign_rs256_active_kid": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    }
+  },
+  "evaluated_at": "2026-10-15T06:44:24.650Z",
+  "evaluator": {
+    "file": "12_poc/code/tests/resilience-keys/TC-015.js",
+    "sha256": "42d4fc78876cf975c9d9a7585f72ad443d65797f71a0f5ae5ef3d690bb7e7e90"
+  },
+  "inputs": [
+    {
+      "file": "as-a/as-events.jsonl",
+      "sha256": "9534ee736fc45b35200d0a9acd781d9987ca8d1bbb7b5b721854c197fbdec6d6"
+    },
+    {
+      "file": "audit/journal.jsonl",
+      "sha256": "46583f13e805ab545a3703c128becbeb90ef99304311e03c0bd4ecfb68ee7ba9"
+    },
+    {
+      "file": "audit-copy/journal.jsonl",
+      "sha256": "46583f13e805ab545a3703c128becbeb90ef99304311e03c0bd4ecfb68ee7ba9"
+    },
+    {
+      "file": "audit-producers/file-service.produced.jsonl",
+      "sha256": "de79ab898cc777e8ee0b66b5073d63e7eb4a8f362a5fad1736c364cf09903abd"
+    },
+    {
+      "file": "audit-producers/file-service.state.json",
+      "sha256": "8634512dfda27c89b2f74473ef51d92f20b6230affcca2f90bab020652834da0"
+    },
+    {
+      "file": "audit-producers/pdp.produced.jsonl",
+      "sha256": "ca56e6eb2529fc63c668208d9ea360846cfb53ebfeacc1f5e995cc20dea5e30f"
+    },
+    {
+      "file": "audit-producers/pdp.state.json",
+      "sha256": "4b2b72bd63a60909b87137596f1cee9184a8363cec7bff035329e3d390786dc1"
+    },
+    {
+      "file": "audit-producers/sts.produced.jsonl",
+      "sha256": "740a1f3641b0bbe3af9564ec307f31a9d768110b1b8394788c8c727a8dfef668"
+    },
+    {
+      "file": "audit-producers/sts.state.json",
+      "sha256": "98f62a2d32164c7b548d75c5714f7576247e9bf7e56ae46edd30078d6c383a3b"
+    },
+    {
+      "file": "bff/bff-events.jsonl",
+      "sha256": "6f5d6cb7b4fabe77373f0961b8f28147d4c6192a15caab1041422eb84faf62ed"
+    },
+    {
+      "file": "dataset.json",
+      "sha256": "95805bc9b093f2ffb0d1e5247b726920540314fec8501a17cf9afb0c2d626d73"
+    },
+    {
+      "file": "edge/edge-requests.jsonl",
+      "sha256": "affec695636acc4cc6fdbd5fc617d2c935159f6b86bf46f37402116b85b5117d"
+    },
+    {
+      "file": "env.json",
+      "sha256": "c158ee14a68f686090f596eec9064f9f1dde24d1611731241da74f1be0d4a9ca"
+    },
+    {
+      "file": "events.jsonl",
+      "sha256": "ae7d5153777553a71a2808715d16b95069ad656aa353016767f9e042c7db73fb"
+    },
+    {
+      "file": "final-keys-at.json",
+      "sha256": "497af59fd29bc493fd88a3c1b70fc713db04c4a314751d2a15cc5ec5e5da0f19"
+    },
+    {
+      "file": "final-keys-txn.json",
+      "sha256": "3ea3b0e6f3eb62485613a708bab66d08dda566f66e28bd2ad19e14c0a0e0d872"
+    },
+    {
+      "file": "fingerprint-after.json",
+      "sha256": "b7642f4872268b4199b1bc8b06e1598d2de90b2a44eea5fc7ada50a29ad411dd"
+    },
+    {
+      "file": "fingerprint-before.json",
+      "sha256": "b7642f4872268b4199b1bc8b06e1598d2de90b2a44eea5fc7ada50a29ad411dd"
+    },
+    {
+      "file": "logs/as-a.log",
+      "sha256": "97ae6aff880183c43819e86326614cd04f675b4e09c0b02e62b42ea080b325fa"
+    },
+    {
+      "file": "logs/as-b.log",
+      "sha256": "719028be1d1ed3e1abfbe6b4eb546343d5871660f0ef81381e24e83c2131cdb7"
+    },
+    {
+      "file": "logs/bff.log",
+      "sha256": "6630e4b7c7ef4dbfa93a3b844be48f0f25986af61fd2a818deb7447a10dc1369"
+    },
+    {
+      "file": "logs/edge.log",
+      "sha256": "bc2c9a5572ec6dd015566aae59201354e14265bd74a3e105af6fe4c8d9a4499e"
+    },
+    {
+      "file": "logs/file-service.log",
+      "sha256": "cddc0c150e60cbc7a3aa84746d541b6614035bacd398b97cedd3ff9451c4893e"
+    },
+    {
+      "file": "logs/journal.log",
+      "sha256": "ae2e9752198b914ea317eb96679ff47958c05c8a46f2e8ef0bcb942727457c07"
+    },
+    {
+      "file": "logs/label-service.log",
+      "sha256": "b37ad7ba2e5b15bc012bb63f37bc510488845a80a68d514142eb3b61ec5415e9"
+    },
+    {
+      "file": "logs/openfga.log",
+      "sha256": "527a9209e1e1abc0235cacbba54353dbd444f167e72dd0939827c04364438476"
+    },
+    {
+      "file": "logs/pdp.log",
+      "sha256": "19446b37dcd8137167a88f1c59392e04ed04d3d40cb51972cca001d3dc1c119b"
+    },
+    {
+      "file": "logs/state-store.log",
+      "sha256": "b630ebbbc609aa352e4c4a9629760b170f33f5a4ba18a0f3602413d3622c0994"
+    },
+    {
+      "file": "logs/sts.log",
+      "sha256": "b4a1edbb8969c599e80f36263b2b7efcf40ad65c09124c159d2af8dc93ca067f"
+    },
+    {
+      "file": "logs/tool-service.log",
+      "sha256": "2cf9b1583d580ab62a11f2d2c52a5ac61974a8b8bbaa05ab8e8360678d66e132"
+    },
+    {
+      "file": "pdp/decisions.jsonl",
+      "sha256": "8a21ca105eeb62563571951df30998bdc848687fef9f3364bcee4746f4e062d5"
+    },
+    {
+      "file": "pdp/object-tenant.jsonl",
+      "sha256": "97bb51a037fe99c64f2999c74519cc916327a1c17623aeb3dbd5a972a5f7b31e"
+    },
+    {
+      "file": "pdp/openfga-store.json",
+      "sha256": "8d1127fa2c527dd0b727ac5c75c6a98152e3ced57852bf0be63f5b069df08648"
+    },
+    {
+      "file": "pdp/write-seq",
+      "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    },
+    {
+      "file": "pdp/writes.jsonl",
+      "sha256": "b53e8855917c3f4647d76fc9e0dd865fdd42f77b24ffb9315ba2a0b125f567cb"
+    },
+    {
+      "file": "pep/file-service-enforce.jsonl",
+      "sha256": "4d057a0bf2b644e02996a811dac273984cde066d610512a6e0772eba2223774e"
+    },
+    {
+      "file": "pep-probe.jsonl",
+      "sha256": "3ff3ca109be35893131b61bbdde91650507a5343ccc794d99679ea3216fe6fdd"
+    },
+    {
+      "file": "roles.json",
+      "sha256": "b50ddb9b568c1b9e37f3d6f56a4371e6e3adf17535a93799bfb1e25830a6eba1"
+    },
+    {
+      "file": "run.json",
+      "sha256": "a4392e0f666da6ea4e4967a052495c29ebd9610ce4929a508fb6e1cdb39439ff"
+    },
+    {
+      "file": "state-changes.jsonl",
+      "sha256": "f40f209bfdcbee277698cd86aa62b60ccaa30539997b0be3ce893fd021a0110f"
+    },
+    {
+      "file": "sts/issuance-ledger.jsonl",
+      "sha256": "a8684d455b01ef6e53da00b318ba9b759d1385ecd2154cf8b79c0c81f2c8463d"
+    },
+    {
+      "file": "ticks.jsonl",
+      "sha256": "9eed57ea60c56382c4b01effffabb7237792f28c09a87b1991e374be5832c92d"
+    },
+    {
+      "file": "user.jsonl",
+      "sha256": "3221d58f9f6fb5d72617874a42f7076f5a9dac8b7e669e33c81d2cdee51f67e4"
+    }
+  ],
+  "output_file": "eval.json"
+}

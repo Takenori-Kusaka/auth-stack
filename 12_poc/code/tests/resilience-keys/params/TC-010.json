@@ -1,0 +1,279 @@
+{
+  "$comment": "TC-010 parameters (test plan §4.10). Written before any TC-010 measurement. Values the plan leaves to 'freeze time' (repetitions, C-3 limit, timing) are set here by the implementer and disclosed as deviation RK-DEV-02 (not witnessed).",
+  "tc": "TC-010",
+  "plan_section": "4.10",
+  "seed": 1,
+  "profile": "smoke",
+  "repetitions_per_request": 3,
+  "batches_per_window": {
+    "A": "immediately after the fault is applied (proxy log or façade ack)",
+    "B": "1500 ms after batch A was dispatched",
+    "concurrency": "each batch = repetitions_per_request sequential rounds; one round sends every operation concurrently (12 requests)"
+  },
+  "batch_b_delay_ms": 1500,
+  "timing": {
+    "D_t_pep_pdp_timeout_ms": 3000,
+    "facade_engine_timeout_ms": 1500,
+    "injected_delay_ms": 5000,
+    "known_answer_probe_interval_ms": 250,
+    "recovery_timeout_ms": 20000,
+    "netstat_sample_interval_ms": 500
+  },
+  "settings": {
+    "accessTokenTtlSec": 3600,
+    "signedUrlTtlSec": 3600
+  },
+  "tiers_implemented": [
+    "public",
+    "read-sensitive",
+    "write",
+    "privileged/T"
+  ],
+  "tiers_not_implemented": {
+    "privileged/P": "no entry point in the PoC ledger",
+    "break-glass/P": "separate path outside the platform (ADR-029 D29-81), not built in line 1",
+    "break-glass/B": "no typed break-glass exception in the PoC"
+  },
+  "operations": [
+    {
+      "id": "pub.download",
+      "tier": "public",
+      "subject": "none",
+      "expected_normal": "allow"
+    },
+    {
+      "id": "rs.file.read.owner",
+      "tier": "read-sensitive",
+      "subject": "owner",
+      "expected_normal": "allow"
+    },
+    {
+      "id": "rs.file.read.none",
+      "tier": "read-sensitive",
+      "subject": "nonmember_of_resource",
+      "expected_normal": "deny"
+    },
+    {
+      "id": "rs.folder.list.owner",
+      "tier": "read-sensitive",
+      "subject": "owner",
+      "expected_normal": "allow",
+      "list": true
+    },
+    {
+      "id": "rs.file.search.owner",
+      "tier": "read-sensitive",
+      "subject": "owner",
+      "expected_normal": "allow",
+      "list": true
+    },
+    {
+      "id": "rs.tool.view.admin",
+      "tier": "read-sensitive",
+      "subject": "project_admin",
+      "expected_normal": "allow"
+    },
+    {
+      "id": "rs.tool.view.none",
+      "tier": "read-sensitive",
+      "subject": "nonmember_of_resource",
+      "expected_normal": "deny"
+    },
+    {
+      "id": "w.file.write.owner",
+      "tier": "write",
+      "subject": "owner",
+      "expected_normal": "allow"
+    },
+    {
+      "id": "w.file.write.none",
+      "tier": "write",
+      "subject": "nonmember_of_resource",
+      "expected_normal": "deny"
+    },
+    {
+      "id": "pT.tool.config.admin",
+      "tier": "privileged",
+      "subject": "project_admin (amr pwd,hwk)",
+      "expected_normal": "allow"
+    },
+    {
+      "id": "pT.tool.config.none",
+      "tier": "privileged",
+      "subject": "nonmember_of_resource (amr pwd,hwk)",
+      "expected_normal": "deny"
+    },
+    {
+      "id": "rs.file.read.restricted_guest",
+      "tier": "read-sensitive",
+      "subject": "external guest whose folder carries restricted_external",
+      "expected_normal": "deny"
+    }
+  ],
+  "windows_openfga": [
+    {
+      "id": "W0",
+      "class": "baseline",
+      "fault": "none"
+    },
+    {
+      "id": "W1",
+      "class": "U",
+      "fm": "FM-01",
+      "fault": "inj-pep delay 5000 ms (> D(t) = 3000 ms)"
+    },
+    {
+      "id": "W2",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep blackhole"
+    },
+    {
+      "id": "W3",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep reset"
+    },
+    {
+      "id": "W4",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "façade process killed"
+    },
+    {
+      "id": "W5",
+      "class": "U",
+      "fm": "FM-01",
+      "fault": "inj-engine delay 5000 ms (> façade engine timeout 1500 ms)"
+    },
+    {
+      "id": "W6",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-engine blackhole"
+    },
+    {
+      "id": "W7",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-engine status 500"
+    },
+    {
+      "id": "W8",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "OpenFGA process killed"
+    },
+    {
+      "id": "W9",
+      "class": "I",
+      "fm": "evaluation error",
+      "fault": "inj-engine status 400 (condition / CEL evaluation error as returned by OpenFGA)"
+    },
+    {
+      "id": "W10",
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade allow_all",
+      "allow_widening": true
+    },
+    {
+      "id": "W11",
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade deny_all"
+    },
+    {
+      "id": "W12",
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "façade stale_revision"
+    },
+    {
+      "id": "W13",
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "inj-engine allow_all (engine answers allowed=true)",
+      "allow_widening": true
+    },
+    {
+      "id": "W14",
+      "class": "F",
+      "fm": "FM-13",
+      "fault": "inj-engine deny_all"
+    },
+    {
+      "id": "W15",
+      "class": "U",
+      "fm": "FM-02 (no decision_id)",
+      "fault": "façade drop_decision_id"
+    },
+    {
+      "id": "W16",
+      "class": "U",
+      "fm": "FM-02 (request id echo mismatch)",
+      "fault": "façade wrong_request_id"
+    },
+    {
+      "id": "W17",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "façade answers 503 unavailable"
+    }
+  ],
+  "windows_cedar": [
+    {
+      "id": "C0",
+      "class": "baseline",
+      "fault": "none"
+    },
+    {
+      "id": "C1",
+      "class": "I",
+      "fm": "attribute missing",
+      "fault": "cedar dropAttr ttu_parent__restricted_inherited"
+    },
+    {
+      "id": "C2",
+      "class": "I",
+      "fm": "entity missing (exclusion skipped)",
+      "fault": "cedar dropEntityPrefix core/tenant:<guest tenant>#external_member"
+    },
+    {
+      "id": "C3",
+      "class": "I",
+      "fm": "schema missing",
+      "fault": "cedar noSchema",
+      "note": "evaluation without schema may still produce valid decisions; recorded, counted only if an expected-deny request is allowed"
+    },
+    {
+      "id": "C4",
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep blackhole (Cedar configuration)"
+    }
+  ],
+  "definitions": {
+    "allowed": "HTTP 2xx at the client",
+    "write_plus_allow": "tier in {write, privileged} and allowed, in a fault window of class U or I (any subject), or of class F where the subject's expected_normal is deny, or of class F after the first fm13 alarm of that window (any subject). Allows of expected-allow subjects in class F before the alarm are reported separately (pre_detection_correct_allows).",
+    "indeterminate_to_allow": "class I window, tier != public, allowed (any subject)",
+    "rs_allow_in_outage": "class U or I window, tier read-sensitive, allowed (provisional rule: rs reads as deny until KD08-1)",
+    "empty_list_in_outage": "class U, I or F window, list operation answered 2xx with an empty item list",
+    "bypass": "a netstat sample during a fault window showing a client connection to the OpenFGA HTTP port owned by a process other than inj-engine (the façade's only configured path) and other than the test harness process itself (its keep-alive readiness probe of OpenFGA after a process start is not part of the system under test)",
+    "alarm_all_allow": "each window with allow_widening=true has at least one fm13_wrong_answer alarm with allow_widening=true",
+    "reason_code_split": "class U decisions recorded by the façade carry deny_unavailable (or no façade record when the façade is unreachable) and class I decisions carry deny_indeterminate (recorded, hypothesis part, not a numbered pass criterion)",
+    "matrix_conformance": "public allowed in every window; rs/w/pT denied with 503 in class U and I windows and in class F after detection (fail-mode-matrix §6.1, §6.2, §6.13 with the provisional rs rule)"
+  },
+  "pass_criteria": {
+    "write_plus_allow": 0,
+    "indeterminate_to_allow": 0,
+    "bypass": 0,
+    "empty_list_in_outage": 0,
+    "rs_allow_in_outage": 0,
+    "alarm_all_allow": "all"
+  },
+  "abort": {
+    "C-3": "baseline window: any expected-allow request denied or any expected-deny request allowed; or the system does not recover (owner read 200) within recovery_timeout_ms after a fault is cleared. Upper limit of control failures = 0",
+    "C-5": "during a fault window a non-target component fails its health probe (state-store /healthz, STS /jwks, AS discovery; plus the façade /healthz for engine-side faults) or the public operation fails"
+  }
+}

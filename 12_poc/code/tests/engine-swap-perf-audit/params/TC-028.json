@@ -1,0 +1,23 @@
+{
+  "tc": "TC-028",
+  "title": "連携パターン参照実装の負例",
+  "plan_section": "preregistered-test-plan.md §4.28",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 28,
+  "dataset": { "profile": "small", "seed": 28 },
+  "engine": "openfga",
+  "patterns": {
+    "P-01": "BFF（services/bff.js）→ edge → file-service。他 aud は同じ利用者の内部 AT（aud=tool）を file-service に直接提示",
+    "P-03": "tool-service → STS 取り直し → file-service（tool.run）。他 aud は内部 AT（aud=tool）を file-service に直接提示",
+    "P-04": "非同期 consumer（lib/jobs.js、1 段）。他 aud は別 workload（harness）向けに登録した受付記録の job_run_id を consumer（tool-service）が使う",
+    "P-05": "長時間ジョブ（lib/jobs.js、10 段）。他テナントは他テナントの資源を対象にした受付、失効後は実行中の関係剥奪",
+    "P-07": "第三者連携アプリ（AS の attacker-client を第三者 app 役、private_key_jwt＋PKCE＋DPoP）。他 aud は app の外部 AT を内部 RS（file-service）に直接提示（NP07-5）、失効後は AS の grant 失効",
+    "P-08": "AI エージェント役の public client（DPoP）→ tool サーバー（tool-service、PP-6）→ STS → file-service。他 aud は内部 AT（aud=file）を tool-service に提示（NP08-1）。下流に届いた token の aud と act も確かめる",
+    "P-09": "file.search（一覧ヘルパ）。他 aud は searchResources を一覧ヘルパ以外（label-service の資格情報）から直接呼ぶ（NP09-4）。失効後は直接付与の剥奪直後の一覧",
+    "P-14": "WebSocket の stream gateway（lib/stream.js、label-service の aud・mTLS 束縛）。接続中に関係の剥奪と session 失効（sid）を注入"
+  },
+  "negatives": ["other_tenant", "other_aud", "after_revocation"],
+  "p14": { "delta_conn_ms": 1000, "i_conn_ms": 500, "l_conn_ms": 60000, "tick_ms": 100, "note": "Δ_conn は TBD のため系統 1 では構成値 1,000 ms で判定（§4.28）。剥奪 API の完了時刻＋Δ_conn より後に client が受け取った配信を違反として数える" },
+  "criteria": { "positive_failures": 0, "negative_accepted": 0, "p14_deliveries_after_budget": 0, "recorded_only": ["P-14 の剥奪から切断までの時間"] },
+  "abort": { "reference_impl_version_changed": "参照実装（lib/jobs.js・lib/stream.js・services/*）の版が凍結 manifest と異なる（C-2 と同じ照合）", "C-3": "正例の失敗 0 件が合否基準そのものなので、C-3 は「スタック起動後の最初の正例（P-01）が失敗した」場合に限る" }
+}

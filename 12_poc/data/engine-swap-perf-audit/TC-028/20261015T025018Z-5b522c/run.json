@@ -1,0 +1,34 @@
+{
+  "tc": "engine-swap-perf-audit/TC-028",
+  "run_id": "20261015T025018Z-5b522c",
+  "frozen": true,
+  "purpose": "measurement",
+  "manifest_hash": "20235ddb497d89fbf45735f8266db5a1c0f71cf4b7188a2e3463f67ce3aece6d",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:50:18.857Z",
+  "ended_at": "2026-10-15T02:50:55.562Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 28,
+  "status": "completed",
+  "tc_id": "TC-028",
+  "group": "engine-swap-perf-audit",
+  "params": {
+    "file": "12_poc/code/tests/engine-swap-perf-audit/params/TC-028.json",
+    "sha256": "141ad8f04b3c0b06acf65a34fe73fac87f9ee7ff5b6ddf7db58638fa2d70c295"
+  },
+  "frozen_manifest": {
+    "version": 3,
+    "manifest_sha256": "20235ddb497d89fbf45735f8266db5a1c0f71cf4b7188a2e3463f67ce3aece6d",
+    "frozen_at": "2026-10-15T02:50:18.103Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": true
+  },
+  "code_tree_sha256": "20235ddb497d89fbf45735f8266db5a1c0f71cf4b7188a2e3463f67ce3aece6d",
+  "port_base": 43560,
+  "verdict": "合格"
+}

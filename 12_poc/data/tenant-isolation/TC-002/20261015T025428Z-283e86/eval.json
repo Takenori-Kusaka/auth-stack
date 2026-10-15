@@ -1,0 +1,1615 @@
+{
+  "tc": "TC-002",
+  "evaluator": "tests/tenant-isolation/TC-002.eval.js",
+  "evaluated_at": "2026-10-15T03:02:16.091Z",
+  "run_id": "20261015T025428Z-283e86",
+  "manifest_hash": "6095ba3e8f3226a787877ff03930b2220062a684bc8ac2d4bfe23b0f440203ef",
+  "verdict": "中止",
+  "verdict_reason": "abort criteria met in C4-cedar-permitall",
+  "criteria": [
+    {
+      "id": "K1",
+      "text": "明示付与のない越境 allow 0 件（n 回の範囲、n = ⌈3/p_max⌉、p_max は KP-4）",
+      "observed": [],
+      "threshold": 0,
+      "threshold_status": "p_max TBD (KP-4); n is provisional",
+      "met_on_observed_n": false
+    },
+    {
+      "id": "K2",
+      "text": "全域 permit モデルでも越境 allow 0 件",
+      "observed": [],
+      "threshold": 0,
+      "threshold_status": "n depends on p_max (KP-4)",
+      "met_on_observed_n": false
+    },
+    {
+      "id": "K3",
+      "text": "変異体の検出力（記録、下限は TBD: CISO, G4, K-03(b)）",
+      "observed": {
+        "detected": 0,
+        "total": 0,
+        "by_class": {}
+      },
+      "threshold": null,
+      "threshold_status": "TBD"
+    }
+  ],
+  "mutants": [],
+  "mutant_o2_usable": false,
+  "reference_mutants_refined_o2": {
+    "note": "参考: v1.1 で追加した O2 の精緻化（凍結前の規則ではない。合否・検出力の正式値には使わない）",
+    "baseline_refined_o2": null,
+    "usable": false,
+    "mutants": []
+  },
+  "mutant_baseline": null,
+  "configs": [
+    {
+      "config": "C4-cedar-permitall",
+      "mutant": null,
+      "n_probes": 1270,
+      "n_cross": 1030,
+      "n_cross_x1": 1009,
+      "n_cross_x2": 21,
+      "n_same": 240,
+      "cross_by_channel": {
+        "direct": 157,
+        "facade_batch": 226,
+        "edge": 352,
+        "facade_eval": 249,
+        "facade_search": 46
+      },
+      "cross_by_channel_ep": {
+        "direct:file.read": 22,
+        "direct:file.write": 29,
+        "facade_batch:belongs": 17,
+        "facade_batch:config": 8,
+        "facade_batch:admin": 13,
+        "facade_batch:view": 44,
+        "facade_batch:use": 13,
+        "direct:tool.view": 41,
+        "edge:file.read": 88,
+        "edge:tool.view": 22,
+        "edge:tool.run": 30,
+        "facade_eval:belongs": 14,
+        "facade_eval:view": 30,
+        "edge:label.read": 26,
+        "facade_batch:delete": 11,
+        "facade_batch:manage": 22,
+        "facade_search:files/file": 16,
+        "edge:folder.list": 38,
+        "edge:file.create": 8,
+        "direct:folder.list": 22,
+        "edge:file.signed_url": 24,
+        "facade_eval:delete": 8,
+        "facade_eval:view_audit": 24,
+        "facade_batch:write": 32,
+        "facade_batch:view_directory": 20,
+        "edge:file.write": 38,
+        "edge:file.move": 23,
+        "facade_search:files/folder": 10,
+        "facade_eval:share": 21,
+        "direct:label.read": 43,
+        "facade_eval:config": 11,
+        "facade_eval:write": 30,
+        "facade_search:proj/tool_instance": 9,
+        "facade_eval:admin": 14,
+        "facade_batch:share": 25,
+        "facade_batch:read": 12,
+        "facade_batch:view_audit": 9,
+        "facade_eval:manage": 34,
+        "facade_eval:read": 27,
+        "edge:file.share": 27,
+        "facade_eval:view_directory": 24,
+        "edge:file.delete": 9,
+        "facade_eval:use": 12,
+        "facade_search:proj/project": 11,
+        "edge:file.search": 9,
+        "edge:tool.config": 10
+      },
+      "violations_o1": 14,
+      "violations_o1_x1": 0,
+      "violations_o1_x2": 14,
+      "violations_by_channel": {
+        "edge:file.read:X2": 2,
+        "direct:tool.view:X2": 1,
+        "facade_eval:use:X2": 2,
+        "edge:label.read:X2": 1,
+        "edge:file.share:X2": 1,
+        "edge:file.search:X2": 2,
+        "direct:folder.list:X2": 2,
+        "direct:file.read:X2": 1,
+        "edge:tool.run:X2": 2
+      },
+      "list_item_violations": 90,
+      "residual_rate_upper_95": 0.002912621359223301,
+      "o2_applicable": 947,
+      "o2_violations": 0,
+      "o2_violation_examples": [],
+      "o2_violations_by": {},
+      "reference_o2_refined_violations": 0,
+      "reference_o2_refined_by": {},
+      "positive_controls": 228,
+      "positive_control_failures": 2,
+      "positive_failure_examples": [
+        {
+          "i": 781,
+          "ch": "edge",
+          "ep": "tool.run",
+          "status": 503
+        },
+        {
+          "i": 1219,
+          "ch": "edge",
+          "ep": "tool.run",
+          "status": 503
+        }
+      ],
+      "same_tenant_decided": 238,
+      "agreement_mismatches": 0,
+      "mismatch_examples": [],
+      "errors": 3,
+      "error_examples": [
+        {
+          "i": 781,
+          "ch": "edge",
+          "ep": "tool.run",
+          "status": 503
+        },
+        {
+          "i": 1219,
+          "ch": "edge",
+          "ep": "tool.run",
+          "status": 503
+        },
+        {
+          "i": 1269,
+          "ch": "direct",
+          "ep": "tool.view",
+          "status": 503
+        }
+      ],
+      "ops": 81,
+      "ops_rejected": 18,
+      "cross_tenant_writes_expected_reject_but_accepted": 0,
+      "search_candidates_for_non_member_claimed_tid": 339,
+      "distribution": {},
+      "distribution_ok": true,
+      "counterexamples": [
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:36.087Z",
+            "i": 19,
+            "ch": "edge",
+            "ep": "file.read",
+            "method": "GET",
+            "path_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "token_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "session_kind": "guest",
+            "sub": "synumwnfdaji54w6qwxdzgbzqr",
+            "res": {
+              "type": "files/file",
+              "id": "synqinwh5ujnzyqf3hrlafjjw2",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn"
+            },
+            "extra": null,
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:36.068Z",
+            "recv": "2026-10-15T02:54:36.087Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "6f3011cc9db51831c019fcd3556e1e7b",
+            "violation": true
+          },
+          "ops_before_minimisation": 2,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:37.054Z",
+            "i": 81,
+            "ch": "direct",
+            "ep": "tool.view",
+            "method": "GET",
+            "token_tid": "synornzoppikghn3gicfxmjt3o",
+            "path_tid": "synornzoppikghn3gicfxmjt3o",
+            "sub": "syn2r3ip7rqvsfim3mfdovgowp",
+            "res": {
+              "type": "proj/tool_instance",
+              "id": "synjqidavcxlsqmb2fg3cvyzlo",
+              "tid": "synornzoppikghn3gicfxmjt3o"
+            },
+            "cross": "X2",
+            "d_variant": "forged_tid_resource_tenant",
+            "sent": "2026-10-15T02:54:37.042Z",
+            "recv": "2026-10-15T02:54:37.054Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "048627d758a75b882b05df0a592b1aa1",
+            "violation": true
+          },
+          "ops_before_minimisation": 7,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:38.731Z",
+            "i": 245,
+            "ch": "facade_eval",
+            "sub": "syn2r3ip7rqvsfim3mfdovgowp",
+            "s_tid": "synornzoppikghn3gicfxmjt3o",
+            "r_tid": "synornzoppikghn3gicfxmjt3o",
+            "res": {
+              "type": "proj/tool_instance",
+              "id": "synjqidavcxlsqmb2fg3cvyzlo",
+              "tid": "synornzoppikghn3gicfxmjt3o"
+            },
+            "perm": "use",
+            "variant": "subject_tid_lie",
+            "cross": "X2",
+            "sent": "2026-10-15T02:54:38.728Z",
+            "recv": "2026-10-15T02:54:38.731Z",
+            "status": 200,
+            "observed": "allow",
+            "reason": "allow",
+            "decision_id": "3f2kl7xqf73e56pf2alkmwwwl3",
+            "expected_sys": true,
+            "expected_correct": false,
+            "violation": true
+          },
+          "ops_before_minimisation": 19,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:39.355Z",
+            "i": 296,
+            "ch": "facade_eval",
+            "sub": "syn2r3ip7rqvsfim3mfdovgowp",
+            "s_tid": "synornzoppikghn3gicfxmjt3o",
+            "r_tid": "synornzoppikghn3gicfxmjt3o",
+            "res": {
+              "type": "proj/tool_instance",
+              "id": "synjqidavcxlsqmb2fg3cvyzlo",
+              "tid": "synornzoppikghn3gicfxmjt3o"
+            },
+            "perm": "use",
+            "variant": "honest",
+            "cross": "X2",
+            "sent": "2026-10-15T02:54:39.352Z",
+            "recv": "2026-10-15T02:54:39.355Z",
+            "status": 200,
+            "observed": "allow",
+            "reason": "allow",
+            "decision_id": "rb2snxy52fhimn2vll5pkfp5i7",
+            "expected_sys": true,
+            "expected_correct": false,
+            "violation": true
+          },
+          "ops_before_minimisation": 22,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:40.207Z",
+            "i": 414,
+            "ch": "edge",
+            "ep": "label.read",
+            "method": "GET",
+            "path_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "token_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "session_kind": "guest",
+            "sub": "synnxbotaevcwutvwv2c233kqj",
+            "res": {
+              "type": "files/file",
+              "id": "synlfpl76ckcjfc5xgda35dk5u",
+              "tid": "synuinvotvq7jgkyb7qetgpqxr"
+            },
+            "extra": null,
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:40.187Z",
+            "recv": "2026-10-15T02:54:40.207Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "3d81ae9639b2278595a516387b09c453",
+            "violation": true
+          },
+          "ops_before_minimisation": 30,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:41.322Z",
+            "i": 555,
+            "ch": "edge",
+            "ep": "file.share",
+            "method": "POST",
+            "path_tid": "synvag7rwfvuj6nifw5o7z36fm",
+            "token_tid": "synvag7rwfvuj6nifw5o7z36fm",
+            "session_kind": "guest",
+            "sub": "syn72jr44ehyutab7j4fhf5yax",
+            "res": {
+              "type": "files/file",
+              "id": "synu2tqcce2vktk3tk5odf7x6o",
+              "tid": "synvag7rwfvuj6nifw5o7z36fm"
+            },
+            "extra": {
+              "grantee": "synrvfs3d5zpyaglbbpn3wdjen"
+            },
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:41.291Z",
+            "recv": "2026-10-15T02:54:41.322Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "78dacd9d7f2215baa9f73542949a002f",
+            "violation": true
+          },
+          "ops_before_minimisation": 38,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:41.684Z",
+            "i": 574,
+            "ch": "edge",
+            "ep": "file.search",
+            "method": "GET",
+            "path_tid": "synj5xqqoloxbr6ecyetnme72b",
+            "token_tid": "synj5xqqoloxbr6ecyetnme72b",
+            "session_kind": "guest",
+            "sub": "syn2zcjwdectbbn635gdzwbxl3",
+            "res": null,
+            "extra": null,
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:41.498Z",
+            "recv": "2026-10-15T02:54:41.672Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": true,
+            "trace_id": "3e445ee02b2f107bba6cb02ac47757ee",
+            "items": [
+              {
+                "id": "syn255mym5hstw5lytvnd2ohty",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn27fsoogveo3m57ibkdtfons",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "syn2jqlxgjahumsxap3vnte4vo",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn4ztksbjzlfr7xcf6kppshrq",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5qxpqdmuhg4vmsybhirtfon",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6f4tcplg4mkswj376wotidn",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6zajbqkrmy3sj7woq6z32at",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "syn74b2kjxa6c5nqfymu5qcmcf",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syna2uvjsil5zebdzbhqwfgmrk",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synanftr5zra2bwc2nqmjfeub2",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "sync3zx6ugjx44caf7e2izuoxo",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syncidwiyygkuzcnfflglozhxj",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synem3ze5lyxkjeirctvciob3m",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synfeaal3nqhw5ucxmrfhtv7xr",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synfoi4jqwb2qxafypcu3jxkym",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synjja7hqgknt2d6ffjxfuru5d",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synk232ybzmozn44wxs74fh7sb",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synknezhkbgr7bsli3nkmmkj62",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synlenfkikvexgtc3ogj62opa2",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synlf3gyopi5vxrgap2mge243n",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synlkrhbsrgucihoeeziuqzdat",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synnwftnbiosmt3q5vmu6tnlsf",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synnyc5yzddwoijrwbozykek5e",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syno3hw2ifdf2ctwabjvwaj5df",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "synoeyxupmmuofzwheoihscxs3",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synppcz2va4eg7qn3wl7yfw2m2",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "synseceem6o3dzgrotx5yk6xvm",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synsiczwnm2nhpuvgreridqufk",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synsx3nyajofp5dgwioyz6i4ur",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synszvs3yxm6ni3r3idr4glrmf",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syntlkp2jw67c3zktneb5wobbu",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synu4pberc47aawwoss2kstfjs",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synufkr6zmzxben4dinf6tyjp7",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synumofhz4tj3wohic4sot26zf",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synvu2aav53ltodpby7oewi6rt",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synwamjmx342fg7ir5htypwj5w",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synxg7hm4sbjhujmnlcsilkd5e",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syny5xze5g3llicukdt4xqynlw",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synzrlflrazp4pieqxz3753wi3",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synzsoaat7t53stfnc3mhi2jut",
+                "tid": "synj5xqqoloxbr6ecyetnme72b",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              }
+            ],
+            "completeness": {
+              "status": "complete"
+            },
+            "violation": true
+          },
+          "ops_before_minimisation": 39,
+          "ops_after_minimisation": [
+            {
+              "t": "2026-10-15T02:54:39.808Z",
+              "op": "revoke",
+              "tid": "synuinvotvq7jgkyb7qetgpqxr",
+              "writes": [],
+              "deletes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "synivggduvr4p3gzlawvmurkm2"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn2zcjwdectbbn635gdzwbxl3"
+                  }
+                }
+              ],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            }
+          ]
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:41.722Z",
+            "i": 575,
+            "ch": "direct",
+            "ep": "folder.list",
+            "method": "GET",
+            "token_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "path_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "sub": "syn46xrxv7f4j7zawvqfmty4t6",
+            "res": {
+              "type": "files/folder",
+              "id": "syn43idfipismmpobfj67h3h37",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn"
+            },
+            "cross": "X2",
+            "d_variant": "forged_tid_resource_tenant",
+            "sent": "2026-10-15T02:54:41.685Z",
+            "recv": "2026-10-15T02:54:41.720Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "86db747a23f72cda4e2af60d4956f978",
+            "items": [
+              {
+                "id": "syn3opc5cjhzzhbed4shibrt6y",
+                "tid": "synbhjp2g63nhwo7nqleojbvfn",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn4juhbrofuw7j3izsaqixvzl",
+                "tid": "synbhjp2g63nhwo7nqleojbvfn",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "synbtqpf4ltx7olnbzgtbrmzhw",
+                "tid": "synbhjp2g63nhwo7nqleojbvfn",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synpzgfayosachrryosx5ahncm",
+                "tid": "synbhjp2g63nhwo7nqleojbvfn",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synzpo2n7ggul5hdwd664bx6jk",
+                "tid": "synbhjp2g63nhwo7nqleojbvfn",
+                "expected_correct": false,
+                "violation": true
+              }
+            ],
+            "violation": true
+          },
+          "ops_before_minimisation": 39,
+          "ops_after_minimisation": [
+            {
+              "t": "2026-10-15T02:54:36.526Z",
+              "op": "grant_foreign_user",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "files/folder",
+                    "id": "syn43idfipismmpobfj67h3h37"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn6iay5xrhvdfzt6uhxtxces4"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            },
+            {
+              "t": "2026-10-15T02:54:38.180Z",
+              "op": "external_share",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "core/external_grant",
+                    "id": "synxg87754a0c4e56c7332ac28"
+                  },
+                  "relation": "grantee",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn46xrxv7f4j7zawvqfmty4t6"
+                  },
+                  "condition": {
+                    "name": "c.not_expired",
+                    "context": {
+                      "expires_at": "2026-10-22T02:54:38.179Z"
+                    }
+                  }
+                },
+                {
+                  "resource": {
+                    "type": "files/folder",
+                    "id": "synrtskowa6eydwludx5tasymd"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/external_grant",
+                    "id": "synxg87754a0c4e56c7332ac28",
+                    "relation": "grantee"
+                  }
+                },
+                {
+                  "resource": {
+                    "type": "core/tenant",
+                    "id": "synbhjp2g63nhwo7nqleojbvfn"
+                  },
+                  "relation": "external_member",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn46xrxv7f4j7zawvqfmty4t6"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            },
+            {
+              "t": "2026-10-15T02:54:38.230Z",
+              "op": "grant_same",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "files/folder",
+                    "id": "syn43idfipismmpobfj67h3h37"
+                  },
+                  "relation": "editor",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn6olaud2znh2uw6ex476w2v6"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            },
+            {
+              "t": "2026-10-15T02:54:39.895Z",
+              "op": "move_same",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "syn4juhbrofuw7j3izsaqixvzl"
+                  },
+                  "relation": "parent",
+                  "subject": {
+                    "type": "files/folder",
+                    "id": "synrtskowa6eydwludx5tasymd"
+                  }
+                }
+              ],
+              "deletes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "syn4juhbrofuw7j3izsaqixvzl"
+                  },
+                  "relation": "parent",
+                  "subject": {
+                    "type": "files/folder",
+                    "id": "syn43idfipismmpobfj67h3h37"
+                  }
+                }
+              ],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            }
+          ]
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:42.160Z",
+            "i": 626,
+            "ch": "direct",
+            "ep": "file.read",
+            "method": "GET",
+            "token_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "path_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "sub": "synnxbotaevcwutvwv2c233kqj",
+            "res": {
+              "type": "files/file",
+              "id": "synimdywvmcbr6rfr73kkjx5un",
+              "tid": "synuinvotvq7jgkyb7qetgpqxr"
+            },
+            "cross": "X2",
+            "d_variant": "forged_tid_resource_tenant",
+            "sent": "2026-10-15T02:54:42.151Z",
+            "recv": "2026-10-15T02:54:42.160Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "142dbc1adf075cfd0794f1d227478b32",
+            "violation": true
+          },
+          "ops_before_minimisation": 41,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:45.622Z",
+            "i": 1005,
+            "ch": "direct",
+            "ep": "folder.list",
+            "method": "GET",
+            "token_tid": "synornzoppikghn3gicfxmjt3o",
+            "path_tid": "synornzoppikghn3gicfxmjt3o",
+            "sub": "synmoomab3xydvdjg7eqja7v2k",
+            "res": {
+              "type": "files/folder",
+              "id": "synsk2io33n4eigfkexufus2by",
+              "tid": "synornzoppikghn3gicfxmjt3o"
+            },
+            "cross": "X2",
+            "d_variant": "forged_tid_resource_tenant",
+            "sent": "2026-10-15T02:54:45.604Z",
+            "recv": "2026-10-15T02:54:45.621Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "6586c4e1ad51ce3201846ef5b75067a9",
+            "items": [
+              {
+                "id": "syn6ivpvwvl2a4kgfesig3w2tn",
+                "tid": "synornzoppikghn3gicfxmjt3o",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syndf6k3fuvaao7k42jkxfta5f",
+                "tid": "synornzoppikghn3gicfxmjt3o",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synf5ndq7xw37m2bibte2ymoqi",
+                "tid": "synornzoppikghn3gicfxmjt3o",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synindqbie6zn5rdxh3xlyogvw",
+                "tid": "synornzoppikghn3gicfxmjt3o",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synuvlxsof3pqdyu4cfnwlfhv2",
+                "tid": "synornzoppikghn3gicfxmjt3o",
+                "expected_correct": false,
+                "violation": true
+              }
+            ],
+            "violation": true
+          },
+          "ops_before_minimisation": 64,
+          "ops_after_minimisation": [
+            {
+              "t": "2026-10-15T02:54:37.830Z",
+              "op": "external_share",
+              "tid": "synornzoppikghn3gicfxmjt3o",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "core/external_grant",
+                    "id": "synxg783219f9922620468e95d"
+                  },
+                  "relation": "grantee",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "synmoomab3xydvdjg7eqja7v2k"
+                  },
+                  "condition": {
+                    "name": "c.not_expired",
+                    "context": {
+                      "expires_at": "2026-10-15T01:54:37.828Z"
+                    }
+                  }
+                },
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "synz4jwt3cjuhctxq6eeiha3yd"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/external_grant",
+                    "id": "synxg783219f9922620468e95d",
+                    "relation": "grantee"
+                  }
+                },
+                {
+                  "resource": {
+                    "type": "core/tenant",
+                    "id": "synornzoppikghn3gicfxmjt3o"
+                  },
+                  "relation": "external_member",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "synmoomab3xydvdjg7eqja7v2k"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            },
+            {
+              "t": "2026-10-15T02:54:38.691Z",
+              "op": "grant_same",
+              "tid": "synj5xqqoloxbr6ecyetnme72b",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "synseceem6o3dzgrotx5yk6xvm"
+                  },
+                  "relation": "editor",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "synmoomab3xydvdjg7eqja7v2k"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            }
+          ]
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:46.580Z",
+            "i": 1115,
+            "ch": "edge",
+            "ep": "tool.run",
+            "method": "POST",
+            "path_tid": "synd6kfsli7iu3b4ttymk5hhoh",
+            "token_tid": "synd6kfsli7iu3b4ttymk5hhoh",
+            "session_kind": "guest",
+            "sub": "syn6uoddus4fe37s2x6qefmh2v",
+            "res": {
+              "type": "proj/tool_instance",
+              "id": "synutuglucattqzierlcnlpwsy",
+              "tid": "synd6kfsli7iu3b4ttymk5hhoh"
+            },
+            "extra": {
+              "file_id": "synbrupabpqc277gl2pxfo3fh2",
+              "file_tenant": "synd6kfsli7iu3b4ttymk5hhoh"
+            },
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:46.544Z",
+            "recv": "2026-10-15T02:54:46.580Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "db4b3dfb98172de5c4601c616eb166cb",
+            "violation": true
+          },
+          "ops_before_minimisation": 72,
+          "ops_after_minimisation": [
+            {
+              "t": "2026-10-15T02:54:38.993Z",
+              "op": "revoke",
+              "tid": "synd6kfsli7iu3b4ttymk5hhoh",
+              "writes": [],
+              "deletes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "synbrupabpqc277gl2pxfo3fh2"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn6iay5xrhvdfzt6uhxtxces4"
+                  }
+                }
+              ],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            },
+            {
+              "t": "2026-10-15T02:54:46.282Z",
+              "op": "grant_same",
+              "tid": "synsz4zjvdnjpf3kcpjjod44f6",
+              "writes": [
+                {
+                  "resource": {
+                    "type": "files/folder",
+                    "id": "syn3jdq4tli7rftichtrwqfwul"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn6uoddus4fe37s2x6qefmh2v"
+                  }
+                }
+              ],
+              "deletes": [],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            }
+          ]
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:46.806Z",
+            "i": 1118,
+            "ch": "edge",
+            "ep": "file.search",
+            "method": "GET",
+            "path_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "token_tid": "synuinvotvq7jgkyb7qetgpqxr",
+            "session_kind": "guest",
+            "sub": "synnxbotaevcwutvwv2c233kqj",
+            "res": null,
+            "extra": null,
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:46.583Z",
+            "recv": "2026-10-15T02:54:46.795Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": true,
+            "trace_id": "da272ba1f0a4683a0e255d776056c810",
+            "items": [
+              {
+                "id": "syn2n6jl3aq5u3o6zkpqhs6krc",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn2nvzgakpfgxwjsul5xk2u4v",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "syn2pekyulnrdc7qflmeayy5wg",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "syn2ugnzwdgpfytz6gimhttirk",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn3v7jornjannownhaa3kcmss",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn4b6f5hmfgr3mcszm6kvl7nr",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn4sbia6wfzqekraf75kcjsxq",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5jmcphbribp3voi2tbwocbp",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5oy6lih2dnfmsobsdu6ugzz",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5qp3vybjmipowfukhgnvhpz",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5r3z2od7jo2m4rtgtpt5txe",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn5uin2ikdhbuhsnugu7i7txf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6bladkyzh2eah7eaomln7mm",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6rs74wkauncex62h25l4nwl",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6vanh3ywzq4lgokynpzu457",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn6ywyywahhp7np627yr2p3wf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn7545cohxfqxechsu2sw7qug",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syn7q2ypjq7q2fag5ahuhex4n6",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syna6bx4dkaetxqd2qm52i67td",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synakxeagg3x74nitlt3cegxcf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synaqsfsl5iey4ljgagaydfqor",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synb46hqpcctvmn5fjwlwbslfc",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synbjh7zoe4ab5z5isedkw643d",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synbq5733aezeo6zsudpwbosvk",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "sync22km5goxtxfieneebucvsv",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synca6xbdeosltqbctcg3qfsyz",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synclttzaywohiagvufjmr4lik",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synctnm2d2spll5n2vwj2rfbhu",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synd2u2gyac3ueoo5rjoy44rom",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synd3gej7dteva4niericmvxkc",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syndbennky6lgahe7kjv6aixdj",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syndedin7v5oyse3wdhwf4f5wz",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syndqo5sxolucjqczcutdqknm6",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syneetbjl3goqm62mj5usxcadf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synfxmyffjaxav6vjndrelwvg2",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syngo356vuwvjz5jsnryzqa3t4",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synh2g5dkk2csfw65j7w3gylrr",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synh3txltwwctcdqfrbqudxdsl",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synhpd666usswqszttf2tfq6c7",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synhsfksxm75me5ljqsjjjoket",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synhtvz3cxidhrqzoo23nnaczf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synhx2aejp5urhnv2bfpxosnhy",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "syni4qsrncjo3xccpxqolblyrf",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synimdywvmcbr6rfr73kkjx5un",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synivggduvr4p3gzlawvmurkm2",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synj4ovdjzlrqy2crrpw7kwvqr",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synjaot46kmsq2ogr2owcsfsrz",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synk7azuhv5ok7qwgzk6gcp5re",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              },
+              {
+                "id": "synke4hxctssd6pkkavig64efy",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": false,
+                "violation": true
+              },
+              {
+                "id": "synkmwewk2jd7rp47e3mjvwv4s",
+                "tid": "synuinvotvq7jgkyb7qetgpqxr",
+                "cross": "X2",
+                "expected_correct": true,
+                "violation": false
+              }
+            ],
+            "completeness": {
+              "status": "complete"
+            },
+            "violation": true
+          },
+          "ops_before_minimisation": 72,
+          "ops_after_minimisation": []
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:47.464Z",
+            "i": 1174,
+            "ch": "edge",
+            "ep": "file.read",
+            "method": "GET",
+            "path_tid": "synj5xqqoloxbr6ecyetnme72b",
+            "token_tid": "synj5xqqoloxbr6ecyetnme72b",
+            "session_kind": "guest",
+            "sub": "syn2zcjwdectbbn635gdzwbxl3",
+            "res": {
+              "type": "files/file",
+              "id": "syncidwiyygkuzcnfflglozhxj",
+              "tid": "synj5xqqoloxbr6ecyetnme72b"
+            },
+            "extra": null,
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:47.447Z",
+            "recv": "2026-10-15T02:54:47.464Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "e7c1b19f5ace60237f87faaf7df413d2",
+            "violation": true
+          },
+          "ops_before_minimisation": 74,
+          "ops_after_minimisation": [
+            {
+              "t": "2026-10-15T02:54:39.808Z",
+              "op": "revoke",
+              "tid": "synuinvotvq7jgkyb7qetgpqxr",
+              "writes": [],
+              "deletes": [
+                {
+                  "resource": {
+                    "type": "files/file",
+                    "id": "synivggduvr4p3gzlawvmurkm2"
+                  },
+                  "relation": "viewer",
+                  "subject": {
+                    "type": "core/user",
+                    "id": "syn2zcjwdectbbn635gdzwbxl3"
+                  }
+                }
+              ],
+              "status": 200,
+              "accepted": true,
+              "expect_reject": false
+            }
+          ]
+        },
+        {
+          "probe": {
+            "t": "2026-10-15T02:54:47.932Z",
+            "i": 1240,
+            "ch": "edge",
+            "ep": "tool.run",
+            "method": "POST",
+            "path_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "token_tid": "synbhjp2g63nhwo7nqleojbvfn",
+            "session_kind": "guest",
+            "sub": "synumwnfdaji54w6qwxdzgbzqr",
+            "res": {
+              "type": "proj/tool_instance",
+              "id": "synhpcqhxzfq5efvmawzw5l4nx",
+              "tid": "synbhjp2g63nhwo7nqleojbvfn"
+            },
+            "extra": {
+              "file_id": "synj3asth5ykcxzrywjgzljs7r",
+              "file_tenant": "synbhjp2g63nhwo7nqleojbvfn"
+            },
+            "cross": "X2",
+            "path_variant": null,
+            "sent": "2026-10-15T02:54:47.901Z",
+            "recv": "2026-10-15T02:54:47.932Z",
+            "status": 200,
+            "observed": "allow",
+            "expected_sys": true,
+            "expected_correct": false,
+            "trace_id": "9aff8c54afc7935cd43e063ea74e66e7",
+            "violation": true
+          },
+          "ops_before_minimisation": 78,
+          "ops_after_minimisation": []
+        }
+      ],
+      "abort": [
+        "no summary (configuration did not complete)"
+      ]
+    }
+  ],
+  "input_sha256": {
+    "configs/C4-cedar-permitall/requests.jsonl": "48b7277de703e4437b1ef355d9f5bc9e3df335b9330b0346f6c3695f6437f2f2",
+    "configs/C4-cedar-permitall/ops.jsonl": "a621b8101372872be4a9f0b28e411a249ff10c19e45b0de49125abedc50955c3",
+    "configs/C4-cedar-permitall/edge/edge-requests.jsonl": "907bceeb383f6550f818d1c588d93cd2995016cd7a73ca4776fe7965fcddac33",
+    "configs/C4-cedar-permitall/pep/file-service-enforce.jsonl": "6cdd8ab0f38a778bc2c0869dea1f6c6ee3bb2ce8b60faf006cac536d486d426e",
+    "configs/C4-cedar-permitall/pep/label-service-enforce.jsonl": "35d04fac10cae5b9726476d17027c98073a508c7f1f5154902971cba29eda40a",
+    "configs/C4-cedar-permitall/pep/tool-service-enforce.jsonl": "ee9f6a7a4812af940df34eda5ffacdae2b3b437201c91c39014cadd8f590636d"
+  }
+}

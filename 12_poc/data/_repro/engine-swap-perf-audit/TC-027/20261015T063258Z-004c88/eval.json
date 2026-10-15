@@ -1,0 +1,378 @@
+{
+  "evaluated_at": "2026-10-15T06:35:21.675Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-027",
+  "sizes": {
+    "1000": {
+      "size": 1000,
+      "search": {
+        "ms": 16589,
+        "pages": 10,
+        "statuses": [
+          200
+        ],
+        "returned": 1000,
+        "distinct": 996,
+        "truth": 1010,
+        "not_permitted_returned": 0,
+        "completeness_per_page": [
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete"
+        ],
+        "first_page_completeness": {
+          "status": "incomplete",
+          "reason": "enumeration_truncated"
+        },
+        "truncated": true,
+        "truncation_detected": true,
+        "incomplete_displayed": true,
+        "false_incomplete": false
+      },
+      "index_post_check": {
+        "status": [
+          200,
+          503
+        ],
+        "pages": 2,
+        "ms": 4478,
+        "returned": 100,
+        "truth": 1000,
+        "missing": 900,
+        "not_permitted_returned": 0,
+        "status_ok": false
+      },
+      "cursor": {
+        "had_cursor": false,
+        "cases": [],
+        "accepted": 0
+      }
+    },
+    "10000": {
+      "size": 10000,
+      "search": {
+        "ms": 16991,
+        "pages": 10,
+        "statuses": [
+          200
+        ],
+        "returned": 1000,
+        "distinct": 1000,
+        "truth": 10010,
+        "not_permitted_returned": 0,
+        "completeness_per_page": [
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete",
+          "incomplete"
+        ],
+        "first_page_completeness": {
+          "status": "incomplete",
+          "reason": "enumeration_truncated"
+        },
+        "truncated": true,
+        "truncation_detected": true,
+        "incomplete_displayed": true,
+        "false_incomplete": false
+      },
+      "index_post_check": {
+        "status": [
+          200,
+          503
+        ],
+        "pages": 30,
+        "ms": 36447,
+        "returned": 2900,
+        "truth": 10000,
+        "missing": 7100,
+        "not_permitted_returned": 0,
+        "status_ok": false
+      },
+      "cursor": {
+        "had_cursor": false,
+        "cases": [],
+        "accepted": 0
+      }
+    }
+  },
+  "two_state": {
+    "intra_tenant": {
+      "hidden_created": 201,
+      "B_can_read_H_per_ref": false,
+      "list_diff": false,
+      "count_before": 0,
+      "count_after": 0,
+      "error_diff": false,
+      "timing_ms": {
+        "list_before": 345,
+        "list_after": 68,
+        "read_hidden": 65,
+        "read_nonexistent": 26
+      }
+    },
+    "inter_tenant": {
+      "hidden_created": 201,
+      "list_diff": false,
+      "error_diff": false
+    },
+    "facets_autocomplete": "PoC に API なし（対象外: DEV-27a）",
+    "revocation": {
+      "trials": 20,
+      "valid_trials": 20,
+      "returned_after_revoke": 0,
+      "rows": [
+        {
+          "i": 0,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 103
+        },
+        {
+          "i": 1,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 93
+        },
+        {
+          "i": 2,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 107
+        },
+        {
+          "i": 3,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 104
+        },
+        {
+          "i": 4,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 105
+        },
+        {
+          "i": 5,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 106
+        },
+        {
+          "i": 6,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 100
+        },
+        {
+          "i": 7,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 117
+        },
+        {
+          "i": 8,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 98
+        },
+        {
+          "i": 9,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 106
+        },
+        {
+          "i": 10,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 100
+        },
+        {
+          "i": 11,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 93
+        },
+        {
+          "i": 12,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 98
+        },
+        {
+          "i": 13,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 93
+        },
+        {
+          "i": 14,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 156
+        },
+        {
+          "i": 15,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 99
+        },
+        {
+          "i": 16,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 129
+        },
+        {
+          "i": 17,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 107
+        },
+        {
+          "i": 18,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 105
+        },
+        {
+          "i": 19,
+          "created": 201,
+          "grant": 200,
+          "revoke": 200,
+          "seen_before": true,
+          "returned_after_revoke": false,
+          "read_after_revoke": 404,
+          "ms_after_revoke": 118
+        }
+      ]
+    }
+  },
+  "criteria": {
+    "truncation_detection_rate": {
+      "value": 1,
+      "truncated_cases": 2,
+      "pass": true
+    },
+    "incomplete_display_rate": {
+      "value": 1,
+      "pass": true
+    },
+    "index_post_check_missing": {
+      "value": 8000,
+      "pass": false
+    },
+    "cursor_acceptance": {
+      "value": 0,
+      "pass": false
+    },
+    "two_state_diffs": {
+      "value": 0,
+      "pass": true
+    },
+    "returned_after_revocation_beyond_bound": {
+      "value": 0,
+      "valid_trials": 20,
+      "pass": true
+    },
+    "not_permitted_items_returned": {
+      "value": 0,
+      "pass": true,
+      "note": "基準外の補助指標（参照評価器で許可されない項目の返却）"
+    }
+  },
+  "verdict": "不合格",
+  "input_hashes": {
+    "requests.jsonl": "3be022554271f99eed5e5678d457a58f8d909778a760f4ecd573587e6a01e28c"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "tc": "revocation-consistency/TC-009",
+  "run_id": "20261015T023112Z-e434fc",
+  "frozen": false,
+  "purpose": "TC-009 engine config nocache",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:31:12.583Z",
+  "ended_at": "2026-10-15T02:33:26.199Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 9,
+  "status": "completed",
+  "tc_id": "TC-009",
+  "group": "revocation-consistency",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/revocation-consistency/params/TC-009.json",
+    "sha256": "b7049b64142392de06f84a93974b04b749f2005fc1439b8af5fd9f34fd2b2782"
+  },
+  "frozen_manifest": null,
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": true
+  },
+  "code_tree_sha256": "fa4e5ca91d080863e355a102e7d0593edadbe5692c1806fba57239141cb25899",
+  "port_base": 42180,
+  "engine_config": {
+    "id": "nocache",
+    "openfga_check_cache_ttl": null
+  },
+  "repetitions": 1
+}

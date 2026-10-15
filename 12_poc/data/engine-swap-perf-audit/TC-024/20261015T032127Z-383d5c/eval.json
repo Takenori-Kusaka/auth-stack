@@ -1,0 +1,28 @@
+{
+  "evaluated_at": "2026-10-15T03:21:43.868Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-024",
+  "verdict": "判定保留",
+  "note": "計画 §3.4 で「待（L_url）」。TC 全体は凍結できないため値の記録のみ（要旨 4）",
+  "values": {
+    "expired_other_tenant_tampered_success": 0,
+    "post_revocation": {
+      "successes_after_revocation": 8,
+      "last_success_ms_after_issue": 1883,
+      "configured_ttl_ms": 2000
+    },
+    "spoofed_or_bypass_accepted": 0,
+    "valid_token_A_with_owner_header_status": 404,
+    "unapproved_code_use": 0
+  },
+  "reference_against_fixed_criteria": {
+    "url_negatives_0": true,
+    "spoof_bypass_0": true,
+    "device_0": true
+  },
+  "observation": "valid_token_A_with_owner_header は A（viewer、剥奪済み）として評価される。偽装ヘッダで owner として扱われれば 200 になる",
+  "input_hashes": {
+    "results.json": "533d654829e4a2e953b40bea64e8a4a45b365c870f13477d13e136e46bea3261"
+  }
+}

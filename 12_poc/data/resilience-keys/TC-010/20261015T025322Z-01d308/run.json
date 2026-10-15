@@ -1,0 +1,99 @@
+{
+  "tc": "resilience-keys/TC-010",
+  "run_id": "20261015T025322Z-01d308",
+  "frozen": true,
+  "purpose": "measurement-cedar",
+  "manifest_hash": "a544c8196a03d8401a53bd7d0d3053e3b3ddd356e600e5375ea350a8debb6825",
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T02:53:23.034Z",
+  "ended_at": "2026-10-15T02:54:16.793Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed",
+  "tc_id": "TC-010",
+  "group": "resilience-keys",
+  "repo_head": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "params": {
+    "file": "12_poc/code/tests/resilience-keys/params/TC-010.json",
+    "sha256": "4ba316e4bd015397504a34a71128bc786a347c9e23985564076a1822b287a62d"
+  },
+  "frozen_manifest": {
+    "version": 2,
+    "manifest_sha256": "a544c8196a03d8401a53bd7d0d3053e3b3ddd356e600e5375ea350a8debb6825",
+    "frozen_at": "2026-10-15T02:53:22.647Z"
+  },
+  "plan": {
+    "file": "12_poc/preregistered-test-plan.md",
+    "frozen_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+    "identical_to_frozen": false,
+    "working_tree_differs": true
+  },
+  "code_tree_sha256": "a544c8196a03d8401a53bd7d0d3053e3b3ddd356e600e5375ea350a8debb6825",
+  "port_base": 42200,
+  "note": "self-made freeze manifest; independent witness (F-5, §2.6) not available -> provisional result (RK-DEV-01)",
+  "engine": "cedar",
+  "eval_summary": {
+    "requests": 324,
+    "windows_completed": 4,
+    "windows_missing": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5",
+      "W6",
+      "W7",
+      "W8",
+      "W9",
+      "W10",
+      "W11",
+      "W12",
+      "W13",
+      "W14",
+      "W15",
+      "W16",
+      "W17"
+    ],
+    "checks": {
+      "write_plus_allow": {
+        "value": 18,
+        "threshold": 0,
+        "pass": false
+      },
+      "indeterminate_to_allow": {
+        "value": 54,
+        "threshold": 0,
+        "pass": false
+      },
+      "bypass": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "samples": 0,
+        "note": "not applicable (no separate authorization store process in the Cedar configuration)"
+      },
+      "empty_list_in_outage": {
+        "value": 6,
+        "threshold": 0,
+        "pass": false
+      },
+      "rs_allow_in_outage": {
+        "value": 36,
+        "threshold": 0,
+        "pass": false
+      },
+      "alarm_all_allow": {
+        "value": "0/0",
+        "pass": null
+      }
+    },
+    "harness_rows_excluded": 0,
+    "matrix_deviation": 96,
+    "public_denied": 0,
+    "pre_detection_correct_allows": 0,
+    "verdict": "incomplete",
+    "non_target_unhealthy_samples": 0
+  }
+}

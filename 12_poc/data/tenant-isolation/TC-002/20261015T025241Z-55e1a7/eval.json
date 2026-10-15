@@ -1,0 +1,238 @@
+{
+  "tc": "TC-002",
+  "evaluator": "tests/tenant-isolation/TC-002.eval.js",
+  "evaluated_at": "2026-10-15T03:02:15.886Z",
+  "run_id": "20261015T025241Z-55e1a7",
+  "manifest_hash": "6095ba3e8f3226a787877ff03930b2220062a684bc8ac2d4bfe23b0f440203ef",
+  "verdict": "中止",
+  "verdict_reason": "abort criteria met in C2-cedar-correct",
+  "criteria": [
+    {
+      "id": "K1",
+      "text": "明示付与のない越境 allow 0 件（n 回の範囲、n = ⌈3/p_max⌉、p_max は KP-4）",
+      "observed": [],
+      "threshold": 0,
+      "threshold_status": "p_max TBD (KP-4); n is provisional",
+      "met_on_observed_n": false
+    },
+    {
+      "id": "K2",
+      "text": "全域 permit モデルでも越境 allow 0 件",
+      "observed": [],
+      "threshold": 0,
+      "threshold_status": "n depends on p_max (KP-4)",
+      "met_on_observed_n": false
+    },
+    {
+      "id": "K3",
+      "text": "変異体の検出力（記録、下限は TBD: CISO, G4, K-03(b)）",
+      "observed": {
+        "detected": 0,
+        "total": 0,
+        "by_class": {}
+      },
+      "threshold": null,
+      "threshold_status": "TBD"
+    }
+  ],
+  "mutants": [],
+  "mutant_o2_usable": false,
+  "reference_mutants_refined_o2": {
+    "note": "参考: v1.1 で追加した O2 の精緻化（凍結前の規則ではない。合否・検出力の正式値には使わない）",
+    "baseline_refined_o2": null,
+    "usable": false,
+    "mutants": []
+  },
+  "mutant_baseline": null,
+  "configs": [
+    {
+      "config": "C2-cedar-correct",
+      "mutant": null,
+      "n_probes": 12510,
+      "n_cross": 9755,
+      "n_cross_x1": 9416,
+      "n_cross_x2": 339,
+      "n_same": 2755,
+      "cross_by_channel": {
+        "edge": 3256,
+        "facade_batch": 2300,
+        "facade_search": 477,
+        "direct": 1255,
+        "facade_eval": 2467
+      },
+      "cross_by_channel_ep": {
+        "edge:folder.list": 328,
+        "facade_batch:delete": 129,
+        "facade_batch:view": 380,
+        "facade_batch:admin": 117,
+        "facade_batch:view_audit": 75,
+        "facade_search:files/file": 127,
+        "direct:file.write": 256,
+        "edge:tool.run": 304,
+        "facade_eval:view_audit": 134,
+        "facade_eval:write": 271,
+        "edge:file.signed_url": 186,
+        "facade_batch:view_directory": 220,
+        "direct:file.read": 252,
+        "facade_eval:view_directory": 231,
+        "edge:file.write": 309,
+        "edge:file.share": 224,
+        "edge:file.move": 207,
+        "direct:tool.view": 226,
+        "facade_batch:read": 265,
+        "facade_eval:admin": 166,
+        "facade_batch:write": 268,
+        "facade_batch:use": 157,
+        "facade_batch:share": 284,
+        "facade_eval:delete": 122,
+        "edge:file.read": 836,
+        "facade_eval:manage": 335,
+        "facade_eval:read": 267,
+        "facade_batch:manage": 175,
+        "direct:folder.list": 239,
+        "facade_eval:share": 238,
+        "edge:tool.config": 121,
+        "edge:label.read": 279,
+        "facade_eval:view": 309,
+        "direct:label.read": 282,
+        "facade_search:proj/tool_instance": 118,
+        "facade_eval:belongs": 124,
+        "edge:tool.view": 226,
+        "facade_batch:belongs": 138,
+        "facade_search:proj/project": 127,
+        "facade_eval:use": 133,
+        "facade_batch:config": 92,
+        "facade_search:files/folder": 105,
+        "facade_eval:config": 137,
+        "edge:file.search": 95,
+        "edge:file.create": 75,
+        "edge:file.delete": 66
+      },
+      "violations_o1": 0,
+      "violations_o1_x1": 0,
+      "violations_o1_x2": 0,
+      "violations_by_channel": {},
+      "list_item_violations": 0,
+      "residual_rate_upper_95": 0.00030753459764223473,
+      "o2_applicable": 8837,
+      "o2_violations": 122,
+      "o2_violation_examples": [
+        {
+          "i": 9,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 105,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 373,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 429,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 437,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 439,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 442,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 539,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 934,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        },
+        {
+          "i": 950,
+          "ch": "edge",
+          "ep": "tool.run",
+          "expected": "pep:deny_l0",
+          "observed": "tool-service:deny_pdp:deny_no_relation"
+        }
+      ],
+      "o2_violations_by": {
+        "edge:pep:deny_l0": 122
+      },
+      "reference_o2_refined_violations": 0,
+      "reference_o2_refined_by": {},
+      "positive_controls": 1492,
+      "positive_control_failures": 1,
+      "positive_failure_examples": [
+        {
+          "i": 10243,
+          "ch": "edge",
+          "ep": "file.move",
+          "status": 503
+        }
+      ],
+      "same_tenant_decided": 2754,
+      "agreement_mismatches": 0,
+      "mismatch_examples": [],
+      "errors": 1,
+      "error_examples": [
+        {
+          "i": 10243,
+          "ch": "edge",
+          "ep": "file.move",
+          "status": 503
+        }
+      ],
+      "ops": 913,
+      "ops_rejected": 223,
+      "cross_tenant_writes_expected_reject_but_accepted": 0,
+      "search_candidates_for_non_member_claimed_tid": 11,
+      "distribution": {},
+      "distribution_ok": true,
+      "counterexamples": [],
+      "abort": [
+        "no summary (configuration did not complete)"
+      ]
+    }
+  ],
+  "input_sha256": {
+    "configs/C2-cedar-correct/requests.jsonl": "648296e868ae817e42af2147be366c2fc082a69ffc9f87017f74a25f6ee8ae20",
+    "configs/C2-cedar-correct/ops.jsonl": "50354fac87f6e82f042d4fdbd4b01546b9e95af5fa08bfc560414850cd75ac35",
+    "configs/C2-cedar-correct/edge/edge-requests.jsonl": "0e8f175c961ff17d61ba11bd3158fd677e9d3d4ceefce14ff67d39ba72209048",
+    "configs/C2-cedar-correct/pep/file-service-enforce.jsonl": "3efc6ffcf4cc9b8ec9e7cb8e594e41997b5b1668bf441e97caa6fdda9ea07432",
+    "configs/C2-cedar-correct/pep/label-service-enforce.jsonl": "af96da0082edf67c0136d00cf1249e1fd57697238afa1a34d763394787d6b2b2",
+    "configs/C2-cedar-correct/pep/tool-service-enforce.jsonl": "6001be3613bba45ec3b8a82505ee3893dc7752ddd374c77df9a26bd40d87364b"
+  }
+}

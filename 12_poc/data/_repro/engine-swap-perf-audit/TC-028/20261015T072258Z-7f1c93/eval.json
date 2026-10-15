@@ -1,0 +1,305 @@
+{
+  "evaluated_at": "2026-10-15T07:23:27.762Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-028",
+  "rows": [
+    {
+      "status": 200,
+      "pattern": "P-01",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": 404,
+      "pattern": "P-01",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "note": "同じ利用者の内部 AT（aud=tool）を file-service に直接提示",
+      "pattern": "P-01",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-01",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "status": 200,
+      "pattern": "P-03",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": 404,
+      "pattern": "P-03",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-03",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-03",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "final": "done",
+      "pattern": "P-04",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "final": "dlq:message_sub_or_tid_mismatch",
+      "pattern": "P-04",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "final": "dlq:tts_400:invalid_request",
+      "note": "別 workload 向けの受付記録（job_run_id）を consumer が使う",
+      "pattern": "P-04",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "final": "dlq:deny_no_relation",
+      "pattern": "P-04",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "final": "done",
+      "pattern": "P-05",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "reason": "deny_guardrail:g1_tenant_mismatch",
+      "pattern": "P-05",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "final": "dlq:tts_400:invalid_request",
+      "note": "別 workload 向けの受付記録（job_run_id）を consumer が使う",
+      "pattern": "P-05",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "final": "dlq:deny_no_relation",
+      "executed_before": 3,
+      "pattern": "P-05",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "status": 200,
+      "pattern": "P-07",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": 404,
+      "pattern": "P-07",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "note": "NP07-5 外部 AT を内部 RS に直接提示",
+      "pattern": "P-07",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-07",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "status": 200,
+      "downstream_exchange": {
+        "aud": "https://svc.poc.test/s/file",
+        "act_depth": 1
+      },
+      "note": "下流は STS で取り直し（aud=file、act=tool-service）。上流 token の中継なし",
+      "pattern": "P-08",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": 404,
+      "pattern": "P-08",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "note": "NP08-1 他 audience（file）の token を tool サーバーへ",
+      "pattern": "P-08",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-08",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "status": 200,
+      "items": 86,
+      "pattern": "P-09",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": 404,
+      "other_tenant_items_in_own_list": 0,
+      "pattern": "P-09",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 403,
+      "note": "NP09-4 一覧ヘルパ以外からの searchResources 直接呼出し",
+      "pattern": "P-09",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "seen_before": true,
+      "returned_after": false,
+      "pattern": "P-09",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "status": 101,
+      "messages": 11,
+      "pattern": "P-14",
+      "kind": "positive",
+      "ok": true
+    },
+    {
+      "status": [
+        404,
+        404
+      ],
+      "pattern": "P-14",
+      "kind": "other_tenant",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-14",
+      "kind": "other_aud",
+      "ok": true
+    },
+    {
+      "status": [
+        401,
+        403
+      ],
+      "note": "NP14-3・NP14-4（基準外の追加負例）",
+      "pattern": "P-14",
+      "kind": "extra_query_token_and_origin",
+      "ok": true
+    },
+    {
+      "status": 401,
+      "pattern": "P-14",
+      "kind": "after_revocation",
+      "ok": true
+    },
+    {
+      "kind": "in_connection_relation_revoked",
+      "connected": true,
+      "msgs_before": 7,
+      "delivered_after_budget": 0,
+      "closed": {
+        "t": 1792048997676,
+        "code": 4003,
+        "reason": "reauthorization_denied"
+      },
+      "ms_to_close": 432,
+      "pattern": "P-14",
+      "ok": true
+    },
+    {
+      "kind": "in_connection_session_revoked",
+      "connected": true,
+      "msgs_before": 8,
+      "delivered_after_budget": 0,
+      "closed": {
+        "t": 1792049001132,
+        "code": 4002,
+        "reason": "revoked"
+      },
+      "ms_to_close": 31,
+      "pattern": "P-14",
+      "ok": true
+    }
+  ],
+  "p14_gateway_events": 11,
+  "criteria": {
+    "positive_failures": {
+      "value": 0,
+      "n": 8,
+      "pass": true
+    },
+    "negative_accepted": {
+      "value": 0,
+      "n": 24,
+      "pass": true
+    },
+    "p14_deliveries_after_budget": {
+      "value": 0,
+      "pass": true,
+      "ms_to_close": [
+        {
+          "kind": "in_connection_relation_revoked",
+          "ms": 432,
+          "code": 4003,
+          "reason": "reauthorization_denied"
+        },
+        {
+          "kind": "in_connection_session_revoked",
+          "ms": 31,
+          "code": 4002,
+          "reason": "revoked"
+        }
+      ]
+    }
+  },
+  "verdict": "合格",
+  "extra_negatives": [
+    {
+      "status": [
+        401,
+        403
+      ],
+      "note": "NP14-3・NP14-4（基準外の追加負例）",
+      "pattern": "P-14",
+      "kind": "extra_query_token_and_origin",
+      "ok": true
+    }
+  ],
+  "input_hashes": {
+    "requests.jsonl": "62083f1cc76a9e4fff837245de212cdba81f67f440ba1aab620e1790fa4ffb5f"
+  }
+}

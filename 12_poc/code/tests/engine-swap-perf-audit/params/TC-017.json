@@ -1,0 +1,22 @@
+{
+  "tc": "TC-017",
+  "title": "小規模負荷の p50/p99/p99.9（記録のみ）",
+  "plan_section": "preregistered-test-plan.md §4.17",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 17,
+  "dataset": { "profile": "medium", "seed": 17, "note": "A-036（深度 8・fanout 10 万）の縮小: unit 木 深さ 5、フォルダ 深さ 5、グループ入れ子 3（gen-synthetic medium）" },
+  "pool_size": 5000,
+  "prerun": { "check_rates": [5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 800, 1200], "secs": 4, "login_rates": [2, 5, 10, 20, 30, 50, 80, 120], "login_secs": 5, "saturation_rule": "全要求が窓（n/rate 秒）＋2 秒以内に完了し失敗 0 の最大の到着率。水準はその 25%・50%・75%（整数に丸め、最小 2/秒）" },
+  "prerun_result": { "run": "12_poc/data/_prefreeze/engine-swap-perf-audit/TC-017/20261015T033153Z-1311ab", "highest_kept_rate_per_s": { "K1": 75, "K2": 75, "K3": 75, "K4": 75, "K5": "1200 以上（ランプの上限で未飽和）", "K6": 800, "L1": "120 以上（ランプの上限で未飽和）" }, "note": "最初の予行（20261015T023026Z-313ea3）は他の試験群の並行実行でホストが高負荷（他プロセスの CPU 約 52%）のときに行い、S2 の起動で PKI の取り違え（同一 run の secrets 再利用）が起きたため使わない。2 回目はホストが静かなとき（他プロセス 3%）に実施" },
+  "levels": { "K1": [19, 38, 56], "K2": [19, 38, 56], "K3": [19, 38, 56], "K4": [19, 38, 56], "K5": [300, 600, 900], "K6": [200, 400, 600], "L1": [30, 60, 90], "rule": "予行の最大到着率の 25%・50%・75%（四捨五入）。K5・L1 はランプの上限を飽和点の下限とみなした" },
+  "k_tail": 10,
+  "samples_per_level": { "L25": 2000, "L50": 10000, "L75": 2000, "rule": "N(1−q) ≥ k、k=10（§2.7。k の所有者は SRE 責任者、値は実施者の暫定: DEV-03）。p99 は N≥1,000、p99.9 は N≥10,000 の水準でだけ報告し、満たさない分位点は「標本不足」と記す" },
+  "cold": { "conditions": ["K7", "K8"], "level": "対応する warm 条件の 50% 水準", "n": 2000, "report_first": 500 },
+  "host_condition": {
+    "rule": "各水準の実行中に、本 TC のプロセス木（ハーネスと起動した部品）以外のプロセスが使った CPU 時間がホスト全体の容量の 20% を超えたら、その水準は中止基準（ホストの他プロセスの負荷が凍結時の条件を外れた）に当たる。中止した水準は記録を残し、30 秒待って 1 回だけやり直す。やり直しでも外れたら TC を中止する",
+    "max_foreign_cpu_share": 0.2,
+    "retry_wait_s": 30,
+    "max_retries_per_level": 1
+  },
+  "criteria": { "pass_fail": "置かない（記録のみ）", "harness_validity": ["全標本が保存されている（samples CSV の行数 = 送信数）", "遅延が予定送信時刻から測られている（lat_ms = 完了 − 予定送信、send_lag_ms を併記）", "失敗が除外されずに数えられている（failed 列、分位点は成功標本から、失敗込みの p99 も併記）"] }
+}

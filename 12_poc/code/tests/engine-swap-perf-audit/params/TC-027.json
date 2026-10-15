@@ -1,0 +1,34 @@
+{
+  "tc": "TC-027",
+  "title": "一覧・検索の認可（打切り・cursor・側路）",
+  "plan_section": "preregistered-test-plan.md §4.27",
+  "frozen_by": "ai-agent (Claude), engine-swap-perf-audit group; witness: none (DEV-01)",
+  "seed": 27,
+  "engine": "openfga",
+  "sizes": [1000, 10000],
+  "size_100000": "含めない（凍結時に所要時間で決める規則に従い除外: 10,000 件の一覧の後段 Check に数十秒を要し、100,000 件は 1 回の実行が系統 1 のホストで現実的でない）",
+  "dataset": { "profile": "small", "seed": 27, "largeFiles": "sizes の各値（1 フォルダに N 件、reader はフォルダの viewer として N 件すべてを読める）" },
+  "listing": {
+    "search": "GET /t/{tid}/files?limit=100 を next_cursor が空になるまで辿る（façade search = OpenFGA ListObjects ＋ SDK の evaluations execute_all 後段 Check）",
+    "index_post_check": "v2: GET /t/{tid}/folders/{large}/files?limit=100 を next_cursor が空になるまで辿る（サービスの索引＝フォルダ内の行 ＋ 頁ごとの後段 Check、CH-ESPA-04）。v1 は limit なしの 1 要求（10,000 件で edge の 10 秒 timeout を超え 503）",
+    "truth": "Python 参照評価器で reader が読めるファイルの全集合を求める"
+  },
+  "cursor_negatives_note": "v2 で folder.list の cursor にも同じ負例（他主体・他テナント・本文改ざん・MAC 改ざん・limit 変更・期限切れ）を追加",
+  "cursor_negatives": ["他主体（同一テナント）の cursor", "他テナントの主体の cursor（自テナントの route）", "期限切れ（façade の page token 寿命 60 秒の経過後）", "改ざん（本文 1 文字の書換え）", "改ざん（MAC の書換え）", "他条件（limit を変えて提示）"],
+  "two_state": {
+    "intra_tenant": "同一テナントで主体 B が読めない隠しファイル H（所有者 A のみ）を作る前後で、B の search 応答（項目・completeness・cursor の有無・件数）と、B による H の読取り応答 vs 存在しない ID の応答を比べる",
+    "inter_tenant": "他テナントに隠しファイル H' を作る前後で、B の search 応答を比べ、B による H' の参照（自テナントの route）応答と存在しない ID の応答を比べる",
+    "facets_autocomplete": "PoC の参照サービスに件数・ファセット・補完の API はないため、件数は一覧の項目数で、エラーは読取り応答で比べる（ファセット・補完は対象外: 逸脱 DEV-27a）"
+  },
+  "revocation": { "trials": 20, "method": "reader に直接 viewer を付けた新規ファイルを作り、一覧に現れることを確認してから façade の関係削除 API で剥奪し、削除応答の直後に search（全頁）と folder.list を取る。系統 1 の cache 最大齢は 0（PEP の判定 cache なし、OpenFGA の Check cache なし）なので、剥奪後の一覧に現れたら超過" },
+  "criteria": {
+    "truncation_detection_rate": 1.0,
+    "incomplete_display_rate": 1.0,
+    "index_post_check_missing": 0,
+    "cursor_acceptance": 0,
+    "two_state_diffs_count_facet_autocomplete_error": 0,
+    "returned_after_revocation_beyond_bound": 0,
+    "recorded_only": ["順位の差", "応答時間の差"]
+  },
+  "abort": { "dataset_size_mismatch": "合成データの件数（大フォルダのファイル数）が凍結値と異なる", "C-3_positive_control_max_failure_rate": 0, "C-3_positive_control_definition": "reader による大フォルダ内ファイル 1 件の読取りが 200" }
+}

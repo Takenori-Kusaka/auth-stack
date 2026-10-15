@@ -1,0 +1,1007 @@
+{
+  "tc": "TC-010",
+  "summary": {
+    "engine": "cedar",
+    "requests": 324,
+    "windows_completed": 4,
+    "windows_missing": [],
+    "checks": {
+      "write_plus_allow": {
+        "value": 6,
+        "threshold": 0,
+        "pass": false
+      },
+      "indeterminate_to_allow": {
+        "value": 18,
+        "threshold": 0,
+        "pass": false
+      },
+      "bypass": {
+        "value": 0,
+        "threshold": 0,
+        "pass": true,
+        "samples": 0,
+        "note": "not applicable (no separate authorization store process in the Cedar configuration)"
+      },
+      "empty_list_in_outage": {
+        "value": 6,
+        "threshold": 0,
+        "pass": false
+      },
+      "rs_allow_in_outage": {
+        "value": 12,
+        "threshold": 0,
+        "pass": false
+      },
+      "alarm_all_allow": {
+        "value": "0/0",
+        "pass": null
+      }
+    },
+    "harness_rows_excluded": 0,
+    "matrix_deviation": 30,
+    "public_denied": 0,
+    "pre_detection_correct_allows": 0,
+    "verdict": "fail",
+    "non_target_unhealthy_samples": 0
+  },
+  "per_window": {
+    "C1": {
+      "class": "I",
+      "fm": "attribute missing",
+      "fault": "cedar dropAttr ttu_parent__restricted_inherited",
+      "n": 72,
+      "allowed": 24,
+      "by_status": {
+        "200": 24,
+        "404": 12,
+        "503": 36
+      },
+      "write_plus_allow": 6,
+      "rs_allow": 12,
+      "empty_list": 6,
+      "pre_detection_correct_allows": 0
+    },
+    "C2": {
+      "class": "I",
+      "fm": "entity missing (exclusion skipped)",
+      "fault": "cedar dropEntityPrefix core/tenant:<guest tenant>#external_member",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    },
+    "C3": {
+      "class": "I",
+      "fm": "schema missing",
+      "fault": "cedar noSchema",
+      "n": 6,
+      "allowed": 6,
+      "by_status": {
+        "200": 6
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0,
+      "note_excluded": 66
+    },
+    "C4": {
+      "class": "U",
+      "fm": "FM-02",
+      "fault": "inj-pep blackhole (Cedar configuration)",
+      "n": 72,
+      "allowed": 6,
+      "by_status": {
+        "200": 6,
+        "503": 66
+      },
+      "write_plus_allow": 0,
+      "rs_allow": 0,
+      "empty_list": 0,
+      "pre_detection_correct_allows": 0
+    }
+  },
+  "fm13_detection": {},
+  "facade_reason_codes": {
+    "C1": {
+      "deny_indeterminate": 78,
+      "allow": 18,
+      "deny_no_relation": 12
+    },
+    "C2": {
+      "deny_indeterminate": 108
+    },
+    "C3": {
+      "allow": 183,
+      "deny_no_relation": 51
+    },
+    "C4": {}
+  },
+  "violations": [
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.159Z",
+      "mono_us": 65057006206,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.083Z",
+      "ms": 76,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.159Z",
+      "mono_us": 65057006206,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.083Z",
+      "ms": 76,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.179Z",
+      "mono_us": 65057026180,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.083Z",
+      "ms": 96,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.179Z",
+      "mono_us": 65057026180,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.083Z",
+      "ms": 96,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:30.179Z",
+      "mono_us": 65057026180,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.083Z",
+      "ms": 96,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:30.199Z",
+      "mono_us": 65057046246,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.084Z",
+      "ms": 115,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.199Z",
+      "mono_us": 65057046246,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.084Z",
+      "ms": 115,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.273Z",
+      "mono_us": 65057120295,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 71,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.273Z",
+      "mono_us": 65057120295,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 71,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.292Z",
+      "mono_us": 65057139244,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 90,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.292Z",
+      "mono_us": 65057139244,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 90,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:30.292Z",
+      "mono_us": 65057139244,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 90,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:30.308Z",
+      "mono_us": 65057155590,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 106,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.308Z",
+      "mono_us": 65057155590,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.202Z",
+      "ms": 106,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.380Z",
+      "mono_us": 65057226844,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 68,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.380Z",
+      "mono_us": 65057226844,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 68,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.403Z",
+      "mono_us": 65057250281,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 91,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:30.403Z",
+      "mono_us": 65057250281,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 91,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:30.403Z",
+      "mono_us": 65057250281,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 91,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:30.423Z",
+      "mono_us": 65057269929,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 111,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:30.423Z",
+      "mono_us": 65057269929,
+      "window": "C1",
+      "class": "I",
+      "batch": "A",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:30.312Z",
+      "ms": 111,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.638Z",
+      "mono_us": 65058485427,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.584Z",
+      "ms": 54,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.638Z",
+      "mono_us": 65058485427,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.584Z",
+      "ms": 54,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.657Z",
+      "mono_us": 65058504178,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.584Z",
+      "ms": 73,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.657Z",
+      "mono_us": 65058504178,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.584Z",
+      "ms": 73,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:31.657Z",
+      "mono_us": 65058504178,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 0,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.584Z",
+      "ms": 73,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:31.672Z",
+      "mono_us": 65058519762,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.585Z",
+      "ms": 87,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.672Z",
+      "mono_us": 65058519762,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 0,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.585Z",
+      "ms": 87,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.729Z",
+      "mono_us": 65058575870,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.675Z",
+      "ms": 54,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.729Z",
+      "mono_us": 65058575870,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.675Z",
+      "ms": 54,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.750Z",
+      "mono_us": 65058596986,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.675Z",
+      "ms": 75,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.750Z",
+      "mono_us": 65058596986,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.675Z",
+      "ms": 75,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:31.750Z",
+      "mono_us": 65058596986,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 1,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.675Z",
+      "ms": 75,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:31.766Z",
+      "mono_us": 65058613669,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.676Z",
+      "ms": 90,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.766Z",
+      "mono_us": 65058613669,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 1,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.676Z",
+      "ms": 90,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.827Z",
+      "mono_us": 65058674314,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.770Z",
+      "ms": 57,
+      "status": 200
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.827Z",
+      "mono_us": 65058674314,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.tool.view.admin",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.770Z",
+      "ms": 57,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.854Z",
+      "mono_us": 65058701215,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.770Z",
+      "ms": 84,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "rs_allow_in_outage",
+      "t": "2026-10-15T02:53:31.854Z",
+      "mono_us": 65058701215,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.770Z",
+      "ms": 84,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "empty_list",
+      "t": "2026-10-15T02:53:31.854Z",
+      "mono_us": 65058701215,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "rs.file.search.owner",
+      "rep": 2,
+      "tier": "read-sensitive",
+      "expected_normal": "allow",
+      "list": true,
+      "sent_at": "2026-10-15T02:53:31.770Z",
+      "ms": 84,
+      "status": 200,
+      "items": 0
+    },
+    {
+      "kind": "write_plus_allow",
+      "t": "2026-10-15T02:53:31.869Z",
+      "mono_us": 65058715906,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.771Z",
+      "ms": 98,
+      "status": 200
+    },
+    {
+      "kind": "indeterminate_to_allow",
+      "t": "2026-10-15T02:53:31.869Z",
+      "mono_us": 65058715906,
+      "window": "C1",
+      "class": "I",
+      "batch": "B",
+      "op": "pT.tool.config.admin",
+      "rep": 2,
+      "tier": "privileged",
+      "expected_normal": "allow",
+      "list": false,
+      "sent_at": "2026-10-15T02:53:31.771Z",
+      "ms": 98,
+      "status": 200
+    }
+  ],
+  "violations_total": 42,
+  "evaluated_at": "2026-10-15T02:54:55.836Z",
+  "evaluator": {
+    "file": "12_poc/code/tests/resilience-keys/TC-010.js",
+    "sha256": "8aed05336a35b9002d1c582a1eac78a9286ca59116e3bd6a04d438ebdfc1c44c"
+  },
+  "inputs": [
+    {
+      "file": "as-a/as-events.jsonl",
+      "sha256": "c987e2e2b8183766e720b8268627cb8a1b2e2d2b9b60e61c68040330453c127c"
+    },
+    {
+      "file": "audit/journal.jsonl",
+      "sha256": "69fc6a704eb71beebf460769c4e69a15e660443f4c7623733d9415bfb769b5f1"
+    },
+    {
+      "file": "audit-copy/journal.jsonl",
+      "sha256": "69fc6a704eb71beebf460769c4e69a15e660443f4c7623733d9415bfb769b5f1"
+    },
+    {
+      "file": "audit-producers/file-service.produced.jsonl",
+      "sha256": "7569747f8ca2c1bfcae3931686dc0f089d48dcda5b57788cd5bfe8feb1e1ff39"
+    },
+    {
+      "file": "audit-producers/file-service.state.json",
+      "sha256": "f3fd7c25184208a2c39818e95d9c6ebf09be64bc368d271d0c47803d2302dfc9"
+    },
+    {
+      "file": "audit-producers/pdp.produced.jsonl",
+      "sha256": "7027b08d59603ca346bfc58e2776afe3172b14aedce2834404ca95ac51b4174e"
+    },
+    {
+      "file": "audit-producers/pdp.state.json",
+      "sha256": "f1bfe29357fb9e08d64480162808b2cf55e2453a495707fab9a855a659d638cc"
+    },
+    {
+      "file": "audit-producers/sts.produced.jsonl",
+      "sha256": "f177957ea94b9060ab056a406afd792c89f148596bb79e493a2750b426b037b8"
+    },
+    {
+      "file": "audit-producers/sts.state.json",
+      "sha256": "7f820d7d882f47a70b631f58df03750548f64564bea9f2c78bce092ea892d09e"
+    },
+    {
+      "file": "audit-producers/tool-service.produced.jsonl",
+      "sha256": "510d881dd94e66122ce0d174c88bea0e8b2c7fb5180fabc373b0e9eddab90a0c"
+    },
+    {
+      "file": "audit-producers/tool-service.state.json",
+      "sha256": "2412086edef581d992a508cedc044a2de9392ca723211a5a32709ed9b3d2890f"
+    },
+    {
+      "file": "bff/bff-events.jsonl",
+      "sha256": "d59ae28aa318e9f1e10292f1d519d8aa2eee3336d4b0f36d326ad7de0918f2bb"
+    },
+    {
+      "file": "dataset.json",
+      "sha256": "5b7ae8b53c6317ed5898f29521724f8d2c53518afd6b42af4562bb75407df154"
+    },
+    {
+      "file": "edge/edge-requests.jsonl",
+      "sha256": "2b6879f65cd236de7091f61fc29ddec4c604c36a9e39d244a0534060438be2c9"
+    },
+    {
+      "file": "env.json",
+      "sha256": "4932738b27902a3343dd16b2071082fbf530c3f2a8b7403da7f2272ea7dbaa40"
+    },
+    {
+      "file": "health.jsonl",
+      "sha256": "ffd6155e9001e0121045b84361258b7d66bd55b9ac22eb98a9c3da1e340c4bdb"
+    },
+    {
+      "file": "inject/inj-pep.jsonl",
+      "sha256": "c25effbf6963b04cc7131a79c92cf4f085f50b9327785849b073e248f4ba15a0"
+    },
+    {
+      "file": "inject.jsonl",
+      "sha256": "741cb740170f4809fed5366ce9937924e4ed34f46c0bca1077bdf3f513b41f4c"
+    },
+    {
+      "file": "logs/as-a.log",
+      "sha256": "cbc626b965e42ac8725093d6425ff87ad97ea353a3a62338a2ad3f8cb3f39bd4"
+    },
+    {
+      "file": "logs/as-b.log",
+      "sha256": "28b8ca70e08e7c1e3ba672765f71c6e582215849115743297580429ab751ee64"
+    },
+    {
+      "file": "logs/bff.log",
+      "sha256": "2b989e0ae6a57069646a252940c40689e35797d1dcab7eeb71bf8116286d33eb"
+    },
+    {
+      "file": "logs/edge.log",
+      "sha256": "6cbd9c7eae1a82159604699d4b1aa90488ff96218021f6c29b8e42812e171f77"
+    },
+    {
+      "file": "logs/file-service.log",
+      "sha256": "3c2651d60e4d5d6101f0648e445e8d2e37c56140eeb0242726122c7c9306619f"
+    },
+    {
+      "file": "logs/inj-pep.log",
+      "sha256": "73ee9b769319ff568fa338b99c2f7b74989dd85f9980160d50e3eb4a6de15a6e"
+    },
+    {
+      "file": "logs/journal.log",
+      "sha256": "69ae94e74be7a1d11b5d039c8975d90c4f7a4218b578deb6c82d70f6a5d10609"
+    },
+    {
+      "file": "logs/label-service.log",
+      "sha256": "25d4884de0f1166cd68bc60cdd91fa45d1022388b93fd6377b36b0c5455571b5"
+    },
+    {
+      "file": "logs/pdp.log",
+      "sha256": "097de41a1e2ea7c3ebcc4a51841d3c8a13d00415fffb667c8a89a6d8f45bbe7e"
+    },
+    {
+      "file": "logs/state-store.log",
+      "sha256": "031603df86706e5f4ac6a0bcfd214d6b8092ba5ec1377048300bf6a2944e30f2"
+    },
+    {
+      "file": "logs/sts.log",
+      "sha256": "14734a8ffecb9d039c024e84cd50610debd2a82f2570c213a5bee03c21b806f2"
+    },
+    {
+      "file": "logs/tool-service.log",
+      "sha256": "4af56de09a45d61399404b3df7df97ff6da4fa3b274ee7dcbbf4772b69f33b1b"
+    },
+    {
+      "file": "pdp/cedar-tuples.jsonl",
+      "sha256": "71927618a2d522ba9eb5678683f8010886c8519a8eb73d8fdbea929e65d47975"
+    },
+    {
+      "file": "pdp/decisions.jsonl",
+      "sha256": "5d96621e7549deb754b5f9c6365b038e6548295f6b1a220f882c25b21cdad920"
+    },
+    {
+      "file": "pdp/object-tenant.jsonl",
+      "sha256": "97bb51a037fe99c64f2999c74519cc916327a1c17623aeb3dbd5a972a5f7b31e"
+    },
+    {
+      "file": "pdp/write-seq",
+      "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    },
+    {
+      "file": "pdp/writes.jsonl",
+      "sha256": "7d92b46bbba51f237763916537ff58807858a330079af7f8b2da424fe3e8ce97"
+    },
+    {
+      "file": "pep/file-service-enforce.jsonl",
+      "sha256": "c743c080397480b8ff8d4ba0b86dadbca7ef71c275fc92aca5a057fedf7b74c5"
+    },
+    {
+      "file": "pep/file-service-probe.jsonl",
+      "sha256": "f528d49f0b4038908977ad5515db3ee15b43674e239a8654f4353d53d8780c60"
+    },
+    {
+      "file": "pep/label-service-probe.jsonl",
+      "sha256": "e8d52742f20000c3346aff837af5e16cbd1d5d3946dd6760c175692c2b38866d"
+    },
+    {
+      "file": "pep/tool-service-enforce.jsonl",
+      "sha256": "a315158bccdcffbf49f355e4687dde8c5c4521dc3d80c581c01914f226fa8c2c"
+    },
+    {
+      "file": "pep/tool-service-probe.jsonl",
+      "sha256": "c40e6ce1e360438f70858720bcc0cf7c2c99ceacf6094ca0841d2ceea86af60b"
+    },
+    {
+      "file": "requests.jsonl",
+      "sha256": "a455ea57bb7783f445e8dc67b7ed2fedbd052e48fccbb7e22937ca3b5471710d"
+    },
+    {
+      "file": "roles.json",
+      "sha256": "25857fb07cce840b8af5aa86f517b23e21bbd9657048c877068866c1bb9a0d6c"
+    },
+    {
+      "file": "run.json",
+      "sha256": "3623c7642974fa5f9e1b35a8c75b60c9c17f2c420cbbe76a8b84ad310c6845cd"
+    },
+    {
+      "file": "sts/issuance-ledger.jsonl",
+      "sha256": "eca8480fc80dd74ec34d7fd570fec24ffa929e7b7599713127822d3f5bf85e62"
+    },
+    {
+      "file": "windows.jsonl",
+      "sha256": "f8998ff5aca0bc4f26b2f0b1a94774e71a3fcd7cc02243b55dabaf6b7225c47a"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "$comment": "TC-015 parameters (test plan §4.15, procedure ADR-015 D15-71 restricted to classic algs). Written before any TC-015 measurement. Disclosed as deviation RK-DEV-02 (not witnessed).",
+  "tc": "TC-015",
+  "plan_section": "4.15",
+  "seed": 1,
+  "profile": "smoke",
+  "pq_check": "ML-DSA availability checked before freeze: Node v22.23.2 crypto.generateKeyPairSync('ml-dsa-44') -> 'The argument 'type' must be a supported key type'; jose 6.2.12 has no ML-DSA -> PQ part is left to TC-110 as the plan prescribes",
+  "passes": [
+    { "id": "P1", "from": "ES256", "to": "ES384" },
+    { "id": "P2", "from": "ES384", "to": "PS256", "comment": "second classic alg; starts from the state P1 leaves (ES384 active, ES256 retired) instead of re-installing ES256" }
+  ],
+  "q_ms": { "in_process_verifiers": 50, "real_pep": 100, "user_traffic": 250 },
+  "settings": { "accessTokenTtlSec": 3600, "internalTokenTtlSec": 10, "txnTokenTtlSec": 10, "keyRemovalInUseCheck": true },
+  "real_pep_jwks_ttl_ms": 2000,
+  "verifier_matrix": {
+    "sdk_versions": ["N"], "sdk_versions_not_available": ["N-1", "N-2"],
+    "kinds": ["at", "txn"], "jwks_cache_ttl_ms": [1000, 5000, 15000], "revocation_push": [true],
+    "comment": "verifiers read the alg allowlist from the distributed crypto profile (CP) of the state store (RK-07); the real file-service PEP and the STS do the same"
+  },
+  "timing": { "cp_propagation_wait_ms": 1000, "prepublish_wait_ms": 17000, "observe_after_switch_ms": 10000, "rollback_inflight_present_ms": 5000, "retire_wait_ms": 12000, "negative_each_ms": 2000 },
+  "procedure": [
+    "S0 baseline control (5 s, C-3)",
+    "S1 CP v(n+1): at allowlist [from, to] (導入) and wait for propagation",
+    "S2 pre-publish a key of alg `to` in the STS at store, wait max JWKS TTL + 2 s",
+    "S3 switch issuing to the `to` key; observe",
+    "S4 rollback: re-activate the `from` key (still published); present in-flight `to` tokens; record rollback time",
+    "S5 re-switch to the `to` key; observe",
+    "S6 retire `from`: wait token TTL, remove the `from` key(s) (in-use check on), CP v(n+3): at allowlist [to]",
+    "S7 negatives: token signed with a published `from` key; old CP version re-presented; alg header / key alg mismatch; alg none; HS256 with the public key as secret; foreign RS256 key under the active kid"
+  ],
+  "pass_criteria": {
+    "code_and_config_diff_files": 0,
+    "service_restarts": 0,
+    "verification_failures_in_procedure": 0,
+    "downgrade_or_negative_accepted": 0
+  },
+  "record_only": ["rollback time (command to issuer switch, and to first token of the rolled-back alg accepted by every verification point)"],
+  "definitions": {
+    "code_and_config_diff_files": "files among services/*.js, pep/sdk.js, lib/jwt.js, config/ledger.json whose SHA-256 differs between before S1 and after S7",
+    "service_restarts": "PID change of file-service, tool-service, label-service, edge, bff between before S1 and after S7",
+    "verification_failures_in_procedure": "in S1-S6: rejection of a token signed with the active key or of an in-flight token of an alg the CP still allows (in-process verifiers, real PEP) and non-2xx answers to the authorized user's file.read / file.write",
+    "downgrade_or_negative_accepted": "any acceptance of an S7 negative by an in-process verifier or the real PEP, or a 2xx to the re-presented old CP version"
+  },
+  "abort": { "C-3": "baseline or post-check control failure (upper limit 0)" }
+}

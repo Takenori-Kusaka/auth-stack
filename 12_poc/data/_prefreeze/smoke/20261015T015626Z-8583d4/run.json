@@ -1,0 +1,67 @@
+{
+  "tc": "smoke",
+  "run_id": "20261015T015626Z-8583d4",
+  "frozen": false,
+  "purpose": "smoke-openfga",
+  "manifest_hash": null,
+  "git_commit": "151940ac00dc64a89ac5a5cd148e42326e7c5e73",
+  "git_dirty": true,
+  "started_at": "2026-10-15T01:56:26.187Z",
+  "ended_at": "2026-10-15T01:56:35.475Z",
+  "operator": "ai-agent (Claude)",
+  "witness": null,
+  "seed": 1,
+  "status": "completed_with_failures",
+  "smoke": {
+    "engine": "openfga",
+    "steps": [
+      {
+        "name": "stack started",
+        "ok": true,
+        "note": "engine=openfga ports=42000..42019"
+      },
+      {
+        "name": "login via BFF (PAR+PKCE+private_key_jwt, cert-bound opaque AT)",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "file read (edge -> STS exchange -> PEP -> PDP façade -> file-service)",
+        "ok": true,
+        "status": 200,
+        "decision_id": "evhrrqgppgf764fhq5k57palk2"
+      },
+      {
+        "name": "cross-tenant read denied (sanity)",
+        "ok": true,
+        "status_route_a": 404,
+        "status_route_b": 404
+      },
+      {
+        "name": "test setup: grant operator viewer on file",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "tool.run 3-hop (edge -> tool-service -> STS re-exchange (act) -> file-service, Txn-Token)",
+        "ok": false,
+        "status": 503
+      },
+      {
+        "name": "public CLI client with DPoP (nonce) read",
+        "ok": true,
+        "status": 200
+      },
+      {
+        "name": "audit chain + reconstruction",
+        "ok": false,
+        "note": "records=8 invalid=3 txn_groups=1 findings=5"
+      },
+      {
+        "name": "3-hop txn reconstructed from audit only",
+        "ok": false,
+        "hops": []
+      }
+    ]
+  }
+}

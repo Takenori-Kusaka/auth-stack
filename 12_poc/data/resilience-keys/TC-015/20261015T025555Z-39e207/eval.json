@@ -1,0 +1,378 @@
+{
+  "tc": "TC-015",
+  "summary": {
+    "checks": {
+      "code_and_config_diff_files": {
+        "value": 0,
+        "files": [],
+        "pass": true
+      },
+      "service_restarts": {
+        "value": 0,
+        "pass": true
+      },
+      "verification_failures_in_procedure": {
+        "value": 0,
+        "n": 15761,
+        "detail": {
+          "verifier_rejects": 0,
+          "pep_failures": 0,
+          "user_failures": 0,
+          "by_phase": {}
+        },
+        "pass": true
+      },
+      "downgrade_or_negative_accepted": {
+        "value": 0,
+        "old_cp_statuses": [
+          409,
+          409
+        ],
+        "pass": true
+      }
+    },
+    "rollbacks": [
+      {
+        "pass": "P1",
+        "command_to_issuer_switch_ms": 5,
+        "command_to_first_all_accept_ms": 59
+      },
+      {
+        "pass": "P2",
+        "command_to_issuer_switch_ms": 4,
+        "command_to_first_all_accept_ms": 4
+      }
+    ],
+    "inflight_during_rollback": {
+      "n": 498,
+      "rejected": 0
+    },
+    "passes_completed": [
+      "P1",
+      "P2"
+    ],
+    "verdict": "pass"
+  },
+  "negatives": {
+    "P1:S7-published_retired_alg": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 37,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 37
+      }
+    },
+    "P1:S7-after_old_cp": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 0,
+      "pep_accepted": 0,
+      "pep_statuses": {}
+    },
+    "P1:S7-alg_key_mismatch": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P1:S7-alg_none": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P1:S7-hs256_public_key_as_secret": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 18,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 18
+      }
+    },
+    "P1:S7-foreign_rs256_active_kid": {
+      "verifier_n": 105,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 105
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-published_retired_alg": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 37,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 37
+      }
+    },
+    "P2:S7-after_old_cp": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 0,
+      "pep_accepted": 0,
+      "pep_statuses": {}
+    },
+    "P2:S7-alg_key_mismatch": {
+      "verifier_n": 96,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 96
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-alg_none": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 18,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 18
+      }
+    },
+    "P2:S7-hs256_public_key_as_secret": {
+      "verifier_n": 96,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 96
+      },
+      "pep_n": 19,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 19
+      }
+    },
+    "P2:S7-foreign_rs256_active_kid": {
+      "verifier_n": 99,
+      "verifier_accepted": 0,
+      "codes": {
+        "R:alg": 99
+      },
+      "pep_n": 18,
+      "pep_accepted": 0,
+      "pep_statuses": {
+        "401": 18
+      }
+    }
+  },
+  "evaluated_at": "2026-10-15T02:59:19.763Z",
+  "evaluator": {
+    "file": "12_poc/code/tests/resilience-keys/TC-015.js",
+    "sha256": "42d4fc78876cf975c9d9a7585f72ad443d65797f71a0f5ae5ef3d690bb7e7e90"
+  },
+  "inputs": [
+    {
+      "file": "as-a/as-events.jsonl",
+      "sha256": "c72d5054ab27635f98c01ffd592b267498b9a15b67d3a5f76e7b1234824462e2"
+    },
+    {
+      "file": "audit/journal.jsonl",
+      "sha256": "402590702ad3fb38f66a67a3532da68a70cc41cf4cf9e72c75c60bde41d6a8e6"
+    },
+    {
+      "file": "audit-copy/journal.jsonl",
+      "sha256": "402590702ad3fb38f66a67a3532da68a70cc41cf4cf9e72c75c60bde41d6a8e6"
+    },
+    {
+      "file": "audit-producers/file-service.produced.jsonl",
+      "sha256": "6cd9f3a64fec3df28e3f4a51def698bc1582bda452bf559fc056bbde85be2464"
+    },
+    {
+      "file": "audit-producers/file-service.state.json",
+      "sha256": "708dbd87ca659e30878ec099d179a917b270eb14ec4890a56ea5c49490366725"
+    },
+    {
+      "file": "audit-producers/pdp.produced.jsonl",
+      "sha256": "74a107b815ead8c0a5de2c5e48ae802d155d28a0af8bbeaab3111aabdc52a9f5"
+    },
+    {
+      "file": "audit-producers/pdp.state.json",
+      "sha256": "caa3f7cdd25a7f16ebf1c12417ae89d03d2a4c3ac1dbe1908d29dff539afb901"
+    },
+    {
+      "file": "audit-producers/sts.produced.jsonl",
+      "sha256": "2997fee5dc4b43442d76f8a00b6e1504b5ab44ca723f3f96f82c98f138be2455"
+    },
+    {
+      "file": "audit-producers/sts.state.json",
+      "sha256": "b42b66f79645ffa8bc395e4c31cf89e091e0187f7c970daeef8d9b3ada2d1324"
+    },
+    {
+      "file": "bff/bff-events.jsonl",
+      "sha256": "ddf2e8683e69cd4f05914ac0356a91f79ff8bbab445ee960b0306fc00a01b6b1"
+    },
+    {
+      "file": "dataset.json",
+      "sha256": "a9b1a28dadfec88fb35c581ecc4274e21e7883edf04eeaf4a8298e8cb9687c9f"
+    },
+    {
+      "file": "edge/edge-requests.jsonl",
+      "sha256": "5b4744d05755e314da847ef4acb24903c126f0891ea65dc2817ae7b5f4463054"
+    },
+    {
+      "file": "env.json",
+      "sha256": "4c1e46277cb19ffc08b78878cde84989962feadfef06e102dad314a83ee30967"
+    },
+    {
+      "file": "events.jsonl",
+      "sha256": "3f609ed7d97884b81b4092ea93a8cf917395b72298c29dcf40a170ad02aa7bdf"
+    },
+    {
+      "file": "final-keys-at.json",
+      "sha256": "daae10c2d64f7bf01406fb2bf286bac017db1984cec632453352159a3083a530"
+    },
+    {
+      "file": "final-keys-txn.json",
+      "sha256": "531b35d72fe8c54350cf0223ab4a08d52f59716250a8a28e8d953c53be922d59"
+    },
+    {
+      "file": "fingerprint-after.json",
+      "sha256": "4e32594cef55d0faeaab492fddc9ce7d8d516cea8a1736efd3831650006f99ba"
+    },
+    {
+      "file": "fingerprint-before.json",
+      "sha256": "4e32594cef55d0faeaab492fddc9ce7d8d516cea8a1736efd3831650006f99ba"
+    },
+    {
+      "file": "logs/as-a.log",
+      "sha256": "97ae6aff880183c43819e86326614cd04f675b4e09c0b02e62b42ea080b325fa"
+    },
+    {
+      "file": "logs/as-b.log",
+      "sha256": "719028be1d1ed3e1abfbe6b4eb546343d5871660f0ef81381e24e83c2131cdb7"
+    },
+    {
+      "file": "logs/bff.log",
+      "sha256": "6630e4b7c7ef4dbfa93a3b844be48f0f25986af61fd2a818deb7447a10dc1369"
+    },
+    {
+      "file": "logs/edge.log",
+      "sha256": "bc2c9a5572ec6dd015566aae59201354e14265bd74a3e105af6fe4c8d9a4499e"
+    },
+    {
+      "file": "logs/file-service.log",
+      "sha256": "c91bdcf00a6c9e9f3996e69a90944211296ba864159c031df18d967d1e0997bf"
+    },
+    {
+      "file": "logs/journal.log",
+      "sha256": "ae2e9752198b914ea317eb96679ff47958c05c8a46f2e8ef0bcb942727457c07"
+    },
+    {
+      "file": "logs/label-service.log",
+      "sha256": "b37ad7ba2e5b15bc012bb63f37bc510488845a80a68d514142eb3b61ec5415e9"
+    },
+    {
+      "file": "logs/openfga.log",
+      "sha256": "d55ac17db14a00a02bd2415639c6796da7a3b44ff7651154b32fe6287e568fca"
+    },
+    {
+      "file": "logs/pdp.log",
+      "sha256": "44a1417cae19b36882496e81f06cb5ce242b13ff8d37a4a99adfeb6e05100cef"
+    },
+    {
+      "file": "logs/state-store.log",
+      "sha256": "b630ebbbc609aa352e4c4a9629760b170f33f5a4ba18a0f3602413d3622c0994"
+    },
+    {
+      "file": "logs/sts.log",
+      "sha256": "b4a1edbb8969c599e80f36263b2b7efcf40ad65c09124c159d2af8dc93ca067f"
+    },
+    {
+      "file": "logs/tool-service.log",
+      "sha256": "2cf9b1583d580ab62a11f2d2c52a5ac61974a8b8bbaa05ab8e8360678d66e132"
+    },
+    {
+      "file": "pdp/decisions.jsonl",
+      "sha256": "59f076d554dfa91cd83b33d5996e7f44ac54326a562c12086ba234ecd4aadd23"
+    },
+    {
+      "file": "pdp/object-tenant.jsonl",
+      "sha256": "97bb51a037fe99c64f2999c74519cc916327a1c17623aeb3dbd5a972a5f7b31e"
+    },
+    {
+      "file": "pdp/openfga-store.json",
+      "sha256": "f378697fc0b275de45eeaaf79fd755de5e53d315d2f69b52866998ca2629dc3c"
+    },
+    {
+      "file": "pdp/write-seq",
+      "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    },
+    {
+      "file": "pdp/writes.jsonl",
+      "sha256": "2afed00fcf3f6948dd16ad340a733f0a7453cbcb24a4c315b18e4e2d8a87a03a"
+    },
+    {
+      "file": "pep/file-service-enforce.jsonl",
+      "sha256": "febfa5e2cb5565950cea450ce7dc20a635f236451b7c8a5e8fab24d74a67b73c"
+    },
+    {
+      "file": "pep-probe.jsonl",
+      "sha256": "365ee60104fa46e7fea9436ee59e42a544ace287f81e783c4ca4630966a8a3e1"
+    },
+    {
+      "file": "roles.json",
+      "sha256": "b50ddb9b568c1b9e37f3d6f56a4371e6e3adf17535a93799bfb1e25830a6eba1"
+    },
+    {
+      "file": "run.json",
+      "sha256": "7046f5d85b4d30aad40fd5e48946784af440e7ee2645a7f79b9aa79126d7e06b"
+    },
+    {
+      "file": "state-changes.jsonl",
+      "sha256": "b732212501b25f10222520b6ea4ef1cae1b60e1c9537f0057e06755f55c9cf5b"
+    },
+    {
+      "file": "sts/issuance-ledger.jsonl",
+      "sha256": "ce42e42fe4cfe087e60e79aa1bf6c5c2120c0506471c7490142f13793c7acfa8"
+    },
+    {
+      "file": "ticks.jsonl",
+      "sha256": "4f5a43614cb4cc69b3a176af8c94ab945d52d1be9a4d20f2951daec94fce33f3"
+    },
+    {
+      "file": "user.jsonl",
+      "sha256": "855bd1a0d84873d7f48978d1a4e6483ef77e6e9896fbbf004684bbf28fc99a5c"
+    }
+  ],
+  "output_file": "eval.json"
+}

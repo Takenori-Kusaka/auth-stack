@@ -1,0 +1,15 @@
+{
+  "evaluated_at": "2026-10-15T02:55:07.589Z",
+  "evaluator": "tests/engine-swap-perf-audit (frozen with the TC manifest)",
+  "witness_signature": null,
+  "tc": "TC-022",
+  "negatives": {},
+  "positives": {},
+  "abort": {
+    "code": "harness_error",
+    "reason": "test bug: invalid E7 record [{\"instancePath\":\"/actor\",\"schemaPath\":\"#/allOf/0/then/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"on_behalf_of\"},\"message\":\"must have required property 'on_behalf_of'\"},{\"instancePath\":\"/actor\",\"schemaPath\":\"#/allOf/0/if\",\"keyword\":\"if\",\"params\":{\"failingKeyword\":\"then\"},\"message\":\"must match \\\"then\\\" schema\"}]",
+    "stack": "Error: test bug: invalid E7 record [{\"instancePath\":\"/actor\",\"schemaPath\":\"#/allOf/0/then/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"on_behalf_of\"},\"message\":\"must have required property 'on_behalf_of'\"},{\"instancePath\":\"/actor\",\"schemaPath\":\"#/allOf/0/if\",\"keyword\":\"if\",\"params\":{\"failingKeyword\":\"then\"},\"message\":\"must match \\\"then\\\" schema\"}]\n    at PrivilegedAccess.record (file:///E:/Github/auth-stack/12_poc/code/tests/engine-swap-perf-audit/lib/priv.js:67:38)\n    at PrivilegedAccess.activate (file:///E:/Github/auth-stack/12_poc/code/tests/engine-swap-perf-audit/lib/priv.js:118:26)\n    at full (file:///E:/Github/auth-stack/12_poc/code/tests/engine-swap-perf-audit/TC-022.js:45:25)\n    at file:///E:/Github/auth-stack/12_poc/code/tests/engine-swap-perf-audit/TC-022.js:49:20\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "verdict": "中止",
+  "input_hashes": {}
+}

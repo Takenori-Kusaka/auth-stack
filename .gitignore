@@ -3,3 +3,13 @@ node_modules/
 *.log
 12_poc/code/.run/
 *.key.pem
+# PoC raw data (3.8GB) is retained locally; only summaries/hashes are versioned
+12_poc/data/**
+!12_poc/data/**/
+!12_poc/data/**/eval.json
+!12_poc/data/**/run.json
+!12_poc/data/**/SHA256SUMS
+!12_poc/data/**/index.json
+!12_poc/data/**/manifest*.json
+!12_poc/data/**/COMPRESSION.json
+!12_poc/data/README.md

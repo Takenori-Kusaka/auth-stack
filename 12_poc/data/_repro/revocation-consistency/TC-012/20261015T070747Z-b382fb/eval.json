@@ -1,0 +1,652 @@
+{
+  "tc": "TC-012",
+  "run": "20261015T070747Z-b382fb",
+  "manifest_version": 2,
+  "manifest_sha256": "4982c8561fcab9b98d77de0f11451d934b0a0381ab2e3d996a8b44fdd5341c95",
+  "evaluated_at": "2026-10-15T07:18:22.297Z",
+  "requests": {
+    "total": 3470,
+    "recorded": 470,
+    "property": 3000,
+    "facade_errors": 0
+  },
+  "control": {
+    "intended_differences_v1_v2": 11,
+    "rollback_control": true,
+    "rollback_model_effective": true
+  },
+  "metrics": {
+    "shadow": {
+      "x_reference_total": 353,
+      "x_detected": 353,
+      "detection_rate": 1,
+      "candidates_exercised": 6,
+      "candidates_total": 20,
+      "candidates_not_blocked": [],
+      "false_x": 0,
+      "rows": [
+        {
+          "candidate": "v2w",
+          "X_facade": 9,
+          "X_reference": 9,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m00",
+          "X_facade": 51,
+          "X_reference": 51,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m01",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m02",
+          "X_facade": 47,
+          "X_reference": 47,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 372,
+          "N_reference": 372,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m03",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m04",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m05",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m06",
+          "X_facade": 94,
+          "X_reference": 94,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m07",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m08",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m09",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m10",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m11",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m12",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m13",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m14",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m15",
+          "X_facade": 20,
+          "X_reference": 20,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m16",
+          "X_facade": 132,
+          "X_reference": 132,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": true,
+          "exercised": true,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m17",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "m18",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 0,
+          "N_reference": 0,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        },
+        {
+          "candidate": "v2n",
+          "X_facade": 0,
+          "X_reference": 0,
+          "X_missed": 0,
+          "X_false": 0,
+          "N_facade": 1,
+          "N_reference": 1,
+          "intended_facade": 11,
+          "blocked": false,
+          "exercised": false,
+          "missed_examples": []
+        }
+      ]
+    },
+    "rollback": {
+      "resurrections": 0,
+      "pairs": 50,
+      "service_checks": 5,
+      "rollback_ack_ms": 0.64,
+      "rollback_effective_ms": 12.852
+    },
+    "ci": {
+      "candidates": 21,
+      "flagged": 21,
+      "rows": [
+        {
+          "candidate": "v2",
+          "mutated": "proj/tool_instance#view",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "v2w",
+          "mutated": "files/file#delete",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m00",
+          "mutated": "files/folder#editors",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m01",
+          "mutated": "files/folder#viewers",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m02",
+          "mutated": "files/folder#restricted_inherited",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m03",
+          "mutated": "files/folder#read",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m04",
+          "mutated": "files/folder#write",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m05",
+          "mutated": "files/folder#share",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m06",
+          "mutated": "files/file#editors",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m07",
+          "mutated": "files/file#viewers",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m08",
+          "mutated": "files/file#read",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m09",
+          "mutated": "files/file#write",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m10",
+          "mutated": "files/file#delete",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m11",
+          "mutated": "files/file#share",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m12",
+          "mutated": "proj/project#members",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m13",
+          "mutated": "proj/project#view",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m14",
+          "mutated": "proj/project#admin",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m15",
+          "mutated": "proj/tool_instance#config",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m16",
+          "mutated": "core/unit#manage",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "widening_witness"
+        },
+        {
+          "candidate": "m17",
+          "mutated": "core/unit#view_directory",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        },
+        {
+          "candidate": "m18",
+          "mutated": "core/unit#manage_membership",
+          "requires_approval": true,
+          "flagged_mutated_permission": true,
+          "via": "unproven"
+        }
+      ]
+    },
+    "gate": {
+      "submitted_without_approval": 21,
+      "refused_403": 21,
+      "re_presented": [
+        {
+          "key": "replay_v2_original_request",
+          "status": 200
+        },
+        {
+          "key": "re_present_widening_with_v2_approvals",
+          "status": 403,
+          "problem": "approval_required"
+        },
+        {
+          "key": "re_present_widening_old_base",
+          "status": 409,
+          "problem": "base_revision_conflict"
+        },
+        {
+          "key": "re_present_v1_as_new",
+          "status": 200
+        }
+      ],
+      "distributed_without_approval": 0,
+      "current_after_gate": "m-428d0c0ece522dfe",
+      "current_is_v1": true
+    },
+    "cedar_analysis": {
+      "candidates": 20,
+      "not_detected_by_ci_total": 0,
+      "rows": [
+        {
+          "candidate": "v2w",
+          "cedar_widening_keys": [
+            "files/file#delete"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m00",
+          "cedar_widening_keys": [
+            "files/folder#editors",
+            "files/folder#write",
+            "files/file#editors",
+            "files/file#write"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m01",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m02",
+          "cedar_widening_keys": [
+            "files/folder#restricted_inherited"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m03",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m04",
+          "cedar_widening_keys": [
+            "files/folder#write"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m05",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m06",
+          "cedar_widening_keys": [
+            "files/file#editors",
+            "files/file#write"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m07",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m08",
+          "cedar_widening_keys": [
+            "files/file#read"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m09",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m10",
+          "cedar_widening_keys": [
+            "files/file#delete"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m11",
+          "cedar_widening_keys": [
+            "files/file#share"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m12",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m13",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m14",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m15",
+          "cedar_widening_keys": [
+            "proj/tool_instance#config"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m16",
+          "cedar_widening_keys": [
+            "core/unit#manage",
+            "core/unit#manage_membership",
+            "core/unit#view_directory",
+            "proj/project#view",
+            "proj/tool_instance#view"
+          ],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m17",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        },
+        {
+          "candidate": "m18",
+          "cedar_widening_keys": [],
+          "not_detected_by_ci": []
+        }
+      ]
+    },
+    "two_generators": {
+      "diffs": 0,
+      "allow_widening": 0,
+      "narrowing_explained": 0,
+      "narrowing_unexplained": 0,
+      "cedar_errors": 0,
+      "examples": []
+    }
+  },
+  "verdict": {
+    "unapproved_widening_detected_100": true,
+    "rollback_no_resurrection": true,
+    "ci_detects_100": true,
+    "no_distribution_without_approval": true,
+    "two_generators": true
+  },
+  "result": "pass",
+  "inputs": {
+    "shadow.jsonl": "e6374eca25e431d3dfb43534a3da169cce96d2766a763631175d82802ecfd8ff",
+    "registrations.jsonl": "dedd847e04184d8f55c5263a27965104bc700e34caae98766db5aabca747cb21",
+    "ci-reports.jsonl": "f077233cc772e795e2a0fe504e5fbc688383f5f70d5f742b6df7e700094bd04a",
+    "cedar.jsonl": "14151b489f89ae0fd9aefdb80df5338984c33c65686ca553f500aea96da429db",
+    "cedar-analysis.jsonl": "9ba2833010ff83028b971f54b2ab90802523945de92556e3384f6c5ceb742572",
+    "rollback.json": "1917afec37b103ee004b34d45752452b4b5206f60051244397396033f964b1ef",
+    "models.json": "58844db38d42daca3616e03675136ebff8525c77a75f622f182e423d6b98708f",
+    "ref-v1.jsonl": "99734498c66c33d8462f7d0564bde238a6218df086d03677056c02f6c6cce054",
+    "run.json": "93545f28a08fe0a01e6bbe86af4aecbaa24384a9a21a2bd2abefe20b9acc6935"
+  }
+}
