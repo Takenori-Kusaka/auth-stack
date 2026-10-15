@@ -1,9 +1,9 @@
 # 認可モデリングガイド
 
-> 文書ID: INT-03 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-03 / 版: 0.6 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-252, R-256, G-107, G-108, G-115, G-116, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-65 を含む全行）。成果物計画の DL-65 行が挙げる R-098, R-147, R-148, R-205 も対応表に含める
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-65）, 04_architecture/authorization-model.md（ARC-05。本書の上位仕様）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-021・ADR-024・ADR-025・ADR-029（設計判断の正本）, 05_adr/reconciliation-notes.md, 11_contracts/relationship-model-registry.openapi.yaml（CON-04、DL-73）, 11_contracts/authorization-api.openapi.yaml（CON-03、DL-72）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 02_requirements/customer-admin-responsibility.md（DL-26）, 01_governance/raci-governance.md（GOV-05 §6）, 01_governance/assumptions-register.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-026〜T-034, T-080）, 07_slo/numeric-contracts.md（SLI-040〜SLI-043）, 12_poc/preregistered-test-plan.md, research/RS-07, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md
-> 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+> 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。v0.6（模擬パネル ラウンド5 の対応）で、契約の参照版を CON-04 v0.3.0 に改め、PoC の CAM 生成器（12_poc/code/model/generate.js）の利用可否と条件、PoC の cam.json と CON-04 `CamModule` の差 3 点を §0-6・§15.1・§15.2 S-8・§15.3 G-7 に書き、§14 残課題 21 と §16.3 の申し送りを加えた。模擬パネルは AI による自己レビューで、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・調査ノートから起草した。ADR に反する設計は置いていない。ADR で決まっていない点は「未決（ADR-0xx）」と書いた。§9 の例は作成者が手作業で OpenFGA DSL と SpiceDB schema に写し、公式 CLI で予備実行した（§9.0。証拠 E4 には数えない）。その後、起草者と別の AI エージェント（Claude）が独立レビューを行い修正した（末尾「レビュー記録」）。実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。
 
 ---
@@ -15,7 +15,7 @@
 3. **巨大ロール表は「関係を資源に付ける」「custom role はデータで表し委譲可の permission だけを入れる」「属性は型付き relation に写す」の 3 つで避ける** [D]（ADR-011 D1-3・D4-1〜D4-3）。資源名・拠点名・金額帯を役割名に埋め込んだ時点で表は資源数と条件の積で増える [D]。Google Cloud は数千の権限を含む basic role を本番で付与しないよう述べ、custom role は自動で更新されず利用者が保守するとしている [V][^6]（RS-17#89）。
 4. **6 ドメイン（ファイル共有、組織・拠点・ツール、プロジェクト管理、医療記録、金融取引承認、管理コンソール）の、要件から試験までの通しの例を §9 に置いた。作成者の予備実行では、OpenFGA CLI v0.7.4 の `fga model test` で 73 件の Check と 1 件の ListObjects、zed v0.30.2 の `zed validate` で 72 件の assertion がすべて期待どおりだった** [M]（予備実行。TC 未採番、生データは作成者の一時作業領域にあり本リポジトリ未保存。CAM 生成器を通しておらず、試験した engine は RS-07 の確認版より古い。E4 には数えない）。v0.5 で全例を CAM での書き方（§4.4）に書き直し、CON-04 v0.2.0 の `CamModule` の JSON Schema で検証して誤り 0 件を確かめた [M]（自前の確認。§9.0。書き直し後の engine での再実行は未実施）。正式な検証は TC-ARC05-10・TC-ARC05-11（DL-22 の TC-013）で行う [D]。
 5. **表せない要件は 3 類型に限られる。承認の定足数と内容への束縛、職務分離（自己承認の禁止・相反役割の同時保持）、件数上限である** [D]。それぞれ workflow・書込検査・業務側の rate 制御に置き、ReBAC で近似しない（§10.2 の要件カタログ、ARC-05 §8.7）[D]。
-6. **基盤の完成を待たずに、連携開発者は本書・CON-03・CON-04・CON-11 のモックと engine 公式 CLI だけでモデル設計・モデル試験・アプリの契約試験を始められる（§15）。CAM の式の文法（CAM 式 v0）、試験ケースの提出形式、変更区分（M0〜M3）の返却欄、意味の変更の申告欄、条件カタログの列挙、階層サービス API は CON-04 v0.2.0 に preview として定義した。残る待ちは、条件カタログの引数の確定、階層の決裁（ARC-05 K05-6〜K05-8）、CAM 生成器と `validateModel` の提供である** [D]（§15.3）。
+6. **基盤の完成を待たずに、連携開発者は本書・CON-03・CON-04・CON-11 のモックと engine 公式 CLI だけでモデル設計・モデル試験・アプリの契約試験を始められる（§15）。CAM の式の文法（CAM 式 v0）、試験ケースの提出形式、変更区分（M0〜M3）の返却欄、意味の変更の申告欄、条件カタログの列挙、階層サービス API は CON-04 v0.2.0 に preview として定義し、v0.3.0 でもその形は変わっていない（v0.3.0 の改版はテナント結合 §6 の追加）。残る待ちは、条件カタログの引数の確定、階層の決裁（ARC-05 K05-6〜K05-8）、CAM 生成器と `validateModel` の提供である** [D]（§15.3）。PoC の CAM 生成器（12_poc/code/model/generate.js）は手元で生成結果を見る参考には使えるが、入力の形が CON-04 の `CamModule` と 3 点で異なる（PoC の cam.json は CON-04 v0.3.0 の `CamModule` の JSON Schema で誤り 13 件）。このため S-8 の生成器には数えず、提出物は CON-04 の形で別に作る [M][D]（§15.1、§15.3 G-7）。
 7. **新たな決裁は 4 件（§13）。最大の論点は、組織の木（unit）を core 型に昇格するかと、組織の木を辿る継承で解決深度の設計値 8 [A-036] を超える問題の扱いである** [D]。RS-18反映（2026-10-15）: ARC-05 v0.3 §3.6 が、`core/tenant`・`core/unit`（単一親の再帰コンテナ、`kind` 属性）・`core/group`（n:n）・`core/admin_scope`（非ネストの委任範囲）の 4 型、containment の `parent` 統一、祖先閉包 `ancestor` の事前計算を決裁案 K05-6〜K05-8 として置いた。INT03-K1・K2 は同じ論点なので ARC-05 の決裁と 1 回にまとめる [D][^28]。閉じ方は、机上（A）で閉じるのが R-252・R-256・R-098・G-107 の 4 件、組織決定（B）が G-116 の 1 件、実測（C）が残る 6 件である（末尾の対応表）[D]。
 
 ---
@@ -1117,6 +1117,7 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | 18 | RS-18反映: research/RS-18 は独立検証記録がない。本書の追記は ARC-05 §3.6 と ADR-021 から導いた [D] で、RS-18 の事実記述を根拠にしていない | A | 作成者以外の照合者。G3 |
 | 19 | v0.4 で CON-04 に置くと決め、preview として定義した（§15.3 G-6、CON-04 §10）。連携開発者は MK-04 の改訂後に `attachToHierarchy`・`moveHierarchyNode` を使う書込を試験できる。採否は K05-6〜K05-8 の決裁に従い、不採用なら削除する。unit の廃止とテナント統合・分割の API は未定義 | A・B | 認可・PDP チーム（CON-04 の所有者）、CTO（K05-6〜K05-8）。DL-73 凍結前 |
 | 20 | v0.5 で §4.4 の書き方に書き直した例（付録 A）を engine の CLI（`fga model test`・`zed validate`）で再実行していない。構造と構文は JSON Schema と自前の構文解析器で確かめた（§9.0）。あわせて CON-04 側の不足（E-4 の範囲、permission の公開宣言、保持者集合の印、core 生成器の付加規則。§16.2 HO-R3-1〜HO-R3-5）の解消を待つ | C・A | 認可・PDP チーム。TC-ARC05-10、DL-73 凍結前 |
+| 21 | v0.6: PoC の CAM 生成器と cam.json が CON-04 の `CamModule` と 3 点で異なる（§15.1 の差 D-1〜D-3、§15.3 G-7）。本書は (a) PoC 側を契約の形に揃える案を採り、POA&M への起票を申し送った（§16.3 HO-R5-1）。揃うまで、PoC の生成器は S-8 に数えない | A | PoC チーム（DL-82）、認可・PDP チーム。PoC の凍結済み試験の再実行前（G4 入場前） |
 
 ---
 
@@ -1129,10 +1130,29 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | もの | 所在 | 状態 | 何に使うか |
 |---|---|---|---|
 | 判定の契約 | CON-03（`authorization-api.openapi.yaml`、AuthZEN 1.0 の evaluation・evaluations） | draft 0.1.0（CON-00 の一覧） | アプリの PEP が送る要求と、受ける応答（allow、deny、`deny_guardrail`、`deny_indeterminate`、`deny_unavailable`）の実装 |
-| 関係とモデルの契約 | CON-04（`relationship-model-registry.openapi.yaml`） | draft 0.2.0。モデル管理（登録・pin・shadow・rollback）、CAM 式 v0、試験ケース欄、条件カタログ、階層サービス API は `x-stability: preview` | tuple の書込・削除・読取の実装、`CamModule` と `ModelChangeRequest`（`tests`・`semantic_change`）の JSON の作成 |
+| 関係とモデルの契約 | CON-04（`relationship-model-registry.openapi.yaml`） | draft 0.3.0（11_contracts/README.md の一覧。v0.3.0 はテナント結合 §6 の追加で、`CamModule`・`ModelChangeRequest` の形は v0.2.0 と同じ）。モデル管理（登録・pin・shadow・rollback）、CAM 式 v0、試験ケース欄、条件カタログ、階層サービス API は `x-stability: preview` | tuple の書込・削除・読取の実装、`CamModule` と `ModelChangeRequest`（`tests`・`semantic_change`）の JSON の作成 |
 | モック | CON-11 の MK-03（PDP façade）・MK-04（registry） | 仕様 draft 0.2 | アプリの契約試験。MK-03 は MK-04 に書いた tuple と制御 API の許可表で判定し、ドメインのモデルの意味論は評価しない（CON-11 §4.4）。MK-04 のモデル管理は example 駆動だけ（CON-11 §4.5） |
 | engine 公式 CLI | OpenFGA CLI（`fga model test`）[^26]、zed（`zed validate`）[^27] | 公開済み | モデルの意味論の試験（ADR-011 D2-4 が CI の検証経路に定めるツール） |
 | 例と規則 | 本書 §3〜§11 | 本版 | モデルの書き方、試験の観点 |
+| PoC の CAM 生成器 | 12_poc/code/model/generate.js・cam.js（入力は model/cam.json。POC-03 §2 の「モデル（CAM）」行） | **条件付きで使える（参考用途だけ）**。PoC の部品で、ADR-011 D2-3 の CAM 生成器でも `validateModel` でもない。下の差 3 点のとおり、入力は CON-04 の `CamModule` の形ではない [M][D] | 手元の作業コピーで PoC の cam.json に自分の型を足し、生成された OpenFGA DSL・JSON と Cedar の policy・schema を見て、S-4 の手写しの DSL と見比べる |
+
+**PoC の CAM 生成器を使う条件（v0.6）** [D]
+
+1. 入力は PoC の cam.json の形（全名前空間を 1 ファイルに束ね、最上位に `conditions` を置く形）で作る。CON-04 の形の `CamModule` をそのまま渡すと、次の 2 つが起きることを確かめた [M]（自前の確認。TC 未採番、2026-10-15、Node.js で generate.js を作業領域外に出力して実行。生データは保存していない）。(a) PoC の cam.json から最上位の `types` だけを残した JSON（CON-04 の形）を渡すと、生成は終わるが、OpenFGA DSL から `condition c_not_expired(...)` の定義が消え、`define grantee: [core/user with c_not_expired]` の参照だけが残る（条件の定義を CAM の最上位の `conditions` からしか読まないため。cam.js `compileCam`）。(b) 1 名前空間分（`files/*` の 2 型）だけを渡すと、Cedar の strict 検証が `failed to resolve types: core::user, ...` で不合格になる（生成器に base revision を合わせる機能がなく、core 型を同じファイルに要するため）。
+2. 生成器の式の構文解析は ARC-05 §8.1 の擬似表記に沿い、`&` と `-` を同じ優先度の左結合で受ける（cam.js の冒頭の文法）。CON-04 §9.2 E-2（異なる演算子は括弧なしで並べない）を検査しないので、生成器が通っても CAM 式 v0 に合うとは言えない [D]。E-1〜E-8 と自動ゲート（§8.2）は `validateModel` の提供まで目視と S-4 で確かめる。
+3. 書込宣言は PoC の形（`writer`・`types`。型単位、`*` あり）で、facade.js だけが読む。CON-04 の `WriteDeclaration`（`workload` の SPIFFE ID と `<型>#<relation>` の列）とは粒度も違う [D]。書込宣言の試験は CON-11 の MK-04 で行う（S-6）。
+4. 出力は開発中の参考だけに使い、本番にも共有 sandbox にも配布しない（ADR-011 D2-3）。出力を S-8 の「生成器が出した DSL」に数えない。
+5. 手元で変えた cam.json は 12_poc/code に戻さない（PoC の凍結と合否に影響させないため。INT-00 §6.3 の「自サービスを workload として繋ぐ場合」と同じ扱い）。
+
+**PoC の cam.json と CON-04 v0.3.0 の `CamModule` の差（3 点）** [M][D]
+
+CON-04 v0.3.0 の `components.schemas.CamModule` に対し、PoC の 12_poc/code/model/cam.json を Python（jsonschema 4.26.0、Draft 2020-12）で検証すると誤りは 13 件で、すべて次の (1)・(2) に当たる。名前空間ごとに分けた `types` だけ（core 9 型、files 2 型、proj 2 型）はいずれも誤り 0 件だった [M]（自前の確認。TC 未採番、2026-10-15、生データは保存していない）。
+
+| # | 差 | PoC の cam.json | CON-04 v0.3.0 | 誤りの件数 |
+|---|---|---|---|---|
+| D-1 | 最上位の欄 | `$comment`・`cam_version`・`guardrail_catalog_version`・`conditions` を持つ | `CamModule` は `types`・`write_declarations` だけ（`additionalProperties: false`）。条件の定義は基盤の `ConditionCatalog`（preview）、版は registry が払い出す `ModelRevisionId` | 1 |
+| D-2 | `write_declarations` の形 | `{writer, types}`（4 件。書き手は論理名、対象は型単位で `core/tenant#external_member` と `*` が混在） | `WriteDeclaration` は `{workload, relations}` が必須（`workload` は URI、`relations` は `<型>#<relation>`） | 12（4 件 × 余計な欄 1・必須欄の欠落 2） |
+| D-3 | 名前空間の束ね方 | core・files・proj の 3 名前空間を 1 ファイルに束ねる（core 型もこのファイルにある） | `CamModule` は「1 名前空間分」で、`ModelChangeRequest.modules[]` が `namespace_code` と `content`（`CamModule`）の組で並べる。`core` は基盤の予約（`NamespaceCode`）で、ドメインは書かない | 0（スキーマでは検出されない。意味の差） |
 
 ### 15.2 手順
 
@@ -1146,6 +1166,8 @@ ARC-05 §16（K05-1〜K05-5）、ADR-011 D4-5、ADR-024 K24-1〜K24-4、GOV-05 D
 | S-6 | tuple の書込を CON-04 の `writeRelationships`・`deleteRelationships` で MK-04 に対して実装し、書込対応表（§3.1 段 7）、書込順序（ARC-05 I-5・I-6）、整合性トークンの保存（I-4）を試験する | 書込経路の実装 | CON-11 の順序族のベクタが合格 |
 | S-7 | 一覧は SDK の一覧ヘルパだけで実装し（LS-1）、MK-03 の search（preview）で `completeness=incomplete` と post-check を試験する | 一覧の実装 | CON-11 §4.4 の一覧の応答を扱える |
 | S-8 | CAM 生成器と `validateModel` が使えるようになったら、S-3 の JSON を登録前検証にかけ、生成器が出した DSL を S-4 の試験で再評価し、手写しの DSL を捨てる（ADR-011 D2-3: 人が DSL を直接編集した結果は本番に配布しない） | `ValidationReport` | `result=pass`。手写しと生成の DSL で S-4 の試験結果が一致 |
+
+- S-8 の「CAM 生成器」は ADR-011 D2-3 の基盤の生成器で、CON-04 の形（`ModelChangeRequest.modules[].content`）を入力に取るものを指す [D]。PoC の生成器（12_poc/code/model/generate.js）は入力の形が違う（§15.1 の差 D-1〜D-3）ので、これを使っても S-8 は完了しない。それまでは §15.1 の条件 1〜5 の範囲で、手写しの DSL の見比べにだけ使ってよい [D]。PoC の生成器が CON-04 の形に揃った時点（§16.3 HO-R5-1 の (a)）で、本項を見直す。
 
 - S-4 の手写しの DSL は開発中の試験のためだけに使い、本番には出さない [D]（ADR-011 D2-3、§11 E-17）。
 - engine の版は RS-07 の確認版（OpenFGA v1.21.0、SpiceDB v1.56.2）を基準にする [D]。§9.0 の予備実行は CLI 内蔵の古い engine で行ったため、基準版での再確認は TC-ARC05-10 で行う [D]。
@@ -1163,6 +1185,7 @@ v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に pre
 | G-4 | 意味の変更の申告欄（ADR-016 D16-08）がない | `semantic_change`（必須。`declared=true` で M2）を加えた [D] | 申告の真偽の確かめ方（審査と shadow）の運用手順 | GOV-05 §6.4、DL-66 |
 | G-5 | 条件カタログの正式な一覧と引数の型が未公開 | `ConditionId`（6 件の列挙）と `ConditionCatalog.$defs`（各条件の tuple_context・request_context）を preview として置いた。`CamRelation.conditions` は列挙に変えた。tuple の `Condition.name`（GA）は列挙で縛らない [D] | 引数の型・既定・CEL 式の確定（ARC-05 §3.5 は案のまま） | 条件カタログ（認可・PDP チーム、DL-73 凍結前） |
 | G-6 | 階層サービス（unit の作成・移動、循環・深さ検査、祖先閉包）の API の置き場所が未定（残課題 19） | CON-04 に置くと決め、`createUnit`・`getUnit`・`attachToHierarchy`・`moveHierarchyNode`・`readAncestors` を tag `hierarchy`、`x-decision-pending: [K05-6, K05-8]` の preview で定義した。`ancestor` と unit を親に取る `parent` は階層サービスだけが書く（既存の `relation_not_writable`）[D] | K05-6〜K05-8 の決裁（不採用なら削除）。unit の廃止とテナント統合・分割の接ぎ木の API | ARC-05 §16（CTO、Gate 3・G4） |
+| G-7 | （v0.6 で追加）PoC の CAM 生成器と cam.json が CON-04 の `CamModule` と別の形を使う（§15.1 の差 D-1〜D-3）。cam.json の `$comment` は「CamModule に従う」と書くが、検証すると誤り 13 件。PoC の生成器と、cam.json を読む試験（TC-013 の参照評価器 `refEvaluate` の既定入力、TC-012・TC-021・TC-026 など）は、連携開発者が CON-04 の形で書くモデルとは別の形式を検証している [M][D] | 対応なし（CON-04 の変更は本書の範囲外） | 本書は (a)「PoC の cam.json と生成器を `ModelChangeRequest.modules[].content`（名前空間ごとの `CamModule`）の形に揃える」を採る。条件の定義は条件カタログ（CON-04 `ConditionCatalog`）の別ファイル、版は生成器の出力（manifest の `cam_revision`）に移し、書込宣言は `WriteDeclaration` の形に改める。(b)「CON-04 に `cam_version`・条件カタログの埋込みを preview で加える」は採らない（理由は §16.3 HO-R5-1）。実施までの扱いは §15.1 の条件 1〜5 | POA&M への起票（§16.3 HO-R5-1）。PoC チーム（DL-82）と認可・PDP チーム（CON-04 の所有者）。凍結済みの試験の再実行前 |
 
 ---
 
@@ -1208,6 +1231,17 @@ v0.4（模擬パネル ラウンド1）で、G-1〜G-5 を CON-04 v0.2.0 に pre
 | HO-R3-6 | ARC-05（04_architecture/authorization-model.md）§8.1〜§8.6 | 例を本書 §4.4 の書き方（直接付与の relation と保持者集合・動詞の permission）に書き直す。AF-INT03-2・HO-1 と同じ改訂でまとめる | ARC-05 §8.2 は `editor: [...] \| owner \| parent->editor` の形のままで、CON-04 の `CamRelation` で表せない |
 | HO-R3-7 | CON-03 §4.2（判定宣言 `caller_scope`）、ARC-05 X-14 の追加案、CON-11 | 判定宣言には catalog に載せた動詞の permission だけを入れ、保持者集合・補助の permission を入れない規則を加える。CON-11 に「保持者集合（`editors`）の照会が `deny_guardrail:caller_scope` になる」負例を加える | 本書 N-24 の強制手段 |
 | HO-R3-8 | research/RS-18-hierarchy-modeling.md、reports/テナント配下の階層モデリング.md | relation に式を混ぜた例（直接型の `[...]` に続けて `\| owner` などを書く形）が残っている。次の改版で §4.4 の書き方に揃えるか、擬似表記であることを注記する | 連携開発者が写す際の食い違いの防止 |
+
+### 16.3 他文書への申し送り（模擬パネル ラウンド5 の対応で生じたもの）
+
+本対応では本書だけを編集した（並行作業のため）。次の改訂は各文書の所有者に申し送る [D]。HO-R3-5 (b) は本節の HO-R5-1・HO-R5-2 に引き継ぐ。
+
+| # | 対象 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| HO-R5-1 | traceability/open-items.md（POA&M） | 行を 1 つ起票する。「PoC の CAM 生成器（12_poc/code/model/generate.js・cam.js）と cam.json を CON-04 の形に揃える（案 (a)）: 入力を `ModelChangeRequest.modules[]`（`namespace_code`＋`content`＝名前空間ごとの `CamModule`）にし、core の module は基盤所有として分け、条件の定義は `ConditionCatalog` の別ファイルから読み、版は manifest の `cam_revision` にだけ置き、書込宣言を `WriteDeclaration`（`workload`・`relations`）に改め、facade.js の読み方を合わせる。式の検査に CON-04 §9.2 E-2 を加える。CamModule ごとの JSON Schema 検証を生成の前段に置く」。閉じ方 A・C、所有者 PoC チーム（DL-82）と認可・PDP チーム（CON-04 の所有者）、期限 凍結済み試験（TC-012・TC-013・TC-021・TC-026）の再実行前（G4 入場前）、依存 TC-013・TC-ARC05-10、残課題は本書 21 | 案 (b)（CON-04 に `cam_version`・条件カタログの埋込みを加える）を採らない理由: 条件カタログは基盤所有で、ドメインの module ごとに定義を持たせると 1 つの条件 ID に複数の定義が並び得る（CON-04 の `ConditionCatalog` は、型・既定・CEL 式を認可・PDP チームが確定する 1 つのカタログとして置かれている）。版は registry が採番する不変の `ModelRevisionId`（CON-04）なので、入力側に版を持たせると二重になる。`CamModule` を 1 名前空間分とする CON-04 の形は、ドメインが自分の名前空間だけを所有する規則（§2、ADR-011 D2-6）に合う。PoC の生成器と試験が契約と同じ形を検証しないと、TC-013 の結果を連携開発者のモデルに当てはめられない。PoC の凍結（POC-01）の範囲を変えるかは PoC チームが判断する（判定の意味は変えない作業だが、cam.json のハッシュは変わる） |
+| HO-R5-2 | 12_poc/code/README.md（POC-03）§10.2、12_poc/code/model/cam.json | (1) §10.2 に暫定 P-15 を加える。「CAM の入力形式: cam.json は全名前空間を 1 ファイルに束ね、最上位に `cam_version`・`guardrail_catalog_version`・`conditions`、書込宣言を `{writer, types}` で持つ。CON-04 v0.3.0 の `CamModule` の JSON Schema では誤り 13 件（INT-03 §15.1 の差 D-1〜D-3）。名前空間ごとの `types` は適合する」。(2) cam.json の `$comment` の「形式は … CamModule … に従う」を「types[] の各型の形は CamModule の CamType に従う。最上位の欄・書込宣言の形・名前空間の束ね方は PoC 限りの形で、CamModule に適合しない（POC-03 §10.2 P-15）」の趣旨に直す。(3) §2 の「モデル（CAM）」行に同じ注記を加える | `$comment` の記述が検証結果と合わない（本書 §15.1 の確認）。INT-00 §6.3 が「POC-03 §10.2 の PoC 限りの暫定（P-1〜P-14）を仕様とみなさない」としているので、P-15 にすれば同じ扱いが及ぶ |
+| HO-R5-3 | 10_integration/README.md（INT-00）§6.3「暫定ローカル結合環境の条件」 | 「使える構成要素」に「CAM 生成器（`model/generate.js`。参考用途だけ、条件は INT-03 §15.1）」を加え、「依存してはならないもの」に「cam.json の形式（POC-03 §10.2 P-15）」を加える | 部品表に生成器の可否がない（模擬パネル ラウンド3 MP-3-22・ラウンド5 の指摘） |
+| HO-R5-4 | traceability/mock-panel-report.md MP-3-22 | 「契約版が古い」は本書 §15.1 で CON-04 v0.3.0 に改め、「CAM 生成器の利用可否が未判断」は §15.1 の条件付きの可否で判断した、として状態を更新する（POA&M の HO-R5-1 の行が閉じるまで生成器の契約適合は残る） | 指摘の閉じ方の記録 |
 
 ---
 
@@ -1607,3 +1641,15 @@ R 6 件（R-requirements から 2 件、成果物計画の DL-65 行から 4 件
 - 対応後の確認 [M]（自前の確認。TC 未採番、生データは保存していない）: (a) 付録 A の 6 件を CON-04 v0.2.0 の `components.schemas.CamModule` に対して Python（jsonschema 4.26.0、Draft 2020-12）で検証し、誤り 0 件。(b) 同じ JSON の 48 式を CON-04 §9.1 の EBNF に沿う自前の構文解析器で検査し、全件合格。(c) 本文 §9.1〜§9.6 の `text` のモデル（14 型）と付録 A の relation 名・直接型・条件・式が一致することをスクリプトで確かめた。(d) 参考として PoC の 12_poc/code/model/cam.json を同じ schema で検証し、13 件の誤りを得た（HO-R3-5）。
 - 新たな事実の根拠: 本対応で使った事実は、CON-04 の `CamRelation`・`CamPermission`・E-2〜E-6、CON-03 の `Action.name` の description と §4.2、ARC-05 §3.1・§8.2・X-12、PoC の cam.json と README P-10 の記述で、いずれも本リポジトリの文書を開いて確かめた [D]。外部の原典は新たに引用していない。
 - 未解決: v0.5 の例の engine CLI による再実行（残課題 20）、CON-04 の E-4 と `CamPermission.public` の不足、core 生成器の付加規則（HO-R3-2〜HO-R3-4）。
+
+### 模擬パネル ラウンド5（2026-10-15）
+
+> 模擬パネルは AI エージェント（Claude）による自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 指摘（重大度・指摘者） | 対応 | 箇所 |
+|---|---|---|---|
+| P5-1 | High（devlead）: PoC の model/cam.json の `$comment` は「形式は CON-04 の CamModule に従う」と書くが、CON-04 v0.3.0 の JSON Schema で不適合 13 件（最上位の `cam_version`・`conditions`・`guardrail_catalog_version`・`$comment`、`write_declarations` の `types`・`writer` と必須欄の欠落、複数名前空間の束ね）。PoC の生成器と TC-013 は CON-04 の形と別の形式を検証している。§15 は「CAM 生成器の提供を待つ」のままで、INT-00 §6.3 の部品表にも生成器の可否がない。ラウンド3 MP-3-22 が閉じていない | (1) §15.1 に「PoC の CAM 生成器」の行を加え、「条件付きで使える（参考用途だけ）」と判断し、条件 1〜5 を置いた。(2) CON-04 との差を D-1（最上位の欄）・D-2（書込宣言の形）・D-3（名前空間の束ね方）として列挙し、誤り 13 件の内訳（1＋12）を示した。(3) S-8 に、PoC の生成器では S-8 が完了しないことを加えた。(4) §15.3 に G-7 を加え、案 (a)（PoC を `ModelChangeRequest.modules[].content` の形に揃える）を採り、(b) を採らない理由を §16.3 HO-R5-1 に書いた。(5) POA&M への起票（HO-R5-1）、POC-03 §10.2 P-15 と cam.json の `$comment` の修正（HO-R5-2）、INT-00 §6.3 の部品表（HO-R5-3）、MP-3-22 の状態更新（HO-R5-4）を申し送った。(6) §0-6 と §15.1 の CON-04 の版を v0.3.0 に改めた（MP-3-22 の「契約版が古い」）。§14 に残課題 21 を加えた | 冒頭の改版、§0-6、§14 残課題 21、§15.1、§15.2 S-8、§15.3 G-7、§16.3 |
+
+- 対応後の確認 [M]（自前の確認。TC 未採番、2026-10-15、生データは保存していない）: (a) CON-04 v0.3.0（`info.version` 0.3.0、HEAD と作業ツリーで同じ）の `components.schemas.CamModule` に対し、12_poc/code/model/cam.json を Python（jsonschema 4.26.0、Draft 2020-12、`referencing` で OpenAPI 文書内の `$ref` を解決）で検証し、誤り 13 件（最上位の追加欄 1、`write_declarations[0..3]` ごとに追加欄 1・必須欄欠落 2）を得た。名前空間ごとに分けた `types` だけ（core・files・proj）は各 0 件。(b) `node model/generate.js` を出力先を作業領域外にして実行し、既定の cam.json では Cedar strict 検証が合格（cedar 4.13.0）、最上位 `types` だけの入力では条件の定義が DSL から消えて参照だけが残り、`files/*` だけの入力では Cedar の型解決が不合格になることを確かめた。12_poc/code の内容は変えていない。(c) 生成器・façade・試験の読み方は、cam.js（`compileCam`、文法の注記）、facade.js（`write_declarations` の `writer`・`types` の読取り）、TC-012・TC-021・TC-026 と engine-swap-perf-audit/lib/helpers.js（`refEvaluate` の既定入力）のソースで確かめた。
+- 新たな事実の根拠: 本対応で使った事実は、CON-04 v0.3.0 の `CamModule`・`WriteDeclaration`・`ModelChangeRequest`・`NamespaceCode`・`ModelRevisionId`・`ConditionCatalog`、11_contracts/README.md の CON-04 の版、POC-03（12_poc/code/README.md）§2・§10.2、INT-00 §6.3、mock-panel-report の MP-3-22、PoC のソースで、いずれも本リポジトリのファイルを開いて確かめた [D]。外部の原典は新たに引用していない。
+- 未解決: 案 (a) の実施と PoC の凍結の扱い（HO-R5-1、残課題 21）。POC-03・cam.json・INT-00・POA&M・mock-panel-report の改訂は各所有者の作業として残る（HO-R5-2〜HO-R5-4）。

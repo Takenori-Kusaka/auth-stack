@@ -1,6 +1,6 @@
 # 成果物計画（マスターファイル計画）
 
-> 文書ID: TRC-03 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: TRC-03 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15（0.5 追補（模擬パネル ラウンド 7 の sre 指摘）: §4.6 の DL-81 行と §8 の 12_poc/measurement-report.md 行に、作成済み（POC-02 版 0.1、draft、作成者以外の確認未実施）の状態を記した。DL の定義・件数・ファイル数は変えていない。末尾「レビュー記録」ラウンド 7（sre）。0.5: 模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）ラウンド 7 の devlead 指摘により、§4.6 の DL-120 の受入れ基準に (4)（sandbox の workload・交換可能な組の登録が MK-02 で動き CRN-28 を再現した記録）と DCS-06 §5.2.2 のキット費目との関係の注記を加えた。末尾「レビュー記録」ラウンド 7）
 > 対応要求: R-025（全要求を単一台帳へ載せ所有者を割当）、R-197〜R-202（追跡可能性と決裁範囲）、ほか R-001〜R-210 全件の成果物割当。G-xxx は未確定（traceability/G-goal-criteria.md の確定後に追記）
 > 依存文書: CONVENTIONS.md, traceability/seed/seed-01-ciso-assurance.md, traceability/seed/seed-02-cto-technical.md, traceability/seed/seed-03-redteam-decision.md, 20年運用を前提とした認証・認可基盤提案のCTO CISOレビュー.md
 
@@ -55,7 +55,7 @@
 - 00_decision は読む順を示す 2 桁接頭辞（`00-`〜`08-`）を付ける。
 - ADR は `05_adr/ADR-0xx-<slug>.md`、調査ノートは `research/RS-xx-<slug>.md`。
 - YAML/JSON の契約ファイルは Markdown のメタ情報ブロックを置けないため、OpenAPI は `info.version` と `info.x-document-id`・`info.x-status`・`info.x-depends-on` に、JSON Schema は `$id`・`$comment` に同等の情報を書く。
-- 12_poc のコード本体は `12_poc/code/` 配下、生データは `12_poc/data/` 配下に置き、DL-81・DL-82 から参照する（個別ファイルは DL 対象外）。
+- 12_poc のコード本体は `12_poc/code/` 配下、生データは `12_poc/data/` 配下に置き、DL-81・DL-82 から参照する（個別ファイルは DL 対象外）。例外として、契約試験キット本体の `12_poc/code/contract-kit/README.md` は DL-120 の本体文書とし、§8 に行を置く（連携側へ配布する成果物であり、所有者と期限を追跡するため。CON-11 §11・§14.2[^7]）。
 
 ## 3. seed-01 由来の成果物（DL-01〜DL-34）
 
@@ -111,7 +111,7 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | 統合 | D25 | 監査ログ設計と PIA を同一ファイル |
 | 1 対多 | D12 | ADR 集は 05_adr/README.md と ADR 29 件（§5） |
 
-## 4. 追加成果物（DL-35〜DL-119）
+## 4. 追加成果物（DL-35〜DL-121）
 
 ### 4.1 リポジトリ全体・決裁パッケージ（00_decision）
 
@@ -186,13 +186,15 @@ seed-01 の D との対応で 1 成果物＝1 ファイルの原則から外れ�
 | DL-117 | ライフサイクルイベント契約（AsyncAPI） | 11_contracts/lifecycle-events.asyncapi.yaml | 依存サービスへ送るテナント・利用者のライフサイクル事象と大規模な権限剥奪の一覧、配送の保証（at-least-once、冪等キー、順序キー、再送、dead letter、replay）、受信側の義務、完了報告、SSF/CAEP との分担、凍結区分を定める。2026-10-15 の模擬パネル（自己レビュー）ラウンド 1 の指摘への是正として先に作成され、ラウンド 2 で本行を追加した（CON-00 §4.1 N-2 の順序を守れなかった。末尾「レビュー記録」）。 | R-044, R-109／G-137, G-118, G-138／DL-49 §7・DL-08 §16.3 の義務を契約にする | 5 | A・C | E4 |
 | DL-118 | ライフサイクル事象スキーマ | 11_contracts/schemas/lifecycle-event.schema.json | DL-117 の事象の封筒（CloudEvents 1.0.2）と type ごとの data、完了報告・replay 要求の形、正例・負例を JSON Schema 2020-12 で定義する。事象の一覧・配送の保証・受信側の義務の正本は DL-117。追加の経緯は DL-117 と同じ。 | R-044, R-109／G-137, G-118, G-138／事象の機械検証 | 5 | A・C | E4 |
 | DL-119 | Client Registration API | 11_contracts/client-registration.openapi.yaml | sandbox の RFC 7591/7592 profile によるセルフ登録（preview）と、本番の承認付き登録申請 API（preview）を定義し、ARC-02 §6 の client 種別ごとの必須項目・禁止項目（GA）を機械可読にする。承認者案、理由コード、負例、モックの振る舞いを含む。2026-10-15 の模擬パネル（自己レビュー）ラウンド 1 の指摘への是正として仮番「CON-13」で先に作成され、ラウンド 2 で CON-14 として本行を追加した（末尾「レビュー記録」）。 | R-158, R-255／G-138（I-01）, G-141(c), G-118, G-119, G-124／client 登録の手段を契約にする | 5 | A・C | E4 |
+| DL-121 | ライフサイクル状態の照会 API（CON-15） | 11_contracts/lifecycle-state.openapi.yaml | CON-12（DL-117）の RO-9（W_replay を超えた停止の後の全件突合）と RO-12（破壊的・不可逆な処理の直前の正本照会）で受信側が呼ぶ読取り専用 API を OpenAPI 3.1.2 で定義する。tenant・principal・membership の現在状態、request_id・hold_ref・mapping_ref と事象の照合（verifyLifecycleAction）、撤回の有無、全件突合の一覧（listReconciliationSnapshot）、相互 TLS、理由コード LQ00〜LQ11・LQ20〜LQ24、正例と負例 LQN-01〜LQN-19 を含む。版 0.1.0 は全 operation が preview で、GA への昇格は CON-12 §4.1 Q-5 による。所有者: DL-49 の所有者＋プラットフォームチーム長（CON-12 LC-OI-3）。期限: DEC-8 第 1 段の付議前（CON-12 §4.1）。受入れ基準: (1) CON-12 の拡張 `x-state-query-api` の値を内容を変えずに本ファイルへ切り出し、CON-12 には参照だけを残す（CON-12 §10 H5-1）、(2) 本ファイル単独で Redocly lint・examples の検証・Prism による起動ができた記録（E4。連携開発者が codegen・モック・lint を単独ファイルに直接使えるようにするため）、(3) 作成者以外の独立レビュー。現状: 契約本体は 2026-10-15 に CON-12 版 0.4.0 の拡張 `x-state-query-api` に起草され、ファイルは未作成。CON-00 §2.3 の機械検査（lint・Prism）は、作成者が一時的に切り出したファイルで行ったもので、本ファイルの記録ではない。2026-10-15 の模擬パネル（自己レビュー）ラウンド 6 の指摘への是正として、CON-00 §9 申し送り 14・CON-12 §10 H5-1 の案（DL-121 案）を採番して追加した（末尾「レビュー記録」）[^8][^9]。 | R-044, R-109／G-137, G-118, G-138／RO-9・RO-12 の照会を契約にし、削除経路の実装と単体試験の入出力を書けるようにする | 5 | A・C | E4 |
 
 ### 4.6 PoC（12_poc）
 
 | DL-ID | 成果物名 | ファイルパス | 内容の要点 | 主な対応要求（seed-01 R-ID／目的） | 作成Phase | 区分 | 証拠種別 |
 |---|---|---|---|---|---|---|---|
-| DL-81 | PoC 実測レポート | 12_poc/measurement-report.md | 事前登録（DL-22）に対する TC-xxx ごとの実測値、合否、逸脱、生データ（12_poc/data/）のハッシュと測定条件を報告する。事前登録からの変更は理由付きで開示する。 | DL-22 と同じ R-ID／seed-03 B2／実測を再現可能な証拠にする | 5 | C | E5（＋E4） |
+| DL-81 | PoC 実測レポート | 12_poc/measurement-report.md | 事前登録（DL-22）に対する TC-xxx ごとの実測値、合否、逸脱、生データ（12_poc/data/）のハッシュと測定条件を報告する。事前登録からの変更は理由付きで開示する。**状態（2026-10-15T04:45Z（UTC）の確認）: draft（POC-02 版 0.1。作成済み、作成者以外の確認は未実施。12_poc/measurement-report.md は git 未追跡）**。版 0.1 は系統 1 の凍結後の実行 50 件（集約ハッシュ `401e8671b4fc7102f14de3342b6089fdc21fa02940d09de37f083e5f5c90e5df`、04:14Z）の区分・判定・逸脱を報告する。全件に立会人がいないため、合否の確定と Gate 4 の証拠には使わない。Gate 4 の実測（系統 2 と系統 1 の再実行）は本 DL の改版で報告する[^13]。 | DL-22 と同じ R-ID／seed-03 B2／実測を再現可能な証拠にする | 5 | C | E5（＋E4） |
 | DL-82 | PoC コードと再現手順 | 12_poc/code/README.md | PoC 実装の構成、合成データ生成、試験ハーネス、障害注入、実行・再現手順、コミットハッシュとの対応を示す。コード本体は 12_poc/code/ 配下、生データは 12_poc/data/ 配下に置く。 | R-169, R-205, R-206／seed-03 B2／第三者が再実行できる | 3→5 | C | E4／E10 |
+| DL-120 | 契約試験キット本体 | 12_poc/code/contract-kit/README.md | CON-11（DL-80）§11.1 の配置（モック MK-01〜MK-08、契約試験ドライバ、負例ベクタ、契約の凍結写し、制御 API の OpenAPI、kit.config.yaml）と §11.2〜§11.4 の起動仕様を実装し、起動・CI 組込みの手順を本体文書に書く。DL-82（PoC 基盤。納品済み）とは別の DL で、DL-82 はキットを含まない。所有者: PEP SDK・開発者支援チーム（案）。期限: G3。受入れ基準: (1) MK-01〜MK-08 の全モックが 1 コマンドで起動した記録（E4）、(2) G-121 の 4 種の負例（deny、timeout、失効、cross-tenant）を再現したログ、(3) CON-11 §10.1 の合否判定を模擬 consumer で 1 回再現した CI ログ（G-122）、(4) sandbox の workload（SVID 登録エントリ）と交換可能な組の登録（CON-14（DL-119）版 0.2.0 §4A の `registerSandboxWorkload`・`deleteSandboxWorkload`・`registerExchangePair`・`decideSandboxExchangePair`・`deleteExchangePair` の 5 operation、preview）が MK-02（STS 役）で動き、登録簿で有効でない組の exchange を STS が拒否すること（CON-14 の負例 CRN-28。ADR-009 D09-13）を再現した記録（E4。CON-11 §4.3・§6.3 の CV-022）[^10][^12]。(4) はラウンド 7 で加えた。P-03 などサービス間同期呼出しで token exchange を使うチームは、登録簿にない exchange を STS が拒否するため（ADR-009 D09-13）、(4) がないと sandbox で exchange の結合試験に進めない [D][^12]。DCS-06（版 0.5）§5.2.2 のキット費目（NA-DCS06-11。G0〜G2 のキットの実装 2〜3 FTE、G3 の保守 1〜2 FTE）は、本書 版 0.3 の DL-120 の定義（MK-01〜MK-08 ほか）を範囲として積まれた（同書 脚注 88）。MK-02 はその範囲に入っているので (4) のモック側の実装は同費目の内数と扱うが、§4A が加わった後の工数がこの幅に収まるかは確認していない。共有 sandbox 上の実際の登録 API（CON-14 §4A.5。所有者 PEP SDK・開発者支援チーム、期限 DEC-8 第 1 段の前）は本 DL ではなく共有 sandbox の構築（同費目の sandbox 0.5〜1 FTE）の側の作業であり、同費目に含まれるかも明記されていない [D][^11]。DCS-06 への注記は下の「レビュー記録」ラウンド 7 の申し送りとした。DEC-8 第 1 段（rc 凍結と告知期間）は G3 でのキット・sandbox 提供を前提とするため、本 DL の受入れが DEC-8 第 1 段の入力になる（DCS-03 の DEC-8 行）。2026-10-15 の模擬パネル（自己レビュー）ラウンド 4 の指摘への是正として、CON-11 版 0.4 の申し送り（§14.2）の案を採番して追加した（末尾「レビュー記録」）[^7]。 | R-062, R-071, R-172／G-121, G-122, G-141(c)／連携側が実基盤なしで負例を再現し、自チームの CI で適合を自己判定できるようにする | 3→5 | C | E4 |
 
 ### 4.7 調査（research）
 
@@ -265,7 +267,7 @@ ADR-001〜ADR-019 は seed-02 の A01〜A19 の読み替えであり[^3]、ADR-0
 | ADR-019 | A19 | 05_adr/ADR-019-compromise-response.md | 侵害時対応の設計原則（kill switch、全 session 失効、鍵切替、PDP 隔離、証拠保全の方式） | R-110〜R-116 | DL-24 | — |
 | ADR-020 | 追加 | 05_adr/ADR-020-fapi2-applicability.md | FAPI 2.0 を必須とする API 範囲と sender constraint 方式（レビュー Gate 3 の分離要求） | R-096, R-160 | DL-16, DL-60 | — |
 | ADR-021 | 追加 | 05_adr/ADR-021-irreversible-identifiers.md | 不可逆識別子（issuer URL、sub/tid 形式、WebAuthn RP ID、SAML entityID/ACS、resource type 名前空間）を自社所有ドメインと不透明 ID で固定する | R-037, R-047, R-209／seed-03 §7-13 | DL-71, DL-48 | 対象 |
-| ADR-022 | 追加 | 05_adr/ADR-022-integration-contract-standards.md | 連携契約の標準（OIDC/OAuth profile、RFC 9068、AuthZEN、SSF/CAEP、SCIM）、contract-first、薄い SDK、契約外依存の禁止 | R-105, R-109, R-208／seed-03 §7-14 | DL-62, DL-69〜DL-80, DL-117〜DL-119 | 対象 |
+| ADR-022 | 追加 | 05_adr/ADR-022-integration-contract-standards.md | 連携契約の標準（OIDC/OAuth profile、RFC 9068、AuthZEN、SSF/CAEP、SCIM）、contract-first、薄い SDK、契約外依存の禁止 | R-105, R-109, R-208／seed-03 §7-14 | DL-62, DL-69〜DL-80, DL-117〜DL-119, DL-121 | 対象 |
 | ADR-023 | 追加 | 05_adr/ADR-023-dependency-tiers.md | 依存階層と「この基盤に依存してはならないもの」、データプレーンの静的安定性と剥奪反映のトレードオフ | R-207, R-210／seed-03 D1 | DL-63, DL-18 | — |
 | ADR-024 | 追加 | 05_adr/ADR-024-cross-tenant-sharing.md | 外部共有・ゲスト・テナント越え権限付与のモデルと、resource-derived tenant 照合規則の例外の扱い | R-011, R-172／seed-03 §7-8 | DL-17, DL-65 | — |
 | ADR-025 | 追加 | 05_adr/ADR-025-list-search-authorization.md | 一覧・検索の認可（ListObjects/LookupResources、ACL 反映インデックス、件数・ページングからの情報漏えい対策） | R-190／seed-03 §7-6 | DL-17, DL-57, DL-64 | — |
@@ -289,7 +291,7 @@ DEC の正式な定義・文言・承認者は DL-39（00_decision/03-decision-i
 | DEC-5 | CISO | 独立保証計画（評価者の任命・調達、Gate 4 立会い範囲） | DL-07, DL-30, DL-59, DL-60, DL-61 |
 | DEC-6 | 事業責任者 | PoC 期間限定の残余リスク受容 | DL-05, DL-41 |
 | DEC-7 | CTO＋CISO | 前回指摘のうち検証済み項目のクローズと繰延べ項目のゲート割当 | DL-38, DL-101, DL-104, DL-110 |
-| DEC-8 | CTO＋CISO | 連携契約 v1 の凍結（他システムがモック・契約試験キットで並行開発を開始できる状態の承認） | DL-62〜DL-80, DL-117〜DL-119, ADR-022 |
+| DEC-8 | CTO＋CISO | 連携契約 v1 の凍結（他システムがモック・契約試験キットで並行開発を開始できる状態の承認） | DL-62〜DL-80, DL-117〜DL-121, ADR-022 |
 | DEC-9 | CTO＋CISO（経営へ報告） | Plan B（中止・方針転換時の既定経路）の事前承認 | DL-42, DL-44 |
 
 ### 6.2 決裁資料の付属 A〜L の所在
@@ -339,10 +341,10 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 
 | 区分 | 件数 |
 |---|---|
-| DL（DL-01〜DL-119） | 119 |
+| DL（DL-01〜DL-121） | 121 |
 | うち seed-01 由来（DL-01〜DL-34） | 34 |
-| うち追加（DL-35〜DL-119） | 85 |
-| 計画ファイル数（§8、既存ファイルと 12_poc/code・data 配下の個別ファイルを除く） | 169（2026-10-15 の DL-111 自動検査で §8 の行から再計数した 166 に、模擬パネル ラウンド 2 の是正で 11_contracts の 3 行（DL-117〜DL-119）を加えた。旧値 141） |
+| うち追加（DL-35〜DL-121） | 87 |
+| 計画ファイル数（§8、既存ファイルと 12_poc/code・data 配下の個別ファイルを除く） | 171（2026-10-15 の DL-111 自動検査で §8 の行から再計数した 166 に、模擬パネル ラウンド 2 の是正で 11_contracts の 3 行（DL-117〜DL-119）を、ラウンド 4 の是正で 12_poc の 1 行（DL-120）を、ラウンド 6 の是正で 11_contracts の 1 行（DL-121）を加えた。旧値 141・169・170） |
 | うち ADR（ADR-001〜ADR-029） | 29 |
 
 ## 8. ディレクトリごとのファイル一覧
@@ -533,6 +535,7 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 11_contracts/lifecycle-events.asyncapi.yaml | CON-12 | DL-117 | AsyncAPI 3.1.0。G-137 のライフサイクルイベント契約（事象一覧・配送の保証・受信側の義務）。2026-10-15 ラウンド 2 で追加（ファイルが先に作られた） |
 | 11_contracts/schemas/lifecycle-event.schema.json | CON-13 | DL-118 | CON-12 の封筒と data の JSON Schema。2026-10-15 ラウンド 2 で追加（同上） |
 | 11_contracts/client-registration.openapi.yaml | CON-14 | DL-119 | client 登録（sandbox セルフ登録と本番の登録申請）。旧仮番 CON-13 は CON-13（DL-118）と衝突したため CON-14 とした。2026-10-15 ラウンド 2 で追加（同上） |
+| 11_contracts/lifecycle-state.openapi.yaml | CON-15 | DL-121 | OpenAPI 3.1.2、preview。CON-12 の RO-9・RO-12 が呼ぶ照会 API。未作成（本体は CON-12 の拡張 `x-state-query-api` にあり、内容を変えずに切り出す。CON-12 §10 H5-1）。期限 DEC-8 第 1 段の付議前。2026-10-15 ラウンド 6 で追加 |
 | 11_contracts/review-notes/CON-02.md | CON-02-RV | DL-71 | CON-02 の独立レビュー記録。DL-111 で検出し追記 |
 | 11_contracts/review-notes/CON-03.md | CON-03-RV | DL-72 | CON-03 の独立レビュー記録。DL-111 で検出し追記 |
 | 11_contracts/review-notes/CON-04.md | CON-04-RV | DL-73 | CON-04 の独立レビュー記録。DL-111 で検出し追記 |
@@ -548,8 +551,9 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | パス | 文書ID | DL | 備考 |
 |---|---|---|---|
 | 12_poc/preregistered-test-plan.md | POC-01 | DL-22 | TC-xxx の定義場所 |
-| 12_poc/measurement-report.md | POC-02 | DL-81 | |
-| 12_poc/code/README.md | POC-03 | DL-82 | コード本体は 12_poc/code/ 配下 |
+| 12_poc/measurement-report.md | POC-02 | DL-81 | draft（版 0.1。作成済み、作成者以外の確認未実施、git 未追跡。2026-10-15 ラウンド 7 で状態を記入）[^13] |
+| 12_poc/code/README.md | POC-03 | DL-82 | コード本体は 12_poc/code/ 配下。契約試験キット本体（contract-kit/）を含まない |
+| 12_poc/code/contract-kit/README.md | POC-04 | DL-120 | 契約試験キット本体の文書。キットのコード・ベクタ・設定は 12_poc/code/contract-kit/ 配下（§2 の例外）。未作成、期限 G3。2026-10-15 ラウンド 4 で追加。受入れ基準 (4)（MK-02 の workload・交換可能な組の登録）はラウンド 7 で追加 |
 | 12_poc/data/ | — | DL-81 | 生データ置き場（ディレクトリ） |
 
 ### research/
@@ -619,6 +623,13 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 [^4]: 計画エージェント（レッドチームレンズ）『種資料03: 決裁パッケージに対するレッドチーム分析』2026-10-03. traceability/seed/seed-03-redteam-decision.md （参照箇所: §1〜§7、確認日: 2026-10-03）
 [^5]: 『20年運用を前提とした認証・認可基盤提案のCTO/CISOレビュー』. 20年運用を前提とした認証・認可基盤提案のCTO CISOレビュー.md （参照箇所: 重大な不足, 進め方の再設計 Gate 0〜6, 必須の数値契約, 承認条件、確認日: 2026-10-03）
 [^6]: 『マルチテナントSaaS認証・認可基盤の比較調査と設計指針』（旧提案書）. マルチテナントSaaS認証・認可基盤の比較調査と設計指針.md （参照箇所: 導入ロードマップ Phase 0〜3、確認日: 2026-10-03）
+[^7]: 本リポジトリ『モック・契約試験キット仕様』（CON-11、版 0.4 draft。ラウンド 7 の追記は版 0.7 draft）2026-10-15. 11_contracts/mock-contract-test-kit.md （参照箇所: 要旨 7, §11 冒頭, §11.1, §14.2 の traceability/deliverables.md 行, 「残課題」表の 1。版 0.7 では §4.3 MK-02 の登録の行, §5.2 (c), §6.3 の CV-015〜CV-024、確認日: 2026-10-15）
+[^8]: 本リポジトリ『契約一覧・規約』（CON-00、版 0.6 draft）2026-10-15. 11_contracts/README.md （参照箇所: 要旨 1, §2.1 の CON-12・CON-15 行, §2.3 の CON-15 行, §2.6.4, §9 申し送り 14、確認日: 2026-10-15）
+[^9]: 本リポジトリ『ライフサイクルイベント契約』（CON-12、版 0.4.0 draft）2026-10-15. 11_contracts/lifecycle-events.asyncapi.yaml （参照箇所: §4 RO-9・RO-12, §4.1, §10 H5-1, x-open-issues LC-OI-3, x-state-query-api、確認日: 2026-10-15）
+[^10]: 本リポジトリ『Client Registration API』（CON-14、版 0.2.0 draft）2026-10-15. 11_contracts/client-registration.openapi.yaml （参照箇所: description §4A.1〜§4A.5, x-negative-examples の CRN-21〜CRN-30, x-mock の MK-02, §9 H-12, paths /v1/sandbox/workloads・/v1/sandbox/exchange-pairs 配下の 5 operation、確認日: 2026-10-15）
+[^11]: 本リポジトリ『ゲート計画と Plan B』（DCS-06、版 0.5 draft）2026-10-15. 00_decision/06-gate-plan-and-plan-b.md （参照箇所: §5.2.1 NA-DCS06-11, §5.2.2 の G0〜G2・G3 のキット・sandbox の行, 脚注 88、確認日: 2026-10-15）
+[^12]: 本リポジトリ『ADR-009 workload identity・token exchange・委任の伝搬・内部取引 context』（版 0.1 draft、proposed）2026-10-15. 05_adr/ADR-009-workload-identity-token-exchange.md （参照箇所: D09-13（交換可能な組の登録簿。登録簿にない exchange を STS は拒否する）、確認日: 2026-10-15）
+[^13]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』（POC-02、版 0.1 draft）2026-10-15. 12_poc/measurement-report.md （参照箇所: 冒頭の文書ID・版・状態・対応成果物（DL-81）・作成方法（作成者以外の確認なし）, 要旨 1・2, §3.1（凍結実行 50 件、2026-10-15T04:14Z の集約ハッシュ）, §7, §9 MR-11、確認日: 2026-10-15）
 
 ---
 
@@ -640,3 +651,80 @@ P-ID の正式定義は DL-64 が持つ。並行作業での ID 衝突を避け�
 | 2 | traceability/traceability-matrix.md（DL-104） | DL-117〜DL-119 を R/G の追跡表に加え、孤児 DL にしない |
 | 3 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12） | `x-document-id` と `x-deliverable` と description 冒頭の「（案）」を外す（本書で確定した） |
 | 4 | traceability/G-goal-criteria.md | G-118・G-137 の申し送り行（458 行付近）の「例」を、確定した CON-12／DL-117・CON-13／DL-118 に更新する |
+
+### ラウンド 4（模擬パネル、2026-10-15、版 0.2 → 版 0.3）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[^1]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R4-1 | High・devlead | CON-11 版 0.4 はキット本体を DL-82（PoC 基盤、納品済み）から分けて「DL-120 案」としたが、本書は DL-119 までしか定義せず、所有者・受入れ基準・期限を持つ DL がない（consistency-checks.md の未定義 ID）。並行開発の可否を決める成果物を、誰がいつ配布するか追跡できない | **対応**。(1) §4.6 に DL-120「契約試験キット本体」を加えた。パス 12_poc/code/contract-kit/README.md、所有者 PEP SDK・開発者支援チーム（案）、期限 G3、受入れ基準は MK-01〜MK-08 の起動記録・G-121 の 4 種の負例の再現ログ・§10.1 の判定の模擬 consumer での再現、DEC-8 第 1 段の入力であることを明記した。内容は CON-11 §14.2 の申し送り案に従い、原文を 2026-10-15 に確認した[^7]。(2) §2.3 に contract-kit の README を §8 の行に置く例外を書いた。(3) §6.1 の DEC-8 行の対応 DL を DL-117〜DL-120 にした。(4) §7 の件数を DL 120 件・追加 86 件・計画ファイル数 170 にした。(5) §8 の 12_poc 表に POC-04／DL-120 の行を加え、DL-82 の行に「キットを含まない」と書いた [D] | 冒頭のメタ情報、§2.3、§4（見出し）、§4.6、§6.1、§7、§8 の 12_poc 表、[^7] |
+
+**他文書への申し送り（ラウンド 4）** [D]
+
+| # | 対象文書 | 申し送る内容 |
+|---|---|---|
+| 1 | 11_contracts/mock-contract-test-kit.md（CON-11） | 「DL-120 案」「キット DL（DL-120 案）」を「DL-120」に改め、「残課題」表 1 の「前提としてキット DL（DL-120 案）を deliverables.md に登録する」を済とする（本書 版 0.3 で採番した） |
+| 2 | 12_poc/code/README.md（POC-03） | キット本体（DL-120、12_poc/code/contract-kit/）を含まないことを一言記載する（CON-11 §14.2 の DL-82 行） |
+| 3 | traceability/consistency-checks.md（DL-111） | DL-120 の未定義 ID の検出を再検査し、§8 の 170 行に対して G-131 の差分検査を再実行する |
+| 4 | traceability/traceability-matrix.md（DL-104）・traceability/G-goal-criteria.md | DL-120 を R-062・R-071・R-172 と G-121・G-122 の追跡に加える（G-121・G-122 の確認対象が DL-80 の仕様だけになっている） |
+| 5 | 00_decision/03-decision-items.md（DCS-03） | DEC-8 行の対象成果物に DL-120 を加える |
+| 6 | 10_integration/onboarding.md（INT-04） | CON-11 §14.2 に挙がる「キット本体（DL-82）は未実装」の類を「DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装（期限 G3）」に改める（本ラウンドの担当外） |
+
+### ラウンド 6（模擬パネル、2026-10-15、版 0.3 → 版 0.4）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[^1]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R6-1 | High・devlead | CON-15（案）は照会 API の契約本体として CON-12 §4.1 で起票され、CON-00 §2.1・§3 にも行があるが、DL-121（案）が本書に未登録で、consistency-checks（DL-111）では未定義 ID となり、G-118・G-131 の確認対象から漏れる。DEC-8 行の対象成果物も DL-117〜DL-120 で止まっている。契約本体が AsyncAPI の `x-` 拡張欄の中にあり、連携開発者は OpenAPI の codegen・Prism・lint を単独ファイルとして直接使えない。CON-00 §2.3 の起動記録は作成者が一時的に切り出したファイルによる | **対応（本書の担当分）**。(1) §4.5 に DL-121「ライフサイクル状態の照会 API（CON-15）」を加えた。パス 11_contracts/lifecycle-state.openapi.yaml、R-044・R-109／G-137・G-118・G-138、所有者 DL-49 の所有者＋プラットフォームチーム長、期限 DEC-8 第 1 段の付議前、受入れ基準（内容を変えない切出し、単独ファイルでの lint・examples 検証・Prism 起動の記録、独立レビュー）を書いた。パス・所有者・期限・切出しの方針は CON-00 §2.1・§9 申し送り 14 と CON-12 §4.1・§10 H5-1・LC-OI-3 の原文を 2026-10-15 に確認して写した[^8][^9]。DL-121 が本書と 11_contracts 以外の全文書で未使用であることを同日にリポジトリ検索で確かめた [D]。(2) §6.1 の DEC-8 行を DL-117〜DL-121 に、§5 の ADR-022 行に DL-121 を加えた（ラウンド 2 と同じく、連携契約 v1 の凍結の束に入るため）。(3) §7 を DL 121 件・追加 87 件・計画ファイル数 171 にした。(4) §8 の 11_contracts 表に CON-15／DL-121 の行を加え、「未作成」と明記した。(5) CON-00 §2.3 の Prism・lint の記録は単独ファイルの記録ではないことを DL-121 の行に書き、受入れ基準 (2) で単独ファイルでの再取得を求めた。(6) 単独ファイルへの切出しは本書の担当外のため、下の申し送り 1 にした [D] | 冒頭のメタ情報、§4（見出し）、§4.5、§5 の ADR-022 行、§6.1 の DEC-8 行、§7、§8 の 11_contracts 表、[^8]・[^9] |
+
+**他文書への申し送り（ラウンド 6）** [D]
+
+| # | 対象文書 | 申し送る内容 |
+|---|---|---|
+| 1 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12） | `x-state-query-api` の値を内容を変えずに 11_contracts/lifecycle-state.openapi.yaml へ切り出し、CON-12 には参照（パスと版）だけを残す。H5-1 (b) の「DL-121 を確定する」を済とし、§4.1・LC-OI-3・x-state-query-api 内の「CON-15（案）・DL-121（案）」の「案」を外す（本書 版 0.4 で採番した） |
+| 2 | 11_contracts/lifecycle-state.openapi.yaml（CON-15、新規） | 冒頭に文書ID CON-15・成果物 DL-121 を置き、単独ファイルで Redocly lint・examples と負例の検証・Prism 起動を再実行して記録する（DL-121 受入れ基準 (2)） |
+| 3 | 11_contracts/README.md（CON-00） | §2.1 の CON-15 行の所在を単独ファイルに改め、SHA-256 を別に取る。§2.3 の CON-15 行を単独ファイルでの検査結果に置き換える。§9 申し送り 14 を済とする |
+| 4 | traceability/consistency-checks.md（DL-111） | DL-121 の未定義 ID の検出を再検査し、§8 の 171 行に対して G-131 の差分検査を再実行する（lifecycle-state.openapi.yaml の作成前は「計画済み・未作成」として扱う） |
+| 5 | traceability/traceability-matrix.md（DL-104）・traceability/G-goal-criteria.md | DL-121 を R-044・R-109 と G-137・G-118・G-138 の追跡に加える |
+| 6 | 00_decision/03-decision-items.md（DCS-03） | DEC-8 行の対象成果物に DL-121 を加える（CON-12 §10 H3-2 の前提条件の明記と合わせる） |
+
+### ラウンド 7（模擬パネル、2026-10-15、版 0.4 → 版 0.5）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[^1]。是正は本書と CON-11（11_contracts/mock-contract-test-kit.md）の 2 ファイルだけで行い、他文書の修正は下の申し送りにした [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R7-1 | High・devlead | CON-14 版 0.2.0 §4A で、C7 の workload（SVID 登録エントリ）と交換可能な組の sandbox セルフ登録の契約（5 operation、x-mock の MK-02 案、負例 CRN-21〜CRN-30）が preview で作られたが、CON-11 v0.6 §5.2 (c) は「workload のセルフ登録の契約はまだない」のままで、§4.0 には解消済みの仮番の記述が残り、MK-02 は登録を持たず、CON-14 §9 H-12 は未適用である。DL-120 の受入れ基準 (1)〜(3) にも workload・組の登録がない。このまま G3 でキットを受け入れると、P-03 を使う大多数のチームが sandbox で exchange の結合試験に進めない（ADR-009 D09-13）。DEC-10 で承認するキットの費目の範囲と、DEC-8 第 1 段の入力の範囲が食い違う | **対応（本書の担当分）**。(1) §4.6 の DL-120 の受入れ基準に (4)「sandbox の workload・交換可能な組の登録（CON-14 §4A の 5 operation）が MK-02 で動き、CRN-28 を再現した記録」を加え、対応 G に G-141(c) を加えた。5 operation の名前、CRN-28 の期待結果（202 pending_callee_approval の間 MK-02 は exchange を拒否）、x-mock の MK-02 案、H-12 は CON-14 の原文を、登録簿にない exchange の拒否は ADR-009 D09-13 の原文を、2026-10-15 に確認して写した[^10][^12]。(2) DCS-06 §5.2.2 のキット費目（NA-DCS06-11）との関係を同じ行に注記した。同費目は本書 版 0.3 の DL-120 の定義を範囲として積まれ（DCS-06 脚注 88）、MK-02 は範囲内なのでモック側の (4) は内数と扱うが、工数の幅に収まるかは未確認であり、共有 sandbox 上の実際の登録 API（CON-14 §4A.5）が同費目に入るかも明記されていないことを書いた。値は DCS-06 版 0.5 の原文を 2026-10-15 に確認した[^11]。費目の範囲の確定は DCS-06 の担当の判断なので、下の申し送り 1 にした。(3) §8 の 12_poc 表の DL-120 行に (4) の追加を記した。(4) CON-11 の §4.3・§5.2 (c)・§4.0・§6.3 の是正は同じラウンドで CON-11 版 0.7 として行った（同書「レビュー記録」ラウンド 7）[^7] [D] | 冒頭のメタ情報、§4.6 の DL-120 行、§8 の 12_poc 表、[^7]・[^10]〜[^12] |
+
+- 新たに確認した外部原典: なし。根拠はいずれもリポジトリ内の文書（CON-14 版 0.2.0、ADR-009、DCS-06 版 0.5）の原文である [D]。
+- 未解決として残すもの: (1) (4) の工数がキット費目の幅に収まるか、共有 sandbox の登録 API が同費目に入るかの判定（申し送り 1）。(2) CRN-21〜CRN-30 の TC-ID（申し送り 3）。(3) MK-02 と共有 sandbox の登録 API・PoC の STS の一致（TC-026）は未測定 [D]。
+- 対応件数: 1 件（対応済み 1、他文書への申し送り 4 項目）[D]。
+
+**他文書への申し送り（ラウンド 7）** [D]
+
+| # | 対象文書 | 申し送る内容 |
+|---|---|---|
+| 1 | 00_decision/06-gate-plan-and-plan-b.md（DCS-06）§5.2.1 NA-DCS06-11・§5.2.2 のキット・sandbox の 2 行 | キット費目が DL-120 の受入れ基準 (4)（MK-02 の workload・交換可能な組の登録と CRN-28 の再現）を含むか、共有 sandbox の構築の費目が CON-14 §4A.5 の実際の登録 API の実装を含むかを注記する。含まない場合は、幅の見直しを DEC-10 の決議文案に反映するか、範囲外の費用の扱い（DEC-11（仮）か Plan）を書く。脚注 88 の参照先を TRC-03 版 0.5 に改める |
+| 2 | 00_decision/03-decision-items.md（DCS-03）DEC-8・DEC-10 の行 | DEC-8 第 1 段の入力（DL-120 の受入れ）に (4) が加わったことを、DEC-10 で承認するキット費目の範囲と同じ記述にそろえる（申し送り 1 の結果に従う） |
+| 3 | 12_poc/preregistered-test-plan.md（DL-22） | CON-14 の CRN-21〜CRN-30（CON-11 の CV-015〜CV-024）の TC-ID を採番し、TC-026（モックと PoC 基盤の一致）の対象に MK-02 の登録簿の照合を含める。PoC の STS は `config/ledger.json` の `exchange_registry` を起動時に読むだけで登録 API がない（CON-14 §4A.5）ことを前提に書く |
+| 4 | traceability/traceability-matrix.md（DL-104）・traceability/G-goal-criteria.md | DL-120 を G-141(c) の追跡に加える |
+
+### ラウンド 7 sre（模擬パネル、2026-10-15、版 0.5 追補）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[^1]。上の devlead の節とは別の担当による是正である。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R7-S1 | High・sre | ラウンド 3 の重点論点「状態表示の陳腐化」が再発している。作業ツリーには 12_poc/measurement-report.md（POC-02 版 0.1、draft）があり、凍結実行 50 件・集約ハッシュ `401e8671…`（04:14Z）・28 TC の内訳（合格 12・不合格 5・判定保留 4・中止 2・未実施 5）を報告しているのに、表紙・要約・POA&M は DL-81 を未作成として扱っている。本書の DL-81 行の状態を draft にすることを求める | **対応**。12_poc/measurement-report.md を直接読み、冒頭の文書ID POC-02・版 0.1・状態 draft・対応成果物 DL-81 と、§3.1 の 50 件・集約ハッシュを確かめた。2026-10-15T04:45Z に 12_poc/data/ から POC-02 §3.1 と同じ手順で集約ハッシュを再計算し、一致を確かめた（50 件、`401e8671…`）[D][^13]。§4.6 の DL-81 行に状態（draft、版 0.1、作成者以外の確認未実施、git 未追跡）と Gate 4 の証拠にしないことを加え、§8 の行の備考に状態を記した。DL の定義と件数は変えていない。表紙（DCS-00 §6 付属 H・§8 の 2）、要約（DCS-01 §10.1）、POA&M（TRC-11 の要旨・OI-C18・OI-M02）は同じラウンドで改めた | §4.6 DL-81 行、§8 の 12_poc/ |
+
+- 新たに確認した外部原典: なし。根拠はリポジトリ内の POC-02 と 12_poc/data/ の生データである [D]。
+- 対応件数: 1 件（対応済み 1、他文書への申し送り 2 項目）[D]。
+
+**他文書への申し送り（ラウンド 7 sre）** [D]
+
+| # | 対象文書 | 申し送る内容 |
+|---|---|---|
+| 1 | traceability/traceability-matrix.md（DL-104） | 「計画済みで未作成の DL」（2 件）、未作成 DL の記述、DL-81 の行（「**未作成**（… measurement-report.md は未作成）」）を、DL-81 は作成済み（POC-02 版 0.1、draft、作成者以外の確認未実施。Gate 4 の実測は未了）に改め、未作成 DL を DL-59 の 1 件にする。2026-10-15T04:45Z の確認では同書の 116 行・138 行・992 行が「未作成」のままである |
+| 2 | traceability/consistency-checks.md（DL-111） | §8 にあって未作成のファイルの検査を再実行し、12_poc/measurement-report.md を未作成から外す。あわせて、本書 §8 にあり作業ツリーに存在するファイルを表紙・要約・POA&M が「未作成」と書く場合を不一致として出す検査を常設する（DCS-00 C-12・C4-9・C7-6 と同件） |

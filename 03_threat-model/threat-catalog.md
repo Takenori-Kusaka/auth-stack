@@ -1,8 +1,8 @@
 # 脅威カタログ・残余リスク記録
 
-> 文書ID: THR-03 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-03
+> 文書ID: THR-03 / 版: 0.3 / 状態: draft / 最終更新: 2026-10-15（0.3: 模擬パネル ラウンド 5 の redteam 指摘により、構成要素 CE-17（ライフサイクル事象の配送）と T-093（ライフサイクル事象の注入・偽造・再送）を追加。0.2: 模擬パネル ラウンド 4 の redteam 指摘により T-092 を追加。末尾「レビュー記録」。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない）
 > 対応要求: R-002, R-023, R-135, R-167, R-168, R-215, G-003, G-004, G-078, G-079, G-097（DL-11）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0166, CL-0196〜CL-0206）, traceability/dissent-log.md（DS-11）, 03_threat-model/attacker-model.md（DL-51）, 03_threat-model/incident-casebook.md（DL-53）, 03_threat-model/fraud-abuse-controls.md（DL-52）, 01_governance/assumptions-register.md（DL-45）, 01_governance/loss-scenarios.md（DL-02）, 01_governance/exception-risk-acceptance.md（DL-05）, 02_requirements/customer-admin-responsibility.md（DL-26）, 02_requirements/identity-lifecycle.md（DL-08）, 02_requirements/tenant-lifecycle.md（DL-49）, 02_requirements/principal-catalog.md（DL-48）, 05_adr/ADR-005-token-profile.md, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, research/RS-03, RS-04, RS-05, RS-06, RS-07, RS-08, RS-10, RS-12, RS-13, RS-14（各ノートと research/verification/ の検証記録）
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md（CL-0166, CL-0196〜CL-0206）, traceability/dissent-log.md（DS-11）, 03_threat-model/attacker-model.md（DL-51）, 03_threat-model/incident-casebook.md（DL-53）, 03_threat-model/fraud-abuse-controls.md（DL-52）, 01_governance/assumptions-register.md（DL-45）, 01_governance/loss-scenarios.md（DL-02）, 01_governance/exception-risk-acceptance.md（DL-05）, 02_requirements/customer-admin-responsibility.md（DL-26）, 02_requirements/identity-lifecycle.md（DL-08）, 02_requirements/tenant-lifecycle.md（DL-49）, 02_requirements/principal-catalog.md（DL-48）, 05_adr/ADR-005-token-profile.md, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, 11_contracts/lifecycle-events.asyncapi.yaml（CON-12。版 0.3 で追加）, research/RS-03, RS-04, RS-05, RS-06, RS-07, RS-08, RS-10, RS-12, RS-13, RS-14（各ノートと research/verification/ の検証記録）
 
 本書は脅威 T-xxx の唯一の定義場所（DL-11）である。調査・起草には AI エージェント（Claude）を用いた。本書の判定は自己レビューであり、実在の CTO/CISO の決裁ではない [D]。残余リスクの「受容者案」は案であり、受容票（DL-05 様式）による受容はまだ一件も行われていない [D]。
 
@@ -10,11 +10,11 @@
 
 ## 0. 結論
 
-1. 構成要素 16 種（CE-01〜CE-16）と STRIDE 6 区分、および個人データを扱う要素に LINDDUN 7 区分を当て、脅威を T-001〜T-086 の 86 件として採番した [D]（§3〜§5）。各脅威には攻撃者類型（ATK-xx）、予防・検知・封じ込め・復旧・証拠の 5 統制、残余リスク、受容者案、検証方法（TC 候補・演習・第三者評価）を付けた [D]。構成要素×区分の網羅表（§4）では、脅威を割り当てない欄にもすべて理由を記した [D]。
+1. 構成要素 16 種（CE-01〜CE-16）と STRIDE 6 区分、および個人データを扱う要素に LINDDUN 7 区分を当て、脅威を T-001〜T-086 の 86 件として採番した [D]（§3〜§5）。版 0.2 で、越境ゲストの付与外資源への到達（モデルの誤り・誤配布との組合せ）を T-092 として追加した（P1。T-087〜T-091 は他文書で予約済みで本書に未起票）[D]。版 0.3 で、構成要素 CE-17（ライフサイクル事象の配送: publisher・broker・照会 API）を加え、ライフサイクル事象の注入・偽造・再送によるテナント参照の付け替えと大量削除を T-093 として追加した（P1）[D]。各脅威には攻撃者類型（ATK-xx）、予防・検知・封じ込め・復旧・証拠の 5 統制、残余リスク、受容者案、検証方法（TC 候補・演習・第三者評価）を付けた [D]。構成要素×区分の網羅表（§4）では、脅威を割り当てない欄にもすべて理由を記した [D]。
 2. レビューが挙げた具体脅威 10 件、旧提案で未指摘だった弱点 6 件、顧客管理者・SAML/OIDC 設定の攻撃面 12 件（DL-26 の AS-1〜AS-12）は、いずれも T-ID に割り当てた [D]（§6）。割当の欠落は 0 件である [D]。
 3. 統制を重ねても予防できない経路が残る脅威が多い [D]。代表例は、正規の権限の範囲内で行う濫用（T-020 の自テナント内、T-072、T-079）、署名鍵が窃取されてから検知するまでの偽造 token の受理（T-041）、剥奪が反映されるまでの許可の継続（T-019、T-032、T-038）である [D]。これらは「防げない経路」として残余リスク欄に明記し、受容者案・期限案・補完統制を付けた [D]。受容そのものは経営判断であり、G-079 は「決裁案まで」とした [D]。
-4. 優先度 P1（封じ込め単位が全域・cell・全テナントに及び得るもの、または R-168 の具体脅威）は 50 件、P2 は 31 件、P3 は 5 件である [D]（§2.4 の規則で判定）。反映時間・検知時間などの数値は本書では置かず、TBD として所有者・期限・決め方を付けた [D]。値は DL-22 の事前登録と DL-81 の実測、DL-20 の数値契約で決める [D]。
-5. DFD（DL-10）は Wave C で作成されるため、本書の構成要素・信頼境界は仮のモデルである [D]。DFD で入口・経路・信頼境界を再確認すべき脅威を §10 に 25 件列挙した [D]。
+4. 優先度 P1（封じ込め単位が全域・cell・全テナントに及び得るもの、または R-168 の具体脅威）は 50 件、P2 は 31 件、P3 は 5 件である（T-001〜T-086 の内訳。版 0.2 で追加した T-092 と版 0.3 で追加した T-093 はいずれも P1 で、これらを含めると P1 は 52 件）[D]（§2.4 の規則で判定）。反映時間・検知時間などの数値は本書では置かず、TBD として所有者・期限・決め方を付けた [D]。値は DL-22 の事前登録と DL-81 の実測、DL-20 の数値契約で決める [D]。
+5. DFD（DL-10）は Wave C で作成されるため、本書の構成要素・信頼境界は仮のモデルである [D]。DFD で入口・経路・信頼境界を再確認すべき脅威を §10 に 26 件列挙した（版 0.3 で T-093 を追加）[D]。
 6. 経営・事業・法務の判断が要る点を、決裁案 TD-1〜TD-4 として §8 に置いた（フィッシング耐性の義務化範囲、テナント横断学習、剥奪反映の許容窓、残余リスクの受容段と期限）[D]。いずれも決定していない [D]。
 7. 対応表（§11）の 11 件のうち、本書で閉じたものは 9 件、決裁案までが 1 件（G-079）、要実測が 1 件（R-168）、要第三者が 0 件である [D]。DL-11 の閉じ方は A・D であり、外部レビュー（R-063、DL-59）による補強は残課題として扱う [D]。
 
@@ -126,8 +126,9 @@ DFD（DL-10）が未作成のため、次の 16 要素を仮の分解とする [
 | CE-14 | 外部連携アプリ（第三者・顧客自作の OAuth client、800 [A-013]） | external | grant（3 万 [A-013]）、refresh token | 認可・token エンドポイント、API | TB-5 | 15, 01 |
 | CE-15 | AI エージェント（1 万 [A-014]） | process | 委任 token、tool 呼出し | MCP 等の tool 経路、token exchange | TB-3、TB-5 | 16, 06 |
 | CE-16 | データ基盤（検索 index、DWH、バックアップ、レプリカ、export、署名付き URL、RAG） | store＋flow | 全テナントの複製データ | 検索 API、export、バッチ、直接読取 | TB-3、TB-4 | 03, 08, 11, 16 |
+| CE-17 | ライフサイクル事象の配送（publisher、broker、照会 API。版 0.3 で追加） | process＋flow | ライフサイクル事象（テナント参照の付け替え、削除要求、保全の解除）、事象の署名鍵（ADR-007 D7-10 族 9 案）、受信側の完了報告 | broker の channel（tenantLifecycle・principalLifecycle・platformLifecycle、deletionReports・replayRequests）、照会 API（CON-15 案） | TB-3、TB-6 | 06, 07, 08, 17, 19 |
 
-到達し得る ATK は DL-51 §3 の各類型の「アクセス経路」から導いた [D]。ATK-12（リージョン障害）と ATK-19（変更と自動化の誤り）は非敵対であり、すべての要素の可用性と完全性に関わるため、該当する T にだけ記した [D]。
+到達し得る ATK は DL-51 §3 の各類型の「アクセス経路」から導いた [D]。CE-17 は、CON-12 が定める組織内のライフサイクル事象の配送経路を、版 0.3 で分解に加えたものである（CON-12 §1・§3・§4）[D][^88]。ATK-12（リージョン障害）と ATK-19（変更と自動化の誤り）は非敵対であり、すべての要素の可用性と完全性に関わるため、該当する T にだけ記した [D]。
 
 ---
 
@@ -141,7 +142,7 @@ DFD（DL-10）が未作成のため、次の 16 要素を仮の分解とする [
 | CE-02 BFF | T-011, T-012 | T-012 | （空欄 a） | T-013 | （空欄 b） | （空欄 c） | — |
 | CE-03 gateway | T-014, T-015, T-016 | T-016, T-017 | T-025 | T-017 | T-004 | T-018, T-019 | D・L: T-084 |
 | CE-04 PEP | T-021, T-025 | T-026 | T-025, T-030 | T-020, T-026 | T-023 | T-020, T-021, T-022, T-023, T-024 | — |
-| CE-05 PDP | （空欄 d） | T-027, T-028 | T-030 | T-076 | T-028, T-031, T-086 | T-027, T-029, T-050 | — |
+| CE-05 PDP | （空欄 d） | T-027, T-028 | T-030 | T-076, T-092 | T-028, T-031, T-086 | T-027, T-029, T-050, T-092 | — |
 | CE-06 relationship store | （空欄 e） | T-033 | T-030 | T-034 | T-031 | T-032, T-033, T-035, T-036 | Id・D・DD: T-034 |
 | CE-07 STS | T-040 | （空欄 f） | T-039, T-040 | T-083 | T-009 | T-037, T-038, T-039, T-040 | L: T-083 |
 | CE-08 鍵/KMS | T-041, T-042, T-085 | T-042 | T-045 | T-041 | T-043 | T-044, T-045 | — |
@@ -153,6 +154,7 @@ DFD（DL-10）が未作成のため、次の 16 要素を仮の分解とする [
 | CE-14 外部連携アプリ | T-069 | （空欄 l） | （空欄 i） | T-069, T-070 | （空欄 m） | T-070, T-071 | — |
 | CE-15 AI エージェント | T-073 | （空欄 l） | T-075 | T-072 | （空欄 m） | T-072, T-073, T-074 | N: T-075 |
 | CE-16 データ基盤 | （空欄 e） | （空欄 n） | （空欄 i） | T-076, T-077, T-078, T-079, T-080 | （空欄 o） | T-080 | DD・NC: T-081, T-082 |
+| CE-17 ライフサイクル事象の配送 | T-093 | T-093 | （空欄 i） | （空欄 p） | T-093 | （空欄 q） | — |
 
 LINDDUN 列の略記は L=Linking、Id=Identifying、N=Non-repudiation、D=Detecting、DD=Data Disclosure、U=Unawareness & Unintervenability、NC=Non-compliance である [D]。
 
@@ -175,6 +177,8 @@ LINDDUN 列の略記は L=Linking、Id=Identifying、N=Non-repudiation、D=Detec
 | m | 外部アプリ・エージェントによる大量呼出しは、rate limit と PDP 過負荷として扱う [D] | T-031, T-079 |
 | n | データ基盤上の改ざんは各依存サービスの業務データの完全性であり、本基盤の範囲外とする [D]。認可データの改ざんは CE-06 で扱う [D] | T-033 |
 | o | データ基盤の停止は依存サービスの可用性の問題で、本基盤の判定系の停止とは独立している [D] | — |
+| p | 事象には不透明 ID（tid・sub）と種別だけを載せ、email などの属性を載せない（CON-12 PO-11、§2 の注記）。事象の中身が漏れて得られるのはテナント・主体の存在と状態の変化であり、識別子の列挙として扱う [D][^88] | T-034, T-083 |
+| q | 事象は認可の根拠にしない（CON-12 RO-10）。偽造した付け替えで他テナントの資源を得る経路は、事象の偽装・改ざん（T-093 の S・T）として扱う [D][^88] | T-093 |
 
 ---
 
@@ -1444,6 +1448,24 @@ LINDDUN 列の略記は L=Linking、Id=Identifying、N=Non-repudiation、D=Detec
 | 受容者案 | 段1（事業責任者）。resource 側テナントの承認を顧客責任とする（DL-26）[D]。期限案 G4 |
 | 検証 | TC: TH-TC-080（home テナントの停止・統合と越境付与の残存）[D] |
 
+#### T-092 越境ゲストの付与外資源への到達（外部付与を持つ主体が、ドメインモデルの誤り・policy の誤配布と組み合わさって、付与されていない資源に届く）〔未指摘: 越境共有〕〔版 0.2 で追加〕
+
+番号の注記: T-087〜T-091 は他文書で予約済み（T-087 は PDP の照会 oracle 化、T-088〜T-091 は DX 型。いずれも本書に未起票）のため、本脅威は T-092 とした [D]。
+
+| 項目 | 内容 |
+|---|---|
+| 分類 | CE-05, CE-04, CE-16, CE-09／I, E／ATK-02, ATK-03（越境付与を得た外部の利用者）と ATK-10, ATK-19（誤ったモデル・policy を生む・配る側）の組合せ／S-01, S-05／P1・誤ったモデルが配布された範囲で、外部付与を発行している資源側テナントの全資源 [D] |
+| 根拠 | (1) ADR-024 D24-08 は、G 段規則 1 を「(i)≠(iii) なら拒否。(i)＝(iii) でも、主体が tid に有効な内部所属も有効な外部付与も持たなければ拒否」と読み、外部付与の**資源範囲**は G 段で見ない [D][^86]。ゲストの付与範囲の閉じ込めは R 段（ドメインモデル）だけに依存する [D][^86]。(2) PoC の façade は G 段の所属確認を `core/tenant` の `belongs`（`member` または `external_member`）で行っており、資源側テナントの `external_member` であるゲストはこの確認を通る [D][^87]。(3) PoC 系統 1 の TC-002 v2（run 20261015T022625Z-96a12e）の自己実行記録では、全域 permit のドメインモデルを入れた構成で、ゲストの付与外資源への allow（X2）が OpenFGA 構成 10,004 回中 275 件、Cedar 構成 10,003 回中 90 件、一覧の項目で 480 件と 178 件あった [D][^85]。文脈 tid・所属が不一致の要求（X1）は両構成とも 0 件であった [D][^85]。実行者は 12_poc/code/CHANGES-tenant-isolation.md の OB-TI-02 で、これを「設計どおりの挙動」と記録している [D][^84]。この記録は立会人がなく（`witness: null`）、[M] の証拠ではない [D][^85]。(4) 越境共有を受ける利用者を B2B 登録の 5% と仮置きしている [A-016] |
+| 攻撃経路 | 攻撃者は、被害テナントで 1 資源だけの外部付与（招待、認証付きリンク）を正規の手続で得ておく [D]。その後、被害テナントの資源型を含むドメインの CAM の誤変更（ATK-10 の二者レビューを通った誤り、T-050）、または誤った版の配布（T-028）が起きると、その版が有効な間、攻撃者は被害テナントの付与されていない資源に到達する [D]。誤りが「全域 permit」のような目立つものではなく、ある permission の union に `belongs`（外部付与を含む）を加えるような部分的なものだと、canary の allow 率の変化（T-028 の検知）が小さく、検知が遅れ得る [D]。攻撃者は誤りを起こせなくても、誤りが起きるのを待つだけでよい [D] |
+| 予防 | (a) G 段での資源範囲の検査: 外部付与を基盤所有の共有 grant ストアに置き、所属が外部付与だけの主体については「資源 ∈ 付与の起点資源とその子孫」を G 段で検査する（ADR-029 D29-10・D29-11 の特権 grant ストアと同型。子孫の判定は資源の正本の親子関係により、ドメインの CAM から導かない）[D]。ADR-024 D24-08 の改訂案であり、DEC-3 の同時決裁論点 5 で決める（未決定）[D]。(b) CAM の CI での機械検査: 外部付与の relation（`external_member`、外部付与の型）から到達できる permission を CAM の graph から列挙し、permission catalog で「外部付与可」と宣言した集合を超える変更を拒否する（ADR-011 D2-5 の CAM CI 検査への追加）[D]。(c) T-028 の段階展開と T-050 の二者レビュー [D] |
+| 検知 | (b) の検査の違反件数。外部付与を持つ主体の allow のうち、付与の起点資源の子孫でない資源への allow の件数（判定記録から事後に算出できる指標。KRI の候補）[D] |
+| 封じ込め | 既知良好版のモデルへの戻し（T-027・T-028 の手順）。該当テナントの外部付与の一括凍結（ADR-024 の即時凍結）[D] |
+| 復旧 | 判定記録から付与外 allow の対象資源と主体を特定し、テナント間漏えいとして扱う（GOV-02 §3.4 の Z1〜Z3、DL-34 の報告判断）[D] |
+| 証拠 | E4: 全域 permit・部分的な誤りのモデルでのゲストの付与外 allow の件数（TC-002 の K2。X1 と X2 を分けて記録）。E10: (b) の CI 検査の実行記録 [D] |
+| 残余リスク | (a) を採らない間は、モデルの誤り・誤配布が起きた時点から戻すまで、外部付与を持つ主体は資源側テナントの付与外資源に到達し得る [D]。これはテナント間漏えい（GOV-02 の U1）であり、具体の経路が実際に起きた場合は受容の対象にしない（DCS-05 X-01）[D]。受容の対象になり得るのは「付与範囲の第二層がない」という構造上の弱点だけであり、DCS-05 RRG-072 に段2 で登録した [D]。(a) を採っても、共有 grant ストアの付与範囲そのものの誤り（誤った起点資源への付与）は残る [D] |
+| 受容者案 | 段2（CEO・経営会議）。期限案: (a)(b) の採否は DEC-3、(b) の実装は G4 入場前（TC-002 の立会い下での再実行の前）、(a) の実装は G4 [D] |
+| 検証 | TC: TC-002（K2 の X2 部分）、TC-24-11 案（ADR-024 §7.1。G 段の範囲検査がある構成で、全域 permit・部分的な誤りのモデルでもゲストの付与外 allow 0 件）。第三者: DL-59 の cross-tenant pentest に、ゲストの付与外資源への到達を含める [D] |
+
 #### T-081 データ所在地・越境移転の違反（保存先、support の遠隔アクセス、監査記録の集約）
 
 | 項目 | 内容 |
@@ -1506,6 +1528,26 @@ LINDDUN 列の略記は L=Linking、Id=Identifying、N=Non-repudiation、D=Detec
 | 受容者案 | 段1（事業責任者。法務の協議を要する）[D]。期限案 G4 |
 | 検証 | 第三者: プライバシー監査（DL-07）[D] |
 
+### 5.18 CE-17 ライフサイクル事象の配送（版 0.3 で追加）
+
+#### T-093 ライフサイクル事象の注入・偽造・再送によるテナント参照の付け替えと大量削除（publisher・broker・broker に書き込める workload の侵害、誤った鍵の受理）〔版 0.3 で追加〕
+
+番号の注記: T-087〜T-091 は他文書で予約済み、T-092 は版 0.2 で使用済みのため、本脅威は T-093 とした [D]。
+
+| 項目 | 内容 |
+|---|---|
+| 分類 | CE-17, CE-09（テナント状態・主体台帳の正本）, CE-16（受信側が保持するデータ）／S, T, D（付け替えの結果は I・E にも及ぶ）／ATK-06（broker に書き込める workload の侵害）、ATK-07・ATK-17（publisher の改ざん）、ATK-08（broker・KMS の管理者）、ATK-19（誤った鍵・鍵マニフェストの配布）／S-01, S-19／P1・最大で全テナント（tenant.deletion.requested を全テナントのパーティションに注入した場合。受信サービスは約 300 [A-050]）[D] |
+| 根拠 | (1) CON-12 は、tenant.merge.cutover・tenant.split.cutover（保存しているテナント参照と所有属性の付け替え）、tenant.deletion.requested・user.deletion.requested（削除）、legal_hold.released（削除の再開）を GA の type とし、受信側に実行を義務付ける [D][^88]。(2) broker を経由すると、受信側の相互 TLS が認証するのは broker であって publisher ではない（CON-12 §1、PO-10）[D][^88]。RFC 9967 は、SET の受信者が発行者と直接通信していない場合に、JWS で SET の署名を検証することを MUST とする [N][^89]（RS-14#35）。CON-12 はこれをライフサイクル事象に準用し、真正性を PO-13（`lcsig` の JWS 署名）と RO-11（受信側の検証）に、破壊的処理の可否を実行前の正本照会 RO-12 に置いた [D][^88]。(3) CON-12 版 0.2.0 の時点で、PO-13 の署名鍵の用途族は ADR-007 D7-10 の 8 族になく（LC-OI-8）、RO-12 が呼ぶ照会 API の契約は未作成であり（LC-OI-3）、deletion.report・replay.request の署名は未決である（LC-OI-9）[D][^88][^90]。本書の版 0.3 と同じ担当で、ADR-007 に族 9「ライフサイクル事象の署名」を案として加え（DEC-3 で決裁。未決定）、照会 API の契約を CON-15（案）として起票したが、契約本体はまだない [D][^88][^90] |
+| 攻撃経路 | (a) broker の channel に書き込める workload を侵害した攻撃者（ATK-06）が、tenant.merge.cutover（統合元＝被害テナント、統合先＝攻撃者のテナント）や tenant.deletion.requested を書き込む [D]。RO-11 が実装されていなければ、受信側は broker との相互 TLS の成功だけで受理する [D]。(b) 署名があっても、受信側が非本番・別 cell・別用途族の鍵を受理すれば（鍵マニフェストの誤配布、(iss, typ, kid) 表の欠落。ATK-19）、その鍵を使える者が事象を偽造できる [D]。(c) 正しく署名された過去の事象（撤回済みの削除要求、過去の cutover）を、重複判定の記録の保持期間（W_replay 以上）を過ぎてから再送する [D]。(d) publisher 自体を侵害した者（ATK-07・ATK-17）の事象は署名が真正であり、RO-11 では見分けられない [D]。照会 API が publisher と同じ部品であれば、RO-12 の照会も同じ偽の状態を返す [D]。(e) 受信側の完了報告（deletion.report）を偽造し、削除していないデータを削除済みに見せる（削除証明の改ざん。LC-OI-9）[D]。成立すると、約 300 の受信サービスが他テナントの資源を攻撃者のテナントへ付け替える（テナント越境）か、対象テナントのデータを削除する [D][A-050] |
+| 予防 | (a) PO-10: broker の事象 channel への書込みを環境・cell ごとの publisher の workload ID だけに限り、ACL の実構成との差分を本番の日次走査で検出する [D][^88]。(b) PO-13・RO-11: 専用鍵（ADR-007 D7-10 族 9 案。環境別・cell 別、1 鍵 1 alg）による署名と、(iss, typ, kid) → 許可鍵集合の表、alg の固定、iss・env の一致、封筒と payload の一致の検証 [D][^88][^90]。RFC 8725 は種別の異なる JWT の検証規則を相互排他にすることを MUST とし、その手段に種別ごとの鍵の分離と明示的な typ を挙げる [N][^6]（RS-05#37）。(c) RO-12: 破壊的・不可逆な処理の直前に、照会 API（CON-15 案）で対象の状態と request_id・hold_ref・mapping_ref の一致、撤回の有無を確かめる [D][^88]。照会 API は publisher と別の workload ID・別の配備にし、テナント状態・主体台帳の正本を読む読取り専用の部品とする（CON-12 版 0.3.0 で RO-12 に追加）[D][^88]。(d) RO-13: 削除要求の猶予 G_del（TBD）[D][^88]。(e) RO-3・RO-12: 重複判定の記録を W_replay 以上保持し、保持を過ぎた再送は RO-12 の照会で不一致として止める [D][^88]。(f) RO-14 案: 受信側で、一定時間内に受けた破壊的事象の対象テナント数・主体数が閾値（TBD）を超えたら、以後の破壊的処理の実行を保留し SOC に警報する（CON-12 版 0.3.0 で追加。大量削除の上限）[D][^88]。(g) 正本側: mapping_ref と削除要求の作成は C-065 の orchestrator に限り、二者承認を要する（T-048）[D] |
+| 検知 | RO-11 による隔離の件数と警報、RO-12 の正本不一致（outcome=failed、理由: 正本不一致）の件数、RO-14 の閾値超過、PO-10 の日次走査の差分、publisher の送信記録と受信側の完了報告の突合（PO-12）[D][^88]。隔離件数と正本不一致件数を KRI の候補にする（目標 0、閾値 TBD）[D] |
+| 封じ込め | 署名鍵の単位は環境 × cell（族 9 案）なので、1 本の鍵の侵害で偽造できるのは当該 cell のパーティションに限る [D][^90]。当該鍵の緊急失効（ADR-007 §2.7）、broker の書込権限の剥奪、RO-14 による破壊的処理の保留 [D]。publisher の侵害は、当該環境・cell の publisher の停止で封じ込める [D] |
+| 復旧 | 付け替えは正本の mapping と照合して戻す（C-065、DL-49 の rollback）[D]。削除は G_del 内なら RO-13 の可逆な準備を戻す [D]。G_del を過ぎた不可逆な削除は、論理削除の保持期間内であれば C-065 の 3 段の削除（論理削除→鍵破棄→消去完了）の途中から復元する。保持期間を過ぎたものは戻せない [D]。runbook は未採番（DL-24）[D] |
+| 証拠 | E4: CON-12 の LC-CV-09〜LC-CV-15（LC-CV-15 は版 0.3.0 で追加した案）を MK-08（CON-11）で実行した結果 [D][^88]。E10: PO-10 の日次走査の記録、鍵マニフェストの (iss, typ, kid) 表の検査記録 [D] |
+| 残余リスク | (1) 照会 API の契約（LC-OI-3、CON-15 案）と署名鍵の用途族（LC-OI-8）が完成するまで、RO-11・RO-12 は実装できず、真正性は PO-10 の broker の ACL だけに依存する [D][^88]。このため CON-12 は、両者が揃うまで DEC-8 第 1 段（GA の凍結）を付議しないことを GA の前提とした [D][^88]。(2) publisher と照会 API の両方を侵害した者、または正本に誤った要求を書ける者（二者承認を通った誤り・悪意）の事象は、署名も照会も通る [D]。G_del と RO-14 で時間と範囲を限るだけである [D]。(3) 報告の偽造（LC-OI-9、未決）により削除証明が誤り得る [D]。(4) G_del と論理削除の保持期間を過ぎた不可逆な削除は戻せない [D]。構造上の弱点は DCS-05 RRG-073 に段2 で登録し、偽造した付け替えでテナント間の到達が実際に起きた場合は受容の対象にしない（DCS-05 X-01）[D] |
+| 受容者案 | 段2（CEO・経営会議）。期限案: LC-OI-3（CON-15）・LC-OI-8・LC-OI-9 の完成は DEC-8 第 1 段の付議前（G3）、LC-CV-09〜LC-CV-15 の実行は G4 [D] |
+| 検証 | TC: LC-CV-09〜LC-CV-14、LC-CV-15 案（CON-12、MK-08）、TL-1〜TL-4（統合・分割）。演習: publisher の侵害を想定した机上演習（DL-24）。第三者: DL-59 の pentest に、broker への書込みによる事象の注入と、他の鍵で署名した事象を含める [D] |
+
 ---
 
 ## 6. 指定脅威と持込み候補の割当（R-135、R-168、G-078）
@@ -1526,10 +1568,10 @@ LINDDUN 列の略記は L=Linking、Id=Identifying、N=Non-repudiation、D=Detec
 | R-168 | stale allow | T-032（関連 T-019、T-035、T-038、T-059） | CB-TC-17 | TH-TC-032 |
 | 未指摘 | 一覧・検索からの漏えい | T-076 | — | TH-TC-076 |
 | 未指摘 | 長時間ジョブの委任 | T-039（関連 T-024） | — | TH-TC-039 |
-| 未指摘 | 越境共有 | T-080 | — | TH-TC-080 |
+| 未指摘 | 越境共有 | T-080（関連 T-092。版 0.2 で追加） | — | TH-TC-080、TC-002 の K2（X2）、TC-24-11 案 |
 | 未指摘 | PEP 外データ | T-077（関連 T-034、T-078） | — | TH-TC-077 |
 | 未指摘 | 長時間接続の失効 | T-019 | — | TH-TC-019 |
-| 未指摘 | テナントの統合・分割 | T-036（関連 T-048、T-082） | — | TL-1〜TL-4 |
+| 未指摘 | テナントの統合・分割 | T-036（関連 T-048、T-082、T-093。T-093 は版 0.3 で追加） | — | TL-1〜TL-4、LC-CV-09〜LC-CV-15 |
 
 DL-53 が「事故由来の TC がない」とした BOLA と policy rollback は、本書の TH-TC-020 と TH-TC-027 を DL-22 へ持ち込む [D]。
 
@@ -1618,11 +1660,11 @@ DL-53 が「事故由来の TC がない」とした BOLA と policy rollback �
 
 | S | 保護対象（DL-02） | 主な ATK | T-ID | 主な統制の所在 | 検証 | 受容者案 |
 |---|---|---|---|---|---|---|
-| S-01 | 顧客業務データ・認可関係 | 01, 02, 03, 06 | T-016, T-018, T-020, T-021, T-022, T-023, T-025, T-026, T-029, T-033, T-036, T-037, T-040, T-061, T-076, T-078, T-080 | ADR-012, ADR-024, ADR-025, DL-15 | TH-TC-020 他、DL-59 | 段2 |
+| S-01 | 顧客業務データ・認可関係 | 01, 02, 03, 06 | T-016, T-018, T-020, T-021, T-022, T-023, T-025, T-026, T-029, T-033, T-036, T-037, T-040, T-061, T-076, T-078, T-080, T-092, T-093 | ADR-012, ADR-024, ADR-025, DL-15 | TH-TC-020 他、DL-59 | 段2 |
 | S-02 | 署名鍵・検証系 | 01, 07, 08, 17 | T-015, T-040, T-041, T-042, T-043, T-044, T-045 | ADR-007, ADR-021, DL-14 | CB-TC-01, CB-TC-20 | 段2（T-045 は段3 案） |
 | S-03 | テナントの認証設定 | 02, 04 | T-005, T-058, T-061〜T-067 | ADR-004, DL-26 | CB-TC-11, CB-TC-12, TL-9 | 段1〜段2 |
 | S-04 | 回復・support 経路 | 01, 09, 13 | T-001, T-002, T-003, T-011, T-046, T-049 | ADR-003, ADR-029, DL-52 | CB-TC-13, DL-59 | 段1〜段2 |
-| S-05 | policy・model | 07, 10, 17, 19 | T-027, T-028, T-033, T-050 | ADR-011, ADR-016, DL-17, DL-46 | CB-TC-19, TH-TC-027 | 段2 |
+| S-05 | policy・model | 07, 10, 17, 19 | T-027, T-028, T-033, T-050, T-092 | ADR-011, ADR-016, DL-17, DL-46 | CB-TC-19, TH-TC-027 | 段2 |
 | S-06 | 判定系・認証系の可用性 | 12, 19 | T-004, T-009, T-023, T-031, T-035, T-043, T-047, T-068 | ADR-013, ADR-023, DL-18, DL-19 | CB-TC-17, DL-81 | 段2 |
 | S-07 | 剥奪の反映 | 03, 05, 12 | T-019, T-024, T-027, T-032, T-035, T-036, T-038, T-039, T-059 | ADR-006, ADR-010, DL-56 | TH-TC-032, TL-5 | 段2（TD-3） |
 | S-08 | AS・PDP・SDK の完全性 | 07, 17, 18 | T-046, T-051, T-052, T-053 | ADR-008, DL-61 | TH-TC-051, DL-30 | 段2 |
@@ -1636,7 +1678,7 @@ DL-53 が「事故由来の TC がない」とした BOLA と policy rollback �
 | S-16 | 報告期限 | 非敵対 | T-054, T-055（立証不能が報告を遅らせる経路） | DL-24, DL-34 | DL-24 演習 | 段2 |
 | S-17 | 所在地・越境移転 | 09, 19 | T-049, T-056, T-081, T-082, T-083, T-084 | DL-34, ADR-013 | 第三者確認 | 段2 |
 | S-18 | 大規模 ATO | 01, 13, 14 | T-001, T-004, T-005, T-006, T-007, T-008, T-010, T-011, T-012 | ADR-002, ADR-003, DL-52 | CB-TC-08, CB-TC-14 | 段1 |
-| S-19 | 大量削除 | 19 | T-036, T-048 | ADR-028, DL-49 | CB-TC-18 | 段2 |
+| S-19 | 大量削除 | 19 | T-036, T-048, T-093 | ADR-028, DL-49, CON-12 | CB-TC-18, LC-CV-09〜LC-CV-15 | 段2 |
 
 S-16 は脅威ではなく手続の失敗であるため、統制の主体は DL-24 の runbook と DL-34 の報告期限表であり、本書は立証不能を通じた寄与だけを示す [D]。
 
@@ -1741,8 +1783,9 @@ DFD（DL-10）が作られたら、次の脅威について、示した点を DF
 | T-077 | PEP 外のデータ経路（バックアップ、レプリカ、CDC、export、DWH、署名付き URL）の全数 |
 | T-078 | RAG・ベクトルストアの配置と共有範囲 |
 | T-081 | cell・リージョンをまたぐデータの流れ（監査の集約、バックアップの複製）|
+| T-093 | ライフサイクル publisher・broker・照会 API の配置と信頼境界、broker の channel へ書き込める主体の全数、照会 API が publisher と別の workload・配備であること（版 0.3 で追加） |
 
-25 件である [D]。DFD の要素 ID が定まったら、CE-01〜CE-16 との対応表を DL-10 に置き、本書の網羅表（§4）をその ID で作り直す [D]。
+26 件である（版 0.3 で T-093 を追加）[D]。DFD の要素 ID が定まったら、CE-01〜CE-17 との対応表を DL-10 に置き、本書の網羅表（§4）をその ID で作り直す [D]。
 
 ---
 
@@ -1781,7 +1824,41 @@ DFD（DL-10）が作られたら、次の脅威について、示した点を DF
 | 9 | 草案標準（Transaction Tokens、AIMS、DBSC、IPSIE AL SCIM、domain verification）の状態追跡と、根拠行の更新 | DL-84 の所有者 | 四半期 |
 | 10 | 統合・分割など DL-49 の試験（TL-1〜TL-10）の結果による T-036・T-080 の残余の更新 | DL-49 の作成者 | G4 |
 | 11 | 本書の承認記録（作成者、第 2 線レビュー者、承認者）の作成（G-133） | CISO | G2 |
+| 12 | T-093 の前提の完成: 照会 API の契約（LC-OI-3、CON-15 案）、署名鍵の用途族（LC-OI-8、ADR-007 D7-10 族 9 案の決裁）、deletion.report・replay.request の署名（LC-OI-9）。未完成のまま DEC-8 第 1 段に進んだ場合は DCS-05 RRG-073 が失効する | CON-12 の所有者、DL-49 の所有者＋プラットフォームチーム長（CON-15）、ADR-007 の所有者 | DEC-8 第 1 段の付議前（G3） |
 
+
+## 他文書への申し送り（版 0.2、ラウンド 4）
+
+本書の担当範囲（本書、05_adr/ADR-024-cross-tenant-sharing.md、00_decision/05-residual-risk-register.md、00_decision/03-decision-items.md）以外は編集していない [D]。
+
+| # | 申し送り先 | 内容 | 所有者（案） | 期限（案） |
+|---|---|---|---|---|
+| T92-1 | 12_poc/preregistered-test-plan.md（POC-01）§4.2 TC-002 | 測定点に X1（文脈 tid・所属の不一致）と X2（ゲストの付与外資源）を分けて記録することを加え、関連に T-092 を加える。K2 の合否基準そのものの変更は、結果を見た後の基準変更に当たるため DEC-3 の同時決裁論点 5 の決定（DCS-03 §4.3.2）まで行わない | PoC リード、CISO | DEC-3 の付議前 |
+| T92-2 | 05_adr/ADR-011-policy-language-pep-pdp-api.md D1-1・D1-2・D2-5 | G 段規則 1 の後段（所属の確認）に外部付与の資源範囲の検査を加えるか（ADR-024 D24-08 の改訂案 (A)）と、CAM の CI 検査に外部付与 relation からの到達 permission の検査を加えること（同 (B)）を、DEC-3 の決定に合わせて改訂する。「モデルを誤っても G 段が止める」の記述は、決定までゲストの付与範囲を含まないことを注記する | ADR-011 の所有者（プラットフォームチーム長） | DEC-3 |
+| T92-3 | 12_poc/code/CHANGES-tenant-isolation.md OB-TI-02 | 「設計どおりの挙動」の判定は実行者の自己記録であり、立会い下での再実行と作成者以外の確認が要ることを記す。本書 T-092 と DCS-05 RRG-072 への参照を加える | PoC リード | DEC-3 の付議前 |
+| T92-4 | traceability/open-items.md | ICR-02 を OI-J04 から分け、独立の行（仮番 OI-J05）として起票する。内容は DCS-03 ラウンド 4（越境ゲスト）の申し送り R4G-1 のとおり | POA&M（DL-110）の担当 | 次版 |
+
+## 他文書への申し送り（版 0.3、ラウンド 5）
+
+本ラウンドの担当範囲（本書、00_decision/05-residual-risk-register.md、11_contracts/lifecycle-events.asyncapi.yaml、05_adr/ADR-007-key-hierarchy-kms-hsm.md）以外は編集していない [D]。
+
+| # | 申し送り先 | 内容 | 所有者（案） | 期限（案） |
+|---|---|---|---|---|
+| T93-1 | traceability/open-items.md（POA&M） | 次を起票する。(1) ADR-007 D7-10 族 9「ライフサイクル事象の署名」の決裁（DEC-3。ADR-007 版 0.2 の案。LC-OI-8）。(2) 照会 API の契約 CON-15 の作成（LC-OI-3）。(3) deletion.report・replay.request の署名の決定（LC-OI-9）。(4) LC-CV-15 案の CON-11 への採番。期限はいずれも DEC-8 第 1 段の付議前 | POA&M（DL-110）の担当 | 次版 |
+| T93-2 | 00_decision/03-decision-items.md（DCS-03）DEC-8 | DEC-8 第 1 段（rc 凍結と告知期間）の前提条件に、CON-12 の LC-OI-3（照会 API の契約 CON-15）と LC-OI-8（ADR-007 の族 9 の決裁）の完成を明記する。未完成のまま第 1 段を付議した場合は DCS-05 RRG-073 が失効する | DCS-03 の作成者 | DEC-8 第 1 段の付議前 |
+| T93-3 | 11_contracts/README.md（CON-00）、traceability/deliverables.md | CON-15（案）「ライフサイクル状態の照会 API」を契約一覧と成果物計画に登録し、ファイル（例 11_contracts/lifecycle-state.openapi.yaml）を作成する。最小要件は CON-12 §10 H2-5 のとおり | CON-00 の所有者、DL-49 の所有者＋プラットフォームチーム長 | DEC-8 第 1 段の付議前 |
+| T93-4 | 06_controls/control-mapping-ledger.md（CTL-01） | C-065 または新しい C-ID の対象脅威に T-093 を加え、PO-10・PO-13・RO-11〜RO-14 を統制として登録する | 統制台帳の所有者 | G3 |
+| T93-5 | 03_threat-model/dfd-entry-points.md | CE-17（publisher・broker・照会 API）を入口と信頼境界の表に加え、broker の ACL（PO-10 (a)〜(c)）を本番の日次走査（H6・AC-09）の対象にする（CON-12 H2-6 と同件） | DFD の作成者 | G2 |
+| T93-6 | 01_governance/kri.md | ライフサイクル事象の隔離件数（RO-11）と正本不一致件数（RO-12）を KRI 候補に加える（目標 0、閾値 TBD） | kri.md の所有者 | G3 |
+
+## レビュー記録
+
+模擬パネルは作成者と同じ AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| ラウンド | 指摘 | 対応 |
+|---|---|---|
+| 4（模擬パネル。自己レビューであり実在の CTO/CISO の決裁ではない） | High（redteam）: テナント越境の攻撃経路（越境共有のゲスト付与と、モデルの誤り・policy の誤配布の組合せ）に脅威がない。TC-002 v2 の自己実行では全域 permit のモデルで越境 allow が OpenFGA 275 件・Cedar 90 件（一覧項目 480 件・178 件）あり、原因は CHANGES-tenant-isolation.md OB-TI-02 に記録されている。外部ゲストは G 段規則 1 を満たし、ADR-024 D24-08 は G 段で付与範囲を見ないので、ゲストの閉じ込めは R 段だけに依存する | 修正済み。12_poc/data/tenant-isolation/TC-002/20261015T022625Z-96a12e の eval.json（K2 の observed: C3 n=10,004・violations 275・x1 0・x2 275・list_item_violations 480、C4 n=10,003・90・0・90・178）と run.json（`witness: null`、`git_dirty: false`、snapshot TC-002-v2）、OB-TI-02 の記述、PoC の façade（G 段の所属確認が `core/tenant` の `belongs` で行われること）と cam.json（`belongs` ＝ `member` または `external_member`）、ADR-024 D24-08 の文言を読んで事実を確認した [D][^84][^85][^86][^87]。T-092 を P1 で起票し、§0・§4.1 の CE-05 行・§6.1 の越境共有の行・§7 の S-01・S-05 の行に加えた。残余リスクは DCS-05 RRG-072（段2）に写し、具体の経路が起きた場合は X-01（受容不可）とした。予防の (a)(b) は ADR-024 D24-08 の改訂案として DEC-3 の同時決裁論点 5 に置いた（同じ担当で ADR-024・DCS-05・DCS-03 を改めた）。番号は T-087〜T-091 の予約を避けて T-092 とした。POC-01・ADR-011・CHANGES・open-items は T92-1〜T92-4 で申し送った |
+| 5（模擬パネル。自己レビューであり実在の CTO/CISO の決裁ではない） | High（redteam）: ライフサイクル事象の偽造・注入によるテナント越境と大量削除の攻撃経路に脅威がない。CON-12 は tenant.merge.cutover／split.cutover と deletion.requested を GA の type にし、真正性を PO-13 の署名と RO-12 の実行前の正本照会に依存させているが、CON-12 の申し送り H2-1 が本書に未反映であり、DCS-05 に RRG も POA&M の起票もない。署名鍵の用途族は ADR-007 にない（H2-2、LC-OI-8）。照会 API（LC-OI-3）の契約は未作成で、LC-OI-9 は未決 | 修正済み。CON-12 版 0.2.0 の §1・§2・§3 PO-10・PO-13・§4 RO-1・RO-10〜RO-13・§6・§10 H2-1・H2-2・H2-5、x-open-issues LC-OI-3・LC-OI-8・LC-OI-9、x-conformance-vectors LC-CV-09〜LC-CV-14 と、ADR-007 D7-10 の 8 族の記述を読んで事実を確認した [D][^88][^90]。RFC 9967 §5 の要求は research の検証済み主張（RS-14#35）によった [N][^89]。構成要素 CE-17 を §3・§4.1 に加え（空欄 p・q の理由を §4.2 に記した）、T-093 を P1 で起票し（§5.18）、§0・§6.1・§7（S-01・S-19）・§10（26 件に）・§12 残課題 12 に反映した。統制は PO-10・PO-13・RO-11〜RO-13 と、本ラウンドで CON-12 に加えた RO-14 案（破壊的事象の量の上限）・照会 API の publisher からの分離に、試験は LC-CV-09〜LC-CV-15 に結んだ。同じ担当で、DCS-05 に RRG-073（段2）を追加し、ADR-007 D7-10 に族 9 を案として加え、CON-12 に CON-15（照会 API の契約）を起票した。POA&M・DCS-03 DEC-8・CON-00・CTL-01・dfd-entry-points・kri.md へは T93-1〜T93-6 で申し送った。番号は T-087〜T-091 の予約と T-092 を避けて T-093 とした |
 
 ## 参考文献
 
@@ -1867,3 +1944,10 @@ DFD（DL-10）が作られたら、次の脅威について、示した点を DF
 [^81]: Slack『Manage Slack Connect channel approval settings and invitation requests』Slack Help Center, 版の記載なし. https://slack.com/help/articles/115005912706 （参照箇所: Manage approval settings per organization（Enterprise plans）。独立検証では地域転送により同一記事の日本語版（/intl/ja-jp/、「オーガナイゼーションごとに承認設定を管理する」）で照合、確認日: 2026-10-03）
 [^82]: Mandiant (Google Cloud)『UNC5537 Targets Snowflake Customer Instances for Data Theft and Extortion』2024-06-10（2024-06-17 更新）. https://cloud.google.com/blog/topics/threat-intelligence/unc5537-snowflake-data-theft-extortion （参照箇所: Introduction、Campaign Overview（three primary factors、79.7%、2020 年 11 月）、contractor systems 段落、Outlook and Implications、確認日: 2026-10-03）
 [^83]: LastPass (K. Toubba)『Security Incident Update and Recommended Actions』2023-03-01. https://blog.lastpass.com/posts/security-incident-update-recommended-actions （参照箇所: 冒頭段落（2022-10-26 以降の活動なし）、What happened（Incident 2 Summary）、確認日: 2026-10-03。現行 URL は本文が折りたたみ表示で抽出できないため、独立検証では旧 URL の Wayback Machine 2023-03-01 版 https://web.archive.org/web/20230301230000/https://blog.lastpass.com/2023/03/security-incident-update-recommended-actions/ を抽出ツールで取得して照合）
+[^84]: 本リポジトリ『基盤への変更記録（試験群 tenant-isolation）』12_poc/code/CHANGES-tenant-isolation.md （参照箇所: 「基盤で見つけたが直していない事項」OB-TI-02、確認日: 2026-10-15。PoC 実行者（AI エージェント）の自己記録であり、作成者以外の確認はない）
+[^85]: 本リポジトリ『PoC 生データ TC-002 run 20261015T022625Z-96a12e』12_poc/data/tenant-isolation/TC-002/20261015T022625Z-96a12e/eval.json・run.json （参照箇所: eval.json の criteria K2（observed の C3-openfga-permitall・C4-cedar-permitall の n・violations・x1・x2・list_item_violations、met_on_observed_n: false）、run.json の witness・git_dirty・code_dir（snapshot TC-002-v2）、確認日: 2026-10-15。立会いのない自己実行であり [M] の証拠ではない）
+[^86]: 本リポジトリ『ADR-024 テナント越境共有』版 0.3. 05_adr/ADR-024-cross-tenant-sharing.md （参照箇所: D24-07, D24-08（G 段規則 1 の読み方）, D24-08 の改訂案（ラウンド 4）、確認日: 2026-10-15）
+[^87]: 本リポジトリ『PoC 基盤のコード』12_poc/code/pdp/facade.js・12_poc/code/model/cam.json （参照箇所: facade.js の G 段（ADR-011 D1-2）の membership 確認（`relation: 'belongs'`、`resource: core/tenant`）, cam.json の `core/tenant` の relation `belongs`（"member | external_member"）、確認日: 2026-10-15）
+[^88]: 本リポジトリ『Lifecycle events for dependent services』CON-12（案）版 0.3.0. 11_contracts/lifecycle-events.asyncapi.yaml （参照箇所: info.description §1（broker 経由の真正性、破壊的処理の正本照会）, §2（GA の type: tenant.merge.cutover・split.cutover・deletion.requested・legal_hold.released）, §3 PO-10・PO-11・PO-13, §4 RO-3・RO-10〜RO-14, §6（GA の前提）, §10 H2-1・H2-2・H2-5, x-open-issues LC-OI-3・LC-OI-8・LC-OI-9, x-conformance-vectors LC-CV-09〜LC-CV-15、確認日: 2026-10-15。版 0.2.0 の記述を読んで事実を確認し、版 0.3.0 は本書と同じ担当で改めた）
+[^89]: P. Hunt ほか『RFC 9967 System for Cross-Domain Identity Management (SCIM) Profile for Security Event Tokens (SETs)』Proposed Standard, 2026-05. https://www.rfc-editor.org/rfc/rfc9967 （参照箇所: §5 Security Considerations（発行者と直接通信しない受信者による JWS の署名の検証）、確認日: 2026-10-03。RS-14#35）
+[^90]: 本リポジトリ『ADR-007 鍵階層と KMS/HSM（root of trust）』版 0.2. 05_adr/ADR-007-key-hierarchy-kms-hsm.md （参照箇所: D7-10（版 0.1 の 8 族と、版 0.2 で案として加えた族 9）, D7-13, D7-21, D7-22, §2.7、確認日: 2026-10-15）

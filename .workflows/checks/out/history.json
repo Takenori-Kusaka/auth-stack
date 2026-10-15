@@ -184,5 +184,67 @@
    "8_openapi_errors": 0,
    "8_openapi_warnings": 13
   }
+ },
+ {
+  "label": "final-r7",
+  "time": "2026-10-15T15:26:51",
+  "fix": false,
+  "counts": {
+   "1_meta_missing": 1,
+   "1_meta_docid_mismatch": 0,
+   "2_forbidden_total": 36,
+   "2_forbidden_review": 2,
+   "3_claimtag_flagged_units": 240,
+   "3_claimtag_untagged_sentences": 1409,
+   "4_undefined_id_distinct": 13,
+   "4_undefined_id_occurrences": 537,
+   "4_subid_or_range_distinct": 17,
+   "4_external_namespace_excluded": 5,
+   "4_duplicate_definitions": 0,
+   "5_footnote_undefined": 0,
+   "5_footnote_crossdoc_mention": 1055,
+   "5_footnote_unused": 5,
+   "5_footnote_numbering_gap_files": 17,
+   "5_footnote_duplicate": 0,
+   "6_planned_missing": 3,
+   "6_unregistered": 0,
+   "7_broken_links": 0,
+   "7_bare_path_unplanned": 23,
+   "7_bare_path_planned_not_created": 43,
+   "8_json_invalid": 0,
+   "8_openapi_errors": 0,
+   "8_openapi_warnings": 13
+  }
+ },
+ {
+  "label": "final-r7-post",
+  "time": "2026-10-15T15:36:19",
+  "fix": false,
+  "counts": {
+   "1_meta_missing": 1,
+   "1_meta_docid_mismatch": 0,
+   "2_forbidden_total": 36,
+   "2_forbidden_review": 2,
+   "3_claimtag_flagged_units": 239,
+   "3_claimtag_untagged_sentences": 1409,
+   "4_undefined_id_distinct": 13,
+   "4_undefined_id_occurrences": 559,
+   "4_subid_or_range_distinct": 17,
+   "4_external_namespace_excluded": 5,
+   "4_duplicate_definitions": 0,
+   "5_footnote_undefined": 0,
+   "5_footnote_crossdoc_mention": 1055,
+   "5_footnote_unused": 5,
+   "5_footnote_numbering_gap_files": 17,
+   "5_footnote_duplicate": 0,
+   "6_planned_missing": 3,
+   "6_unregistered": 0,
+   "7_broken_links": 0,
+   "7_bare_path_unplanned": 23,
+   "7_bare_path_planned_not_created": 51,
+   "8_json_invalid": 0,
+   "8_openapi_errors": 0,
+   "8_openapi_warnings": 13
+  }
  }
 ]

@@ -11,7 +11,7 @@
 
 1. **本書は 16 分野・75 問（FQ-01〜FQ-75）の問いと答えを置き、全回答に根拠文書へのリンクを付けた** [D]。G-128 が名指しする 6 分野（token、テナント context、キャッシュ、非同期、エラー時の挙動、ローカル開発とモック）に加え、権限追加、越境共有、検索、AI エージェント、レガシー、性能、障害時、例外申請、trace id と `txn` の違い、Tier を扱う（§3）[D]。G-128 の合格判定（作成者以外のレビュアーによる確認）は未実施である [D]。
 2. **答えの大半は「してはならないこと」に集約できる。§2 の 15 項目を守れば、主要な事故類型（テナント越境、剥奪の未反映、token の流出、障害時の迂回）に対する連携側の義務の大半を満たす** [D]。15 項目は INT-02 の共通義務 IC-01〜IC-12、INT-01 の M-01〜M-10、ARC-15 の DEV-1〜DEV-9、ARC-06 §4.3 の 12 項目から重複を除いて抜き出した [D]。義務の正本はそれらの文書であり、本書の要約が食い違えば正本を優先する（§1.1）[D]。
-3. **75 問のうち 28 問の答えは「値は未決」「契約は未作成」に依存する（§6）** [D]。token 寿命・PDP deadline・cache 最大齢などの数値は DL-20 で未決裁（TBD）、issuer の粒度は未決（ADR-007／ADR-021、U-01）、契約試験キット本体（DL-82）は未実装である。ライフサイクル事象の契約（G-137）は CON-12・CON-13 が draft で配置済みだが、キット本体（DL-82）が未実装でモック MK-08 を動かせず、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]。本書はこれらについて「値をコードに直書きせず設定から読む」「安全側の暫定動作で実装する」という答えを返す（§6）[D]。決まった時点で該当回答を改訂する（§4 の改訂規則）[D]。
+3. **75 問のうち 28 問の答えは「値は未決」「契約は未作成」に依存する（§6）** [D]。token 寿命・PDP deadline・cache 最大齢などの数値は DL-20 で未決裁（TBD）、issuer の粒度は未決（ADR-007／ADR-021、U-01）、PoC 基盤（DL-82）は納品済みだが、契約試験キット本体（DL-120）は未実装（期限 G3）である。ライフサイクル事象の契約（G-137）は CON-12・CON-13 が draft で配置済みだが、キット本体（DL-120）が未実装で[^29]モック MK-08 を動かせず、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]。本書はこれらについて「値をコードに直書きせず設定から読む」「安全側の暫定動作で実装する」という答えを返す（§6）[D]。決まった時点で該当回答を改訂する（§4 の改訂規則）[D]。
 4. **FAQ は非規範文書とし、拘束力のある解釈は正誤表（CON-00 §5.2 の E0 経路）でだけ出す案を推奨する（決裁案 KD-FAQ-1）** [D]。約 20〜30 の組織 [A-052] が FAQ の文言を契約とみなして実装すると、FAQ の改訂が事実上の契約変更になり、契約変更審査会（RACI-20）を迂回するからである [D]。
 5. **G-145 のうち本書が担うのは「問い合わせを FAQ・文書の改訂に戻す手順」の FAQ 側の受け口だけである（§4）** [D]。窓口の経路・重大度別目標・体制の導出は 08_operations/operating-model.md §8 が正本で、目標値は TBD、ライン長の確約とパイロットでの実測は未達である [D]。
 6. **経営判断が要る点は 3 件である（§5）**。FAQ の規範性（KD-FAQ-1）、開示範囲（KD-FAQ-2）、所有と改訂の目標（KD-FAQ-3）であり、いずれも決裁前である [D]。
@@ -116,7 +116,7 @@ flowchart TB
 
 #### FQ-02 基盤の完成を待たずに何を始められるか
 - 主パターンの選定、entry point 台帳への記載、token 検証・PEP 呼出し・exchange・監査送出の実装、拒否と不存在の応答の同一化、fail-closed の分岐、負例の単体試験は今日から始められる [D]。
-- 始められないのは、自チームの CI で合否を出す契約試験（キット本体 DL-82 が未実装、期限 G3）、Webhook の署名（KD64-1 の決裁待ち）、保管庫を使う outbound 連携（KD64-2 の決裁待ち）である [D]。
+- 始められないのは、自チームの CI で合否を出す契約試験（DL-82（PoC 基盤）は納品済みだが、キット本体 DL-120 が未実装、期限 G3）、Webhook の署名（KD64-1 の決裁待ち）、保管庫を使う outbound 連携（KD64-2 の決裁待ち）である [D]。
 - ライフサイクル事象の受信は条件付きで始められる。CON-12・CON-13（draft）に対して受信処理（重複除去、欠番検知、未知の type の受理と無視、完了報告）の実装と単体試験を書ける。封筒・type 名・冪等と順序は GA、個別 data は preview である。配送の保証に依存する結合試験はモックの提供後になる [D]（CON-00 §2.5）。
 - client 登録は契約（client-registration.openapi.yaml、preview）がある。sandbox はセルフ登録、本番は承認付きの申請 API である [D]（CON-00 §3）。
 - DEC-8 までは契約の版が 0.x で、変更期間は約束されない [D]。SemVer 2.0.0 は major 0 の間はいつ何が変わってもよいとする [N][^17]（RS-16#31）。契約ファイルの git コミットを固定し、DEC-8 後に DL-80 の判定で適合を確かめ直す [D]。
@@ -354,7 +354,7 @@ flowchart TB
 
 #### FQ-42 ローカルで token を発行して試験するには
 - 契約試験キットのモック MK-01（開発用 AS・IdP）を使う [D]。MK-01 は「本番役」と「sandbox 役」の 2 issuer を持ち、制御 API で合成の主体・テナント・client を登録し、負例の token（alg=none、期限切れ、他 aud、他テナントの tid など）を鋳造できる [D]。
-- キット本体（DL-82）は未実装（期限 G3）である [D]。それまでは自前の試験鍵で発行した token で、CON-06 の examples と `x-negative-examples`、ADR-022 D-6-2 の必須負例のうち自サービスに当たるものを単体試験にする [D]。
+- DL-82（PoC 基盤）は納品済みだが、キット本体（DL-120）は未実装（期限 G3）である [D]。それまでは自前の試験鍵で発行した token で、CON-06 の examples と `x-negative-examples`、ADR-022 D-6-2 の必須負例のうち自サービスに当たるものを単体試験にする [D]。
 - 根拠: [CON-11 §4.2・§16](../11_contracts/mock-contract-test-kit.md)、[INT-01 §7.4 #3](dependency-tiers.md)
 
 #### FQ-43 PDP（認可判定）をモックするには
@@ -363,7 +363,7 @@ flowchart TB
 - 根拠: [CON-11 §4.4・§16.2 #8](../11_contracts/mock-contract-test-kit.md)、[INT-03 §15](authz-modeling-guide.md)
 
 #### FQ-44 モックから sandbox・本番へ移るとき、何を変えてよいか
-- 環境変数で渡す差し替え点だけである [D]。discovery URL、trust anchor、PDP・STS・TTS・Registry・SSF・監査送出の endpoint、workload 資格情報の取得元、fail-mode の設定の取得先である [D]。暫定の変数名は `AUTH_OIDC_DISCOVERY_URL`、`AUTH_TRUST_ANCHOR_FILE`、`AUTHZ_PDP_BASE_URL`、`AUTH_STS_TOKEN_URL`、`AUTH_TTS_URL`、`AUTHZ_REGISTRY_BASE_URL`、`AUTH_SSF_CONFIGURATION_URL`、`AUDIT_SINK_URL`、`WORKLOAD_CREDENTIAL_SOURCE`、`AUTHZ_FAILMODE_CONFIG_URL` で、DL-82 と SDK で凍結する [D]。
+- 環境変数で渡す差し替え点だけである [D]。discovery URL、trust anchor、PDP・STS・TTS・Registry・SSF・監査送出の endpoint、workload 資格情報の取得元、fail-mode の設定の取得先である [D]。暫定の変数名は `AUTH_OIDC_DISCOVERY_URL`、`AUTH_TRUST_ANCHOR_FILE`、`AUTHZ_PDP_BASE_URL`、`AUTH_STS_TOKEN_URL`、`AUTH_TTS_URL`、`AUTHZ_REGISTRY_BASE_URL`、`AUTH_SSF_CONFIGURATION_URL`、`AUDIT_SINK_URL`、`WORKLOAD_CREDENTIAL_SOURCE`、`AUTHZ_FAILMODE_CONFIG_URL` で、キット本体 DL-120 と SDK で凍結する [D]。
 - 業務 API に試験用のヘッダ・パラメータを加えない [D]。加えると PoC 基盤への切替でコード差分が出て、G-123（コード差分 0）を満たせない [D]。
 - 根拠: [CON-11 §4.1 MK-P4・§11.4](../11_contracts/mock-contract-test-kit.md)
 
@@ -655,8 +655,8 @@ flowchart LR
 | token 寿命、J_max、C_edge、D(t)、retry 予算、q_t、M_rev、B_rs、L_url、Q_r・Q_w | TBD（DL-20、G4） | FQ-07、FQ-22、FQ-31、FQ-37、FQ-56、FQ-66 | 設定から読む。試験は仮値と明記 |
 | 審査 SLA | TBD（INT-03 §8.5、Gate 3） | FQ-50 | K-31 で監視 |
 | 重大度別の応答目標 | TBD（operating-model §8.2、G4） | FQ-38 | — |
-| ライフサイクル事象のモック・未決の値 | CON-12・CON-13 は draft（DL-117・DL-118）。モック（MK-08。キット本体 DL-82 は未実装）、LC-OI-1〜3、期限 T_*（DL-20）が未決 | FQ-02 | 受信の実装と単体試験は今から。配送の保証に依存する結合試験はモックの提供後 |
-| 契約試験キット本体 | 未実装（DL-82、G3） | FQ-02、FQ-42、FQ-43 | 自前スタブと汎用モックで正例 |
+| ライフサイクル事象のモック・未決の値 | CON-12・CON-13 は draft（DL-117・DL-118）。モック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）、LC-OI-1〜3、期限 T_*（DL-20）が未決 | FQ-02 | 受信の実装と単体試験は今から。配送の保証に依存する結合試験はモックの提供後 |
+| 契約試験キット本体 | 未実装（DL-120、G3。PoC 基盤 DL-82 は納品済みだがキットを含まない） | FQ-02、FQ-42、FQ-43 | 自前スタブと汎用モックで正例 |
 | 共有 sandbox の提供時期・水準 | TBD（K11-3） | FQ-45 | — |
 | SDK の提供言語と時期 | 未定（ADR-022 NA-022-1） | FQ-04 | 自前実装の外形を ARC-06 §4.2 で示す |
 | レガシー互換層の廃止期限 | TBD（DL-31、ADR-027） | FQ-64 | 例外台帳に期限付きで登録 |
@@ -719,6 +719,7 @@ flowchart LR
 [^26]: OpenFGA『Getting Started with Modeling』web 文書（版表記なし）. https://openfga.dev/docs/modeling/getting-started （参照箇所: A Process For Defining Authorization Models（01〜06）, roles に関する注記、確認日: 2026-10-03。RS-17#84）
 [^27]: S. Dalal, E. Wilde『The Deprecation HTTP Response Header Field』RFC 9745, Proposed Standard, 2025-03. https://www.rfc-editor.org/rfc/rfc9745 （参照箇所: §2.1 Syntax、確認日: 2026-10-03。RS-16#34）
 [^28]: IETF (W. Denniss, J. Bradley)『RFC 8252: OAuth 2.0 for Native Apps』BCP 212, 2017-10. https://www.rfc-editor.org/rfc/rfc8252 （参照箇所: §8.12、確認日: 2026-10-03。RS-17#6）
+[^29]: 本リポジトリ『モック・契約試験キット仕様』（CON-11、版 0.4 draft）2026-10-15. 11_contracts/mock-contract-test-kit.md （参照箇所: 要旨 7, §11 冒頭, §14.2 の 10_integration・11_contracts 行、確認日: 2026-10-15）。DL-120 の定義は本リポジトリ『成果物計画』（TRC-03、版 0.3）traceability/deliverables.md §4.6・§8（確認日: 2026-10-15）
 
 ---
 
@@ -734,3 +735,13 @@ flowchart LR
 
 - 根拠として確認した箇所: CON-00 §2.5（判定と役割別の表）・§2.6.1・§3 の client 登録行、lifecycle-events.asyncapi.yaml（CON-12）の RO-6・LC-OI-1〜3・LC-CV-08、client-registration.openapi.yaml の `info`（x-status draft）。いずれも 2026-10-15 に本リポジトリで確認した [D]。再発防止の DL-111 の検査規則は INT-00「他文書への申し送り」S-1 で申し送った [D]。
 - 対応件数: 1 件（対応済み 1）[D]。
+
+### ラウンド 4（模擬パネル、2026-10-15）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R4-1 | High・devlead | CON-11 版 0.4 は契約試験キット本体を DL-82（PoC 基盤、納品済み）から分けて DL-120 案としたが、本書は「キット本体 DL-82 は未実装」と書き、納品済みの DL-82 と矛盾していた。キット本体を誰がいつ配布するかを追跡できない | **対応**。「キット本体（DL-82）は未実装」の類を「DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装（期限 G3）」に、「キット（DL-82）の配布後」の類を DL-120 に改めた。DL-120 は traceability/deliverables.md 版 0.3 で所有者案（PEP SDK・開発者支援チーム）・受入れ基準・期限 G3 とともに登録された。CON-11 の原文（要旨 7、§11 冒頭、§14.2）を 2026-10-15 に確認した[^29] [D] | §0 の 3、FQ-02、FQ-42、FQ-44（環境変数の凍結先）、§6 の表 2 行 |
+
+- 他文書への申し送り: 10_integration/onboarding.md（INT-04）にも同じ記載（「キット本体（DL-82）の配布は G3 の予定」、図の「キット配布（DL-82、G3）」）が残る。CON-11 §14.2 の申し送りに従い DL-120 に改める（本ラウンドの担当外）[D]。

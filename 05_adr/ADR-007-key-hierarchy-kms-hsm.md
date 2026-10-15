@@ -1,10 +1,10 @@
 # ADR-007 鍵階層と KMS/HSM（root of trust）
 
-> 文書ID: ADR-007 / 版: 0.1 / 状態: proposed（決裁前。CONVENTIONS §1 の区分では draft）/ 最終更新: 2026-10-03
+> 文書ID: ADR-007 / 版: 0.2 / 状態: proposed（決裁前。CONVENTIONS §1 の区分では draft）/ 最終更新: 2026-10-15（0.2: 模擬パネル ラウンド 5 の redteam 指摘により、D7-10 に用途族 9「ライフサイクル事象の署名」を案として加え、D7-10a・KD7-9 を置いた。末尾「レビュー記録」。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない）
 > 可逆性: **一部不可逆**。不可逆な部分は次の 6 つ。(1) 3 層の鍵階層と「1 鍵 1 用途 1 alg 1 スコープ」の原則。(2) 検証側が守る結合規則「(iss, typ, kid) → 許可鍵集合」。(3) 信頼アンカー（L0 公開鍵）と署名付き鍵マニフェストの配布形式。(4) kid を不透明 ID とする命名規則。(5) 鍵台帳のスキーマ。(6) issuer の粒度（ADR-021 と同時に決裁）。可逆な部分は、KMS/HSM の製品と backend、L1 の保管方式（KMS か単一テナント HSM か）、鍵年齢などの数値、alg、テナント専用鍵と例外 backend の適用範囲である。可逆な部分はいずれも「新鍵の事前公開 → 署名の切替 → 旧鍵の退役」で戻せる。
 > DEC-3 対象: はい（traceability/deliverables.md の ADR-007 行「対象（鍵階層の原則）」、DEC-3 行の DL-12）
 > 対応要求: R-049, R-101（本書を対応成果物に名指し）／R-038, R-050〜R-057, R-104, R-113, R-161, R-162, R-168, R-174, R-184, R-189.3〜R-189.6, R-195.4, R-209, R-268（関連）／G-020（05_adr の全 ADR）, G-084, G-085（DL-14 経由）／G-032, G-042, G-048, G-049, G-055, G-058, G-065, G-067, G-068, G-081, G-088, G-091, G-093, G-106, G-141（関連）
-> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/exception-risk-acceptance.md, 02_requirements/tenant-lifecycle.md, 03_threat-model/attacker-model.md, 05_adr/ADR-005-token-profile.md, research/RS-02, RS-03, RS-04, RS-05, RS-09, RS-10, RS-11, RS-12（各 research/verification/ の検証記録を含む）
+> 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, 01_governance/loss-scenarios.md, 01_governance/exception-risk-acceptance.md, 02_requirements/tenant-lifecycle.md, 03_threat-model/attacker-model.md, 05_adr/ADR-005-token-profile.md, 11_contracts/lifecycle-events.asyncapi.yaml（CON-12。版 0.2 で追加）, 03_threat-model/threat-catalog.md（T-093。版 0.2 で追加）, research/RS-02, RS-03, RS-04, RS-05, RS-09, RS-10, RS-11, RS-12（各 research/verification/ の検証記録を含む）
 > 作成方法: 3 つの起草レンズ（sec: セキュリティ・保証、ops: 運用性・費用・組織実現性、evo: 20 年の進化・退出）の案を 3 名の判定者が採点した。集計上の勝者（得点合計）は ops である。本書は ops 案を土台に、判定者が挙げた取込み（graft）と事実誤りの訂正を統合した。judge panel は AI エージェント（Claude）による模擬の自己レビューであり、実在の CTO/CISO の判定・決裁ではない（CONVENTIONS §8）。
 > 日付の扱い: 最終更新はプログラムの規定日（2026-10-03）とした。research にない原典（脚注 55, 61〜64 と RFC 7517 §4）は統合者が実行環境の日付 2026-10-15 に取得・照合したため、その脚注の確認日は 2026-10-15 と記す。この差はプログラム日付と実行日の差であり、既知の不整合として残す。作成者以外による照合はまだ受けていない。
 > 表記: 決定は D7-xx、決裁案は KD7-x、試験案は TC-07-xx（仮番。DL-22 で採番）、残余リスクは RR7-xx、新規仮定は N7-x と書く。表のセルのうちタグのないものは設計推論 [D] であり、本注記で個別タグに代える。事実を述べるセルには個別にタグと脚注を付けた。
@@ -173,7 +173,7 @@
 
 ### 2.2 用途族と分離
 
-- **D7-10** L2 の用途族は次の 8 つとし、1 族 1 鍵、1 鍵 1 alg とする [N][^2][^16][D]（RS-05#1、RS-11#51）。
+- **D7-10** L2 の用途族は次の 8 つ（版 0.2 で族 9 を案として加えた。決裁後は 9 つ）とし、1 族 1 鍵、1 鍵 1 alg とする [N][^2][^16][D]（RS-05#1、RS-11#51）。
   1. 外部 ID token
   2. 外部 access token（RFC 9068）。ADR-005 D1-1 は外部 client に渡す access token を opaque にするため、この族は ADR-005 が案C などで外部 JWT に戻す場合に備えた予約とし、初期構成では鍵を作らない（整合調整で修正）
   3. 内部 token（token exchange、service 間の代理 token）
@@ -183,6 +183,14 @@
   6. SAML assertion / metadata 署名
   7. 監査記録の署名（法域単位）
   8. policy bundle の署名（法域単位。ADR-008 と共有管理）
+  9. ライフサイクル事象の署名（CON-12 PO-13 の `lcsig`。typ `lifecycle-event+jws`。環境別・cell 別）。**版 0.2 で案として追加し、DEC-3 で他の族と同時に決裁するまで案である**（模擬パネル ラウンド 5、CON-12 の申し送り H2-2・LC-OI-8）[D][^65]。内部の約 300 サービスが、この署名を根拠にテナント参照の付け替えと削除を行うため、他の族の鍵で署名した事象を受理しないよう鍵を分ける [D][^65][^66]。RFC 8725 は種別の異なる JWT の検証規則を相互排他にすることを MUST とし、その手段として種別ごとの鍵の分離と明示的な typ を挙げる [N][^16]（RS-05#37）。CON-12 はこれを JWS に準用している [D][^65]
+- **D7-10a**（版 0.2 で追加。案）族 9 の鍵スコープは次のとおりとする [D]。
+  - 単位は環境 × cell × alg とし、cell ごとのライフサイクル publisher だけが Sign を呼べる [D]。cell の間で共有しない（D7-13）[D]。
+  - platform パーティション（CON-12 PO-4 の `/platform`。revocation.bulk など範囲がテナント・主体に収まらない事象）にも全域の鍵を作らない。範囲が複数 cell に及ぶ事象は、各 cell の publisher が自 cell の鍵で別々に署名して出す [D]。全域の 1 鍵は、侵害時の封じ込め単位を全域にするためである（D7-07・D7-13 と同じ理由）[D]。
+  - (iss, typ, kid) を L1 署名付き鍵マニフェストに登録する。iss は環境・cell ごとの publisher を表す不透明 URI、typ は `lifecycle-event+jws` とする [D][^65]。受信側は D7-21 の表で検証し、alg は鍵に固定した値だけを受け入れる（D7-22 の alg none の拒否を含む）[D][^65]。加えて、tenant パーティションの事象では tid の収容 cell と kid の cell の一致を確かめる（D7-22 の内部 token のテナント結合と同型）[D]。
+  - 主体区分では分けない（D7-12 の例外）。D7-12 の根拠は consumer 鍵と enterprise 鍵の混同による token の受理であり、族 9 の署名は利用者・RP に提示されず、受信側は typ と (iss, typ, kid) で他の族と区別するためである [D]。ただし 1 cell の族 9 の鍵が侵害されると、その cell の全主体区分の事象を偽造できる [D]。principal パーティション（`/principals/<sub>`）の事象をどの cell の鍵で署名し、受信側が何と照合するかは、主体台帳の配置が決まっていないため KD7-9 で決める [D]。
+  - 受信側の完了報告（deletion.report）と replay.request の署名（CON-12 LC-OI-9）は族 9 に含めない。署名者が約 300 の受信サービスであり、L2 を各サービスに配ると「1 族 1 鍵」の管理単位が崩れるためである [D][A-050]。workload の鍵（ADR-009 の系統。D7-11）で署名する案を ADR-009 と CON-12 に申し送る（末尾「他文書への申し送り」A7-3）[D]。
+  - 族 9 の侵害・誤受理の残余は THR-03 T-093 と DCS-05 RRG-073 で扱い、本書 §6.3 の RR 表には行を加えない（DCS-05 §8.2 の ADR 行の母集団を変えないため。残余の受容者案は RRG-073 の段2）[D]。
 - **D7-11** L1 と L0 の用途（鍵マニフェスト、失効リスト、監査鍵台帳、L1 認可文書）は L2 の用途族に含めない [D]。sec 案の 11 族は L1 の用途を L2 の族に混在させており、本書で分離した [D]。workload CA は ADR-009 の系統で扱い、本書の L2 と別系統にする [D]。
 - **D7-12** 主体区分（B2B／B2C realm／従業員）の間で L2 を共有しない [D]。根拠は Storm-0558 の consumer 鍵と enterprise 鍵の混同である [I][^10][^11]（RS-05#19, #21）。
 - **D7-13** cell の間で L2 を共有しない [D]。法域の間で L1 を共有しない [D][A-060, A-063]。L0 を法域ごとに分けるかは KD7-6 で決める [D]。
@@ -191,6 +199,7 @@
   - 版は現用・next・退役保持・DR の 4 版で 76 版、10 cell で約 760 版。法域単位の監査・bundle（2 × 3 法域 × 4 版＝24）、L1（3 法域 × 2）、高保証テナントの専用鍵（50 × 3 族 × 4 版＝600）を加え、約 1,400 版になる。
   - rotation は 30 日周期で約 350 系統、1 日あたり約 12 件で、自動処理で回す [D]。PQ の並行公開期間には最大で約 2 倍になる [D]。
   - 整合調整による補正: D7-10 の族 2 を予約にし族 3b を加えると、1 cell あたりは 19 −（外部 AT 3＋外部 AT の ES256 並行 3）＋要求 context 3 ＝ 16 系統、版は 64、10 cell で約 640 版、全体で約 1,270 版になる [D]。上の約 1,400 版は上限側の試算として残す（整合調整で修正）。
+  - 版 0.2 の補正（族 9 案）: 族 9 は 1 cell あたり 1 系統（環境別の本番分。非本番は D7-04 の別系統）なので、補正後は 1 cell あたり 17 系統、版は 68、10 cell で約 680 版、全体で約 1,310 版になる [D]。上限側は 20 系統、80 版、10 cell で約 800 版、全体で約 1,440 版である [D]。30 日周期の rotation は約 360 系統、1 日あたり約 12 件で、自動処理の件数はほぼ変わらない [D]。
 - **D7-15** 高保証要求テナント（A-081、基準 50）のうち契約で専用の封じ込め単位を求めたテナントには、テナント専用の L2 鍵と専用 issuer を KMS 上で提供する（提供条件と上限は ADR-021 D21-05・K21-3 に揃える。費用試算は上限の 50 で置く。整合調整で修正）[D][A-081]。CSRB 勧告 6 の「顧客単位の鍵スコープ」を、費用が成立する範囲で採るものである [I][^10]（RS-05#27、RS-12#11）。契約で単一テナント HSM を求めるテナントには、専用 cell の L2 を原価回収で提供する（案 E の部分適用）[D]。
 
 ### 2.3 issuer・テナント・token 種別へのスコープ結合
@@ -324,6 +333,7 @@
 | KD7-6 | L0 を法域で分けるか | 1 系統（主＋予備）／ 法域別 | 1 系統。規制が分離を求めたら分ける | 法域別にすると ceremony と custodian が 3 倍 | CTO＋法務 |
 | KD7-7 | 要員 | N7-8 ／ L1 HSM 時 +1 FTE | N7-8 | A-054 が確保できない場合は自社部品の多い構成の実現性が下がる（DL-42 Plan B） | 経営（DEC-4） |
 | KD7-8 | 第 2 事業者の待機 L1（本番） | 常設 ／ 非本番の訓練だけ | 非本番の訓練から始め、RFP 費用で本番常設を判断（D7-29） | 常設なら退出の実証が本番で可能。費用は §1.6 の式 | CTO |
+| KD7-9 | 族 9（ライフサイクル事象の署名）の採否と、principal パーティションの鍵（版 0.2 で追加） | (a) 族 9 を置き、principal パーティションは主体台帳の正本を持つ cell の鍵で署名し、受信側は照会 API（CON-15 案）で主体の cell を確かめる ／ (b) 族 9 を置き、principal パーティションは法域単位の 1 系統で署名する ／ (c) 族 9 を置かず内部 token（族 3）の鍵を流用する | (a)。(c) は RFC 8725 §3.12 の鍵の分離に反し、内部 token の鍵を持つ者が削除を偽造できるため採らない [N][^16][D] | (a) は照会 API への依存が増える。(b) は封じ込め単位が法域になる。族 9 の決定は CON-12 の GA（DEC-8 第 1 段）の前提である（CON-12 §6、LC-OI-8）[D][^65] | CTO＋CISO（DEC-3） |
 
 いずれも決定済みではない [D]。
 
@@ -568,7 +578,7 @@
 
 | TC 案 | 確かめる仮説 | 合否基準 |
 |---|---|---|
-| TC-07-01 負例 | 他の issuer・cell・主体区分・用途族の鍵で署名した token、未知の kid、alg の取違え、typ の取違え、alg none、未署名の内部 token、テナント不一致の代理 token を、外部 RP 相当の標準ライブラリと共通 SDK の全検証点が拒否する（G-081, G-088、CVE-2025-55241 型を含む） | 受理 0 件 |
+| TC-07-01 負例 | 他の issuer・cell・主体区分・用途族の鍵で署名した token、未知の kid、alg の取違え、typ の取違え、alg none、未署名の内部 token、テナント不一致の代理 token、他の族（内部 token など）・別 cell・非本番の鍵で署名したライフサイクル事象（族 9 案。CON-12 LC-CV-10 と同じ入力）を、外部 RP 相当の標準ライブラリと共通 SDK の全検証点が拒否する（G-081, G-088、CVE-2025-55241 型を含む） | 受理 0 件 |
 | TC-07-02 計画 rotation | 30 日周期の事前公開 → 切替 → 保持 → 撤去を早回しで 12 回以上連続して実施しても、検証失敗が増えない（R-189.3, R-189.4） | 検証失敗 0 件（全 SDK 版と主要な外部 RP ライブラリ）。所要時間を記録 [A-094] |
 | TC-07-03 緊急失効 | 宣言から全内部検証点が旧 kid を拒否するまでの時間（R-189.5, R-195.4） | TBD（BIA）以内。値を記録する |
 | TC-07-04 削除の誤り注入 | retain の印がある鍵・使用実績が残る鍵の削除が阻止され、誤って撤去した場合も canary で検知して自動再掲載される（Azure AD 2021 型） | 阻止されない削除 0 件、canary cell 外への波及 0 件 |
@@ -637,6 +647,7 @@
 | ADR-019 / DL-24 | 鍵侵害 runbook（鍵切替、全 session 失効） |
 | ADR-022 | 外部 RP に求める検証規則と cache の既定値 |
 | ADR-028 | cell 間移動時の鍵の和集合（T10） |
+| CON-12（11_contracts/lifecycle-events.asyncapi.yaml） | 族 9 の鍵で署名するライフサイクル事象（PO-13）と受信側の検証（RO-11）。族 9 の決定は CON-12 の GA の前提（LC-OI-8。版 0.2 で追加） |
 | ADR-001 | managed AS を選んだ場合の範囲の縮小 |
 | DL-14（04_architecture/root-of-trust.md） | 鍵台帳スキーマ、ceremony 手順、k/n の根拠、global 部品（L0・L1）の障害時影響範囲 |
 | DL-20 / DL-58 / DL-30 | 数値契約（R-189.3〜R-189.6、R-195.4）、cell 割当、RFP（HSM・立会人・第 2 事業者） |
@@ -720,6 +731,27 @@
 | jti・認証イベント ID・所属以外の付加 claim の設計（利用者の相談） | ADR-005／ADR-014 の起草者 | G3 |
 | ceremony の第三者立会い、鍵系の第三者レビュー、SDK の pentest | CISO（第三者評価の調達） | 段階 3 |
 | 作成者以外による原典照合（本書の脚注 55, 61〜64 と RFC 7517 §4 を含む） | レビュアー | Phase 4 |
+| 族 9（ライフサイクル事象の署名）と KD7-9 の決裁、鍵マニフェストへの (iss, typ, kid) の登録手順、TC-07-01 への族 9 の負例の追加（版 0.2 で追加） | CTO＋CISO（決裁）、プラットフォームチームの鍵管理担当 | DEC-3（決裁）。CON-12 の DEC-8 第 1 段の付議前に登録 |
+
+---
+
+## 他文書への申し送り（版 0.2、ラウンド 5）
+
+本ラウンドの担当範囲（本書、03_threat-model/threat-catalog.md、00_decision/05-residual-risk-register.md、11_contracts/lifecycle-events.asyncapi.yaml）以外は編集していない [D]。
+
+| # | 申し送り先 | 内容 | 所有者（案） | 期限（案） |
+|---|---|---|---|---|
+| A7-1 | traceability/open-items.md（POA&M） | 族 9 と KD7-9 の決裁を DEC-3 の論点として起票する（THR-03 T93-1 と同件） | POA&M（DL-110）の担当 | 次版 |
+| A7-2 | 04_architecture/root-of-trust.md（DL-14） | 鍵台帳スキーマと鍵マニフェストに族 9 の行（環境 × cell × alg、typ `lifecycle-event+jws`）を加え、鍵本数の試算を D7-14 の版 0.2 の補正に合わせる | アーキテクチャ所有者 | DEC-3 |
+| A7-3 | 05_adr/ADR-009（workload identity）、11_contracts/lifecycle-events.asyncapi.yaml（CON-12）LC-OI-9 | deletion.report・replay.request を受信サービスの workload の鍵で署名する案を検討し、publisher 側の検証規則（登録簿の照合）を決める。族 9 には含めない（D7-10a） | ADR-009 の所有者、CON-12 の所有者 | DEC-8 第 1 段の付議前 |
+
+## レビュー記録
+
+模擬パネルは作成者と同じ AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D]。
+
+| ラウンド | 指摘 | 対応 |
+|---|---|---|
+| 5（模擬パネル。自己レビューであり実在の CTO/CISO の決裁ではない） | High（redteam）: CON-12 のライフサイクル事象の署名（PO-13）の鍵の用途族が本書にない（D7-10 に「ライフサイクル事象」は 0 件。CON-12 の申し送り H2-2、LC-OI-8）。偽造した tenant.merge.cutover・deletion.requested で約 300 サービスに付け替え・全件削除を起こし得る攻撃経路の前提の一つである | 修正済み（案として）。CON-12 版 0.2.0 の PO-13・RO-11・§6・§10 H2-2・LC-OI-8 を読んで、鍵に求められている性質（環境別・cell 別、1 鍵 1 alg、(iss, typ, kid) の登録）を確認した [D][^65]。D7-10 に族 9 を案として加え、D7-10a で鍵スコープ（cell 単位、platform パーティションに全域鍵を作らない、主体区分で分けない理由、報告の署名を族 9 に含めない理由）を定め、KD7-9 を §2.13 に置き、D7-14 の鍵本数、TC-07-01 の負例、§9.1、残課題を改めた。RFC 8725 §3.12 は既存の脚注 [^16]（RS-05#37）によった。族 9 は DEC-3 で決裁するまで案であり、決定済みではない。残余は THR-03 T-093・DCS-05 RRG-073 で扱う。POA&M・root-of-trust・ADR-009 へは A7-1〜A7-3 で申し送った |
 
 ---
 
@@ -789,3 +821,5 @@
 [^62]: AWS『AWS Price List API: CloudHSM / ap-northeast-1』publicationDate 2026-09-11T12:46:25Z. https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/CloudHSM/current/ap-northeast-1/index.json （参照箇所: 「$1.81 Hourly charge for CloudHSM hsm2m usage」、確認日: 2026-10-15。research 外、統合者が取得）
 [^63]: Microsoft『Azure Retail Prices API』serviceName 'Key Vault'、armRegionName 'japaneast'. https://prices.azure.com/api/retail/prices （参照箇所: productName「Key Vault HSM Pool」、skuName「Standard B1」、retailPrice 3.2 USD / 1 Hour、effectiveStartDate 2021-09-01、確認日: 2026-10-15。research 外、統合者が取得）
 [^64]: Microsoft Azure『Key Vault pricing』（版日付の記載なし）. https://azure.microsoft.com/en-us/pricing/details/key-vault/ （参照箇所: 「Managed HSM Pools」節、meter「Hourly usage fee per HSM pool」、tier「Standard B1」（金額は取得時の表示で「$-」）、確認日: 2026-10-15。research 外、統合者が取得）
+[^65]: 本リポジトリ『Lifecycle events for dependent services』CON-12（案）版 0.3.0. 11_contracts/lifecycle-events.asyncapi.yaml （参照箇所: §3 PO-4・PO-13, §4 RO-11, §6（GA の前提）, §10 H2-2, x-open-issues LC-OI-8・LC-OI-9, x-conformance-vectors LC-CV-10、確認日: 2026-10-15）
+[^66]: 本リポジトリ『脅威カタログ・残余リスク記録』THR-03 版 0.3. 03_threat-model/threat-catalog.md （参照箇所: T-093、確認日: 2026-10-15）

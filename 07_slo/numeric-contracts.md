@@ -1,14 +1,14 @@
 # 数値契約台帳（SLI/SLO）
 
-> 文書ID: SLO-01 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: SLO-01 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-077, R-087, R-188〜R-196（子要求 R-188.1〜R-195.5 を含む）, R-220, R-271, G-024, G-057, G-060, G-106, G-144, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-20 を含む全行。末尾の対応表を参照）／関連: CL-0108, CL-0131, CL-0168, CL-0169, CL-0193, CL-0204, CL-0236, CL-0255, CL-0262、RH-001, RH-013〜RH-015
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-20 行）, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/rejected-hypotheses.md, 01_governance/assumptions-register.md（GOV-01）, 01_governance/business-impact-analysis.md（GOV-04）, 01_governance/risk-appetite-draft.md（GOV-02）, 01_governance/kri.md, 01_governance/loss-scenarios.md（GOV-03）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03）, 02_requirements/identity-lifecycle.md, 03_threat-model/fraud-abuse-controls.md, 04_architecture/reference-architecture-v2.md（ARC-01）, 04_architecture/capacity-model.md（ARC-13）, 04_architecture/fail-mode-matrix.md（ARC-08）, 04_architecture/revocation-continuous-evaluation.md（ARC-09）, 05_adr/README.md と ADR-005, ADR-006, ADR-007, ADR-010, ADR-013, ADR-014, ADR-015, ADR-016, ADR-019, ADR-023, ADR-027, 10_integration/developer-faq.md, 12_poc/preregistered-test-plan.md, research/RS-03, RS-04, RS-05, RS-07, RS-09, RS-10, RS-16, research/standards-status.md
-> 作成方法: AI エージェント（Claude）が上記文書の数値・TBD・決め方を集約し、SLI-ID を採番した。新しい数値は導出していない（候補値はすべて上流文書の A-ID・規範・ADR 初期案からの転記）。本書の判断と決裁案は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research に収載のない原典（SRE 本 第 4 章、SRE Workbook 付録 B、Dean・Barroso「The Tail at Scale」）は本書の作成者が 2026-10-15 に取得して照合した [D]。版 0.2 で模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド 3 指摘に対応した（末尾「レビュー記録」）[D]。
+> 作成方法: AI エージェント（Claude）が上記文書の数値・TBD・決め方を集約し、SLI-ID を採番した。新しい数値は導出していない（候補値はすべて上流文書の A-ID・規範・ADR 初期案からの転記）。本書の判断と決裁案は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。research に収載のない原典（SRE 本 第 4 章、SRE Workbook 付録 B、Dean・Barroso「The Tail at Scale」）は本書の作成者が 2026-10-15 に取得して照合した [D]。版 0.2 で模擬パネル（自己レビューであり実在の CTO/CISO の決裁ではない）のラウンド 3 指摘に、版 0.3 でラウンド 4 指摘（SLI-038 と FM-13 の検知前の窓）に、版 0.4 でラウンド 5 指摘（SLI-038 が引く TC-010 の自己実行の扱い）に、版 0.5 でラウンド 7 指摘（鍵の誤撤去を検知する token 検証失敗率の SLI がない）に対応した（末尾「レビュー記録」）[D]。
 > 表の注記: 表のセルでタグのないものは、同じ行の「根拠」列・脚注に示した文書の記述を転記・要約した設計推論 [D] であり、この注記で個別のタグに代える。
 
 ## 0. 結論（要旨）
 
-1. **レビューの 8 分類 43 指標と、G-060・G-106・G-144・G-147 が求める追加指標を、SLI-001〜SLI-106 の 80 件として定義した（分類ごとに番号帯を分け、空き番号は予約）。値を置いたのは 27 件で、すべて「仮置き」である。決裁済の指標は 0 件である** [D]。候補値は、前提台帳の A-ID、規範の上限（SP 800-63B-4、FAPI 2.0、PCI DSS など）、ADR の初期案、リスク選好の選択肢のいずれかに紐付けたものだけである [D]。残る 53 件は TBD とし、所有者・期限・決め方を付けた [D]。旧提案の一律値（token 寿命 5〜15 分、全操作 fail-closed）は採らない [D]（R-087、CL-0131、CL-0236、CL-0108、RH-001）。レビューは数値を事業影響分析と PoC 実測で決めるよう求め、空欄のまま本番承認してはならないとしている [D][^5]。本書の現状では本番承認の条件（R-196、G-057）を満たさない [D]。
+1. **レビューの 8 分類 43 指標と、G-060・G-106・G-144・G-147 が求める追加指標を、SLI-001〜SLI-106 の 81 件として定義した（分類ごとに番号帯を分け、空き番号は予約。版 0.5 で SLI-029 を追加）。値を置いたのは 27 件で、すべて「仮置き」である。決裁済の指標は 0 件である** [D]。候補値は、前提台帳の A-ID、規範の上限（SP 800-63B-4、FAPI 2.0、PCI DSS など）、ADR の初期案、リスク選好の選択肢のいずれかに紐付けたものだけである [D]。残る 54 件は TBD とし、所有者・期限・決め方を付けた [D]。旧提案の一律値（token 寿命 5〜15 分、全操作 fail-closed）は採らない [D]（R-087、CL-0131、CL-0236、CL-0108、RH-001）。レビューは数値を事業影響分析と PoC 実測で決めるよう求め、空欄のまま本番承認してはならないとしている [D][^5]。本書の現状では本番承認の条件（R-196、G-057）を満たさない [D]。
 2. **SLI を「予算型」「限度型」「設定上限型」の 3 種に分け、error budget を使うのは予算型だけとする** [D]。予算型は、可用性、遅延、誤 deny、login 成功率など、目標を下回る時間や件数を一定量まで許すものである [D]。限度型は、誤 allow、stale allow、剥奪反映時間、監査の欠損、鍵年齢の硬上限など、超過をインシデントとして扱い予算として消費させないものである [D]。設定上限型は、token 寿命、session、clock skew、鍵 rotation 周期など、CI と実行時検査で違反件数を数えるものである [D]。この区分によって、可用性の余裕を安全側の窓（stale allow など）に振り替える圧力を構造的に断つ [D]。fail-mode と依存 Tier を別の軸で決めた ADR-023 と同じ考え方である [D]。
 3. **SLO は plane 別・cell 別に置き、テナント単位の最悪値を併記する** [D]。decision plane は cell ごとに判定系・認証系の 2 つの SLO を持つ [D]。control plane は法域パーティションごとに SLO を持つ [D]。依存サービスへは依存予算（SLI-068）として配分する [D]。全体の平均は報告用にとどめ、決裁と error budget の判定には使わない [D]。cell の平均は、1 テナントが 100% 失敗している状態を隠すからである [D]。AWS の cell 白書は、判断の材料として「全顧客の 5% が失敗するのと、5% の顧客が 100% 失敗するのと、どちらがよいか」を問うている [V][^30]（RS-09#4）。error budget の窓は BIA と同じ 30 日（43,200 分）とする [D][^7]。予算を使い切った cell では、緊急でない policy・model・binary の変更を止める [D]。ただし剥奪・失効の配布と、セキュリティ修正は止めない（ADR-013 D13-36）[D]。
 4. **経営判断が要る点は 5 件ある**（§8）[D]。SLO の構成単位（K20-1）、error budget 方針（K20-2）、決裁前の暫定運用（K20-3）、指標ごとの決裁権限（K20-4）、状態の昇格に独立立会を要するか（K20-5）である [D]。
@@ -299,6 +299,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | SLI-026 | JWKS cache 最大齢 J_max（R-189.6、G-106） | 設定上限型 | 取得に失敗したときに last known good の JWKS を使い続ける上限 | SDK の設定と、JWKS 取得失敗の注入 |
 | SLI-027 | 認可コード・request_uri の寿命（R-189.1 の内数） | 設定上限型 | 認可コードと PAR の request_uri の寿命 | AS の設定の CI 検査 |
 | SLI-028 | introspection cache 最大齢 C_edge(t)（G-106） | 設定上限型 | edge が introspection 応答を cache してよい最大齢（階層別） | edge の設定と、失効注入時の stale allow |
+| SLI-029 | token 検証失敗率 V(k, c, p)（R-189.6 の関連。版 0.5 で追加） | 予算型（平常時）。基線の超過は警報（ARC-08 §3.5 の FM-08 誤撤去の行） | 検証点の種別 p、cell c、kid k ごとに、署名・kid の検証に失敗した token の件数 ÷ 検証を試みた token の件数。失敗理由を「未知 kid（JWKS に欠落）」「署名不一致」「失効 kid（失効状態による拒否）」「期限切れ・audience 等」に分ける。誤撤去・JWKS 不整合の検知に使うのは前 2 者だけで、失効 kid と期限切れは分子から除く（意図した拒否であるため）。p は (1) PEP SDK、(2) edge、(3) 外部 RP の代理指標の 3 種である。外部 RP の検証は本基盤から観測できないため、(3) は次の 3 つで代える: (a) 外部 RP 向けの issuer の JWKS・discovery の取得要求数の急増（未知 kid による再取得）、(b) 外部 RP の client_id ごとの認可要求・refresh の急増（RP が拒否した token を取り直す）、(c) 顧客受付（ADR-023 NX-09）の認証エラー件数 | SDK・edge の検証イベントを kid・cell・理由のラベル付きで集計する（1 分窓）。基線 b(c, p) は、同じ cell・検証点種別について過去 W_b の同じ曜日・時間帯の 1 分窓の率の分布の上側 q_b 分位とする。計画 rotation（SLI-024 の P_pre・P_post）の期間は除かず基線に含める（計画 rotation で検証失敗が増えないことが ADR-007 TC-07-02 の基準であるため）。要求数が n_min 未満の窓は判定しない。W_b・q_b・n_min は TBD（下表） |
 
 **(b) 導出の鎖・候補値・状態**
 
@@ -313,6 +314,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | SLI-026 | ADR-005 U5、R-189.5 との整合（失効 kid は別経路で配るので J_max は失効の反映時間に効かない。ARC-08 §4） | TBD（所有者 CTO＋SRE 責任者、期限 G4、決め方 TC-13-22・TC-07-04）[^12] | TBD | CTO＋SRE 責任者 | TC-13-22、TC-07-04 |
 | SLI-027 | 規範上限 | 認可コード 60 秒以下、PAR request_uri 600 秒未満（FAPI 2.0 の shall。ADR-005 は認可コードの上限を全 client に適用）[N][^35]（RS-04#42–#43）[^21] | 仮置き（規範上限） | CTO。G3 | ADR-005 H-24 |
 | SLI-028 | RFC 7662 は応答の cache を許すが、性能と安全のトレードオフの検討を求める [N][^37]（RS-04#67）→ 応答の exp を超えない（ADR-005 U1、ARC-08 §4）→ C_edge(t) ≦ R(t) − D_w − Δ_E1（ARC-09 §4.3） | 上限: 応答の exp 以下（ADR-005 U1 の表）[^21]。値は TBD（所有者 CTO、期限 G4、決め方 ADR-005 H-02・ADR-006 H6-03） | 仮置き（上限のみ） | CTO | TC-ARC09-04 |
+| SLI-029 | ADR-007 D7-35 の 3（canary cell で撤去し、24 時間、検証失敗率が基線を超えなければ撤去を進め、超えたら自動で再掲載する）が依存する信号を定義する [D][^22] → 誤撤去から検知・自動再掲載までの時間 T_rk（ARC-08 §4）と窓内の誤 deny 件数を、V(k, c, p) の基線超過で測る → OPS-01 RB-A08 の検知（A0）。Azure AD 2021-03-15 では、使われなくなった鍵の自動削除が retain の印を無視して鍵を消し、metadata の変更後に依存アプリがその鍵の token を信頼しなくなった。metadata を戻した後も、利用側の cache の扱いの差で回復時間が分かれた [I][^34]（RS-09#53, #54）。PoC 系統 1 の TC-014 では、使用中の旧鍵を JWKS から撤去した後、検証 1,980 件のうち 1,566 件（実 PEP で 168 件）が拒否され、検知の警報は 0 件だった（自己実行の参考値。立会人なし・git_dirty で、DCS-01 §10.1 の区分 W-1〜W-5 を満たさない。証拠に使わない）[D][^55] | 値は TBD。対象は V の閾値（基線 b からの超過の判定規則）、W_b、q_b、n_min、T_rk。所有者は SRE 責任者、期限は G4。決め方: 平常時の V の分布（G1 の As-Is 実測、または系統 2 の平常負荷）から基線を作り、TC-014・TC-07-04・TC-109 の誤撤去の注入で検知時間 T_rk の分布と誤検知率を測って決める。決裁前の PoC では閾値を複数水準で試し、T_rk と窓内の誤 deny 件数を記録する | TBD | SRE 責任者（値）＋CTO（ADR-007 D7-35 の撤去手順への組込み）。G4 | TC-014（POC-01 系統 1）、TC-07-04、TC-109（系統 2）、EX-A08（OPS-01） |
 
 ### 5.3 認可（R-190、G-106、G-147）
 
@@ -328,7 +330,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | SLI-035 | PEP→PDP deadline D(t)（R-190.4、G-106） | 設定上限型 | 操作階層別の deadline（Q4）。超過は `deny_unavailable` として fail-mode に回す | SDK の設定 |
 | SLI-036 | 一覧 1 回の評価件数（R-190.4） | 設定上限型 | 一覧 1 回で post-check する件数の上限（Q5） | façade の設定と評価記録 |
 | SLI-037 | テナント quota q_t（R-190.4、G-106） | 設定上限型 | テナントごとの Check 受付上限。超過は再試行可能な受付拒否 | edge・façade の受付記録 |
-| SLI-038 | 誤 allow 件数・率（R-190.5） | 限度型 | 比較の基準（参照実装または旧実装）が deny とし、照合で誤りと確定した allow | differential・shadow 試験（R-175）。cross-tenant と操作階層別。K-04 |
+| SLI-038 | 誤 allow 件数・率（R-190.5） | 限度型 | 比較の基準（参照実装または旧実装）が deny とし、照合で誤りと確定した allow。PDP の誤応答（ARC-08 FM-13）による誤 allow は、PEP が既知解の判定で検知する前（検知窓内）と後（検知窓外）に分けて数える（版 0.3 で追加）[D][^12] | differential・shadow 試験（R-175）。cross-tenant と操作階層別。K-04。FM-13 の検知窓内の件数 E は、障害注入試験（TC-010、TC-13-05）と本番の事後照合（判定記録の参照実装による再評価）で数える |
 | SLI-039 | 誤 deny 率（R-190.6） | 予算型 | 正当な要求の拒否の率。旧実装または参照実装が allow とし、照合で誤りと確定した deny | shadow・differential 試験、本番の問い合わせ記録。操作階層別 |
 | SLI-040 | 表現力（G-147①） | 予算型（目標は上向き） | 認可要件カタログ（G-108）のうち、モデル・policy の変更だけで表現できる割合 | カタログの判定記録 |
 | SLI-041 | 変更速度（G-147②） | 予算型 | モデル変更の申請から本番相当環境への反映までの所要時間（p50・p95）と、自動審査だけで反映できた割合 | 変更パイプラインの記録 |
@@ -348,7 +350,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | SLI-035 | GOV-04 B14(o) × α ÷ k_serial（§3.5 (1)）を上限 → 呼出し元から伝播した残り deadline との最小値 → TC-13-04 の p99 → DL-19 の fail-mode と同時に決める（短くすると fail-mode の発動が増える） | TBD（所有者 CTO、期限 G4、決め方 TC-13-04 の p99、B14・α・k_serial、TC-101・TC-120 の多 hop 端から端の実測）（ARC-08 §4 D(t)）[^12]。deadline の伝播は SRE 本の勧め [V][^50]（RS-09#38） | TBD | CTO | TC-13-04、TC-101・TC-120（申し送り 5） |
 | SLI-036 | ADR-025 の post-check → ARC-13 §7.3 Q5 | ページ長 25（上限 100）× f（ADR-025 の新規仮定 NA-025-1・NA-025-2。前提台帳へ追加要）[^11]。OpenFGA の ListObjects 既定（3 秒・1,000 件で打切り）[V][^38]（RS-07#20）は打切りによる欠落の判定に使う | 仮置き | CTO。G4 | TC-025-xx（ADR-025 §7） |
 | SLI-037 | ARC-13 §5.3 の q_t の導出式 → H-11 で補正 | TBD（所有者 CTO、期限 G4、決め方 ARC-13 §5.3 と TC-010-11）[^11] | TBD | CTO＋SRE 責任者 | TC-010-11 |
-| SLI-038 | GOV-02 T4 の選択肢 → 操作階層 → differential 試験（R-175） | cross-tenant: 全選択肢で 0 件。privileged・break-glass、write: 選択肢 A・B で 0 件。read-sensitive: 選択肢 B では率の上限 TBD（GOV-02 §3.4.3）[^8]。「0 件」は見つかった不一致をすべて原因分析し本番化前に是正すること [D][^8] | 仮置き（GOV-02 の選択肢に依存） | 経営会議（GOV-02 決裁案 1）、率の上限は CISO。G4 | differential・shadow 試験（R-175、DL-22）、K-04 |
+| SLI-038 | GOV-02 T4 の選択肢 → 操作階層 → differential 試験（R-175）→ FM-13 の検知前の窓（ARC-08 §6.13 の T_win ＝ P_ka × N_ka ＋ t_ka ＋ T_prop、E ＝ Σ_cell λ_w+,cell × T_win × ρ_deny）で検知窓内と窓外に分ける | cross-tenant: 全選択肢で 0 件。privileged・break-glass、write: 検知窓外は選択肢 A・B で 0 件。FM-13 の検知窓内は 1 事象・cell あたり E ≦ E_max（E_max は TBD。所有者 CISO、期限 G4、決め方 K-04 の許容度と TC-010・TC-13-05 の実測。P_ka・N_ka と組で決める。ARC-08 §4）[D][^12]。read-sensitive: 選択肢 B では率の上限 TBD（GOV-02 §3.4.3）[^8]。「0 件」は見つかった不一致をすべて原因分析し本番化前に是正すること [D][^8]。検知窓内を 0 件と置かない理由: 誤応答は形式が正しく、PEP は検知までの allow を誤りと区別できない（ADR-013 D13-27 の検知は事後）[D]。TC-010 の自己実行の参考値（立会人なし・git_dirty、DCS-01 §10.1 の区分 W-1〜W-5 を満たさない。証拠に使わない）（P_ka 250 ms、N_ka 1）でも、検知（39〜203 ms）前に write 以上の誤 allow が実行ごとに 4 件出た [D][^52][^53]。同じ正式実行（`5418a7`）では、FM-01（窓 W1、D(t) 超過の timeout 注入）の間にも write 以上の allow 12 件・read-sensitive の allow 24 件があった。Cedar 構成の正式実行（`01d308`）では評価不能から許可が 18 件あった。TC-010 は事前登録の基準（write 以上の allow 0 件）で不合格であり、この結果は正式な結果として残る（ARC-08 §0 の 1・§6.1、DCS-01 §10.1 の X-1）[D][^52][^53][^54]。FM-13 以外の障害での write 以上の allow は検知窓内の E に含めず、検知窓外（目標 0 件）の側に数える [D]。原因区分（試験ハーネス・PoC 実装・設計）は未確定である（残課題 13）[D]。日本の標準 cell（Check 7,742/秒）では、窓が秒単位なら E の上限は 1 秒あたり 7,742 × p_w 件になる（p_w は TBD）[D][^11] | 仮置き（GOV-02 の選択肢に依存）。E_max は TBD | 経営会議（GOV-02 決裁案 1）、率の上限と E_max は CISO。G4 | differential・shadow 試験（R-175、DL-22）、K-04、TC-010・TC-13-05（検知窓内の E と検知時間の分布）。TC-010 の合否基準を「検知窓外 0 件」に変えるには、POC-01 §2.4 の「データを見た後」の変更として開示する（申し送り 10） |
 | SLI-039 | GOV-04 B13（誤 deny の業務影響）→ 階層ごとに許容できる誤 deny 率の拘束値（最小値）（GOV-04 §6.2） | TBD（所有者 CTO、期限 G4、決め方 B13 の署名値と shadow 試験）。ADR-027 D27-22 の差分許容条件の入力になる | TBD | 事業責任者（B13）＋CTO | shadow・differential 試験（DL-22）、TC-027-xx |
 | SLI-040 | G-108 の認可要件カタログ | TBD（所有者 CTO、期限 G4、決め方 カタログの判定とパイロット） | TBD | CTO | TC 未採番（DL-65・DL-22） |
 | SLI-041 | 同上。ARC-13 の容量見直しと異なり、事業側の変更要求の待ち時間 | TBD（同上）。中央チームの審査待ちは K-31 で報告する | TBD | CTO | TC 未採番 |
@@ -506,14 +508,14 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | 分類 | SLI 数 | 値あり（仮置き） | TBD | 決裁済 |
 |---|---|---|---|---|
 | 認証 | 12 | 2（SLI-005、SLI-006。上限のみ） | 10 | 0 |
-| token | 9 | 6（SLI-021〜SLI-024、SLI-027、SLI-028） | 3 | 0 |
+| token | 10 | 6（SLI-021〜SLI-024、SLI-027、SLI-028） | 4 | 0 |
 | 認可 | 15 | 4（SLI-031、SLI-032、SLI-036、SLI-038） | 11 | 0 |
 | 剥奪 | 8 | 0 | 8 | 0 |
 | 可用性 | 10 | 8（SLI-060〜SLI-067） | 2 | 0 |
 | 監査 | 7 | 2（SLI-072、SLI-073） | 5 | 0 |
 | 変更 | 12 | 3（SLI-081、SLI-083、SLI-084） | 9 | 0 |
 | インシデント | 7 | 2（SLI-101、SLI-102） | 5 | 0 |
-| 計 | 80 | 27 | 53 | 0 |
+| 計 | 81 | 27 | 54 | 0 |
 
 - 上表は本書の表から数えた [D]。SLI-011 は現状の起点だけを置いたので TBD に数えた [D]。上限だけを置いた SLI（SLI-005、SLI-006、SLI-021、SLI-028、SLI-067）は「値あり」に数えた [D]。
 - 値を置いた 27 件はすべて「仮置き」であり、署名済の BIA・実測・決裁のいずれも経ていない [D]。
@@ -525,6 +527,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | token 検証のキャッシュ最大齢（introspection） | SLI-028 | 仮置き（上限のみ） |
 | SDK 判定 cache の最大齢（read-sensitive） | SLI-056（≦ min(B, B_rs)） | TBD |
 | JWKS cache の最大齢 | SLI-026 | TBD |
+| token 検証失敗率の報告（SDK・edge が kid・cell・理由のラベルで出す。版 0.5 で追加） | SLI-029 | TBD |
 | PDP 呼出しの timeout（deadline） | SLI-035 | TBD |
 | retry・circuit breaker | SLI-044 | TBD |
 | レート上限（テナント quota） | SLI-037 | TBD |
@@ -594,7 +597,7 @@ Check 1 回の deadline:  SLI-035 の D(t) ≦ min( 設定上限, 呼出し元�
 | 選択肢 | A: 分類ごとに分ける。可用性・RTO・RPO・誤 deny は事業責任者（BIA）＋CTO。誤 allow・剥奪・インシデントは CISO（許容値）＋CTO（実現性）＋事業責任者（残余リスクの受容）。保持期間は法務責任者。token・鍵・設定上限は CTO＋CISO。B: CTO が全指標を決裁する。C: 経営会議が全指標を決裁する |
 | 推奨 | A [D] |
 | 理由 | リスクを所有するのは第一線であり（GOV-04 §7.1）、残余リスクの受容は CTO・CISO の単独では行わない（G-032）[D][^7] |
-| 帰結 | A: 80 件の SLI ごとに決裁者が異なり、決裁の記録（E1）の管理が要る [D]。B: 事業影響と残余リスクを技術部門が単独で負う [D]。C: 経営会議の議題が過大になる [D] |
+| 帰結 | A: 81 件の SLI ごとに決裁者が異なり、決裁の記録（E1）の管理が要る [D]。B: 事業影響と残余リスクを技術部門が単独で負う [D]。C: 経営会議の議題が過大になる [D] |
 | 決める人 | 経営会議（DEC-1）。RACI（DL-04）で確定する [D] |
 
 ### K20-5: 「実測済」への昇格に独立立会を要するか
@@ -639,7 +642,7 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | R-189.3 | 鍵 rotation 周期 | §5.2 SLI-023 | B | 決裁案まで（初期案 30 日は仮置き） |
 | R-189.4 | 旧鍵併存時間 | §5.2 SLI-024 | C | 要実測 |
 | R-189.5 | 緊急失効完了時間 | §5.2 SLI-025 | C | 要実測 |
-| R-189.6 | JWKS cache 最大齢 | §5.2 SLI-026 | C | 要実測 |
+| R-189.6 | JWKS cache 最大齢 | §5.2 SLI-026、SLI-029（誤撤去の検知。版 0.5） | C | 要実測 |
 | R-190 | 数値契約: 認可 | §5.3 | C | 要実測 |
 | R-190.1 | Check p95/p99/p99.9 | §3.5、§5.3 SLI-030 | C | 要実測 |
 | R-190.2 | availability | §5.3 SLI-031、§5.5 SLI-060 | C | 要実測 |
@@ -708,9 +711,12 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | 8 | 本書で新たに参照した原典（SRE 本 第 4 章、SRE Workbook 付録 B）を作成者以外が照合する | 引用監査（DL-29） | Phase 4 | G-024 |
 | 9 | 保持期間（SLI-073）の PCI 以外の区分を法務の判定（L-03、DL-34）で決める | 法務責任者 | G3 | R-193.4 |
 | 10 | §3.5 の α（NA-SLO-4）と k_serial（NA-SLO-5）を、G1 の As-Is トレース（内部 hop 数 f と直列 Check 数の分布）と TC-101・TC-120 の多 hop 端から端の実測から決める | SRE 責任者、CTO、プラットフォームチーム長 | G1（実測）→G4（決裁） | R-190.1、R-190.4、G-106 |
-| 11 | 他文書への申し送り 1〜6 の反映を各文書の所有者が確認する | 各文書の所有者 | G1 | R-190.1、G-106 |
+| 11 | 他文書への申し送り 1〜13 の反映を各文書の所有者が確認する | 各文書の所有者 | G1 | R-190.1、G-106、R-190.5 |
+| 12 | SLI-038 の FM-13 検知窓内の上限 E_max と、ARC-08 §4 の P_ka・N_ka を K-04 の許容度・TC-010・TC-13-05 の実測から決める。p_w（ADR-005 NA-02）を G1 で実測し、日本の標準 cell の E の上限を再計算する | CISO（E_max）、SRE 責任者＋CISO（P_ka・N_ka）、CTO（p_w） | G1（p_w）→G4 | R-190.5、K-04 |
+| 13 | SLI-038 が引く TC-010 の正式な実行 2 件の不合格（DCS-01 §10.1 の X-1。`5418a7` の W1 の write 以上の allow 12 件・read-sensitive の allow 24 件、W10・W13 の検知前の 4 件、`01d308` の評価不能から許可 18 件）の原因区分（試験ハーネス・PoC 実装・設計）を確定する。確定と立会い下の再実行までは、SLI-038 の write 以上の目標の達成見込みを示す数値として使わない（版 0.4 で追加） | PoC リード（DL-22）＋CTO（ARC-08 の所有者）。設計の欠陥が否定できない場合の残余リスクの判断は CISO | 原因区分は DEC-4 第 1 段の付議前、再実行は G4 | R-190.5、K-04 |
+| 14 | SLI-029（token 検証失敗率）の基線の作り方（W_b、q_b、n_min）、閾値、T_rk（ARC-08 §4）の値を決める。外部 RP の代理指標 (a)〜(c) で誤撤去を検知できるかを TC-109（系統 2）と EX-A08 で確かめる。系統 1 の TC-014 は検知 0 件だった（自己実行の参考値、証拠に使わない）（版 0.5 で追加） | SRE 責任者（値）、CTO（ADR-007 D7-35 への組込み） | G4 | R-189.6、R-210 |
 
-## 他文書への申し送り（版 0.2）
+## 他文書への申し送り（版 0.2、版 0.3 で 7〜9、版 0.4 で 10、版 0.5 で 11〜14 を追加）
 
 本書は指示された範囲外の文書を編集しない [D]。§3.5 の新設に伴い、次の変更を各文書の所有者に申し送る [D]。
 
@@ -722,6 +728,14 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | 4 | 10_integration/developer-faq.md（FQ-66） | 「値は未決」に加え、(a) 要求あたりの認可遅延は直列 hop の和で、α × B14 の範囲に収めること、(b) 並列 n 回の Check では少なくとも 1 回が p99 を超える確率が 1 − 0.99ⁿ になること、(c) 連携申請時に直列の深さ・並列数を申告すること、(d) deadline は SDK の既定で残り時間を伝播すること、を追記し DL-20 §3.5 を根拠に挙げる | 約 300 サービス・20〜30 チームが値の決裁を待たずに同じ規則で設計できるようにする（§3.5）[D] |
 | 5 | 12_poc/preregistered-test-plan.md（POC-01 の TC-101・TC-120） | TC-101 に、直列 Check を 1・2・k_serial 段、並列 Check を 1・3・10・25 回に変えた多 hop の連鎖で、端から端の L_authz(req) の p99・p99.9 を測る測定点を加える。TC-120 に、token exchange・introspection を直列 hop に含めた場合と cache 済みの場合の差を加える。計算値（1 − qⁿ）と実測の差を記録する | 分位点は足し算で合成できず、合否は端から端の実測で判定する（§3.5 (1)、NA-SLO-6）[D] |
 | 6 | 01_governance/assumptions-register.md（G1 の実測項目）、02_requirements/as-is-inventory.md（DL-50）、05_adr/ADR-015（N15-2） | G1 の As-Is 実測項目に、edge 要求あたりの内部 hop 数 f の分布と、直列 Check 数・並列 Check 数の分布（業務操作別）を加える。NA-SLO-4〜6 を前提台帳に登録する | k_serial・α を実測から決めるため。f は ADR-015 N15-2 でも TBD のまま（決め方は As-Is のトレース）である [D] |
+| 7 | 01_governance/kri.md（K-04） | 閾値の行で、write 以上を「検知窓外 0 件」と「FM-13 の検知窓内は E_max 以下」に分ける（SLI-038 と同じ構造。ARC-08 申し送り 5 と同一） | SLI-038 と K-04 の閾値を一致させるため [D][^9] |
+| 8 | 00_decision/05-residual-risk-register.md（DCS-05 RRG-032） | FM-13 の検知前の窓の誤 allow を、RRG-032 の枝番（案 RRG-032-1、AT-1・段2（CEO））として独立の残余にする。文案は ARC-08「他文書への申し送り」4 | SLI-038 が検知窓内に 0 件でない上限を置くので、その残りを受容の対象にする必要がある [D][^12] |
+| 9 | 01_governance/risk-appetite-draft.md（GOV-02 §3.4.3） | write の誤 allow「選択肢 A・B で 0 件」に、FM-13 の検知窓内の扱い（E_max、CISO）を決裁案 1 の論点として加える（ARC-08 申し送り 8 と同一） | SLI-038 の目標の出典が GOV-02 であるため [D][^8] |
+| 10 | 12_poc/preregistered-test-plan.md（POC-01 §2.4.1、§4.10 TC-010）、DL-81 | TC-010 の合否基準「write 以上の allow 0 件」を FM-13 について「検知窓外 0 件」と「検知窓内は E を記録」に分ける変更（ARC-08 申し送り 7）は、v1（`5418a7`）・v2（`01d308`）の不合格を見た後の変更である。§2.4 の「手順・閾値の変更（当該 TC のデータを見た後）」として §2.4.1 の様式で開示し、DEV 番号（DEV-05 以降の空き番号）を付ける。理由、見たデータの範囲、差分を DL-81 に開示する。v1・v2 の旧基準での不合格を正式な結果として残し、新基準の結果は参考として併記する。TC-010 の数値は自己実行の参考値（[D]）として扱う（ARC-08 申し送り 7 の版 0.5 の追記と同一） | SLI-038 の目標の分け方が、結果を見た後の基準緩和として扱われずに TC-010 の合否に入るのを防ぐため [D][^54] |
+| 11 | 05_adr/ADR-007-key-hierarchy-kms-hsm.md（D7-35 の 3、§8 の実測行、TC-07-04） | D7-35 の 3 の「検証失敗率」と「基線」を SLO-01 SLI-029 の定義（kid・cell・検証点種別ごと、失効 kid と期限切れを分子から除く、基線は過去 W_b の同時間帯の上側 q_b 分位）で読むと明記し、「24 時間」の観測窓とは別に、検知・自動再掲載までの上限 T_rk（ARC-08 §4）を置く。TC-07-04 の合否に「誤撤去から自動再掲載までの時間 ≦ T_rk」と「窓内の誤 deny 件数の記録」を加える。外部 issuer の JWKS は 1 つの公開文書で、cell 単位の canary で影響を閉じ込められない。そのため外部 issuer の撤去にどの canary 方式を使うかを決める（POC-02 の MR-8 の受け） | D7-35 の 3 が依存する信号が数値契約になく、PoC 系統 1 の TC-014 では誤撤去を検知できなかった [D][^55] |
+| 12 | 12_poc/preregistered-test-plan.md（POC-01 §4.14 TC-014、§2.4.1） | TC-014 の仮説「誤撤去は検知される」に対応する合否基準（誤撤去から検知・自動再掲載までの時間 ≦ T_rk。決裁前は複数水準で記録。窓内の誤 deny 件数の記録）を加える。これは正式実行 `ece5ac` の結果（検知 0 件）を見た後の変更なので、§2.4 の「手順・閾値の変更（当該 TC のデータを見た後）」として §2.4.1 の様式で開示する（POC-02 の DEV-16 候補）。`ece5ac` の「合格」は旧基準での正式な結果として残し、仮説の「誤撤去の検知」が不成立だったことを併記する | 仮説と合否基準のずれにより、検知 0 件でも合格になった（POC-02 §5.6 DEV-16、§6.4）[D][^55] |
+| 13 | 00_decision/05-residual-risk-register.md（DCS-05 RRG-011） | RRG-011 の枝番（案 RRG-011-1）を置く。残余は「鍵の誤撤去・JWKS 不整合が canary の外へ波及した場合の全域の検証失敗。外部 RP の JWKS cache（RRG-010 の目安 24 時間）の間は、再掲載後も外部 RP 側の回復が遅れる。検知信号 SLI-029 は値が TBD で、系統 1 では検知 0 件」とする。補完統制は D7-35 の 3 条件、SLI-029 の警報、OPS-01 RB-A08、EX-A08。処置所有は SRE 責任者＋CTO、期限は G4 とする。失効条件は「TC-07-04・TC-014・TC-109・EX-A08 で T_rk の超過、または canary cell 外への波及が 1 件以上」とする。受容の段は RRG-011 と同じ AT-5・段2（CEO）を案とする | 100 万人・約 300 サービスに同時に及ぶ相関障害の類型で、台帳の RRG-011 は「自動再掲載」を統制に挙げるだけで、検知の信号と復旧の手順を持たない [D] |
+| 14 | 04_architecture/fail-mode-matrix.md（ARC-08）、08_operations/compromise-runbooks.md（OPS-01） | 本ラウンドで同時に改めた（ARC-08 版 0.6 の §3.5・§4・§6.8・§8、OPS-01 版 0.5 の RB-A08・EX-A08）。反映済みであり、申し送りではなく記録として置く | 3 文書の記号（SLI-029、T_rk）をそろえるため [D] |
 
 ## 変更履歴
 
@@ -729,6 +743,9 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 |---|---|---|
 | 0.1 | 2026-10-15 | 初版。8 分類と G-060・G-106・G-144・G-147 の指標を SLI-001〜SLI-106（80 件）として採番。SLI の 3 種別、plane・cell 別の構成、error budget 方針案、決裁案 5 件を記載 |
 | 0.2 | 2026-10-15 | 模擬パネル ラウンド 3 の指摘（sre、High）に対応。§3.5「要求あたりの認可遅延予算」を新設（直列 hop の合成式、α、k_serial、並列 Check の tail 増幅 1 − qⁿ、申告・実装の規則）。SLI-030・SLI-035 の導出の鎖を「B14 × α ÷ k_serial」に改め、多 hop 端から端の TC を加えた。新規仮定 NA-SLO-4〜6、残課題 10・11、他文書への申し送り 1〜6、レビュー記録を追加 |
+| 0.3 | 2026-10-15 | 模擬パネル ラウンド 4 の指摘（sre、High）に対応。SLI-038 の write 以上の目標を「検知窓外 0 件、FM-13 の検知窓内は E ≦ E_max」に分け、定義・測定方法・導出の鎖・検証 TC を改めた。残課題 12、他文書への申し送り 7〜9、脚注 52 を追加 |
+| 0.4 | 2026-10-15 | 模擬パネル ラウンド 5 の指摘（sre、High）に対応。SLI-038 が引く TC-010 の数値のタグを [M] から [D] に改め、自己実行の参考値（証拠に使わない）と明記した。同じ正式実行の FM-01 の不合格と Cedar の評価不能から許可 18 件を併記し、旧基準での不合格が正式な結果として残ることを書いた。残課題 13、他文書への申し送り 10、脚注 53・54 を追加し、脚注 52 を改めた |
+| 0.5 | 2026-10-15 | 模擬パネル ラウンド 7 の指摘（sre、High）に対応。§5.2 に SLI-029（token 検証失敗率。kid・cell・検証点種別ごと、基線の算出法つき）を追加し、§0・§5.9 の件数（81 件、TBD 54 件）、§6 の索引、対応表 R-189.6 を改めた。残課題 14、他文書への申し送り 11〜14、脚注 55 を追加し、脚注 34 の参照箇所を広げた |
 
 ## 参考文献
 
@@ -743,7 +760,7 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 [^9]: 本リポジトリ『KRI』. 01_governance/kri.md （参照箇所: K-04, K-07, K-17, K-18, K-21, K-22, K-29, K-31 の定義・閾値行、確認日: 2026-10-15）
 [^10]: 本リポジトリ『操作リスク階層×保証レベル割当』REQ-03. 02_requirements/operation-risk-tiers-assurance.md （参照箇所: §3.3, §4.1, §8.6 REQ03-D6、確認日: 2026-10-15）
 [^11]: 本リポジトリ『容量モデル』ARC-13 版 0.2. 04_architecture/capacity-model.md （参照箇所: 要旨, §5.3, §7.1〜§7.3, §9, §11、確認日: 2026-10-15）
-[^12]: 本リポジトリ『失敗モード表』ARC-08 版 0.2. 04_architecture/fail-mode-matrix.md （参照箇所: §0, §1.3, §1.4, §4, §5、確認日: 2026-10-15）
+[^12]: 本リポジトリ『失敗モード表』ARC-08 版 0.4. 04_architecture/fail-mode-matrix.md （参照箇所: §0, §1.3, §1.4, §4（P_ka・N_ka・E_max を含む）, §5, §6.13（検知前の窓）、確認日: 2026-10-15）
 [^13]: 本リポジトリ『失効・継続評価』ARC-09 版 0.2. 04_architecture/revocation-continuous-evaluation.md （参照箇所: 要旨, §1.3, §4.1〜§4.5, §8、確認日: 2026-10-15）
 [^14]: 本リポジトリ『ADR 索引と様式』ADR-000 版 0.1. 05_adr/README.md （参照箇所: 要旨, §3.2、確認日: 2026-10-15）
 [^17]: 本リポジトリ『参照アーキテクチャ v2』ARC-01. 04_architecture/reference-architecture-v2.md （参照箇所: 要旨 2, §1.2 の plane の表と用語の注意、確認日: 2026-10-15）
@@ -762,7 +779,7 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 [^31]: Chris Jones, John Wilkes, Niall Murphy, Cody Smith（Google）『Site Reliability Engineering』Chapter 4 "Service Level Objectives", 2016. https://sre.google/sre-book/service-level-objectives/ （参照箇所: Service Level Terminology（Indicators, Objectives）, Indicators in Practice（percentiles の段落）。research に収載されていないため、本書の作成者が取得して確認した。確認日: 2026-10-15）
 [^32]: Steven Thurgood（Google）『The Site Reliability Workbook』Appendix B "Example Error Budget Policy", 2018. https://sre.google/workbook/error-budget-policy/ （参照箇所: SLO Miss Policy, Outage Policy, Escalation Policy。research に収載されていないため、本書の作成者が取得して確認した。確認日: 2026-10-15）
 [^33]: Alec Warner, Štěpán Davidovič（Google）『The Site Reliability Workbook』Chapter 16 "Canarying Releases", 2018. https://sre.google/workbook/canarying-releases/ （参照箇所: Canarying, Error budget の段落。RS-09#31 で検証済み。確認日: 2026-10-03）
-[^34]: Microsoft Azure『RCA - Authentication errors across multiple Microsoft services (Tracking ID LN01-P8Z)』Azure status history, 2021-03-15 事象（Wayback Machine 2021-04-02 取得）. https://web.archive.org/web/20210402023547/https://status.azure.com/en-us/status/history/ （参照箇所: Summary of Impact。RS-09#53 で検証済み。確認日: 2026-10-03）
+[^34]: Microsoft Azure『RCA - Authentication errors across multiple Microsoft services (Tracking ID LN01-P8Z)』Azure status history, 2021-03-15 事象（Wayback Machine 2021-04-02 取得）. https://web.archive.org/web/20210402023547/https://status.azure.com/en-us/status/history/ （参照箇所: Summary of Impact、Root Cause and Mitigation。RS-09#53, #54 で検証済み。#54 は版 0.5 で SLI-029 の根拠に追加し、research の記述と照合した。確認日: 2026-10-03）
 [^35]: OpenID Foundation FAPI WG (D. Fett, D. Tonge, J. Heenan)『FAPI 2.0 Security Profile』Final, 2025-02-22. https://openid.net/specs/fapi-security-profile-2_0-final.html （参照箇所: §5.3.2.1, §5.3.2.2。RS-04#42–#43 で検証済み。状態は final（SS-C05）。確認日: 2026-10-03）
 [^36]: NIST (E. Barker)『SP 800-57 Part 1 Rev. 5: Recommendation for Key Management: Part 1 – General』final, 2020-05. https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf （参照箇所: §5.3.6, Table 1。RS-05#3 で検証済み。確認日: 2026-10-03）
 [^37]: IETF (J. Richer, Ed.)『RFC 7662: OAuth 2.0 Token Introspection』2015-10. https://www.rfc-editor.org/rfc/rfc7662 （参照箇所: §4。RS-04#67 で検証済み。確認日: 2026-10-03）
@@ -780,6 +797,10 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 [^49]: 本リポジトリ『ADR-016 版管理・非推奨』. 05_adr/ADR-016-versioning-deprecation.md （参照箇所: 要旨, NA-016-1, NA-016-7, §2 の期間表、確認日: 2026-10-15）
 [^50]: Mike Ulrich（Google）『Site Reliability Engineering』Chapter 22 "Addressing Cascading Failures", 2016. https://sre.google/sre-book/addressing-cascading-failures/ （参照箇所: Latency and Deadlines（deadline の伝播）、Retries。RS-09#38 で検証済み。確認日: 2026-10-03）
 [^51]: Jeffrey Dean, Luiz André Barroso（Google）『The Tail at Scale』Communications of the ACM, Vol. 56, No. 2, pp. 74–80, 2013-02. https://www.barroso.org/publications/TheTailAtScale.pdf （参照箇所: p. 76「Variability in the latency distribution of individual components is magnified at the service level」の段落と、100 台への並列要求で 63% が 1 秒を超える例示。research に収載されていないため、本書の作成者が取得して確認した。確認日: 2026-10-15）
+[^52]: 本リポジトリ『POC-01 TC-010 の実行記録』（AI エージェントによる自己実行。独立立会人なし、run.json の git_dirty は true。DCS-01 §10.1 の区分 W-1〜W-5 を満たさず、[M] の証拠に使わない）. 12_poc/data/resilience-keys/TC-010/20261015T025031Z-5418a7/eval.json（正式実行 v1、OpenFGA。不合格。検知 46〜203 ms。per_window.W1: fault「inj-pep delay 5000 ms (> D(t) = 3000 ms)」、n 72、allowed 42、write_plus_allow 12、rs_allow 24。summary.checks: write_plus_allow 16、rs_allow_in_outage 24）、12_poc/data/resilience-keys/TC-010/20261015T025322Z-01d308/eval.json（正式実行 v2、Cedar。不合格。summary.checks: indeterminate_to_allow 18、write_plus_allow 6、empty_list_in_outage 6、rs_allow_in_outage 12）、12_poc/data/resilience-keys/TC-010/20261015T030247Z-8882ff/eval.json（結果を見た後の参考用 params による参考実行。検知 39〜156 ms）（参照箇所: per_window の W1・W10・W13 の write_plus_allow、fm13_detection.detect_ms）、各 run.json（git_dirty、witness）、構成値 12_poc/code/tests/resilience-keys/params/TC-010.ref.json（known_answer_probe_interval_ms ＝ 250、`$comment`）、12_poc/code/CHANGES-resilience-keys.md（RK-08、RK-EV-02、RK-EV-03）、12_poc/code/tests/resilience-keys/README.md（RK-DEV-01、RK-DEV-07）. 確認日: 2026-10-15
+[^53]: 本リポジトリ『経営向け要約』DCS-01 版 0.5. 00_decision/01-executive-summary.md （参照箇所: 要旨の系統 1 の扱い（[M] の証拠として扱わない）、§10.1 の逸脱 X-1、§10.1.1 の実行区分の表（W-1〜W-5。TC-010 の行 20〜22）、申し送り 32、確認日: 2026-10-15）
+[^54]: 本リポジトリ『高保証 PoC 試験計画（事前登録）』POC-01. 12_poc/preregistered-test-plan.md （参照箇所: §2.4 の「手順・閾値の変更（当該 TC のデータを見た後）」の行（旧版の基準での合否を正式な結果とする）、§2.4.1 の逸脱の様式（DEV-01〜DEV-04）、§4.10 TC-010 の合否基準、確認日: 2026-10-15）
+[^55]: 本リポジトリ『POC-01 TC-014 の実行記録』と『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（AI エージェントによる自己実行。独立立会人なし、run.json の git_dirty は true、witness は null。DCS-01 §10.1 の区分 W-1〜W-5 を満たさず、[M] の証拠に使わない）. 12_poc/data/resilience-keys/TC-014/20261015T025035Z-ece5ac/eval.json（mistaken_removal: removal_status 200、inflight_verifications 1980、inflight_rejected 1566、pep_inflight_rejected 168、detection_alarm_files 0、detected false。verdict pass）と run.json、12_poc/measurement-report.md（参照箇所: §4.1 の TC-014 行、§5.6 の DEV-16、§6.4 の TC-014 行、§9 の MR-8）、12_poc/preregistered-test-plan.md（§4.14 TC-014 の仮説と合否基準）. 確認日: 2026-10-15
 
 ## レビュー記録
 
@@ -788,3 +809,6 @@ R-requirements.md と G-goal-criteria.md から、対応成果物欄に本書の
 | ラウンド | 指摘者（役割） | 重大度 | 指摘 | 対応 | 箇所 |
 |---|---|---|---|---|---|
 | 3 | sre | High | SLI-030（Check 遅延）と SLI-035（deadline）を GOV-04 B14 に Check 1 回で直結している。B14 は利用者操作全体の値で任意欄。edge 要求は平均 2.5 Check（A-025）・token exchange・introspection を経て、hop 数 f も TBD（N15-2）。直列 hop の合成と並列 fan-out の tail 増幅（1 − 0.99ⁿ）が導出の鎖になく、直列 Check 数の上限もない。FQ-66 は「値は未決」とだけ答え、並行開発の設計規則がない | (1) §3.5 を新設し、L_authz(req) の直列和、α（NA-SLO-4、TBD・所有者・期限・決め方付き）、並列の 1 − qⁿ の表と q ≧ Q^(1/n) の逆算を置いた。tail 増幅は Dean・Barroso の原典で確認した [^51]。deadline の伝播は SRE 本（RS-09#38）[^50]。SLI-030・SLI-035 の導出の鎖を「B14 × α ÷ k_serial」に改めた。(2) k_serial を NA-SLO-5 として置き、SDK の既定上限と申告事項にした。ARC-13 §12 の 6 の様式拡張と、integration-patterns の再判定しない規則は申し送り 2・3。(3) B14 未記入の業務では SLI-030・SLI-035 を導出済に上げない規則を本書に置き、B14 の必須化は申し送り 1。(4) G1 の As-Is 実測項目（f、直列・並列 Check 数の分布）と TC-101・TC-120 の多 hop 端から端の測定を申し送り 5・6、残課題 10 に置いた。(5) FQ-66 の追記は申し送り 4。本書の範囲は対応済、他文書の反映は申し送り待ち | §3.4、§3.5、§4、§5.3 (a)(b)、対応表、残課題 10・11、他文書への申し送り |
+| 4 | sre | High | ARC-08 FM-13 の w・pT・pP 行は「拒否、最大齢 0」とするが、拒否は既知解の判定（ADR-013 D13-27）で検知した後に限られ、検知前の窓の allow は防げない。SLI-038 は write の誤 allow を「選択肢 A・B で 0 件」としており、構造上達成できない目標になっている。TC-010 の自己実行では検知 39〜203 ms の間に write 以上の allow 4 件。日本の標準 cell（Check 7,742/秒）では窓が秒単位なら数千件規模。RRG-032 はこの量を扱っていない | (1) SLI-038 の定義・目標を「検知窓外 0 件」と「FM-13 の検知窓内は 1 事象・cell あたり E ≦ E_max（TBD、CISO、G4、決め方 K-04 の許容度と TC-010・TC-13-05 の実測）」に分けた。窓の式（T_win、E）と P_ka・N_ka・E_max は ARC-08 §4・§6.13（版 0.4）に置き、本書から参照した [^12]。(2) TC-010 の数値は生データで確かめた。4 件は正式・参考の各実行で W10・W13 の注入直後に出た件数、39〜203 ms は両実行の検知時間の範囲である [D][^52]（ラウンド 5 で [M] から [D] に訂正。自己実行の参考値であり証拠に使わない）。7,742/秒は ARC-13 §5.1 で確かめた [^11]。(3) K-04・RRG-032・GOV-02 の対応は申し送り 7〜9（ARC-08 の申し送り 4・5・8 と同一）。新たな外部原典は使っていない。本書の範囲は対応済、他文書の反映は申し送り待ち | §5.3 (a)(b) SLI-038、残課題 12、他文書への申し送り 7〜9、変更履歴 0.3、脚注 52 |
+| 5 | sre | High | (1) SLI-038 が TC-010 の自己実行（立会人なし、git_dirty）の数値を [M] で引いており、DCS-01 などの「[M] の証拠として扱える実測は 0 件。系統 1 の記録は証拠にしない」と矛盾する。(2) 同じ正式実行の FM-13 の窓（W10・W13 の 4 件）だけを引き、W1（FM-01）の write 以上の allow 12 件・read-sensitive の allow 24 件と、Cedar（`01d308`）の評価不能から許可 18 件に触れていない。(3) SLI-038 の目標の分け方に合わせて TC-010 の基準を緩めることは、不合格を見た後の変更（POC-01 §2.4）に当たるのに、その開示と、旧基準での不合格（v1・v2）が正式な結果として残ることが書かれていない | (1) SLI-038 と脚注 52 の TC-010 の数値を [D] に改め、「自己実行の参考値（立会人なし・git_dirty、DCS-01 §10.1 の区分 W-1〜W-5 を満たさない。証拠に使わない）」と明記した [^52][^53]。ラウンド 4 の記録のタグも [D] に訂正した。(2) 生データ（eval.json の per_window.W1 と summary.checks、run.json）で数値を確かめ、SLI-038 に W1 と Cedar の結果、FM-13 以外の allow を検知窓外に数えること、原因区分が未確定であることを書いた。原因区分は残課題 13 に置いた（所有者 PoC リード＋CTO、残余リスクの判断は CISO、期限は DEC-4 第 1 段の付議前、再実行は G4）。§0 の 1 の注記は ARC-08 版 0.5 で行った。(3) SLI-038 の検証 TC 欄と申し送り 10 に、POC-01 §2.4.1 の DEV 番号での開示と、v1・v2 の不合格が正式な結果として残ることを書いた [^54]。新たな外部原典は使っていない。対応 3 件 | §5.3 (b) SLI-038、残課題 13、他文書への申し送り 10、変更履歴 0.4、脚注 52〜54、ラウンド 4 の記録 |
+| 7 | sre | High | 署名鍵の誤撤去（ADR-007 が教訓に挙げる Azure AD 2021 LN01-P8Z 型）による全域の検証失敗について、token の検証失敗率の SLI がない。ADR-007 D7-35 の 3 の「canary で 24 時間、検証失敗率が基線を超えなければ撤去、超えたら自動再掲載」が依存する信号（検証失敗率とその基線）が数値契約に定義されていない。POC-02 §6.4 の TC-014 では誤撤去を検知できず、使用中の token 1,980 件のうち 1,566 件（実 PEP で 168 件）が拒否されたが、合否基準の欠落（DEV-16 候補）で「合格」になっている | (1) §5.2 に SLI-029「token 検証失敗率 V(k, c, p)」を新設した。kid・cell・検証点種別（PEP SDK／edge／外部 RP の代理指標 (a)〜(c)）ごとに集計し、失効 kid と期限切れは分子から除く。基線 b(c, p) の算出法（過去 W_b の同時間帯の 1 分窓の率の上側 q_b 分位。計画 rotation の期間を含める。n_min 未満の窓は判定しない）を定義した。値は TBD（所有者 SRE 責任者、期限 G4、決め方: 平常時の分布と TC-014・TC-07-04・TC-109 の注入での T_rk と誤検知率）。(2) TC-014 の数値は生データ（eval.json の mistaken_removal）で 1,980・1,566・168・警報 0 を確かめ、自己実行の参考値として [D] で引いた [^55]。Azure AD 2021 は既存の脚注 34 の参照箇所を RS-09#54 まで広げて引いた。(3) 警報（ARC-08 §3.5）・T_rk と FM-08 の試験基準（ARC-08 §4・§8）・RB-A08 と EX-A08（OPS-01 §3A・§5.2A）は同時に改めた（申し送り 14）。(4) ADR-007 D7-35・TC-07-04、POC-01 TC-014 の合否基準（DEV-16・MR-8、§2.4.1 の開示）、DCS-05 RRG-011 の枝番は担当外のため申し送り 11〜13 とした。新たな外部原典は使っていない。対応 5 件（指摘の修正項目 1〜5） | §0、§5.2 (a)(b) SLI-029、§5.9、§6、K20-4 の帰結、対応表 R-189.6、残課題 14、他文書への申し送り 11〜14、変更履歴 0.5、脚注 34・55 |

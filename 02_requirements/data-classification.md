@@ -1,6 +1,6 @@
 # 資産・データ分類台帳
 
-> 文書ID: REQ-04 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-03
+> 文書ID: REQ-04 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15（0.2: 模擬パネル ラウンド 4 の指摘（legal）により、§4.2 の運用拠点の注記と §7.2 の N2 を「仮置き。NA-3・OM-N1 の確定に従う」に改め、残課題 11 を改めた。末尾「レビュー記録」。模擬パネルは AI による自己レビューであり、実在の CTO・CISO・法務責任者の決裁ではない）
 > 対応要求: R-001, R-004, G-030（関連: R-010, R-011, R-118〜R-124, R-134, R-172, DS-12）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md, traceability/R-requirements.md, traceability/G-goal-criteria.md, traceability/claims-ledger.md, traceability/dissent-log.md, 01_governance/assumptions-register.md, research/RS-02-regulatory-applicability.md, research/RS-08-pep-completeness-tenant-isolation.md, research/RS-10-audit-privacy-residency.md, research/RS-03-identity-lifecycle.md, research/RS-05-root-of-trust-keys-supply-chain.md, research/RS-07-authz-engines-consistency.md, research/RS-11-twenty-year-evolution-pqc.md
 
@@ -179,7 +179,8 @@ RS-08 は、全テナントのデータを含むデータ集合（バックア�
 
 - **28 CFR Part 202 の規模**: 基準シナリオの米国利用者は約 7 万人（100 万人 × 7%）で、対象個人識別子の閾値（10 万人超）を下回る [D][A-001][A-061]。成長シナリオでは約 45 万人（300 万人 × 15%）となり、閾値を上回る [D][A-001][A-061]。適用されるのは米国人・米国法人が当事者となる場合なので、当事者関係を DL-34 で判定する [D]。
 - **英国利用者**: 前提台帳は、英国利用者を EU リージョンに収容すると仮置きしている [A-063]。英国から EU への移転規律は未調査である（§7）[D]。
-- **運用拠点**: 運用拠点の所在は前提台帳にない [D]。本書は「日本だけ」を新規仮定 N2 として置く（§7）[D]。この仮定の下では、EU cell・米国 cell の運用は日本からの遠隔参照になるので、EDPB の見解では移転に当たり得る [D]。
+- **運用拠点**: 運用拠点の所在は前提台帳にない [D]。本書は「日本だけ」を新規仮定 N2 として**仮置き**する（§7）[D]。同じ前提を、CTL-02 は NA-3（運用・support 要員と外部委託 SOC の所在国）として「未定」とし [D][^61]、OPS-02 は OM-N1（SRE 一次の拠点構成）として「未定（DP-OM-1 で決める）」としている [D][^60]。N2 の値は、NA-3・OM-N1 とともに DEC-1 で決める OPS-02 DP-OM-5（L-04 の選択肢 B を提供する法域と運用要員の所在国。決める人は CTO＋CISO＋法務責任者＋CFO、期限 G0）の結論に従う [D][^60][^62]。この仮定の下では、EU cell・米国 cell の運用は日本からの遠隔参照になるので、EDPB の見解では移転に当たり得る [D]。
+- 上の表の CUS・PII・AZD 行の「home cell の法域内を既定とする」と、SEC 行の「cell の法域内にいる特権者だけが行う」は、N2（日本だけ）の下では日本以外の cell について満たせない [D]。N2 の下でこれらの既定を満たすには、日本以外の cell の運用参照を移転として根拠を整える（L-04 の選択肢 A）必要がある [D][^61]。所在国に限る運用（L-04 の選択肢 B）を日本以外で採るには、法域内の運用要員が要る（OPS-02 DP-OM-5 (a-2)）[D][^60]。表の既定値の扱いは DP-OM-5 の決議後に見直す（残課題 11）[D]。
 
 ### 4.3 保持
 
@@ -456,9 +457,9 @@ SPI・MED の DWH 欄を「不可」としたのは既定値である [D]。集�
 | 仮 ID | 仮定 | 外れた場合に変わること |
 |---|---|---|
 | N1 | 基盤は生体情報（照合用のテンプレート等）を保持しない。passkey 等の生体照合は、利用者の端末内で完結する | GDPR 9 条 1 項の特別カテゴリ（生体識別目的の生体データ）に当たり得る[^10] [N]。28 CFR Part 202 では生体識別子の bulk 閾値が 1,000 人超と低い[^27] [N]。いずれも分類と所在地を引き上げる [D] |
-| N2 | 基盤の運用拠点（SRE、support、SOC）は日本だけに置き、EU cell と米国 cell も日本から運用する | follow-the-sun 運用にすると、運用者のアクセス元の国が増え、移転根拠と 28 CFR Part 202 の判定対象が増える [D] |
+| N2 | 仮置き。NA-3・OM-N1 の確定に従う。仮置きの値は、基盤の運用拠点（SRE、support、SOC）を日本だけに置き、EU cell と米国 cell も日本から運用する、である。確定は DEC-1 での OPS-02 DP-OM-5 の決議による（G0）[D][^60][^62] | follow-the-sun 運用にすると、運用者のアクセス元の国が増え、移転根拠と 28 CFR Part 202 の判定対象が増える [D]。法域内に運用要員を置く（DP-OM-5 (a-2)）と、§4.2 の「home cell の法域内」の既定を日本以外の cell でも満たせるが、最大 ＋16 名の桁の要員が要る [D][^60] |
 
-前提台帳（01_governance/assumptions-register.md）は本書では編集していない [D]。仮 ID の N1・N2 は、台帳に登録するときに A-ID へ置き換える [D]。
+前提台帳（01_governance/assumptions-register.md）は本書では編集していない [D]。仮 ID の N1・N2 は、台帳に登録するときに A-ID へ置き換える [D]。N2 は、CTL-02 NA-3・OPS-02 OM-N1 と同じ前提であるため、別々の A-ID にせず 1 つの A-ID に統合して登録することを申し送る（他文書への申し送り 1）[D]。POA&M には OI-L11 として起票済みである [D][^63]。
 
 ---
 
@@ -517,13 +518,33 @@ traceability/R-requirements.md と traceability/G-goal-criteria.md の対応成�
 | 8 | EU-US DPF の帰趨と、英国から EU への移転規律の確認 | 法務責任者 | G3（以後は DL-84 で四半期ごと） |
 | 9 | 業務 BF-xx と重大損失シナリオ S-xx の対応付け | CISO（DL-02） | G0 |
 | 10 | 業務ごとの最大許容停止時間・最大許容損失 | 事業責任者（DL-21） | G0 |
-| 11 | 新規仮定 N1・N2 の前提台帳への登録 | 前提台帳の所有者（DL-45） | G0 |
+| 11 | 新規仮定 N1 の前提台帳への登録。N2 は CTL-02 NA-3・OPS-02 OM-N1 と 1 つの A-ID に統合して登録し、値は DEC-1 での DP-OM-5 の決議で確定する（POA&M OI-L11）。確定後に §4.2 の表の運用者のアクセス元の既定値を見直す | 前提台帳の所有者（DL-45）、CTO＋CISO＋法務責任者＋CFO（DP-OM-5） | G0 |
 | 12 | 本書のローカルラベル（BF・AS・分類コード・X・Z）を ID 体系に入れるか、DL-77 の列挙値にするかの判断 | CTO＋CISO（CONVENTIONS と DL-77 の所有者） | G3 |
 | 13 | 攻撃者類型 ATK-xx の番号の照合 | CISO（DL-51） | G2 |
 | 14 | 実測: 検索・DWH の側路（RS-08 M-08・M-09）、cross-cell アクセスの負例（RS-02 §5.3-7）、crypto-shredding の完了時間（RS-10 §5.2-7）、cross-tenant property test | プラットフォームチーム長（DL-22。TC 未採番） | G4 |
 | 15 | 本書で追加取得した 7 原典の、作成者以外による照合 | 引用監査の担当（DL-29） | Phase 4 |
 | 16 | 分類を前提にした PIA（監査記録中の個人識別情報の要素の特定） | 個人情報保護責任者（DL-25） | G3 |
 | 17 | 受容票の起票（§5.3 の残余リスク 3 件） | 事業責任者（DL-05） | G0 |
+
+---
+
+## 他文書への申し送り
+
+本書以外では、本指摘の担当範囲である 00_decision/03-decision-items.md、00_decision/07-organization-and-tco.md、traceability/open-items.md を同時に是正した [D]。それ以外の文書は編集していない [D]。
+
+| # | 申し送り先 | 内容 | 所有者（案） | 期限（案） |
+|---|---|---|---|---|
+| 1 | 01_governance/assumptions-register.md | N2（本書）、NA-3（CTL-02）、OM-N1（OPS-02）を 1 つの A-ID に統合して登録する。値は「仮置き: 日本の単一拠点。未確定」、確定ゲートは G0（DEC-1 の DP-OM-5）とする（DCS-03 R4L-4 と同じ） | 前提台帳（DL-45）の確定責任者 | G0 |
+| 2 | 06_controls/applicability.md（CTL-02）§1.3 NA-3 | NA-3 が REQ-04 N2・OPS-02 OM-N1 と同じ前提であり、DEC-1 の DP-OM-5 で 1 つの値に確定することを記す（DCS-03 R4L-1 と同じ） | 法務責任者（CTL-02 の担当） | G0 |
+| 3 | 08_operations/operating-model.md（OPS-02）§1.2 OM-N1 | OM-N1 の値の確定先に DP-OM-5（DEC-1）を加え、REQ-04 N2・CTL-02 NA-3 との統合を記す | OPS-02 の担当 | 次版 |
+
+## レビュー記録
+
+| ラウンド | 指摘（模擬パネル。自己レビューであり実在の CTO・CISO・法務責任者の決裁ではない） | 対応 |
+|---|---|---|
+| 4 | High（legal）: 本書は運用拠点を「日本だけ」（N2、§4.2・§7.2）とするが、CTL-02 は NA-3 を、OPS-02 は OM-N1 を未定としており、いずれも前提台帳と POA&M に未起票である。OPS-02 版 0.2 §3.7.1 は、L-04 の選択肢 B を日本以外に提供するには法域内の運用要員が要るとしている | 対応した。OPS-02 版 0.2 §1.2 OM-N1・§3.7.1・§11 DP-OM-5 と CTL-02 §1.3 NA-3・L-04 を読み、記述を確認した [D][^60][^61]。§4.2 の運用拠点の注記を「仮置き」とし、NA-3・OM-N1 との関係と DP-OM-5 による確定を記した。表の「home cell の法域内」の既定が N2 の下では日本以外の cell で満たせないことを開示した。§7.2 の N2 を「仮置き。NA-3・OM-N1 の確定に従う」に改め、残課題 11 を改めた。POA&M には OI-L11 として同時に起票し [^63]、前提台帳への統合登録は申し送り 1 とした |
+
+- 本記録は模擬パネルによる自己レビューへの対応であり、実在の CTO/CISO の決裁ではない [D]。
 
 ---
 
@@ -588,3 +609,7 @@ traceability/R-requirements.md と traceability/G-goal-criteria.md の対応成�
 [^57]: U.S. Securities and Exchange Commission『17 CFR 240.17a-4 Records to be preserved by certain exchange members, brokers and dealers』eCFR（同条の最終改正 2024-08-02。eCFR の表示は up to date as of 2026-10-01）. https://www.ecfr.gov/current/title-17/chapter-II/part-240/section-240.17a-4 （参照箇所: (f)(2)(i)(A)(B)、(f)(2)(ii)、確認日: 2026-10-03）
 [^58]: legislation.gov.uk『United Kingdom General Data Protection Regulation, Article 33 (revised version)』. https://www.legislation.gov.uk/eur/2016/679/article/33 （参照箇所: Art. 33(1)(2)、確認日: 2026-10-03）
 [^59]: California Legislative Information『Civil Code §1798.82』（SB 446 による改正後、2026-01-01 施行）. https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.82 （参照箇所: (a)(2)(A)(B)、(b)、確認日: 2026-10-03）
+[^60]: 本リポジトリ『運用・要員モデル』OPS-02 版 0.2. 08_operations/operating-model.md （参照箇所: §1.2 OM-N1（SRE 一次の拠点構成、未定）, §3.7 拠点と所在国, §3.7.1 CTL-02 L-04 選択肢 B との関係（(a-1)・(a-2)、最大 ＋16 名の桁）, §11 DP-OM-5（決める人 CTO＋CISO＋法務責任者＋CFO、期限 G0）、確認日: 2026-10-15）
+[^61]: 本リポジトリ『法域・規制・契約適用性判定表』CTL-02. 06_controls/applicability.md （参照箇所: §1.3 NA-3（運用・support 要員と外部委託 SOC の所在国、未定）, L-04 データ所在地と越境アクセスの方針（選択肢 A〜C、推奨）、確認日: 2026-10-15）
+[^62]: 本リポジトリ『決裁事項詳細（DEC-1〜DEC-10）』DCS-03 版 0.5. 00_decision/03-decision-items.md （参照箇所: §4.1 DEC-1 決裁内容 (4)・決議文案 11、確認日: 2026-10-15）
+[^63]: 本リポジトリ『残課題・是正追跡（POA&M）』TRC-11 版 0.4. traceability/open-items.md （参照箇所: §4.8 OI-L11、確認日: 2026-10-15）

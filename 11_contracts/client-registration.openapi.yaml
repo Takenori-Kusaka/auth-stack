@@ -2,8 +2,8 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Client Registration API（sandbox の RFC 7591/7592 profile と本番の登録申請 API）
-  version: 0.1.1
-  summary: OAuth/OIDC client の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01、G-141(c)、OB-2(d)）
+  version: 0.3.0
+  summary: OAuth/OIDC client と、C7（内部 workload）の SVID 登録エントリ・交換可能な組の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01・I-16（案）・I-17（案）、G-141(c)、OB-2(a)〜(d)）
   license:
     name: 社内限定（Proprietary, internal use only）
     identifier: LicenseRef-Proprietary-Internal
@@ -17,31 +17,37 @@ info:
     - 11_contracts/README.md（CON-00 §3 I-01、§4 命名・版付け規約）
     - 04_architecture/token-profile.md（ARC-02 §3.2, §6, §7, §8, §9.2 行 01・02・25・34, §13 KP-1）
     - 05_adr/ADR-005-token-profile.md（D7-1, D7-2, K-3）
+    - 03_threat-model/threat-catalog.md（T-007, T-071）、03_threat-model/attacker-model.md（ATK-02, ATK-06, ATK-17）。版 0.3.0 の AR-4・AR-8 の対応先（§9 H-16）
+    - research/RS-17-integration-patterns-modeling.md（RS-17#63。AR-8 の先行例）
     - 05_adr/ADR-008-*.md（D8-50〜D8-54）
-    - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-18, D09-19）
+    - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-12〜D09-15, D09-18, D09-19）
+    - 04_architecture/workload-identity-delegation.md（ARC-04 W55-01, W55-03, W55-04, W55-06, W55-08, W55-11）
     - 05_adr/ADR-020-fapi2-applicability.md（D20-03, D20-08-4）
     - 05_adr/ADR-021-irreversible-identifiers.md（D21-09, D21-13, D21-22〜D21-24）
     - 05_adr/ADR-022-integration-contract-standards.md（D-1, D-2 の OIDC/OAuth profile 行, D-2-3, D-6-4, D-7-1）
     - 08_operations/operating-model.md（§7.2 CP-1・CP-2、§5.5 有資格者名簿）
-    - 10_integration/onboarding.md（INT-04 §4.3 OB-2(d)、ONB-R2）
-    - 10_integration/integration-patterns.md（INT-02 §5.1 I-01）
+    - 10_integration/onboarding.md（INT-04 §4.3 OB-2(a)〜(d)、ONB-R2、ONB-R3）
+    - 10_integration/integration-patterns.md（INT-02 §5.1 I-01、§5.2 の判定。I-16・I-17 は本契約からの追加案、§9 H-9）
     - 11_contracts/mock-contract-test-kit.md（CON-11 §4.2 MK-01, §5.2 (c), CV-011）
-    - research/RS-16-parallel-development-governance.md（RS-16#20）, research/RS-04-oauth-oidc-profile.md（RS-04#1）, research/standards-status.md（SS-A23）
+    - 12_poc/code/lib/topology.js（WORKLOADS）、12_poc/code/config/ledger.json（exchange_registry）、12_poc/code/sts/server.js（registry の照合）。§4A.5 の暫定手順の根拠（2026-10-15 にソースを確認）
+    - research/RS-16-parallel-development-governance.md（RS-16#20）, research/RS-04-oauth-oidc-profile.md（RS-04#1）, research/RS-06-*.md（RS-06#4, #25, #27）, research/standards-status.md（SS-A23）
   x-requirements:
     - id: G-138
-      coverage: I-01（client 登録）の登録の手段を契約にした。sandbox は preview（ADR-022 D-2）、本番の申請 API も preview（ADR-022 の改版待ち）。登録する内容（種別ごとの必須項目）は ARC-02 §6 の GA 範囲を写した
+      coverage: I-01（client 登録）の登録の手段を契約にした。sandbox は preview（ADR-022 D-2）、本番の申請 API も preview（ADR-022 の改版待ち）。登録する内容（種別ごとの必須項目）は ARC-02 §6 の GA 範囲を写した。版 0.2.0 で、INT-02 §5.1 に追加を申し送る I-16（workload ID の登録）と I-17（交換可能な組の登録）の登録手段も preview で定義した（§4A、§9 H-9）。I-16・I-17 は INT-02 の行列に反映されるまで G-138 の判定には数えられない
     - id: G-141
-      coverage: (c) client のセルフサービス登録の契約。(a) 信頼の分離のうち、登録段階の環境分離（本番 redirect URI・本番鍵の sandbox 登録拒否、sandbox client_id の本番での拒否）。workload の登録は範囲外（x-open-issues）
+      coverage: (c) client と workload（SVID 登録エントリ）・交換可能な組のセルフサービス登録の契約（workload と組は版 0.2.0 で追加、preview）。(a) 信頼の分離のうち、登録段階の環境分離（本番 redirect URI・本番鍵の sandbox 登録拒否、sandbox client_id の本番での拒否、sandbox の登録での本番 trust domain の SPIFFE ID の拒否）
     - id: G-118
       coverage: client 登録の契約ファイル本体（OpenAPI 3.1.2）
     - id: G-119
       coverage: x-standards に準拠標準・版・状態・準拠範囲と、Experimental な RFC 7592 に依存する部分の互換方針を記載
     - id: G-124
-      coverage: OB-2(d) の承認者案（x-approval-rules）。決裁は ONB-R2・ADR-022 の改版
+      coverage: OB-2(d) の承認者案（x-approval-rules、AR-1〜AR-8。AR-8 の所有テナントの管理者の同意は版 0.3.0 で追加）。決裁は ONB-R2・ADR-022 の改版
     - id: R-158
       coverage: 登録時に redirect URI の完全一致、implicit・ROPC の拒否、非対称 client 認証を機械検査する（ARC-02 §9 行 01・02・25）
     - id: R-255
-      coverage: 共有 client secret の登録を拒否する（ADR-009 D09-18）
+      coverage: 共有 client secret の登録を拒否する（ADR-009 D09-18）。内部 workload は SVID の登録エントリで登録させ、共有秘密の資格情報を払い出さない（§4A、ADR-009 D09-14・D09-19）
+    - id: R-251
+      coverage: 交換可能な組（呼出し元 SPIFFE ID × 呼出し先 × scope 上限）の登録手段（§4A.3、ADR-009 D09-13）。登録簿にない exchange を STS が拒否する前提の入力を契約にした
   x-standards:
     - id: SS-A23
       name: RFC 7591 OAuth 2.0 Dynamic Client Registration Protocol
@@ -66,29 +72,32 @@ info:
   x-freeze-classes:
     irreversible: client_id の形式と「不透明に扱う」という契約（ADR-021 D21-22、D21-13 の墓石）
     GA: 種別ごとの必須項目と禁止項目（ClientMetadata の規則。中身は ARC-02 §6 の GA 範囲の写し）。理由コード CR01〜CR14 の意味
-    preview: sandbox の登録・管理 endpoint（ADR-022 D-2 の「非本番環境の動的登録」）、本番の登録申請 API と承認規則（ADR-022 が本番の登録手段を定めていないため。x-open-issues の ADR-022 行）
+    preview: sandbox の登録・管理 endpoint（ADR-022 D-2 の「非本番環境の動的登録」）、本番の登録申請 API と承認規則（ADR-022 が本番の登録手段を定めていないため。x-open-issues の ADR-022 行）、workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair、WorkloadEntry・ExchangePair、CR15〜CR21。版 0.2.0）、所有テナントの同意の参照（tenant_consent）と CR22（版 0.3.0）
     not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値
   x-preview-expires: TBD（CON-00 §4.6 F-2 の初期案では preview に置いた日から 12 か月。決める人 CTO、期限 DEC-8 前）
   description: |
-    > 文書ID: CON-14 / DL-119 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15
-    > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-255（全件は info.x-requirements）
+    > 文書ID: CON-14 / DL-119 / 版: 0.3.0 / 状態: draft / 最終更新: 2026-10-15（0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
+    > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-251, R-255（全件は info.x-requirements）
     > 依存文書: info.x-depends-on
-    > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。版 0.2.0 の §4A（workload と交換可能な組の登録）は、ラウンド 6 の指摘に答えて ARC-04 §3.1・§3.2、ADR-009 D09-12〜D09-15、INT-04 §4.3、12_poc/code のソースを読んで加えた。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 
     ## 0. 要旨
 
     1. **連携開発者は、本契約で「何を申請し、何が返るか」を実装・試験できる** [D]。sandbox では RFC 7591 の登録 endpoint にセルフ登録し、`client_id` と RFC 7592 の管理用 URL・token を受け取る（承認なし。G-141(c)）。本番では登録申請 API に申請し、承認後に `client_id` を受け取る（OB-2(d)）[D]。
     2. **登録する中身は sandbox と本番で同じスキーマ（ClientMetadata）で検査する** [D]。種別（C1〜C6、C8。ARC-02 §6）ごとに grant、`token_endpoint_auth_method`、DPoP・mTLS の束縛、PAR、FAPI の層を必須項目・禁止項目として機械可読にした。sandbox で通った登録内容は、環境に依存する値（redirect URI、鍵）を差し替えれば本番の申請にそのまま使える [D]。
     3. **sandbox と本番の issuer・登録窓口・鍵・client_id を分ける** [D]（ADR-022 D-6-4、ADR-008 D8-50〜D8-52、ADR-021 D21-22）。sandbox の登録 endpoint は sandbox の AS にだけあり、本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34）。sandbox への本番 redirect URI・本番の公開鍵の登録は拒否する（負例 CRN-01、CRN-13）[D]。
-    4. **本番の承認者は既存の変更区分（operating-model §7.2）に当てはめた案である** [D]。標準の登録は認証・IdP チームの有資格者による作成者≠承認者の審査（CP-2 相当）、層 F（FAPI）や privileged scope は CISO 組織のセキュリティレビュアーを加え、複数テナントにまたがる app-only の権限は CP-1 相当の別報告系統の二者とする（x-approval-rules）。承認者の確定は ONB-R2 と ADR-022 の改版による（未決（ADR-022））[D]。
-    5. **凍結区分**: sandbox の登録手段と本番の申請 API はどちらも preview である [D]。ADR-022 D-2 は非本番の動的登録を preview に置き、本番の登録手段は定めていないためである。種別ごとの必須項目は ARC-02 §6（GA）の写しなので GA とする [D]。ADR-022 D-2-3 は空欄を GA か preview の契約で埋めることを求めるので、G-138 の I-01 は本契約で「対応（登録手段は preview）」になる [D]。
+    4. **本番の承認者は既存の変更区分（operating-model §7.2）に当てはめた案である** [D]。標準の登録は認証・IdP チームの有資格者による作成者≠承認者の審査（CP-2 相当）、層 F（FAPI）や privileged scope は CISO 組織のセキュリティレビュアーを加え、app-only の権限（client_credentials の client が要求する scope）の付与は、単一テナントか複数テナントかを問わず CP-1 相当の別報告系統の二者とする（AR-4。ADR-008 D8-54）。顧客テナントを所有テナントとする client が app-only の権限か低リスクでない scope を要求するときは、そのテナントの管理者の同意記録がなければ払い出さない（AR-8。ADR-005 D7-2。版 0.3.0）（x-approval-rules）。承認者の確定は ONB-R2 と ADR-022 の改版による（未決（ADR-022））[D]。
+    5. **内部 workload（C7）は client ではなく、SVID の登録エントリと交換可能な組で登録する** [D]（§4A、版 0.2.0 で追加、preview）。約 300 サービスのサービス間同期呼出し（INT-02 の P-03）が token exchange を使うには、この 2 つが要る（ADR-009 D09-13・D09-14、INT-04 OB-2(a)〜(c)）。sandbox ではどちらもセルフ登録（`registerSandboxWorkload`、`registerExchangePair`。呼出し先が他チームのサービスなら呼出し先の所有者の承認を待つ）、本番は申請 API の申請種別 `workload`・`exchange_pair` で承認付きにする [D]。selector は基盤が管理し workload が書き換えられない属性に限る（ARC-04 W55-08）[D]。sandbox がまだないため、それまでの暫定手順を §4A.5 に置いた [D]。
+    6. **凍結区分**: sandbox の登録手段と本番の申請 API はどちらも preview である [D]。ADR-022 D-2 は非本番の動的登録を preview に置き、本番の登録手段は定めていないためである。種別ごとの必須項目は ARC-02 §6（GA）の写しなので GA とする [D]。ADR-022 D-2-3 は空欄を GA か preview の契約で埋めることを求めるので、G-138 の I-01 は本契約で「対応（登録手段は preview）」になる [D]。
 
     ## 1. 範囲
 
     | 範囲内 | 範囲外（正本） |
     |---|---|
-    | sandbox の client 登録・読取り・更新・削除（RFC 7591/7592 profile） | 内部 workload の SVID 登録エントリ（ARC-04 W55-08、OB-2(b)）。C7 の token exchange 利用者はこちらで登録する |
-    | 本番の client 登録・変更・廃止の申請、承認、払出し結果の取得 | 交換可能な組の登録簿（ADR-009 D09-13、OB-2(c)） |
+    | sandbox の client 登録・読取り・更新・削除（RFC 7591/7592 profile） | SVID の発行・更新そのもの、attestation の実装、trust domain と SPIFFE ID の path の形式（ARC-04 W55-02・W55-03・W55-07〜W55-10、DL-71） |
+    | 本番の client 登録・変更・廃止の申請、承認、払出し結果の取得 | STS の exchange の判定そのもの（ADR-009 D09-11〜D09-16、CON-05） |
+    | **C7 の workload の SVID 登録エントリ（ARC-04 W55-08、OB-2(a)(b)）の sandbox セルフ登録と本番の申請（§4A、版 0.2.0、preview）** | 登録簿の版管理と監査の仕組み（ADR-016、ADR-009 D09-13） |
+    | **交換可能な組（ADR-009 D09-13、OB-2(c)）の sandbox 登録と本番の申請（§4A、版 0.2.0、preview）** | AI エージェントの委任 grant（ADR-017・ADR-026） |
     | 種別ごとの登録内容の検査規則、理由コード、負例 | token の取得・検証そのもの（ARC-02、CON-06） |
     | 承認の要否を決める規則（案） | 本基盤が RP として顧客 IdP に接続する C9（ADR-004。顧客 IdP 側の登録） |
     | | OIDC Back-Channel Logout の `backchannel_logout_uri` の登録（位置が未決。ADR-006 L6-2） |
@@ -143,6 +152,7 @@ info:
       - C6 の `id_token_signed_response_alg` は、省略すると RS256 になる [N][^6]。ARC-02 K1 は ES256 か PS256 で登録させるとしているので、本 profile は必須項目にする。層 F の client は、PS256 の鍵がない間（XR-04）は ES256 に限る [D]。層 B の既定 alg は ARC-02 KP-1 で未決である。
       - `client_id` と `client_secret` を登録者が要求に入れることはできない（ADR-021 D21-22）。`client_id` は基盤が払い出す不透明値で、環境ごとに別の値になる [D]。
       - 所有者（`platform_owner`）と所有テナント（`platform_owning_tenant`）は metadata に持たせ、`client_id` から推論させない（ADR-021 D21-22）[D]。所有者のない client は登録できない（ADR-008 D8-54 の棚卸し）[D]。
+    - C7（内部 workload）は ClientMetadata では登録しない。§4A の WorkloadEntry と ExchangePair で登録する [D]。C7 は STS への client 認証に X.509-SVID の mTLS（RFC 8705 の `tls_client_auth` で SAN URI を照合）を使うので（ADR-009 D09-14・D09-19）、STS 側の client の設定は登録エントリから基盤が作り、利用者に ClientMetadata を書かせない [D]。
     - RFC 7591 が定めない項目名（`platform_` で始まる 5 項目）は本契約の名前案であり、名前空間の規則（ADR-021 D21-28）で確定する（未決（ADR-021））[D]。RFC 7591 は、AS が理解しない client metadata を無視しなければならない（MUST）としている [N][^1]（§2）。そのため、他の AS 製品へ移る場合もこれらの項目は登録記録の側（本契約の申請 API と台帳）に持ち、AS 製品の拡張機能に依存しない [D]。
     - RFC 9126 は、RFC 7591 の metadata が、動的登録を使わない場合にも client の一般的なデータモデルとして役に立つと述べている [N][^5]（§6）。本番の申請 API が RFC 7591 の項目名を使うのはこのためである [D]。
 
@@ -168,20 +178,70 @@ info:
       - sandbox で払い出した `client_id` は本番の AS では未知であり、本番の token endpoint は `invalid_client` を返す（CRN-12）。sandbox の token は本番の検証点で拒否される（CON-11 CV-011）。
     - 登録数の上限は consumer_id ごとに置き、超えた場合は 429 を返す（CR14）。値は TBD（所有者 プラットフォームチーム長、期限 DEC-8 前）。RFC 7591 は、認可なしの登録要求について DoS を防ぐためにレート制限してよい（MAY）としている [N][^1]（§3）。
 
+    ## 4A. C7 の workload と交換可能な組の登録（版 0.2.0 で追加、preview）
+
+    ### 4A.1 なぜ要るか
+
+    - 内部のサービス間同期呼出し（INT-02 の種別 6、P-03）で token exchange を使うには、次の 2 つが要る [D]。(a) 呼出し元のインスタンスが、登録済みの SPIFFE ID を持つ X.509-SVID を持つこと（ARC-04 §2 の表、ADR-009 D09-01）。STS は actor の身元をこの SVID による mTLS から取る（ADR-009 D09-14）。(b) 「呼出し元 workload × 呼出し先サービス × scope の上限」が交換可能な組の登録簿にあること。登録簿にない exchange を STS は拒否する（ADR-009 D09-13）。
+    - 版 0.1.1 までは、どちらも本契約の範囲外で、契約がなかった。このため P-03 のチームは、基盤の側で誰かが手で登録しない限り、exchange の結合試験に進めなかった（ラウンド 6 の指摘）[D]。版 0.2.0 で、client と同じ形（sandbox はセルフ登録、本番は承認付きの申請）の登録手段を preview で加えた [D]。
+    - 登録エントリと組は client ではない。C7 には ClientMetadata を書かせない（§3）[D]。
+
+    ### 4A.2 workload の登録エントリ（WorkloadEntry）
+
+    - **SPIFFE ID は基盤が払い出し、登録者は指定できない（CR17）** [D]。path の形式が未決であり（ARC-04 W55-03、DL-71）、廃止した ID を別の workload に再割当てしないためである（W55-04）。WIMSE の identifier 草案は、識別子を別の workload に再割当てすべきでない（SHOULD NOT）とする [N][^9]（§4.5、RS-06#25）。Internet-Draft なので設計の参照にとどめる [D]。
+    - **selector は、基盤が管理し workload 自身が書き換えられない属性に限る**（ARC-04 W55-08）[D]。本 profile が受け付ける型は `k8s:ns`（実行基盤の namespace）、`k8s:sa`（service account）、`image:digest`（署名済みイメージの sha256 digest）の 3 つである [D]。
+      - `k8s:ns` と `k8s:sa` は必須とする。本番は `image:digest` も必須とする（CR16）[D]。
+      - label、annotation、Pod・コンテナの名前、hostname、環境変数、プロセスの名前・パス、イメージの tag、IP アドレスは受け付けない（CR15）[D]。これらは workload か配備する人が自分で書けるためである [D]。WIMSE の workload identity practices 草案は、マルチテナント基盤で偽造しやすい属性だけでアクセスや federation を許してはならない（MUST NOT）とする [N][^8]（§5.8、RS-06#27）。Internet-Draft なので設計の参照にとどめる [D]。
+      - `k8s:ns` は、その consumer_id に基盤が割り当てた namespace でなければならない。同じ selector の組を別の登録エントリがすでに持つ場合も拒否する（CR21）[D]。1 つの workload を 2 人の所有者が名乗れないようにするためである [D]。
+      - selector の妥当性は、本番では AR-6 の承認者が見る（INT-04 OB-2(b)、ARC-04 W55-08 の第三者の構成レビュー）[D]。
+    - **所有者のない登録エントリは作れない**（`platform_owner` の consumer_id と副所有者の連絡先を必須にする。ARC-04 W55-11）[D]。
+    - 登録エントリは鍵を受け取らない。SVID の鍵は workload の側で作り、無関係なインスタンスと共有しない（ARC-04 W55-06）[D]。
+    - 呼出し先として exchange を受ける場合は `expose_as_service: true` を指定する。基盤はサービスの正規識別子（不透明値。ADR-009 D09-11、ADR-021 の名前空間台帳）を払い出し、応答の `service_id` に入れる。呼出し元は exchange の `resource` にこの値を使う [D]。
+    - 削除（廃止）すると、SPIFFE ID は墓石として保持し再発番しない（W55-04、ADR-021 D21-13）。SVID の新規発行を止め、発行済みの SVID は寿命（W55-09）で切れる。その workload を呼出し元か呼出し先に持つ交換可能な組は同時に無効になる [D]。
+    - 環境の分離（G-141(a) の登録段階）[D]。sandbox の登録エントリは sandbox の trust domain で SPIFFE ID を払い出す。本番の trust domain の SPIFFE ID を要求のどこかに含む sandbox の登録は拒否する（CR20）[D]。WIMSE の mutual-tls 草案は、認可ポリシーが trust domain と trust anchor を考慮せずに識別子の path だけを評価してはならない（MUST NOT）とする [N][^10]（§5、RS-06#25）。本 profile は登録エントリと組を trust domain を含む完全な SPIFFE ID で記録するので、path が同じ sandbox の ID は本番の組に一致しない [D]。
+
+    ### 4A.3 交換可能な組（ExchangePair）
+
+    - 登録内容は、呼出し元（`caller_spiffe_id`。同じ環境の登録済みエントリ）、呼出し先（`callee_service_id`。§4A.2 で払い出したサービスの正規識別子か、基盤が提供する参照サービス）、scope の上限（`max_scope`）、理由（`justification`）である（ADR-009 D09-13）[D]。
+    - `max_scope` は空にできず、wildcard（`*`）を含められない（CR19）[D]。STS が発行する scope は、subject_token の scope と `max_scope` の共通部分以下になる（ADR-009 D09-15）[D]。
+    - 申請するのは呼出し元の所有者、承認するのは呼出し先の所有者である（ADR-009 D09-13、INT-04 OB-2(c)）[D]。sandbox でもこの承認は省かない [D]。
+      - sandbox で、呼出し先が自分の consumer_id の workload か基盤の参照サービスなら、承認者は申請者自身と同じ所有者なので、201 で即時に有効になる [D]。
+      - 呼出し先が他の consumer の workload なら、202 と `status: pending_callee_approval` を返し、呼出し先の所有者が `decideSandboxExchangePair` で承認すると有効になる [D]。中央の承認は待たない（G-141(c)）[D]。
+    - 変更は ADR-016 の版管理と監査の対象にする（ADR-009 D09-13）。本契約は登録・削除の操作だけを定め、版管理の仕組みは範囲外とする [D]。
+
+    ### 4A.4 本番の申請
+
+    - 本番は §5 の申請 API に、申請種別 `subject: workload` か `subject: exchange_pair` で申請する [D]。本番の登録エントリと組は、承認がそろうまで払い出さない [D]。
+    - 承認者案 [D]。AR-6（workload の create・update）: プラットフォームチームの有資格者（作成者≠承認者。selector の妥当性を見る。INT-04 OB-2(b) と同じ）。AR-7（exchange_pair の create・update）: 呼出し先の所有者（ADR-009 D09-13）。`max_scope` が privileged の scope（F1・F2）を含む組は AR-3 も要る。retire は AR-0 で、所有者だけで成立する。
+    - 申請から払出しまでの SLI は未採番である（INT-04 ONB-R3）[D]。
+
+    ### 4A.5 API ができるまでの暫定手順
+
+    - 2026-10-15 時点で、共有 sandbox は未提供（K11-3）、契約試験キット本体（DL-120）は未実装で、PoC（POC-03）に登録 API はない [D]。PoC の workload は `12_poc/code/lib/topology.js` の固定一覧 `WORKLOADS` にあり、交換可能な組は `12_poc/code/config/ledger.json` の `exchange_registry`（呼出し元・呼出し先・`max_scope`）にあって、STS（`12_poc/code/sts/server.js`）が起動時に読む（2026-10-15 にソースで確認）[D]。
+    - それまでは次のどちらかで進める [D]。
+      1. **ローカル**: PoC を手元に複製し、`WORKLOADS` に名前を、`ledger.json` の `services` と `exchange_registry` に行を加えて起動し直す。この変更はリポジトリにコミットしない（POC-03 の試験の前提が変わるため）。selector の検査、承認、負例 CRN-21〜CRN-30 は再現できない。
+      2. **共有 sandbox の提供後で API の提供前**: S1 窓口（INT-00 §8.1）に、本契約の WorkloadEntry・ExchangePair と同じ項目を書いて依頼し、プラットフォームチームが手で登録する。依頼の項目を本契約のスキーマに合わせておけば、API の提供後にそのまま移せる。
+    - API の実装の所有者は PEP SDK・開発者支援チーム（ARC-04 の所有者と協議）、期限は DEC-8 第 1 段の前（キット本体 DL-120 の受入れが DEC-8 第 1 段の入力になるため。deliverables.md の DL-120 行）とする（x-open-issues の G-141(c) の workload）[D]。
+
     ## 5. 本番の登録申請 API（preview）と承認フロー（OB-2(d) の承認者案）
 
     - 本番の AS では動的登録を無効にする（ARC-02 §9.2 行 34。本番での採否は未決（ADR-022、ARC-02 AR-3））[D]。本番の client は、本 API への申請と承認を経て、プラットフォームが AS に払い出す [D]。
     - 申請者は consumer 台帳に登録されたチームの人である。認証は社内の workforce IdP（MFA 必須、ADR-008 D8-53）で行う [D]。
+    - 申請の対象（`subject`）は `client`（既定）、`workload`、`exchange_pair` の 3 つである（後の 2 つは版 0.2.0 で追加。§4A.4）[D]。
     - 申請の種類は `create`（新規）、`update`（変更）、`retire`（廃止）の 3 つである。`retire` は権限を減らす変更なので、所有者だけで成立させ、中央の承認を待たない [D]。
     - 承認の要否は x-approval-rules で決まり、申請の応答の `required_approvals` に入る [D]。すべての承認がそろうまで払出しは行わない [D]。
     - 承認者は有資格者名簿（operating-model §5.5）に載った者に限り、申請者自身は承認できない（403。CRN-17）[D]。
     - 承認者案の根拠 [D]。
-      - AR-1（全申請）を CP-2 相当にしたのは、client の登録が単一テナントか第一者の構成の変更であり、operating-model §7.2 の CP-2 が作成者≠承認者の peer review を定めているためである。ADR-022 D-7-1 の「下層の実装変更は peer review」にも合う。
+      - AR-1（全申請）を CP-2 相当にしたのは、client の登録が単一テナントか第一者の構成の変更であり、operating-model §7.2 の CP-2 が作成者≠承認者の peer review を定めているためである。ADR-022 D-7-1 の「下層の実装変更は peer review」にも合う。ただし AR-1 は基盤側の審査であり、所有テナントの意思を確かめない。単一テナントの変更でも、app-only の権限の付与は AR-4（CP-1）、所有テナントの同意は AR-8 で別に求める（版 0.3.0）。
       - AR-2（第三者・外部 RP）は ADR-005 D7-1 の「登録時の発行者確認」を写した。
       - AR-3（層 F・privileged scope）は、ADR-020 D20-03 が層を client の profile 属性と操作の分類の組で決めるとしているためである。層 F の client の誤登録は、F1・F2 の管理 API を外部から呼べる状態を作る。
-      - AR-4（複数テナントにまたがる app-only の権限）は、ADR-008 D8-54 が app-only 権限の付与を CP-1 の保護操作としているためである。
+      - AR-4（app-only の権限）は、ADR-008 D8-54 が app-only 権限の付与を一律に CP-1 の保護操作としているためである（T-071）。版 0.2.0 までは「複数テナントにまたがる」場合に限っていたが、D8-54 に単一テナントを除く定めはなく、operating-model §7.2 の CP-2（単一テナントの設定）に当てはめて CP-1 から外す理由もないので、版 0.3.0 で app-only の権限の付与すべてに広げた。client_credentials は利用者を介さないので、その client が要求する scope はすべて app-only の権限とみなす。RFC 6749 §4.4 は、client 自身の管理下にない資源への client_credentials のアクセスを、事前に AS と取り決めた（previously arranged）ものに限り、取決めの方法は範囲外としている [N][^11]。
       - AR-5（C3 で mTLS の代わりに DPoP）は ADR-005 K-3 の例外の扱いで、受容票を必須にする。
-    - 本書が新たに置いた承認者はない。AR-1〜AR-5 は既存の区分（CP-1・CP-2、ADR-005 D7-1、ADR-008 D8-54、K-3）への当てはめである [D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
+      - AR-6（workload）は INT-04 OB-2(b) の「プラットフォームチーム（作成者≠承認者）」を写した。AR-7（交換可能な組）は ADR-009 D09-13 の「呼出し先の所有者の承認」を写した。
+      - AR-8（所有テナントの管理者の同意。版 0.3.0）は、ADR-005 D7-2 の「低リスク以外はテナント管理者の同意とし、privileged 操作として扱う」を登録の段階に写した。AR-1〜AR-4 の承認者はすべて基盤側の者なので、悪意のある社内チーム（ATK-17）や侵害された consumer（ATK-06）が `platform_owning_tenant` に被害テナントを書くと、そのテナントの誰も知らないまま、そのテナントの資源に届く client が払い出される（テナント越境）。RFC 6749 §4.4 の「事前の取決め」で守られるべき当事者は資源の所有者（ここでは所有テナント）であり、基盤側の承認ではその意思を確かめられない [N][^11][D]。先行例として、Microsoft Entra ID の admin consent workflow では、審査者に指定しても権限は昇格せず、承認するには管理者同意を付与できる権限が要り、Microsoft Graph のアプリケーション権限を求める要求を承認できるのは Global Administrator だけである [V][^12]（RS-17#63）。同意を求める範囲は、app-only の権限すべてと、操作の分類登録（DL-67）で低リスクに分類されていない scope である。分類が未登録の scope は低リスクとみなさない（fail-closed）[D]。
+      - AR-8 の同意記録（`tenant_consent`）は、(a) 所有テナントの管理画面の承認 API（テナント管理者が申請 ID と scope の一覧を見て承認する。API の契約は本書の範囲外で、§9 H-17）の記録 ID か、(b) テナント管理者が署名した同意票の参照のどちらかである。同意記録は、テナント・申請（request_id か target_client_id）・scope の集合・有効期限に束縛し、同意の時点で同意者がそのテナントの管理者の役割を持っていたことを、受付時と払出しの直前に基盤が検査する。他テナントの同意、別の申請や狭い scope の同意、期限切れ、管理者でない者の同意は CR22 で拒否する [D]。AR-8 の判断は基盤側の承認者（workforce IdP の有資格者）が記録できない（403。CRN-34）[D]。
+      - 同意を得られても、テナント管理者自身が悪意を持つ場合（ATK-02）や、管理者が欺かれて同意する場合（consent phishing、T-007）は防げない。この残余は §9 H-18 で残余リスク台帳に申し送った [D]。
+    - 本書が新たに置いた承認者はない。AR-1〜AR-8 は既存の区分（CP-1・CP-2、ADR-005 D7-1・D7-2、ADR-008 D8-54、K-3、INT-04 OB-2(b)、ADR-009 D09-13）への当てはめである [D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
     - 申請から払出しまでの時間は SLI が未採番である（INT-04 ONB-R3）[D]。
 
     ## 6. 凍結区分（ADR-022 D-1・D-2）
@@ -191,7 +251,8 @@ info:
     | `client_id` の形式と「不透明に扱う」という契約 | 不可逆（ADR-021 D21-22） |
     | ClientMetadata の種別ごとの規則、理由コード CR01〜CR14 の意味 | GA（ARC-02 §6 の写し。DEC-8 前は draft） |
     | sandbox の登録・管理 endpoint（RFC 7591/7592 profile） | preview（ADR-022 D-2 の「非本番環境の動的登録」） |
-    | 本番の登録申請 API、承認規則 AR-1〜AR-5 | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
+    | 本番の登録申請 API、承認規則 AR-1〜AR-8、所有テナントの同意の参照（tenant_consent）と理由コード CR22（版 0.3.0） | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
+    | workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair）、WorkloadEntry・ExchangePair のスキーマ、理由コード CR15〜CR21 | preview（版 0.2.0 で追加。ADR-022 D-2 に該当する行がない。§9 H-11） |
     | ホスト名、initial access token の寿命、登録数の上限、承認の SLI | 凍結しない |
 
     - GA の ClientMetadata 規則は、preview の endpoint に必須で依存していない。規則は申請 API と sandbox の両方で同じスキーマとして使うので、endpoint が変わっても規則は残る（ADR-022 D-1-1）[D]。
@@ -206,7 +267,7 @@ info:
 
     ## 8. 未決
 
-    info.x-open-issues に一覧化した。主なものは、本番の登録手段の正式な区分と承認者（未決（ADR-022）、ONB-R2）、本番での動的登録の採否（ARC-02 AR-3）、workload の sandbox セルフ登録の契約（G-141(c) の残り）、拡張項目の名前空間（未決（ADR-021））、Back-Channel Logout の登録項目（未決（ADR-006 L6-2））である [D]。
+    info.x-open-issues に一覧化した。主なものは、本番の登録手段の正式な区分と承認者（未決（ADR-022）、ONB-R2）、本番での動的登録の採否（ARC-02 AR-3）、§4A の API の実装と暫定手順の解消（G-141(c) の workload）、selector の型の一覧の確定（ARC-04 W55-08・DL-71）、拡張項目の名前空間（未決（ADR-021））、Back-Channel Logout の登録項目（未決（ADR-006 L6-2））である [D]。
 
     ## 9. 他文書への申し送り（本契約は編集していない）
 
@@ -219,11 +280,22 @@ info:
     | H-5 | 05_adr/ADR-022 D-2 の OIDC/OAuth profile 行 | 本番の登録手段（本契約の申請 API）を preview に加え、承認者 AR-1〜AR-5 を決める（ONB-R2、INT-02 §9.1 の指摘と同じ） |
     | H-6 | 04_architecture/token-profile.md（ARC-02）§11 | 「client 登録」行に本契約を加える |
     | H-7 | 07_slo/numeric-contracts.md（DL-20） | 本番の登録申請から払出しまでの SLI を採番する（INT-04 ONB-R3 と同じ） |
-    | H-8 | 01_governance/assumptions-register.md | 新しい仮定は置いていない。追加は不要 |
+    | H-8 | 01_governance/assumptions-register.md | 新しい仮定は置いていない。追加は不要（版 0.2.0 の §4A も同じ） |
+    | H-9 | 10_integration/integration-patterns.md（INT-02）§5.1・§5.2・要旨 4・対応表 G-138 | （ラウンド 6）§5.1 に 2 行を加える。**I-16「workload ID の登録（SVID 登録エントリ。sandbox はセルフ、本番は承認付き）」**: 本契約 §4A.2（`registerSandboxWorkload`・`deleteSandboxWorkload`、申請種別 `workload`）、状態は「定義あり（draft、preview、API 未実装。暫定手順は §4A.5）」。**I-17「交換可能な組の登録」**: 本契約 §4A.3（`registerExchangePair`・`decideSandboxExchangePair`・`deleteExchangePair`、申請種別 `exchange_pair`）、状態は同じ。§5.2 の行列に I-16・I-17 の列を足し、少なくとも P-03・P-05・P-22・P-24（指摘で名指しされたパターン。exchange を使う他のパターンは INT-02 の作成者が洗い出す）に ● を付ける。G-138 の判定には、版 0.1.1 の時点では P-03・P-05・P-22・P-24 が契約に定義のないインタフェースに依存していたこと、版 0.2.0 で契約は定義されたが API が未実装であることを書く。§9.1・残課題も合わせる |
+    | H-10 | 10_integration/README.md（INT-00）§6.1・§7.1 | （ラウンド 6）§6.1 の「client 登録は CON-14 でセルフ登録」は C7 に当てはまらなかった。版 0.2.0 で C7 の登録手段（§4A）が preview で契約になったが API は未実装であることと、暫定の手順（PoC の `topology.js`・`config/ledger.json` の手元改変、または S1 経由の手動登録。本契約 §4A.5）を明記する。§7.1 の client 登録の行の次に、workload・交換可能な組の登録の行（提供時期は DL-120 と共有 sandbox K11-3 に従う）を加える |
+    | H-11 | 05_adr/ADR-022 D-2、11_contracts/README.md（CON-00）§3 | （ラウンド 6）D-2 の表に workload の登録エントリと交換可能な組の登録の行がない。preview として加えるか、ADR-009 の範囲として別契約にするかを決める。CON-00 §3 の対応表に I-16・I-17 の行を加える |
+    | H-12 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§5.2 (c)・§6.3 | （ラウンド 6）MK-02（STS 役）に sandbox の登録エントリと交換可能な組の登録（本契約 x-mock の MK-02 案）を加え、§5.2 (c) の sandbox セルフ登録の対象に workload と組を明記し、§6.3 の登録族に CRN-21〜CRN-30 を加える |
+    | H-13 | 10_integration/onboarding.md（INT-04）§4.3 | （ラウンド 6）OB-2(b) の SVID 登録エントリと (c) 交換可能な組の行の「手順」に、本契約の申請種別 `workload`・`exchange_pair` と承認者案 AR-6・AR-7 を書く。sandbox の行の「workload」を本契約 §4A の操作に結び付ける |
+    | H-14 | 12_poc/code（POC-03） | （ラウンド 6）workload と交換可能な組を固定の一覧ではなく登録で追加できるようにするかを、DL-120 の作成者と決める。PoC の試験の前提を変えるため、本契約からは編集しない |
+    | H-15 | 04_architecture/workload-identity-delegation.md（ARC-04）W55-08 | （ラウンド 6）本契約が受け付ける selector の型（`k8s:ns`・`k8s:sa`・`image:digest`）と拒否する属性の一覧を W55-08 の例示と照合し、実行基盤の選定（W55-07）の後に確定する |
+    | H-16 | 03_threat-model/threat-catalog.md（THR-03）§5.14 | （ラウンド 7）「本番の client 登録での所有テナントの詐称によるテナント越境（app-only の権限を、被害テナントの同意なく得る）」を起票する。攻撃者は ATK-17（内部不正の開発者）と ATK-06（侵害された microservice・consumer）、分類は CE-14／E, I。新しい T-ID とするか、T-071（app-only 権限の付与）の予防・検証の欄に本契約の AR-4・AR-8 と CRN-31〜CRN-37 を写すかは THR-03 の所有者が決める。本書の推奨は新しい T-ID である。T-071 の攻撃の起点は非本番テナント・旧アプリで、所有テナントの詐称を含まないためである。採番は THR-03 の所有者による |
+    | H-17 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)・ONB-R2、05_adr/ADR-022 D-2（H-5）、08_operations/operating-model.md §7.2 | （ラウンド 7）OB-2(d) の承認者に AR-8（所有テナントの管理者の同意）を加え、AR-4 を「app-only の権限の付与すべて」に改める。所有テナントの管理画面の承認 API（AR-8 の (a)）の契約の置き場所を決める（DL-120 か新しい契約）。operating-model §7.2 の CP-1 の対象に「app-only 権限の付与（単一テナントを含む）」を明記し、CP-2 の「単一テナントの設定」との境界を ADR-008 D8-54 に合わせる。H-5 の承認者の範囲は AR-1〜AR-8 に読み替える |
+    | H-18 | 00_decision/05-residual-risk-register.md（DCS-05）、traceability/open-items.md（TRC-11）§4.11 | （ラウンド 7）(1) 残余リスク: AR-8 の同意があっても、悪意のあるテナント管理者（ATK-02）の同意と、欺かれた管理者の同意（T-007）による app-only の付与は防げない。検知は同意と払出しの監査記録、テナント管理者への払出しの通知、app-only の client の棚卸し（ADR-008 D8-54）による。受容者案は T-071 と同じ段 2。(2) POA&M: 本指摘（ラウンド 4 の MP-4-21 と同じ趣旨）の是正の残り（H-16・H-17、AR-8 の (a) の API、CRN-31〜CRN-37 の実行）を起票する。あわせて、OI-K01〜OI-K07 の対象はラウンド 1〜3 の Medium/Low 106 件だけなので、ラウンド 4・5 の Medium/Low 62 件の群を起票する。62 件は mock-panel-report §0 の件数（ラウンド 4 は指摘 73 件・Critical/High 42 件、ラウンド 5 は 59 件・28 件）の差 31＋31 から算出した |
+    | H-19 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3 | （ラウンド 7）MK-01 の本番の申請 API のモックに AR-8 と CR22 を加え、§6.3 の登録族に CRN-31〜CRN-37 を加える（H-3 の追加分） |
 
     ## 10. 誠実性
 
-    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。版 0.2.0 で加えた §4A の 5 操作と申請種別は、実装も負例 CRN-21〜CRN-30 の実行もない [D]。版 0.3.0 の AR-8・CR22・CRN-31〜CRN-37 も同じく実装・実行していない。所有テナントの管理画面の承認 API はまだどの契約にもない（§9 H-17）[D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 
     ## 参考文献
 
@@ -240,6 +312,16 @@ info:
     [^6]: N. Sakimura, J. Bradley, M. Jones / OpenID Foundation『OpenID Connect Dynamic Client Registration 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-registration-1_0.html （参照箇所: §2 Client Metadata の id_token_signed_response_alg・token_endpoint_auth_method・token_endpoint_auth_signing_alg、確認日: 2026-10-15。research ノート外）
 
     [^7]: T. Lodderstedt, J. Bradley, A. Labunets, D. Fett / IETF『Best Current Practice for OAuth 2.0 Security』RFC 9700, BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.1、§2.4、確認日: 2026-10-03。RS-04#1, #13, #18。§2.1 の文言は起草者が 2026-10-15 に再確認）
+
+    [^8]: A. Schwenkschuster, Y. Rosomakho / IETF『Workload Identity Practices』draft-ietf-wimse-workload-identity-practices-07, 2026-09-22（Internet-Draft）. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-identity-practices-07 （参照箇所: §5.8、確認日: 2026-10-03。RS-06#27。ARC-04 の脚注 13 と同じ原典）
+
+    [^9]: Y. Rosomakho, J. Salowey / IETF『Workload Identifier』draft-ietf-wimse-identifier-03, 2026-07-06（Internet-Draft）. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-identifier-03 （参照箇所: §4.5、確認日: 2026-10-03。RS-06#25）
+
+    [^10]: J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02, 2026-07-06（Internet-Draft）. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5、確認日: 2026-10-03。RS-06#25）
+
+    [^11]: D. Hardt (Ed.) / IETF『The OAuth 2.0 Authorization Framework』RFC 6749, Standards Track, 2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §1.3.4、§4.4 冒頭（client 自身の管理下の資源か、事前に AS と取り決めた他の資源所有者の資源に限る。取決めの方法は範囲外）、確認日: 2026-10-15。§10.4 は RS-04#70。§1.3.4・§4.4 は research ノート外で、是正の作成者が RFC Editor から取得して照合）
+
+    [^12]: Microsoft『Configure the admin consent workflow』Microsoft Entra ID, Microsoft Learn, ms.date 2024-12-29. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow （参照箇所: 冒頭、Enable the admin consent workflow、確認日: 2026-10-03。RS-17#63。製品の挙動の先行例として引き、規範の根拠にはしない）
 
     ## レビュー記録
 
@@ -258,6 +340,26 @@ info:
     | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
     |---|---|---|---|---|
     | R2-1 | High・devlead | 文書ID「CON-13」を本契約（仮番）とライフサイクル事象のスキーマ（案）が同時に名乗っている。本契約は CON-00 §2.1 の一覧と §2.5 の役割別の表になく、deliverables.md §8 にも行がないため、G-118・G-131 の確認対象から漏れる | **対応**。deliverables.md §4.5・§8 で本契約を CON-14／DL-119 と確定し、x-document-id・x-deliverable・x-depends-on・冒頭の文書ID・§9 H-1 を合わせた。CON-13 はライフサイクル事象のスキーマ（DL-118）、CON-12 は AsyncAPI 契約（DL-117）で確定した。版は CON-01 CP-60 (1) に従い 0.1.1 に上げた。Redocly lint 2.63.0 を版 0.1.1 で再実行し、エラー 0・警告 0 を確かめた [M]（CON-00 §2.3）。本文の仮番「CON-13」を参照している INT-04（§4.3 の表、ONB-R2）と CON-11 §5.2 (c) の更新は担当外のため申し送った（CON-00 §9 申し送り 10） | info（x-document-id、x-deliverable、x-depends-on、version、description 冒頭、§9 H-1、本表） |
+
+    ### ラウンド 6（模擬パネル、2026-10-15、版 0.1.1 → 版 0.2.0）
+
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。並行作業の約束により、本ラウンドで編集したのは本ファイルだけである。他文書の是正は §9 の H-9〜H-15 で申し送った [D]。
+
+    | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | R6-1 | High・devlead | 約 300 サービスで最も多い内部のサービス間同期呼出し（種別 6、P-03）が token exchange を使うには、(a) sandbox での workload（SVID）の登録エントリ（ARC-04 W55-08、OB-2(a)(b)）と (b) 交換可能な組の登録簿（ADR-009 D09-13、OB-2(c)）が要るが、どちらも契約がない。本契約は C7 と登録簿を範囲外とし、INT-02 §5.1 にも行がないため、G-138 の未定義依存に P-03・P-05・P-22・P-24 が数えられていない。INT-00 §6.1 の「client 登録は CON-14 でセルフ登録」も C7 に当てはまらず、PoC でも workload は `lib/topology.js` の手編集でしか追加できない | **対応（本ファイル分）。他文書は申し送り**。(1) §4A を新設し、preview の 5 操作を加えた: `registerSandboxWorkload`・`deleteSandboxWorkload`（登録エントリ）、`registerExchangePair`・`decideSandboxExchangePair`・`deleteExchangePair`（交換可能な組。呼出し先の所有者の承認は sandbox でも残す）。(2) 本番の申請 API に申請種別 `subject: workload／exchange_pair` と承認者案 AR-6（プラットフォームチーム、OB-2(b)）・AR-7（呼出し先の所有者、D09-13）を加えた。(3) selector を基盤管理の属性（`k8s:ns`・`k8s:sa`・`image:digest`）に限り、label・環境変数・tag などを拒否する規則と理由コード CR15〜CR21、負例 CRN-21〜CRN-30 を置いた。根拠は ARC-04 W55-03・W55-04・W55-06・W55-08・W55-11、ADR-009 D09-11〜D09-15、WIMSE 草案（RS-06#25・#27。脚注 8〜10。Internet-Draft なので設計の参照にとどめる）。(4) §1 の範囲表と x-open-issues の G-141(c) を改め、所有者と期限（DEC-8 第 1 段の前）を付けた。(5) 暫定の手順（PoC の `topology.js` と `config/ledger.json` の `exchange_registry` の手元改変、または S1 経由の手動登録）を §4A.5 に書いた。PoC のファイル位置は 2026-10-15 にソースで確かめた。(6) INT-02 §5.1 の I-16・I-17 の追加と §5.2・G-138 の判定（H-9）、INT-00 §6.1・§7.1（H-10）、ADR-022 D-2・CON-00 §3（H-11）、CON-11（H-12）、INT-04（H-13）、PoC（H-14）、ARC-04（H-15）は担当外のため申し送った。版は操作の追加なので 0.2.0 に上げた（CON-01 CP-60 の通知の対象） | info（version、summary、x-depends-on、x-requirements、x-open-issues、x-approval-rules、x-reason-codes、x-negative-examples、x-mock、x-lint-notes）、description §0・§1・§3・§4A・§5・§6・§8・§9・§10・脚注 8〜10、paths（4 つの path を追加、申請 API の説明）、components（WorkloadEntry・ExchangePair ほか） |
+
+    - 本ラウンドで閉じられなかったもの [D]: §4A の API の実装とモック（DL-120）、INT-02 の行列と G-138 の判定への反映（H-9）、selector の型の確定（H-15）、作成者以外による照合。
+
+    ### ラウンド 7（模擬パネル、2026-10-15、版 0.2.0 → 版 0.3.0）
+
+    > 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。並行作業の約束により、本ラウンドで編集したのは本ファイルだけである。他文書の是正は §9 の H-16〜H-19 で申し送った [D]。
+
+    | # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | R7-1 | High・redteam | 悪意のある社内チームや侵害された consumer が、`platform_owning_tenant` に被害テナント T を書いた client_credentials の client（単一テナントの app-only scope）を本番に申請すると、AR-1（認証・IdP チームの peer review）だけで払い出される（テナント越境）。AR-4（CP-1）は複数テナントにまたがる app-only に限られ、所有テナント側の同意を求める規則がない。ADR-005 D7-2（低リスク以外はテナント管理者の同意、privileged）と ADR-008 D8-54（app-only 権限の付与は一律 CP-1）に反する。ラウンド 4 の MP-4-21（Medium）と同じ趣旨だが是正されず、open-items（OI-K01〜OI-K07 はラウンド 1〜3 の 106 件だけ）にも残余リスク台帳にも起票がない | **対応（本ファイル分）。他文書は申し送り**。(1) AR-8 を新設した。`platform_owning_tenant` が顧客テナントで、app-only の権限か、DL-67 で低リスクに分類されていない scope（未分類を含む）を含む create・update には、そのテナントの管理者の同意記録（`tenant_consent`。テナント管理画面の承認 API の記録 ID か署名付き同意票）を必須にし、検査に通るまで status は pending_review のままで払い出さない。同意はテナント・申請・scope の集合・有効期限に束縛し、他テナントの同意の流用・別の申請や狭い scope の同意・期限切れ・管理者でない者の同意を CR22 で拒否する。AR-8 の判断を基盤側の承認者は記録できない。負例 CRN-31〜CRN-37（同意なし、他テナントの同意の流用、狭い scope の同意、基盤側による AR-8 の記録、管理者でない者・期限切れの同意、update での scope の追加と旧い同意の再使用、AR-4 なしの単一テナントの app-only）を加えた。根拠は ADR-005 D7-2、RFC 6749 §1.3.4・§4.4（2026-10-15 に原典で確認。脚注 11）、Entra の admin consent workflow の先行例（RS-17#63。脚注 12）。(2) AR-4 の適用を D8-54 に合わせ「client_credentials の client が要求する app-only の権限の付与すべて（単一テナントを含む）」に広げ、CP-2 に当てはめない理由を §5 に書いた。(3) 脅威の起票（THR-03。新しい T-ID を推奨、または T-071 に写す）は H-16、OB-2(d)・ADR-022・operating-model の CP-1 の範囲は H-17、残余リスク（悪意のある・欺かれたテナント管理者の同意）と POA&M（本件の残りと、ラウンド 4・5 の Medium/Low 62 件の群）の起票は H-18、CON-11 のモックと負例は H-19 で申し送った。版は申請本文の項目・承認規則・理由コードの追加なので 0.3.0 に上げた（CON-01 CP-60 の通知の対象） | info（version、x-depends-on、x-requirements G-124、x-freeze-classes、x-open-issues、x-approval-rules、x-reason-codes、x-negative-examples、x-mock、x-lint-notes）、description 冒頭・§0 の 4・§5・§6・§9 H-16〜H-19・§10・脚注 11・12、paths（申請 API の説明・例）、components（ClientRegistrationRequest の tenant_consent、TenantConsentRef、ApprovalItem、ApprovalDecision、RegistrationRequestStatus） |
+
+    - 本ラウンドで閉じられなかったもの [D]: 所有テナントの管理画面の承認 API の契約（H-17）、THR-03 への起票（H-16）、残余リスク台帳と POA&M への起票（H-18）、CON-11 への取込み（H-19）、AR-8 の確定（ONB-R2）、CRN-31〜CRN-37 の実行、作成者以外による照合。
   x-lint-notes:
     - rule: Redocly CLI 2.63.0 lint（recommended 規則、設定ファイルなし）
       result: エラー 0・警告 0（起草者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置き、リポジトリには残していない）
@@ -265,13 +367,23 @@ info:
     - rule: Python jsonschema 4.26.0（Draft202012Validator、FormatChecker あり）
       result: components.schemas の check_schema に合格。examples 6 件が適合し、負例 10 件（CRN-02〜CRN-09 相当、C4 の層 F、C5 の refresh_token）がスキーマで拒否された（起草者が 2026-10-15 に実行）
       reason: CR04・CR10〜CR14 は設定・状態に依存するためスキーマでは検査できない（ClientMetadata の x-constraint）
+    - rule: 版 0.2.0（ラウンド 6）の再検査。Redocly CLI 2.63.0 lint（recommended）と Python jsonschema 4.26.0（Draft202012Validator、FormatChecker あり）
+      result: Redocly はエラー 0・警告 0。components.schemas の check_schema に合格し、examples 12 件（追加 5 件を含む）が適合した。§4A のスキーマ負例 10 件（CRN-21〜CRN-24、CRN-27 相当、CR18、不正な image digest、空の max_scope、本文のない workload 申請、target_id のない exchange_pair の update）が拒否され、正例 3 件（workload の create、exchange_pair の retire、subject 省略の client の retire）が適合した（起草者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた）
+      reason: 申請本文の分岐は if/then/else では Redocly の no-required-schema-properties-undefined 警告が出たため、subject と kind の組ごとの anyOf にした。CR19〜CR21 と CRN-25・CRN-26・CRN-28〜CRN-30 は状態に依存するためスキーマでは検査できない
+    - rule: 版 0.3.0 の再検査（Redocly CLI 2.63.0 lint、Python jsonschema 4.26.0）
+      result: Redocly はエラー 0・警告 0。check_schema に合格し、examples 13 件（追加の createTenantAppOnlyClient を含む）が適合した。TenantConsentRef は form のない値と enum 外の form を拒否した。版 0.2.0 のスキーマ負例 10 件は引き続き拒否された（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた）
+      reason: AR-8 の判定（同意のテナント・申請・scope の集合・期限・同意者の役割）と CRN-31〜CRN-37 は状態に依存するため、スキーマでは検査できない。tenant_consent を AR-8 に当てはまる申請で必須にする規則も、scope の分類（DL-67）に依存するのでスキーマに書かず、受付時の検査（CR22）と required_approvals で表す
   x-open-issues:
     - id: ADR-022（本番の登録手段）
-      text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-5 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
+      text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-8 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
     - id: ARC-02 AR-3
       text: 本番の AS で RFC 7591 の動的登録を許すか。本契約は無効を前提とする。許す場合は発行者確認（ADR-005 D7-1）を経た client に限る
     - id: G-141(c) の workload
-      text: sandbox の workload（SVID）のセルフ登録の契約は本契約の範囲外で、まだない。所有者 PEP SDK・開発者支援チーム（ARC-04 の所有者と協議）、期限 DEC-8 前
+      text: 版 0.2.0 で、workload（SVID 登録エントリ）と交換可能な組の登録手段を preview で契約にした（§4A）。未了は API とモックの実装（DL-120）、INT-02 §5.1 への I-16・I-17 の追加と G-138 の判定（§9 H-9）、ADR-022 D-2 での区分（H-11）。実装までは §4A.5 の暫定手順による。所有者 PEP SDK・開発者支援チーム（ARC-04 の所有者と協議）、期限 DEC-8 第 1 段の前
+    - id: selector の型（ARC-04 W55-08）
+      text: 受け付ける型を k8s:ns・k8s:sa・image:digest の 3 つに置いた。実行基盤の選定（W55-07、ADR-001 の評価枠）で型の名前と組が変わり得る。確定は ARC-04 の所有者、期限 G3（§9 H-15）
+    - id: sandbox の参照サービス
+      text: 基盤が sandbox に置く参照サービス（呼出し先として誰でも組を作れるもの）の一覧は未定。決める人 プラットフォームチーム長、期限 DEC-8 第 1 段の前
     - id: ADR-021 D21-28（拡張項目名）
       text: platform_client_category・platform_owner・platform_owning_tenant・platform_risk_layer・platform_acceptance_ref の名前。外部に出す名前は自社所有ドメインで修飾する規則との関係。DEC-8 前
     - id: ADR-021 D21-23（client_id の値域）
@@ -293,9 +405,12 @@ info:
     rules:
       - { id: AR-1, applies: "kind が create か update の全申請", approver: "認証・IdP チームの有資格者（作成者≠承認者）", basis: "operating-model §7.2 CP-2、ADR-022 D-7-1", checks: "種別ごとの規則の自動検査の結果、scope の最小化、所有者・副所有者の有無" }
       - { id: AR-2, applies: "platform_client_category が C3・C4・C6、または外部の発行者のソフトウェア", approver: "認証・IdP チームの有資格者（発行者確認の記録を付ける）", basis: "ADR-005 D7-1", checks: "発行者の確認、redirect URI のホストの所有" }
-      - { id: AR-3, applies: "platform_risk_layer が F、または privileged の scope（F1・F2）を含む", approver: "CISO 組織のセキュリティレビュアー（非同期）を AR-1 に加える", basis: "ADR-020 D20-03、ARC-02 §8", checks: "PAR・mTLS・alg の固定値、操作の分類登録（DL-67）との整合" }
-      - { id: AR-4, applies: "client_credentials で、複数テナントにまたがる権限（app-only）を要求する", approver: "別報告系統の二者（CP-1 相当）", basis: "ADR-008 D8-54、operating-model §7.2 CP-1", checks: "テナント横断の必要性、権限の上限" }
+      - { id: AR-3, applies: "platform_risk_layer が F、または privileged の scope（F1・F2）を含む（exchange_pair の max_scope を含む）", approver: "CISO 組織のセキュリティレビュアー（非同期）を AR-1 に加える", basis: "ADR-020 D20-03、ARC-02 §8", checks: "PAR・mTLS・alg の固定値、操作の分類登録（DL-67）との整合" }
+      - { id: AR-4, applies: "grant_types に client_credentials を含み、scope（app-only の権限）を新たに要求するか広げる create・update。単一テナントか複数テナントかを問わない（版 0.3.0 で広げた。版 0.2.0 までは複数テナントにまたがる場合だけ）", approver: "別報告系統の二者（CP-1 相当）", basis: "ADR-008 D8-54（app-only 権限の付与は CP-1。T-071）、operating-model §7.2 CP-1、RFC 6749 §4.4", checks: "app-only である必要性（委任で足りないか）、権限の上限、対象テナントの範囲（複数テナントならテナント横断の必要性）、AR-8 の要否" }
       - { id: AR-5, applies: "C3 で tls_client_certificate_bound_access_tokens の代わりに dpop_bound_access_tokens を使う", approver: "AR-1 に加え、受容票（platform_acceptance_ref）の参照が必須", basis: "ADR-005 K-3", checks: "受容票の有効期限" }
+      - { id: AR-6, applies: "subject が workload で、kind が create か update", approver: "プラットフォームチームの有資格者（作成者≠承認者）", basis: "INT-04 OB-2(b)、ARC-04 W55-08、operating-model §7.2 CP-2", checks: "selector が基盤管理の属性だけで、image:digest を含むこと。namespace が申請者の consumer に割り当て済みであること。所有者・副所有者の有無（W55-11）" }
+      - { id: AR-7, applies: "subject が exchange_pair で、kind が create か update", approver: "呼出し先の所有者", basis: "ADR-009 D09-13、INT-04 OB-2(c)", checks: "呼出しの必要性、max_scope の最小化" }
+      - { id: AR-8, applies: "subject が client の create・update で、platform_owning_tenant が顧客テナントであり、scope に app-only の権限（grant_types に client_credentials を含む client の scope すべて）か、操作の分類登録（DL-67）で低リスクに分類されていない scope（未分類を含む）がある。update では scope・grant_types・platform_owning_tenant を変えるとき（版 0.3.0）", approver: "所有テナント（platform_owning_tenant）の管理者。基盤側の承認者は記録できない（CRN-34）", basis: "ADR-005 D7-2、ARC-02 §6（テナント管理者の同意は privileged、F2）、RFC 6749 §1.3.4・§4.4、先行例 RS-17#63", checks: "tenant_consent（consent_ref）があり、tenant_id が platform_owning_tenant と一致し、同意が本申請（request_id か target_client_id）と要求する scope の集合を覆い、期限内で、同意の時点で同意者がそのテナントの管理者であること。満たさなければ CR22。検査に通るまで status は pending_review のままで払い出さない" }
       - { id: AR-0, applies: "kind が retire", approver: "不要（所有者だけで成立）", basis: "権限を減らす変更", checks: "払出し後、その client の grant と token を無効化する（RFC 7592 §2.3 の SHOULD を本番にも適用）" }
   x-reason-codes:
     CR01: { error: invalid_client_metadata, http: 400, meaning: token_endpoint_auth_method がない、または共有秘密の方式（client_secret_basic・client_secret_post・client_secret_jwt）、または種別と合わない方式 }
@@ -312,6 +427,14 @@ info:
     CR12: { error: invalid_client_metadata, http: 400, meaning: 別の consumer_id が同じ software_id と software_version で登録済み（RFC 7591 §5） }
     CR13: { error: invalid_client_metadata, http: 400, meaning: 本番の client に登録済みの公開鍵と同じ鍵（JWK thumbprint が一致） }
     CR14: { error: rate_limited, http: 429, meaning: consumer_id ごとの登録数か要求頻度の上限を超えた。Retry-After を返す }
+    CR15: { error: invalid_workload_selector, http: 400, meaning: "selector に、受け付けない型（label、annotation、Pod・コンテナの名前、hostname、環境変数、プロセスの名前・パス、イメージの tag、IP アドレスなど、workload か配備する人が書ける属性）がある（ARC-04 W55-08。版 0.2.0、preview）" }
+    CR16: { error: invalid_workload_selector, http: 400, meaning: "必須の selector（k8s:ns と k8s:sa。本番は image:digest も）がない（版 0.2.0、preview）" }
+    CR17: { error: invalid_workload_metadata, http: 400, meaning: "登録者が SPIFFE ID や service_id を指定した（基盤が払い出す。W55-03・W55-04。版 0.2.0、preview）" }
+    CR18: { error: invalid_workload_metadata, http: 400, meaning: "platform_owner（consumer_id と副所有者の連絡先）がない（W55-11。版 0.2.0、preview）" }
+    CR19: { error: invalid_exchange_pair, http: 400, meaning: "呼出し元が同じ環境の登録済みエントリでない、呼出し先が未知、max_scope が空か wildcard を含む、または同じ組が登録済み（ADR-009 D09-13。版 0.2.0、preview）" }
+    CR20: { error: invalid_workload_metadata, http: 400, meaning: "sandbox の登録で、本番の trust domain の SPIFFE ID を含む（環境の分離。版 0.2.0、preview）" }
+    CR21: { error: invalid_workload_selector, http: 400, meaning: "k8s:ns が申請者の consumer_id に割り当てられていない、または同じ selector の組を別の登録エントリが持つ（版 0.2.0、preview）" }
+    CR22: { error: invalid_tenant_consent, http: 400, meaning: "所有テナントの同意記録（tenant_consent）が AR-8 を満たさない。tenant_id が platform_owning_tenant と異なる（他テナントの同意の流用）、別の申請・client に対するもの、要求する scope の集合を覆わない、期限切れ、または同意の時点で同意者がそのテナントの管理者でない（ADR-005 D7-2。版 0.3.0、preview）" }
   x-negative-examples:
     description: 登録族の負例。期待結果はすべて拒否（または払出し 0 件）と、理由コード付きの記録。CON-11 §6.3 に「登録族」として追加する（申し送り H-3）。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
     items:
@@ -335,6 +458,23 @@ info:
       - { ref: CRN-18, op: submitClientRegistrationRequest, case: "platform_risk_layer=F で AR-3 の承認がそろわない", expect: "status は pending_review のまま。払出し 0 件" }
       - { ref: CRN-19, op: submitClientRegistrationRequest, case: "C4 で platform_risk_layer=F", expect: "400 Problem（code=invalid_client_metadata、reason_code=CR09）" }
       - { ref: CRN-20, op: registerSandboxClient, case: "C5 で grant_types に refresh_token を含む", expect: "400 invalid_client_metadata / CR02" }
+      - { ref: CRN-21, op: registerSandboxWorkload, case: "selector が k8s:label（app=orders）だけ", expect: "400 Problem（code=invalid_workload_selector、reason_code=CR15）。SVID は発行されない" }
+      - { ref: CRN-22, op: registerSandboxWorkload, case: "k8s:ns と k8s:sa に加えて env（SERVICE_NAME=orders）を含む", expect: "400 / CR15（受け付けない型が 1 つでもあれば全体を拒否）" }
+      - { ref: CRN-23, op: registerSandboxWorkload, case: "k8s:sa がない", expect: "400 / CR16" }
+      - { ref: CRN-24, op: registerSandboxWorkload, case: "spiffe_id を指定（spiffe://<sandbox trust domain>/w/orders）", expect: "400 / CR17" }
+      - { ref: CRN-25, op: registerSandboxWorkload, case: "他の consumer に割り当てた namespace を k8s:ns に指定", expect: "400 / CR21。別 consumer の workload を名乗れない" }
+      - { ref: CRN-26, op: registerExchangePair, case: "caller_spiffe_id が本番の trust domain の ID（path は sandbox の登録エントリと同じ）", expect: "400 / CR20" }
+      - { ref: CRN-27, op: registerExchangePair, case: "max_scope が * だけ", expect: "400 / CR19" }
+      - { ref: CRN-28, op: registerExchangePair, case: "呼出し先が他の consumer の workload で、呼出し先の所有者が未承認のまま、その組で exchange を要求", expect: "202 pending_callee_approval。MK-02（STS 役）は exchange を拒否する（登録簿にない組。ADR-009 D09-13）" }
+      - { ref: CRN-29, op: decideSandboxExchangePair, case: "呼出し元の所有者（申請者）が自分の申請を承認", expect: "403。組は有効にならない" }
+      - { ref: CRN-30, op: deleteSandboxWorkload, case: "削除した登録エントリを呼出し元に持つ組で exchange を要求し、同じ selector で再登録する", expect: "exchange は拒否。再登録には新しい SPIFFE ID が払い出され、旧 ID は再発番されない（W55-04）" }
+      - { ref: CRN-31, op: submitClientRegistrationRequest, case: "C5（client_credentials）で platform_owning_tenant=T、単一テナントの app-only scope、tenant_consent なし。AR-1 の承認はそろう", expect: "202 で required_approvals に AR-4 と AR-8 が入る。AR-1 の承認後も status は pending_review のまま。払出し 0 件（版 0.3.0）" }
+      - { ref: CRN-32, op: submitClientRegistrationRequest, case: "platform_owning_tenant=T で、テナント U の管理者が別の申請に出した同意の consent_ref を tenant_consent に入れる（他テナントの同意の流用）", expect: "400 Problem（code=invalid_tenant_consent、reason_code=CR22）。払出し 0 件" }
+      - { ref: CRN-33, op: submitClientRegistrationRequest, case: "テナント T の管理者の同意が scope の一部（例 tenant.reports.read）だけを覆い、申請は tenant.reports.read tenant.users.read を要求する", expect: "400 / CR22" }
+      - { ref: CRN-34, op: decideClientRegistrationRequest, case: "認証・IdP チームの有資格者（基盤側）が AR-8 の approve を記録する", expect: "403。AR-8 は未充足のまま。払出し 0 件" }
+      - { ref: CRN-35, op: submitClientRegistrationRequest, case: "同意者が同意の時点でテナント T の管理者でない（一般利用者、または役割を外された元管理者）か、同意の期限が切れている", expect: "400 / CR22（払出しの直前の再検査で発覚した場合は status=rejected、reason_code=CR22）" }
+      - { ref: CRN-36, op: submitClientRegistrationRequest, case: "払出し済みの client（T の同意あり）の update で app-only scope を追加し、旧い同意の consent_ref を再使用する", expect: "400 / CR22。新しい scope の集合を覆う同意がない限り払い出さない（AR-4・AR-8 が required_approvals に入る）" }
+      - { ref: CRN-37, op: submitClientRegistrationRequest, case: "platform_owning_tenant を省略した C5 で単一テナントの app-only scope を要求し、AR-1 だけの承認で払出しを待つ", expect: "required_approvals に AR-4（cp1-dual-control）が入り、AR-1 だけでは pending_review のまま。払出し 0 件" }
   x-mock:
     description: CON-11 の MK-01（開発用 AS・IdP）への追加案（申し送り H-3）。CON-11 の作成者が取り込むまでは本節を仕様とする
     MK-01:
@@ -342,6 +482,11 @@ info:
       - issuer A（本番役）には登録 endpoint を置かない。issuer B で払い出した client_id は issuer A で invalid_client になる（CRN-12）
       - 本番役の redirect URI のホストと公開鍵の一覧を制御 API（POST /__kit/fixtures）で登録し、CR04・CR13 の判定に使う
       - 本番の登録申請 API は examples から起動する example 駆動のモックにする。承認は制御 API の inject で模し、required_approvals がそろうまで provisioned にしない
+    MK-02:
+      - （版 0.2.0 の追加案。申し送り H-12）STS 役に registerSandboxWorkload・deleteSandboxWorkload・registerExchangePair・decideSandboxExchangePair・deleteExchangePair を実装し、CR15〜CR21 の判定を返す
+      - 登録エントリに対して sandbox の trust domain の SVID を発行し、有効な組（status=active）だけを exchange の登録簿として使う（CRN-28・CRN-30）
+      - （版 0.3.0 の追加案。申し送り H-19）本番の申請 API のモックは、AR-4 を client_credentials の申請に、AR-8 を platform_owning_tenant のある app-only・低リスクでない scope の申請に付け、tenant_consent の検査（CR22）を example 駆動で返す（CRN-31〜CRN-37）
+      - 割り当て済みの namespace と参照サービスの一覧を制御 API（POST /__kit/fixtures）で登録し、CR21 と即時有効の判定に使う
 servers:
   - url: https://sandbox-as.id-domain.example
     description: sandbox の AS（issuer B）。ホスト名は仮置きで凍結しない。consumer は AS metadata の registration_endpoint から URL を得る
@@ -349,7 +494,9 @@ tags:
   - name: sandbox-registration
     description: sandbox の client セルフ登録（RFC 7591/7592 profile）。preview
   - name: production-registration-request
-    description: 本番の client 登録・変更・廃止の申請と承認。preview
+    description: 本番の client・workload・交換可能な組の登録・変更・廃止の申請と承認。preview
+  - name: sandbox-workload-registration
+    description: sandbox の workload（SVID 登録エントリ）と交換可能な組のセルフ登録（版 0.2.0 で追加、§4A）。preview
 paths:
   /v1/register:
     post:
@@ -512,6 +659,207 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/sandbox/workloads:
+    servers:
+      - url: https://sandbox-workload.id-domain.example
+        description: sandbox の workload 登録窓口（sandbox の trust domain の SVID 発行系と STS の登録簿の前段。ホスト名は仮置きで凍結しない）
+    post:
+      operationId: registerSandboxWorkload
+      tags: [sandbox-workload-registration]
+      summary: sandbox の workload の SVID 登録エントリを作る（§4A.2）
+      x-freeze-class: preview
+      description: |
+        sandbox の trust domain に workload の登録エントリを作り、基盤が払い出した SPIFFE ID を返す。承認は不要である（G-141(c)）。
+        selector は k8s:ns・k8s:sa（必須）と image:digest（任意）だけを受け付ける（ARC-04 W55-08、CR15・CR16）。SPIFFE ID と service_id は指定できない（CR17）。
+        expose_as_service が true なら、exchange の resource に使うサービスの正規識別子（service_id）も払い出す（ADR-009 D09-11）。
+      security:
+        - sandboxInitialAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkloadEntry'
+            examples:
+              ordersApi:
+                summary: 正例。注文サービス（呼出し先としても exchange を受ける）
+                value:
+                  platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: orders-oncall@partner-team.example }
+                  workload_name: orders-api
+                  selectors:
+                    - { type: "k8s:ns", value: orders-sbx }
+                    - { type: "k8s:sa", value: orders-api }
+                  expose_as_service: true
+      responses:
+        '201':
+          description: 登録成功。SVID は selector に一致したインスタンスに発行される
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadEntryInfo'
+              examples:
+                registered:
+                  summary: 正例の登録結果
+                  value:
+                    workload_entry_id: w3kq8zm2xh7tn4vc6pr9bde5ya
+                    spiffe_id: spiffe://sandbox.id-domain.example/w/w3kq8zm2xh7tn4vc6pr9bde5ya
+                    service_id: v6pt2kq9mz4xh7nc3rb8wde5ya
+                    platform_environment: sandbox
+                    status: active
+                    platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: orders-oncall@partner-team.example }
+                    workload_name: orders-api
+                    selectors:
+                      - { type: "k8s:ns", value: orders-sbx }
+                      - { type: "k8s:sa", value: orders-api }
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/sandbox/workloads/{workload_entry_id}:
+    servers:
+      - url: https://sandbox-workload.id-domain.example
+        description: sandbox の workload 登録窓口（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/WorkloadEntryIdPath'
+    delete:
+      operationId: deleteSandboxWorkload
+      tags: [sandbox-workload-registration]
+      summary: sandbox の workload の登録エントリを削除する（§4A.2）
+      x-freeze-class: preview
+      description: |
+        SVID の新規発行を止める。発行済みの SVID は寿命で切れる（ARC-04 W55-09）。SPIFFE ID と service_id は墓石として保持し再発番しない（W55-04、ADR-021 D21-13）。
+        この workload を呼出し元か呼出し先に持つ交換可能な組は同時に無効になる（CRN-30）。登録した consumer だけが削除できる。
+      security:
+        - sandboxInitialAccessToken: []
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+  /v1/sandbox/exchange-pairs:
+    servers:
+      - url: https://sandbox-workload.id-domain.example
+        description: sandbox の workload 登録窓口（仮置き）
+    post:
+      operationId: registerExchangePair
+      tags: [sandbox-workload-registration]
+      summary: sandbox の交換可能な組を登録する（§4A.3、ADR-009 D09-13）
+      x-freeze-class: preview
+      description: |
+        呼出し元の所有者が申請する。呼出し先が自分の consumer の workload か基盤の参照サービスなら 201（status=active）、他の consumer の workload なら 202（status=pending_callee_approval）を返し、呼出し先の所有者が decideSandboxExchangePair で承認すると有効になる。
+        有効になるまで、STS はこの組の exchange を拒否する（CRN-28）。max_scope は空にできず、wildcard を含められない（CR19）。
+      security:
+        - sandboxInitialAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangePair'
+            examples:
+              ordersToInventory:
+                summary: 正例。注文から在庫へ（呼出し先は他チーム）
+                value:
+                  caller_spiffe_id: spiffe://sandbox.id-domain.example/w/w3kq8zm2xh7tn4vc6pr9bde5ya
+                  callee_service_id: v8nd3kx7qz2mt6hc4rb9pwe5ya
+                  max_scope: inventory.read
+                  justification: 注文確定時の在庫照会（P-03）
+      responses:
+        '201':
+          description: 登録し、有効にした（呼出し先が自分の consumer か参照サービス）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangePairInfo'
+        '202':
+          description: 呼出し先の所有者の承認待ち
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangePairInfo'
+              examples:
+                pending:
+                  summary: 承認待ち
+                  value:
+                    pair_id: x5mr8kq2zt7nh3vc6pb9wde4ya
+                    status: pending_callee_approval
+                    platform_environment: sandbox
+                    caller_spiffe_id: spiffe://sandbox.id-domain.example/w/w3kq8zm2xh7tn4vc6pr9bde5ya
+                    callee_service_id: v8nd3kx7qz2mt6hc4rb9pwe5ya
+                    max_scope: inventory.read
+                    justification: 注文確定時の在庫照会（P-03）
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/sandbox/exchange-pairs/{pair_id}:
+    servers:
+      - url: https://sandbox-workload.id-domain.example
+        description: sandbox の workload 登録窓口（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/PairIdPath'
+    delete:
+      operationId: deleteExchangePair
+      tags: [sandbox-workload-registration]
+      summary: sandbox の交換可能な組を削除する
+      x-freeze-class: preview
+      description: 呼出し元か呼出し先の所有者が削除できる。削除後、STS はこの組の exchange を拒否する。
+      security:
+        - sandboxInitialAccessToken: []
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
+  /v1/sandbox/exchange-pairs/{pair_id}/decision:
+    servers:
+      - url: https://sandbox-workload.id-domain.example
+        description: sandbox の workload 登録窓口（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/PairIdPath'
+    post:
+      operationId: decideSandboxExchangePair
+      tags: [sandbox-workload-registration]
+      summary: 呼出し先の所有者が sandbox の交換可能な組を承認・却下する
+      x-freeze-class: preview
+      description: 呼出し先の workload を登録した consumer だけが送れる。それ以外（申請者を含む）は 403（CRN-29）。
+      security:
+        - sandboxInitialAccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairDecision'
+            examples:
+              approve:
+                summary: 承認
+                value: { decision: approve, comment: 在庫照会だけなら可 }
+      responses:
+        '200':
+          description: 判断を記録した後の組（approve なら status=active）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangePairInfo'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
   /v1/client-registration-requests:
     servers:
       - url: https://onboarding.id-domain.example
@@ -519,10 +867,12 @@ paths:
     post:
       operationId: submitClientRegistrationRequest
       tags: [production-registration-request]
-      summary: 本番の client の登録・変更・廃止を申請する
+      summary: 本番の client・workload・交換可能な組の登録・変更・廃止を申請する
       x-freeze-class: preview
       description: |
-        申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ）。
+        `subject` で対象を選ぶ（`client` が既定。`workload`・`exchange_pair` は版 0.2.0 で追加。§4A.4）。workload には AR-6、exchange_pair には AR-7 の承認が要る。
+        client_credentials の client には AR-4（CP-1）が要る。`platform_owning_tenant` が顧客テナントで、app-only の権限か低リスクでない scope を要求する申請には、そのテナントの管理者の同意記録 `tenant_consent` が要り、検査に通るまで払い出さない（AR-8、CR22。版 0.3.0）。
+        申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ。同意記録の不備は CR22）。
         sandbox と同じ ClientMetadata を使えるが、`client_id` は本番で別の値が払い出される（ADR-021 D21-22）。
       security:
         - workforceOidc: []
@@ -553,6 +903,24 @@ paths:
                     tls_client_certificate_bound_access_tokens: true
                     require_pushed_authorization_requests: true
                     scope: tenant.config.write
+              createTenantAppOnlyClient:
+                summary: 正例。C5 で単一テナントの app-only（AR-1・AR-4・AR-8 の承認が要る。版 0.3.0）
+                value:
+                  kind: create
+                  justification: 顧客テナントの夜間の集計バッチ（利用者を介さない読取り）
+                  tenant_consent: { consent_ref: tc-8kq4m2zr7xw3nv6p, tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy, form: tenant_admin_api }
+                  metadata:
+                    platform_client_category: C5
+                    platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: batch-oncall@partner-team.example }
+                    platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    platform_risk_layer: B
+                    client_name: Tenant Nightly Report
+                    grant_types: [client_credentials]
+                    token_endpoint_auth_method: private_key_jwt
+                    token_endpoint_auth_signing_alg: ES256
+                    jwks_uri: https://batch.partner-apps.example/.well-known/jwks.json
+                    tls_client_certificate_bound_access_tokens: true
+                    scope: tenant.reports.read
       responses:
         '202':
           description: 受付。承認待ち（retire は承認不要で、払出しの完了まで pending_provisioning）
@@ -589,7 +957,7 @@ paths:
       tags: [production-registration-request]
       summary: 申請の状態と払出し結果を読む
       x-freeze-class: preview
-      description: 払出しが済むと `status=provisioned` と、払い出した `client_id`・登録された metadata を返す。申請者と所有チーム、承認者だけが読める。
+      description: 払出しが済むと `status=provisioned` と、払い出した `client_id`・登録された metadata（workload なら `issued_workload`、交換可能な組なら `issued_exchange_pair`）を返す。申請者と所有チーム、承認者だけが読める。
       security:
         - workforceOidc: []
       responses:
@@ -661,7 +1029,7 @@ components:
     sandboxInitialAccessToken:
       type: http
       scheme: bearer
-      description: RFC 7591 §3 の initial access token。consumer 台帳に登録済みのチームにだけ、オンボーディング窓口から発行する。sandbox の AS でしか受理しない
+      description: RFC 7591 §3 の initial access token。consumer 台帳に登録済みのチームにだけ、オンボーディング窓口から発行する。sandbox の AS と sandbox の workload 登録窓口でしか受理しない。consumer_id に結び付き、§4A の操作ではこの consumer_id を所有者・承認者の判定に使う（版 0.2.0）
     registrationAccessToken:
       type: http
       scheme: bearer
@@ -678,6 +1046,20 @@ components:
       description: 払い出された client_id（不透明値。ADR-021 D21-22）
       schema:
         $ref: '#/components/schemas/ClientId'
+    WorkloadEntryIdPath:
+      name: workload_entry_id
+      in: path
+      required: true
+      description: 登録エントリの ID（不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
+    PairIdPath:
+      name: pair_id
+      in: path
+      required: true
+      description: 交換可能な組の ID（不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
     RequestIdPath:
       name: request_id
       in: path
@@ -1112,47 +1494,227 @@ components:
       type: object
       required: [kind, justification]
       properties:
+        subject:
+          description: 申請の対象。省略時は client（版 0.2.0 で追加。§4A.4）
+          type: string
+          enum: [client, workload, exchange_pair]
+          default: client
         kind:
           type: string
           enum: [create, update, retire]
         target_client_id:
-          description: update・retire で必須
+          description: subject が client の update・retire で必須
           $ref: '#/components/schemas/ClientId'
+        target_id:
+          description: subject が workload（workload_entry_id）か exchange_pair（pair_id）の update・retire で必須
+          $ref: '#/components/schemas/OpaqueId'
         justification:
           type: string
           maxLength: 1000
         metadata:
-          description: create・update で必須
+          description: subject が client の create・update で必須
           $ref: '#/components/schemas/ClientMetadata'
+        workload:
+          description: subject が workload の create・update で必須。本番は image:digest の selector も必須（CR16）
+          $ref: '#/components/schemas/WorkloadEntry'
+        exchange_pair:
+          description: subject が exchange_pair の create・update で必須
+          $ref: '#/components/schemas/ExchangePair'
+        tenant_consent:
+          description: 所有テナントの管理者の同意記録の参照。AR-8 に当てはまる申請で必須（ないと pending_review のまま払い出さない。CRN-31）。版 0.3.0
+          $ref: '#/components/schemas/TenantConsentRef'
       anyOf:
-        - properties: { kind: { const: create } }
+        - properties: { subject: { const: client }, kind: { const: create } }
           required: [metadata]
-        - properties: { kind: { const: update } }
+        - properties: { subject: { const: client }, kind: { const: update } }
           required: [metadata, target_client_id]
-        - properties: { kind: { const: retire } }
+        - properties: { subject: { const: client }, kind: { const: retire } }
           required: [target_client_id]
+        - properties: { subject: { const: workload }, kind: { const: create } }
+          required: [subject, workload]
+        - properties: { subject: { const: workload }, kind: { const: update } }
+          required: [subject, workload, target_id]
+        - properties: { subject: { const: exchange_pair }, kind: { const: create } }
+          required: [subject, exchange_pair]
+        - properties: { subject: { const: exchange_pair }, kind: { const: update } }
+          required: [subject, exchange_pair, target_id]
+        - properties: { subject: { enum: [workload, exchange_pair] }, kind: { const: retire } }
+          required: [subject, target_id]
+    TenantConsentRef:
+      description: 所有テナントの管理者の同意記録の参照（AR-8、ADR-005 D7-2。版 0.3.0、preview）。同意の本体（同意者、同意の時点の役割、申請 ID、scope の集合、期限）は基盤が consent_ref から引いて検査し、本文の値を信用して判定しない（CR22）
+      type: object
+      additionalProperties: false
+      required: [consent_ref, tenant_id, form]
+      properties:
+        consent_ref:
+          description: テナント管理画面の承認 API の記録 ID か、署名付き同意票の参照
+          type: string
+          maxLength: 128
+        tenant_id:
+          description: 同意したテナント。platform_owning_tenant と一致しなければ CR22（CRN-32）
+          $ref: '#/components/schemas/OpaqueId'
+        form:
+          type: string
+          enum: [tenant_admin_api, signed_consent_form]
+    SpiffeId:
+      description: SPIFFE ID（trust domain を含む完全な形で扱い、path だけで比べない。§4A.2）。値は基盤が払い出す
+      type: string
+      maxLength: 2048
+      pattern: '^spiffe://[a-z0-9.-]+/[^#?\s]+$'
+    WorkloadSelector:
+      description: 登録エントリの selector。基盤が管理し workload が書き換えられない属性に限る（ARC-04 W55-08）。受け付けない型は CR15
+      type: object
+      required: [type, value]
+      properties:
+        type:
+          type: string
+          enum: ["k8s:ns", "k8s:sa", "image:digest"]
+        value:
+          type: string
+          maxLength: 256
+      if:
+        properties: { type: { const: "image:digest" } }
+      then:
+        properties:
+          value: { pattern: '^sha256:[0-9a-f]{64}$' }
+    WorkloadEntry:
+      description: workload の SVID 登録エントリの要求（§4A.2。版 0.2.0、preview）
+      type: object
+      additionalProperties: false
+      required: [platform_owner, workload_name, selectors]
+      properties:
+        platform_owner:
+          $ref: '#/components/schemas/Owner'
+        workload_name:
+          description: 表示名。SPIFFE ID には入らない（W55-03）
+          type: string
+          maxLength: 128
+        selectors:
+          type: array
+          minItems: 2
+          maxItems: 8
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/WorkloadSelector'
+          allOf:
+            - contains: { properties: { type: { const: "k8s:ns" } }, required: [type] }
+            - contains: { properties: { type: { const: "k8s:sa" } }, required: [type] }
+        expose_as_service:
+          description: 呼出し先として exchange を受けるなら true。service_id が払い出される
+          type: boolean
+          default: false
+      x-constraint:
+        - "spiffe_id・service_id を要求に含めない（CR17。additionalProperties false で拒否）"
+        - "本番の申請では image:digest の selector が必須（CR16）"
+        - "k8s:ns が申請者の consumer_id に割り当て済みで、同じ selector の組を別の登録エントリが持たない（CR21。状態に依存するためスキーマでは表せない）"
+        - "sandbox の登録で本番の trust domain の SPIFFE ID を含まない（CR20）"
+    WorkloadEntryInfo:
+      description: 払い出し後の登録エントリ
+      type: object
+      required: [workload_entry_id, spiffe_id, platform_environment, status, platform_owner, selectors]
+      properties:
+        workload_entry_id:
+          $ref: '#/components/schemas/OpaqueId'
+        spiffe_id:
+          $ref: '#/components/schemas/SpiffeId'
+        service_id:
+          description: expose_as_service が true のときだけ。exchange の resource に使う不透明値（ADR-009 D09-11）
+          $ref: '#/components/schemas/OpaqueId'
+        platform_environment:
+          type: string
+          enum: [sandbox, production]
+        status:
+          type: string
+          enum: [active, retired]
+        platform_owner:
+          $ref: '#/components/schemas/Owner'
+        workload_name:
+          type: string
+        selectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkloadSelector'
+    ExchangePair:
+      description: 交換可能な組の要求（§4A.3、ADR-009 D09-13。版 0.2.0、preview）
+      type: object
+      additionalProperties: false
+      required: [caller_spiffe_id, callee_service_id, max_scope, justification]
+      properties:
+        caller_spiffe_id:
+          description: 同じ環境の登録済みエントリの SPIFFE ID（CR19・CR20）
+          $ref: '#/components/schemas/SpiffeId'
+        callee_service_id:
+          description: 呼出し先サービスの正規識別子（WorkloadEntryInfo の service_id か参照サービス）
+          $ref: '#/components/schemas/OpaqueId'
+        max_scope:
+          description: scope の上限（空白区切り）。空と wildcard を許さない（CR19）。STS は subject_token の scope との共通部分以下で発行する（ADR-009 D09-15）
+          type: string
+          minLength: 1
+          maxLength: 1024
+          pattern: '^[^*\s]+( [^*\s]+)*$'
+        justification:
+          type: string
+          maxLength: 1000
+    ExchangePairInfo:
+      type: object
+      required: [pair_id, status, platform_environment, caller_spiffe_id, callee_service_id, max_scope]
+      properties:
+        pair_id:
+          $ref: '#/components/schemas/OpaqueId'
+        status:
+          type: string
+          enum: [active, pending_callee_approval, rejected, retired]
+        platform_environment:
+          type: string
+          enum: [sandbox, production]
+        caller_spiffe_id:
+          $ref: '#/components/schemas/SpiffeId'
+        callee_service_id:
+          $ref: '#/components/schemas/OpaqueId'
+        max_scope:
+          type: string
+        justification:
+          type: string
+    PairDecision:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, reject]
+        comment:
+          type: string
+          maxLength: 1000
     ApprovalItem:
       type: object
       required: [rule, role]
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8]
         role:
           type: string
-          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control]
+          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control, platform-workload-reviewer, callee-owner, tenant-admin]
         decision:
           type: string
           enum: [approve, reject]
         decided_at:
           type: string
           format: date-time
+        consent_ref:
+          description: rule が AR-8 のときだけ。検査に通った同意記録の参照（版 0.3.0）
+          type: string
+          maxLength: 128
     RegistrationRequestStatus:
       type: object
       required: [request_id, kind, status, submitted_at, required_approvals]
       properties:
         request_id:
           $ref: '#/components/schemas/OpaqueId'
+        subject:
+          type: string
+          enum: [client, workload, exchange_pair]
+          default: client
         kind:
           type: string
           enum: [create, update, retire]
@@ -1174,17 +1736,24 @@ components:
           minimum: 0
         issued_metadata:
           $ref: '#/components/schemas/IssuedMetadata'
+        issued_workload:
+          description: subject が workload で status が provisioned のときだけ
+          $ref: '#/components/schemas/WorkloadEntryInfo'
+        issued_exchange_pair:
+          description: subject が exchange_pair で status が provisioned のときだけ
+          $ref: '#/components/schemas/ExchangePairInfo'
         reason_code:
-          description: 却下・受付拒否の理由コード（CR01〜CR13）
+          description: 却下・受付拒否の理由コード（CR01〜CR13、CR15〜CR22）
           type: string
           pattern: '^CR[0-9]{2}$'
     ApprovalDecision:
+      description: 基盤側の承認者の判断。AR-8 はテナント側の同意記録で満たし、本操作では記録できない（403。CRN-34。版 0.3.0）
       type: object
       required: [rule, decision]
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8]
         decision:
           type: string
           enum: [approve, reject]

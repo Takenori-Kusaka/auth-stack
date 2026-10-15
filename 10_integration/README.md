@@ -1,9 +1,9 @@
 # 連携ハンドブック総覧
 
-> 文書ID: INT-00 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-00 / 版: 0.4 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: G-100, G-140, G-143, G-145（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-62 を含む全行。R-requirements.md には該当行がない）／R-136, R-140（deliverables.md の DL-62 行が挙げるもの）。全件と閉じ方は末尾「対応表」
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-62 行、§8、DEC-8）, 05_adr/README.md, 05_adr/ADR-002・ADR-005・ADR-009・ADR-011・ADR-012・ADR-016・ADR-017・ADR-020・ADR-022・ADR-023・ADR-026・ADR-027（設計判断の正本）, 05_adr/reconciliation-notes.md, 10_integration/dependency-tiers.md（INT-01）, integration-patterns.md（INT-02）, authz-modeling-guide.md（INT-03）, onboarding.md（INT-04）, definition-of-ready.md（INT-05）, developer-faq.md（INT-06）, 11_contracts/README.md（CON-00）, compatibility-deprecation-policy.md（CON-01）, mock-contract-test-kit.md（CON-11）, 04_architecture/pep-contract.md（ARC-06）, token-profile.md（ARC-02）, 08_operations/operating-model.md（DL-27 §8）, 08_operations/phased-rollout.md（OPS-04 §10.5）, 01_governance/assumptions-register.md（A-050〜A-055, A-110, A-113）, 01_governance/exception-risk-acceptance.md（GOV-07）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 06_controls/mappings/identity-appsec.md（ASVS 7.4.4、KM-4）, research/RS-16（verification 記録を含む）, research/standards-status.md
-> 作成方法: AI エージェント（Claude）が 10_integration の全文書と 11_contracts/README.md・CON-11・ADR-022 を通読し、連携開発者の入口として起草した。本書は新しい設計判断をしない。食い違いがあれば ADR と各正本を正とする。ASVS 5.0 の 7.4.4 は research に収載がないため、起草者が 2026-10-15 に原典を取得して文言を確認した。判断は自己レビューであり、実在の CTO/CISO・連携開発者の確認を経ていない（CONVENTIONS §8）[D]。
+> 作成方法: AI エージェント（Claude）が 10_integration の全文書と 11_contracts/README.md・CON-11・ADR-022 を通読し、連携開発者の入口として起草した。本書は新しい設計判断をしない。食い違いがあれば ADR と各正本を正とする。ASVS 5.0 の 7.4.4 は research に収載がないため、起草者が 2026-10-15 に原典を取得して文言を確認した。判断は自己レビューであり、実在の CTO/CISO・連携開発者の確認を経ていない（CONVENTIONS §8）[D]。版 0.2 は模擬パネル（自己レビュー）のラウンド 4 の指摘を受け、§6.3 に 12_poc/code（POC-03）を暫定ローカル結合環境として使う行と条件を加えた版である。根拠は 12_poc/code/README.md（POC-03）と同コードのソース、CON-00 §2.3 の汎用モックの実行記録、CON-11 §11.5 である（末尾「レビュー記録」ラウンド 4）[D]。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 6 の devlead 指摘を受け、§0 の 3、§1.2 の版・状態、§6.1・§6.3、§7.1 のモデル管理・client 登録の行と照会 API（CON-15（案））の行を作業ツリーの実態に合わせた版である。確認は 2026-10-15 13:23（JST）、HEAD `a155148` に未コミットの作業ツリーを重ねた状態で行った。根拠は各ファイル冒頭の版、INT-03 §0-6・§15.3、CON-04 `info.description` §8・§9、CON-00 §2.1・§2.3・§2.6.4、CON-12 §4.1・§6 であり、新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 6）[D]。版 0.4 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の devlead 指摘を受け、CON-14 §9 の申し送り H-10 を反映し、§0 の 3・§6.1・§7.1 に C7（内部 workload）の SVID 登録エントリと交換可能な組の登録手段（CON-14 §4A、preview、API 未実装）と暫定手順（同 §4A.5）を加えた版である。根拠は client-registration.openapi.yaml（版 0.2.0）の §4A・§5・§9 と 12_poc/code のソースであり、新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
 
 ---
 
@@ -11,7 +11,7 @@
 
 1. **連携開発者が依存してよいのは、11_contracts の契約のうち `x-freeze-class` が GA の要素と、版付きの OIDC/OAuth profile（ARC-02）だけである。製品、エンジン、cell 構成、内部 API、SDK の内部実装、モックの実装には依存してはならない** [D]（ADR-022 D-1・D-3-2、§4）。この線引きは、AS・認可エンジン・PEP SDK をそれぞれ 1 回以上置き換える 20 年の前提 [A-104] の下で、約 300 サービス [A-050] の改修を置換のたびに発生させないためのものである [D]。
 2. **基盤が提供するのは「token・判定・関係データ・委譲・失効・監査の契約と、その実装・SDK・モック」であり、サービスが実装するのは「entry point の宣言、テナントの正本照合、認可モデル、PEP の組込み、障害時の振舞い、自サービスの復旧経路」である（§2 の 1 ページ図）** [D]。テナント分離の最後の照合（resource-derived tenant）は資源の正本を持つサービスにしか書けないので、基盤に移せない [D]（ARC-06 §4.2 の `bind_tenant`）。
-3. **基盤の完成を待たずに、今日から設計・実装・単体試験の大半を始められる。始められないのは、自チームの CI で合否を出す契約試験（キット本体 DL-82 が未実装、予定 G3）、Webhook 署名（KD64-1 の決裁待ち）、保管庫を使う outbound 連携（KD64-2 の決裁待ち）の 3 つである** [D]（§6、INT-02 §10.1、CON-11 §16.1）。ライフサイクル事象の受信は条件付きで着手できる。CON-12・CON-13（draft）の封筒・type 名・冪等と順序は GA、個別 data は preview である。キット本体（DL-82）が未実装でモック MK-08 を動かせず、LC-OI-1〜3、期限 T_* の値、独立レビューが残るため、配送の保証に依存する結合試験はモックの提供後になる [D]（CON-00 §2.5・§2.6）。client 登録は契約（CON-14 client-registration.openapi.yaml、draft。登録の手段は preview）がある。sandbox はセルフ登録、本番は承認付きの申請 API である [D]（CON-00 §3 の client 登録行）。DEC-8 まで契約は 0.x 版で変更期間が約束されないため、契約ファイルの git コミットを固定し、DEC-8 後に DL-80 の判定で適合を確かめ直す [D]（CON-00 §2.5）。
+3. **基盤の完成を待たずに、今日から設計・実装・単体試験の大半を始められる。始められないのは、自チームの CI で合否を出す契約試験（DL-82（PoC 基盤）は納品済みだが、キット本体 DL-120 が未実装、予定 G3[^10]）、Webhook 署名（KD64-1 の決裁待ち）、保管庫を使う outbound 連携（KD64-2 の決裁待ち）の 3 つである** [D]（§6、INT-02 §10.1、CON-11 §16.1）。ライフサイクル事象の受信は条件付きで着手できる。CON-12・CON-13（draft）の封筒・type 名・冪等と順序は GA、個別 data は preview である。キット本体（DL-120）が未実装でモック MK-08 を動かせず、LC-OI-1（type 名の前置の値）・LC-OI-2（非人間主体の事象の type）、期限 T_* の値、独立レビューが残るため、配送の保証に依存する結合試験はモックの提供後になる [D]（CON-00 §2.5・§2.6）。LC-OI-3（照会 API）は CON-15（案、DL-121 案。CON-12 の拡張 `x-state-query-api`、版 0.1.0、preview）として起草済みで、削除などの経路の実装と単体試験はその要求・応答と負例 LQN-01〜LQN-19 に対して書ける。GA への昇格は DEC-8 第 1 段の付議の前である [D]（CON-00 §2.6.4、CON-12 §4.1・§6）。client 登録は契約（CON-14 client-registration.openapi.yaml、draft。登録の手段は preview）がある。sandbox はセルフ登録、本番は承認付きの申請 API である [D]（CON-00 §3 の client 登録行）。内部のサービス間同期呼出し（INT-02 P-03）で token exchange を使う C7 の workload は client ではなく、SVID の登録エントリ（INT-02 I-16）と交換可能な組（I-17）で登録する。手段は同じ契約の §4A（版 0.2.0、preview）に定義済みだが API とモックは未実装なので、それまでは §4A.5 の暫定手順で進める [D]（§6.1、CON-14 §4A.1・§4A.5）。DEC-8 まで契約は 0.x 版で変更期間が約束されないため、契約ファイルの git コミットを固定し、DEC-8 後に DL-80 の判定で適合を確かめ直す [D]（CON-00 §2.5）。
 4. **SDK は 5 つの責務に限った薄いラッパであり、使わなくても契約と負例ベクタだけで適合できる（G-140）** [D]（ADR-022 D-4）。本書 §5 に、SDK を提供しない言語向けの「契約だけで連携する手順」を責務ごとに置いた [D]。SDK 提供言語（候補 3、NA-022-1）、版差の許容幅、支援期間、脆弱性修正期限の値は未決（TBD、所有者 CTO・CISO、期限 DEC-8 前）である [D]。
 5. **問い合わせは S0〜S5 の 6 経路、例外申請は S4 の単一受付口に集約する（§8）** [D]（operating-model §8）。重大度別の目標値、想定問い合わせ量、体制のライン長確約、パイロットでの応答時間の実測はいずれも未達である（G-145 は C 区分）[D]。
 6. **機能ごとの提供時期は、ゲート（DEC-8、G3、G4、G6）との対応までを §7 に示した。日付は DL-42（ゲート計画。00_decision/06-gate-plan-and-plan-b.md、DCS-06 版 0.2 draft）が持つ。DCS-06 §8 は機能ごとの提供ゲートの割当て案までを示し、日付は同 §5.4 の規則で決まるまで置いていない。このため G-143 は未達である** [D]。
@@ -36,22 +36,23 @@
 - 正本の優先順位は「ADR ＞ 設計文書（04_architecture）・契約（11_contracts）＞ ハンドブック（10_integration）＞ 本書」である [D]。本書の要約が正本と食い違う場合は正本を正とし、本書を直す [D]。
 - 本書は非規範文書である [D]。拘束力のある解釈は正誤表（CON-00 §5.2 の E0 経路）でだけ出す（INT-06 KD-FAQ-1 の推奨案と同じ扱い。決裁前）[D]。
 
-### 1.2 文書一覧（2026-10-15 時点）
+### 1.2 文書一覧（2026-10-15 13:23 JST 時点。HEAD `a155148` に未コミットの作業ツリーを重ねた状態。版・状態は各ファイル冒頭のメタ情報の写し。INT-00・INT-02・INT-04・INT-05 の版は同日のラウンド 7 の是正後の値）
 
 | 文書ID | DL | ファイル | 何に答えるか | 版・状態 |
 |---|---|---|---|---|
-| INT-00 | DL-62 | [README.md](README.md)（本書） | どこから読み、何に依存してよいか | 0.1 draft |
+| INT-00 | DL-62 | [README.md](README.md)（本書） | どこから読み、何に依存してよいか | 0.4 draft |
 | INT-01 | DL-63 | [dependency-tiers.md](dependency-tiers.md) | 自サービスの Tier、障害時の振舞い、必須実装 M-01〜M-10、依存してはならないもの NX-01〜NX-16 | 0.2 draft |
-| INT-02 | DL-64 | [integration-patterns.md](integration-patterns.md) | やりたいこと → パターン P-01〜P-27 の決定表、共通義務 IC-01〜IC-12 | 0.2 draft |
-| INT-03 | DL-65 | [authz-modeling-guide.md](authz-modeling-guide.md) | 認可モデル（型・relation・permission）の書き方、変更区分 M0〜M3 | 0.2 draft |
-| INT-04 | DL-66 | [onboarding.md](onboarding.md) | 参加の 9 段階 OB-0〜OB-8、承認者・リードタイム・費用配賦 | 0.1 draft |
-| INT-05 | DL-67 | [definition-of-ready.md](definition-of-ready.md) | 連携開始の条件 RD-01〜RD-14、本番切替の条件 DD-01〜DD-14 | 0.1 draft |
+| INT-02 | DL-64 | [integration-patterns.md](integration-patterns.md) | やりたいこと → パターン P-01〜P-27 の決定表、共通義務 IC-01〜IC-12 | 0.3 draft |
+| INT-03 | DL-65 | [authz-modeling-guide.md](authz-modeling-guide.md) | 認可モデル（型・relation・permission）の書き方、変更区分 M0〜M3 | 0.6 draft |
+| INT-04 | DL-66 | [onboarding.md](onboarding.md) | 参加の 9 段階 OB-0〜OB-8、承認者・リードタイム・費用配賦 | 0.2 draft |
+| INT-05 | DL-67 | [definition-of-ready.md](definition-of-ready.md) | 連携開始の条件 RD-01〜RD-14、本番切替の条件 DD-01〜DD-14 | 0.4 draft |
 | INT-06 | DL-68 | [developer-faq.md](developer-faq.md) | 75 問の FAQ、してはならないこと N-1〜N-15 | 0.1 draft |
-| CON-00 | DL-69 | [../11_contracts/README.md](../11_contracts/README.md) | 契約の一覧・版・状態・準拠範囲、変更提案 E0〜E3 | 0.2 draft |
-| CON-01 | DL-70 | [../11_contracts/compatibility-deprecation-policy.md](../11_contracts/compatibility-deprecation-policy.md) | 互換区分、非推奨期間、consumer 台帳 | 0.1 draft（数値は未承認） |
-| CON-11 | DL-80 | [../11_contracts/mock-contract-test-kit.md](../11_contracts/mock-contract-test-kit.md) | モック MK-01〜MK-07、負例ベクタ CV-xxx、CI 組込み、合格判定、共有 sandbox | 0.2 draft（キット本体 DL-82 は未実装） |
+| CON-00 | DL-69 | [../11_contracts/README.md](../11_contracts/README.md) | 契約の一覧・版・状態・準拠範囲、変更提案 E0〜E3 | 0.6 draft |
+| CON-01 | DL-70 | [../11_contracts/compatibility-deprecation-policy.md](../11_contracts/compatibility-deprecation-policy.md) | 互換区分、非推奨期間、consumer 台帳 | 0.2 review（数値は決裁案 KC-1〜KC-5 で未承認） |
+| CON-11 | DL-80 | [../11_contracts/mock-contract-test-kit.md](../11_contracts/mock-contract-test-kit.md) | モック MK-01〜MK-08、負例ベクタ CV-xxx、CI 組込み、合格判定、共有 sandbox | 0.6 draft（DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3。MK-08 の照会モックは CON-15（案）から作る形） |
 
 - どの文書も作成者以外の人による判定は未実施である [D]。AI エージェントによる独立レビューの有無は各文書のレビュー記録にある [D]。
+- 版・状態の列は各ファイル冒頭の「版」「状態」を写したもので、各文書が改版されると本表は古くなる。確かめる手順は、各ファイルの 3 行目（文書ID の行）を読むことである。CON-00 §2.1 の版の列にも古い値が残る（他文書への申し送り S-5）[D]。
 
 ---
 
@@ -68,7 +69,7 @@ flowchart LR
     SSF["失効・継続評価<br/>SSF/CAEP（CON-09・CON-10）"]
     AUD["監査収集<br/>（CON-08）"]
     SDK["薄い SDK・BFF 参照実装<br/>（ADR-022 D-4、ADR-005 D6-2）"]
-    KIT["モック・負例ベクタ・共有 sandbox<br/>（CON-11、DL-82）"]
+    KIT["モック・負例ベクタ・共有 sandbox<br/>（CON-11、DL-120）"]
     HELP["窓口 S0〜S5・FAQ・正誤表<br/>（operating-model §8）"]
   end
   subgraph SV["サービスが実装するもの（連携開発チーム）"]
@@ -206,7 +207,7 @@ SDK を提供しない言語（§5.1 の 3 言語以外。言語は未確定）�
 | step-up（RFC 9470）の challenge を受けた client | 新しい認可要求を出す。BFF 参照実装と SDK の client 側で扱う | ADR-002、INT-06 FQ-29 |
 | mTLS 証明書の更新 | 証明書の更新で束縛 token は無効になるので、更新前に token を取り直す | ADR-020 D20-05-2、INT-02 P-03・P-22 |
 | FAPI 範囲（層 F）の client 登録 | FAPI client profile での登録と OIDF 試験の自己実行。sandbox と参照 SDK で支援 | ADR-020 |
-| 環境変数名（差し替え点） | CON-11 §11.4 の暫定名（`AUTH_OIDC_DISCOVERY_URL` ほか 9 種）を本書でも採る。凍結は DL-82 と DEC-8 | CON-11 §11.4 |
+| 環境変数名（差し替え点） | CON-11 §11.4 の暫定名（`AUTH_OIDC_DISCOVERY_URL` ほか 9 種）を本書でも採る。凍結は DL-120 と DEC-8 | CON-11 §11.4 |
 
 ---
 
@@ -215,8 +216,10 @@ SDK を提供しない言語（§5.1 の 3 言語以外。言語は未確定）�
 ### 6.1 判定（2026-10-15）
 
 - 本ハンドブックと 11_contracts だけで、主パターンの選定、entry point 台帳への記載、token 検証・PEP 呼出し・exchange・監査送出の実装、拒否と不存在の応答の同一化、fail-closed の分岐、負例の単体試験を始められる [D]（INT-02 §10.1、CON-11 §16.1）。
-- ライフサイクル事象の受信は条件付きで始められる。CON-12・CON-13 に対して、受信 consumer、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告の実装と単体試験を書ける。CON-13 の examples と `x-negative-examples` を試験データにする [D]（CON-00 §2.5）。配送の保証（重複・順序の逆転・欠番・replay）に依存する結合試験はモックの提供後になる [D]。独自 session を持つサービスは CON-12 RO-6 の事象で session を無効にする（INT-04 ONB-R9）[D]。
-- client 登録は、sandbox では client-registration.openapi.yaml の RFC 7591/7592 profile でセルフ登録し、本番では同契約の申請 API で申請する（いずれも preview）[D]（CON-00 §3、INT-04 §4.3）。
+- ライフサイクル事象の受信は条件付きで始められる。CON-12・CON-13 に対して、受信 consumer、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告の実装と単体試験を書ける。CON-13 の examples と `x-negative-examples` を試験データにする [D]（CON-00 §2.5）。配送の保証（重複・順序の逆転・欠番・replay）に依存する結合試験はモックの提供後になる [D]。削除・保全解除・付け替え・所属除去の経路は、CON-15（案）の verifyLifecycleAction を直前に呼び、verdict=proceed のときだけ実行する処理（QC-1〜QC-7）を、CON-15 の examples と LQN-01〜LQN-19 を試験データにして書ける（preview）[D]（CON-00 §2.5 の役割別の表、§2.6.4）。独自 session を持つサービスは CON-12 RO-6 の事象で session を無効にする（INT-04 ONB-R9）[D]。
+- client 登録は、sandbox では client-registration.openapi.yaml の RFC 7591/7592 profile でセルフ登録し、本番では同契約の申請 API で申請する（いずれも preview）[D]（CON-00 §3、INT-04 §4.3）。これは ClientMetadata で登録する OAuth/OIDC の client に限り、ARC-02 §6 の C7（内部 workload・edge）には当てはまらない。C7 は STS への client 認証に X.509-SVID の mTLS を使い、STS 側の client の設定は登録エントリから基盤が作る（CON-14 §3・§4A.1）[D]。
+- C7 の workload と交換可能な組の登録は、同じ契約の §4A（版 0.2.0 で追加、preview）で定義されている [D]（CON-14 §4A）。sandbox では `registerSandboxWorkload`・`deleteSandboxWorkload`（SVID の登録エントリ。SPIFFE ID は基盤が払い出し、selector は `k8s:ns`・`k8s:sa`・`image:digest` に限る）と `registerExchangePair`・`decideSandboxExchangePair`・`deleteExchangePair`（呼出し元・呼出し先・`max_scope` の組。呼出し先が他の consumer なら呼出し先の所有者の承認を待つ）でセルフ登録し、本番では §5 の申請 API に申請種別 `subject: workload`（承認者案 AR-6: プラットフォームチームの有資格者、作成者≠承認者）か `subject: exchange_pair`（AR-7: 呼出し先の所有者。privileged の scope を含む組は AR-3 も）で申請する [D]（CON-14 §4A.2〜§4A.4、`x-approval-rules`）。
+- ただし 2026-10-15 時点で §4A の API とモック（キット本体 DL-120）は未実装、共有 sandbox は未提供（K11-3）であり、PoC（POC-03）にも登録 API はない [D]（CON-14 §4A.5）。それまでは CON-14 §4A.5 の暫定手順による。(1) ローカルでは、PoC を手元に複製し、`12_poc/code/lib/topology.js` の固定一覧 `WORKLOADS` と `12_poc/code/config/ledger.json` の `services`・`exchange_registry` に行を加えて起動し直す（STS `sts/server.js` が起動時に `exchange_registry` を読む。2026-10-15 にソースで確認）。この変更は 12_poc/code にコミットしない（§6.3 の「自サービスを workload として繋ぐ場合」行）。selector の検査・承認・負例 CRN-21〜CRN-30 は再現できない。(2) 共有 sandbox の提供後で API の提供前は、S1 窓口（§8.1）に WorkloadEntry・ExchangePair と同じ項目で依頼し、プラットフォームチームが手で登録する [D]。
 - ローカルのモックでの開発は DoR の前でも始めてよい。DoR は共有 sandbox の資格情報の発行と consumer 台帳への登録の前の関門である（INT-05 §0）[D]。
 
 ### 6.2 初日にすること
@@ -235,9 +238,25 @@ SDK を提供しない言語（§5.1 の 3 言語以外。言語は未確定）�
 
 | 時期 | 使うもの | できること | 注意 |
 |---|---|---|---|
-| 今（キット配布前） | 契約ファイルの examples から起動する汎用モック（Microcks 型 [V][^5]（RS-16#55）） | 正例の結合確認 | 起動を確認したのは CON-07 だけ（CON-00 §2.3）。汎用モックの既知の誤り（CON-11 §4.10）に合わせてコードを直さない。起動できなければ S1（E0）に報告 |
-| キット配布後（DL-82、予定 G3） | MK-01〜MK-07 と制御 API。1 コマンドで起動し、役割を指定すれば必要なモックだけ起動 | 負例・署名付き試験、障害注入（PDP timeout 等） | 業務 API と制御 API は別ポート。モックは本番と別の issuer・鍵（CON-11 §11.2） |
-| PoC 基盤（G4） | 同じ設定を PoC 基盤へ向ける | 同じベクタの再実行 | 変えてよいのは §5.3 の差し替え点だけ（コード差分 0、G-123） |
+| 今（キット配布前） | 契約ファイルの examples から起動する汎用モック（Microcks 型 [V][^5]（RS-16#55）、Prism 等） | 正例の形の結合確認 | OpenAPI 6 本すべてで Prism 5.12.0 の起動を確認した（CON-00 §2.3、2026-10-15）[M]。照会 API（CON-15（案）。CON-12 の拡張 `x-state-query-api` を取り出したもの）も同じ Prism で 6 operation すべてが 200 を返した（CON-00 §2.3、2026-10-15 12:58）[M]。署名付き token・負例・mTLS の拒否は出せない（同節）。汎用モックの既知の誤り（CON-11 §4.10）に合わせてコードを直さない。起動できなければ S1（E0）に報告 |
+| 今（キット配布前）: 暫定ローカル結合環境 | 12_poc/code（POC-03、DL-82）。POC-03 §4 の手順で手元に起動する | 実署名の token に対する token 検証、AuthZEN 呼出しと失敗時の振舞い（PDP 不達・timeout・`deny_unavailable`）、token exchange・Txn-Token の伝播、監査イベントの送出の結合確認 | 下の「暫定ローカル結合環境の条件」に従う。合否の判定には使わない（判定はキット配布後に §6.4 で行う） |
+| キット配布後（DL-120、予定 G3） | MK-01〜MK-08 と制御 API。1 コマンドで起動し、役割を指定すれば必要なモックだけ起動 | 負例・署名付き試験、障害注入（PDP timeout 等） | 業務 API と制御 API は別ポート。モックは本番と別の issuer・鍵（CON-11 §11.2） |
+| PoC 基盤（G4） | 同じ設定を PoC 基盤へ向ける | 同じベクタの再実行 | 変えてよいのは CON-11 §11.4 の差し替え点だけ（コード差分 0、G-123）。ただし 2026-10-15 時点の PoC は §11.4 の差し替え点を読まない（PEP SDK は `PEP_PDP_URL`・`PEP_JWKS_TTL_MS` 等を読み、JWKS URL を topology から組み立てる。STS/TTS に discovery がない）ので、このままではコード差分 0 で切り替えられない（CON-11 §11.5）[D]。是正は TC-119 の開始前に行う（CON-11 残課題 12、本書 残課題 10） |
+
+**暫定ローカル結合環境の条件（12_poc/code。版 0.2 で追加）** [D]
+
+G0 からキットを配る G3 までは、NA-DCS06-7 の仮置きで 12〜24 か月ある（00_decision/06-gate-plan-and-plan-b.md の NA-DCS06-7 行。前提台帳に未登録の新規仮定）[D]。この間、汎用モックだけでは token 検証と PDP の失敗時の振舞いを結合で確かめられないので、PoC 基盤のコードを手元の結合環境として使ってよいことにする。使ってよい範囲は次のとおりである。
+
+| 区分 | 内容 | 根拠 |
+|---|---|---|
+| 使える構成要素 | AS（issuer A＝本番役、issuer B＝sandbox・攻撃者役）、STS（RFC 8693）と TTS（Txn-Token）、PDP façade（AuthZEN の evaluation・evaluations・search）、監査ジャーナル、障害注入プロキシ（PDP 経路の blackhole・delay 等）、参照サービス（tool・file・label）、試験ハーネス（`startStack`、BFF 経由・DPoP CLI のログイン、負例用 token の偽造 `harness/forge.js`） | POC-03 要旨 1、§2、§4 |
+| 業務コードが依存してよいもの | 契約に定めた要求と応答だけ（CON-03 の AuthZEN、CON-05 の exchange、CON-06 の claim、CON-08 の監査イベント）。設定は CON-11 §11.4 の差し替え点から読む | §4.1、CON-11 §11.4 |
+| 依存してはならないもの（実装・内部 API） | PoC の部品を業務コードから import しない（`pep/sdk.js` は PoC の topology に結び付いた試験用の部品で、§11.4 の設定を読まない。CON-11 §11.5）。管理・模擬用の API（`/admin/*`、合成ログイン `/interaction/:uid/login`、`/admin/fault`）、契約外の拡張（`context["x-authz-corr"]`。POC-03 §10.2 P-3）、PEP のローカル記録の内部理由（`deny_token`・`deny_l0:*`。同 P-2）、opaque token の形式（同 P-13）、topology の JSON の形・ポート表（POC-03 §5）・論理名 `*.poc.test`（同 P-12）・`config/ledger.json` の形式に依存しない。POC-03 §10.2 の PoC 限りの暫定（P-1〜P-14）を仕様とみなさない。ハーネスの補助（ログイン、偽造、障害注入）は試験コードの中でだけ使う | §4.2、POC-03 §2・§10.2 |
+| 本番と別の issuer・鍵 | PoC の issuer は `https://as-a.poc.test` などの論理名で実体は 127.0.0.1 の各ポートである（POC-03 §10.2 P-12）。署名鍵・PKI・HMAC 鍵は実行ごとに生成し、`12_poc/code/.run/` にだけ置く（POC-03 §3）。PoC の issuer・CA・鍵を、共有 sandbox や本番の設定、自サービスの allowlist に入れない。`.run/` の秘密を持ち出さない | POC-03 §3・§10.2、CON-11 §5.3 |
+| PoC にないもの | SSF transmitter、SCIM、ライフサイクル事象（CON-12・CON-13）、client 登録（CON-14）の部品はない（POC-03 §2 の部品表、§10.3）。これらは汎用モックか、キット配布後の MK-05〜MK-08 で確かめる | POC-03 §2・§10.3 |
+| 自サービスを workload として繋ぐ場合 | mTLS の workload は `lib/topology.js` の固定一覧だけなので、手元の作業コピーで一覧と entry point 台帳（`config/ledger.json`）を変える必要がある。この変更は手元にとどめ、12_poc/code に戻さない（試験計画の凍結 POC-01 と PoC の合否に影響させないため） | CON-11 §11.5 |
+| 支援 | PoC の部品の不具合や使い方の疑義は S1（E0）に出す。PoC チームは試験計画の実施を優先し、連携チームへの支援の水準は約束しない | §8.1 |
+
 
 ### 6.4 契約試験
 
@@ -258,23 +277,25 @@ SDK を提供しない言語（§5.1 の 3 言語以外。言語は未確定）�
 
 | 機能（契約） | 契約ファイル | モック | 共有 sandbox | PoC 基盤 | 本番 |
 |---|---|---|---|---|---|
-| token 検証（ARC-02、CON-06） | 今（0.x）→ DEC-8 で v1 | 汎用モックは今。MK-01 は G3（DL-82） | G3 予定（K11-3 で運用水準が未決） | G4 | G6（段 P1〜P4） |
+| token 検証（ARC-02、CON-06） | 今（0.x）→ DEC-8 で v1 | 汎用モックは今。MK-01 は G3（DL-120） | G3 予定（K11-3 で運用水準が未決） | G4 | G6（段 P1〜P4） |
 | 認可判定 evaluation（CON-03） | 同上 | MK-03 は G3 | 同上 | G4 | G6 |
 | 一覧・検索 search（CON-03、preview） | 今（preview） | MK-03 は G3 | 同上 | G4 | GA 昇格の別承認（ADR-022 D-1）の後、早くても G6 の P3（案、DCS-06 §8） |
 | tuple の書込み（CON-04） | 今 → DEC-8 | MK-04 は G3 | 同上 | G4 | G6 |
-| モデル管理（CON-04、preview） | 今（preview。CAM の式の文法が未公開、INT-03 §15.3 G-1） | MK-04 は example 駆動のみ | 同上 | G4 | G6 |
+| モデル管理（CON-04、preview） | 今（preview）。CAM 式 v0（permission 式の文法）は CON-04 §9 に preview で公開済みで、モデルを CON-04 の `CamModule` の形で書ける（INT-03 §0-6・§15.3 G-1）。残りは条件カタログの引数の確定（G-5）、`validateModel`・CAM 生成器の提供、CAM 仕様全体への移管（INT-03 §15.3） | MK-04 は example 駆動のみ | 同上 | G4 | G6 |
 | token exchange（CON-05） | 今 → DEC-8 | MK-02 は G3 | 同上 | G4 | G6 |
 | Txn-Token（CON-05、preview、draft 依存） | 今（preview） | MK-02 は G3 | 同上 | G4 | Transaction Tokens が RFC になり GA 昇格の別承認を得た後（案、DCS-06 §8。2026-10-15 時点は draft-11、standards-status SS-B04） |
 | 監査イベント（CON-08） | 今 → DEC-8 | MK-07 は G3 | 同上 | G4 | G6 |
 | 失効・継続評価（CON-09・CON-10） | 今 → DEC-8 | MK-05 は G3 | 同上 | G4 | G6 |
 | SCIM（CON-07） | 今 → DEC-8 | 汎用モックで起動確認済み。MK-06 は G3 | 同上 | G4 | G6 |
-| ライフサイクル事象（G-137。CON-12・CON-13） | draft 作成済み（2026-10-15）。封筒・type 名・冪等と順序は GA、個別 data は preview。DL-117・DL-118 は割当済み。独立レビューは DEC-8 前、凍結は DEC-8 | キット本体 DL-82 の配布後（G3。モックの仕様は CON-11 版 0.3。案、DCS-06 §8） | G3（案） | G4（案） | G6（案） |
-| client 登録（CON-14、client-registration.openapi.yaml） | draft 作成済み（2026-10-15）。登録する内容（ClientMetadata）は GA、登録の手段（sandbox のセルフ登録、本番の申請 API）は preview。凍結は DEC-8 | キット本体 DL-82 の配布後（G3。モックの仕様は CON-11 版 0.3。案、DCS-06 §8）。契約の `x-mock` は定義済みで起動は未確認 | G3（案） | G4（案） | G6（案） |
+| ライフサイクル事象（G-137。CON-12・CON-13） | draft 作成済み（2026-10-15）。封筒・type 名・冪等と順序は GA、個別 data は preview。DL-117・DL-118 は割当済み。独立レビューは DEC-8 前、凍結は DEC-8 | キット本体 DL-120 の配布後（G3。モックの仕様は CON-11 版 0.3。案、DCS-06 §8） | G3（案） | G4（案） | G6（案） |
+| client 登録（CON-14、client-registration.openapi.yaml） | draft 作成済み（2026-10-15）。登録する内容（ClientMetadata）は GA、登録の手段（sandbox のセルフ登録、本番の申請 API）は preview。凍結は DEC-8 | キット本体 DL-120 の配布後（G3。モックの仕様は CON-11 版 0.3。案、DCS-06 §8）。汎用モックでは Prism 5.12.0 で起動確認済み（CON-00 §2.3。確認時の契約の版は 0.1.1 で 7 operation が応答。現行版 0.2.0 での再実行は記録がない） | G3（案） | G4（案） | G6（案） |
+| 照会 API（CON-15（案）、DL-121（案）。LC-OI-3。CON-12 の拡張 `x-state-query-api`） | draft・版 0.1.0（2026-10-15 起草）。全 operation が preview。GA への昇格は DEC-8 第 1 段の付議の前（CON-12 §4.1・§6）。単独ファイル化と DL の確定は未了（CON-00 §9 申し送り 14） | 汎用モックは今（Prism 5.12.0 で 6 operation の起動確認済み、CON-00 §2.3）。MK-08 の照会モックは CON-11 版 0.6 で CON-15 から作る仕様に改められた。実装はキット本体 DL-120（G3） | G3（案。ライフサイクル事象の行に揃えた） | G4（案） | G6（案） |
+| C7 の workload（SVID 登録エントリ、INT-02 I-16）と交換可能な組（I-17）の登録（CON-14 §4A） | 定義あり（CON-14 版 0.2.0 で追加。2026-10-15 確認時の版は 0.3.0）。全 5 操作と申請種別 `workload`・`exchange_pair`、WorkloadEntry・ExchangePair、CR15〜CR21 はいずれも preview（CON-14 §6）。API は未実装。凍結区分は ADR-022 D-2 の改版で決める（CON-14 §9 H-11） | キット本体 DL-120 の配布後（G3）。STS 役 MK-02 に 5 操作を実装する案は CON-11 への申し送り（CON-14 §9 H-12）で、未反映。それまでは PoC の固定一覧（`lib/topology.js` の `WORKLOADS`、`config/ledger.json` の `exchange_registry`）の手元改変で代える（§6.1、CON-14 §4A.5） | G3（案。共有 sandbox K11-3 に従う。提供後で API の提供前は S1 経由の手動登録） | G4（案） | G6（案。本番は申請 API と AR-6・AR-7 による承認） |
 | Webhook 署名（I-15） | KD64-1 の決裁待ち | 決裁後 | G3（案、DCS-06 §8） | G4（案） | G6（案） |
 | PEP SDK（3 言語） | — | — | 言語確定後、G3（案、DCS-06 §8） | G4（案。TC-119 で SDK なし適合を先に示す） | G6 の P1（案） |
 | BFF 参照実装（ADR-005 D6-2） | — | — | G3（案、DCS-06 §8） | G4（案） | G6（案） |
 
-- 版 0.1 の初版で「未定」とした行は、DCS-06 §8 の割当て案を写して「（案）」とした（2026-10-15、レビュー記録 R2-1）[D]。割当ての決裁は DCS-06 の決裁に従い、決裁・改訂のときに本表を同期する（KD-INT00-3 (a)）[D]。契約欄は CON-00 §2.6・§3 の判定（2026-10-15）による [D]。
+- 版 0.1 の初版で「未定」とした行は、DCS-06 §8 の割当て案を写して「（案）」とした（2026-10-15、レビュー記録 R2-1）[D]。割当ての決裁は DCS-06 の決裁に従い、決裁・改訂のときに本表を同期する（KD-INT00-3 (a)）[D]。契約欄は CON-00 §2.6・§3 の判定（2026-10-15）による [D]。C7 の workload・交換可能な組の登録の行は版 0.4 で加えた（CON-14 §9 H-10）。DCS-06 §8 に独立の行がないため、ゲートの割当ては client 登録の行に揃えた本書の案であり、DCS-06 への反映を申し送った（他文書への申し送り S-7）[D]。照会 API の行は版 0.3 で加えた。DCS-06 §8 に照会 API の独立の行がないため、ゲートの割当てはライフサイクル事象の行に揃えた本書の案であり、DCS-06 への反映を申し送った（他文書への申し送り S-6）[D]。
 
 ### 7.2 基盤の本番提供より前に本番を迎えるサービス
 
@@ -465,7 +486,8 @@ flowchart LR
 | 6 | API6・API7・API10 の業務 API 部分の共通規則の所有者（06_controls KM-4）。決まれば本書 §2 に共通規則を置く | B | CTO | G2 |
 | 7 | 申し送り（本書は他文書を編集していない）: CON-00 §2.1・§8 残課題 13 は CON-11・DL-65・DL-67・DL-68 を「未作成」としているが、2026-10-15 時点で存在する。CON-00 §2.5 は「ハンドブックができたら手順を移す」としており、本書 §6 を参照する形への改訂が要る。INT-06 §1.1 の「DL-62 は存在しない」の記述と、INT-02 §10.3 の「BFF 参照実装の提供時期（DL-62）」も本書 §7.1 への参照に直す | A | 各文書の所有者 | 次版 |
 | 8 | 作成者以外のレビュー（人）と、本書のリンク切れ検査 | A | 作成者以外のレビュアー | DEC-8 前 |
-| 9 | Webhook 署名 profile の作成。ライフサイクル事象（CON-12・CON-13）と client 登録の契約は 2026-10-15 に draft を作成済みで、文書ID・DL は CON-12〜CON-14・DL-117〜DL-119 として確定した（CON-00 版 0.4）。残りは作成者以外の独立レビュー、モックの実装（キット本体 DL-82）、LC-OI-1〜3 と T_* の値である（CON-00 §8 残課題 1・7） | A・B | CON-00 §8 の所有者、KD64-1 の決裁者 | DEC-8 前 |
+| 9 | Webhook 署名 profile の作成。ライフサイクル事象（CON-12・CON-13）と client 登録の契約は 2026-10-15 に draft を作成済みで、文書ID・DL は CON-12〜CON-14・DL-117〜DL-119 として確定した（CON-00 版 0.4）。残りは作成者以外の独立レビュー、モックの実装（キット本体 DL-120）、LC-OI-1・LC-OI-2 と T_* の値、照会 API（LC-OI-3。CON-15（案）として preview で起草済み）の単独ファイル化・DL の確定・GA への昇格（DEC-8 第 1 段の付議前）である（CON-00 §8 残課題 1・7、§9 申し送り 14〜16） | A・B | CON-00 §8 の所有者、KD64-1 の決裁者 | DEC-8 前 |
+| 10 | 暫定ローカル結合環境（§6.3）の PoC は CON-11 §11.4 の差し替え点を読まない。PoC の SDK と STS/TTS を discovery 経由と §11.4 の設定名に改めるか、対応表（CON-11 §11.5）を凍結するかを決めて実施する。POA&M への起票は「他文書への申し送り」S-2 とした（版 0.2 で追加） | A・C | PEP SDK・開発者支援チーム（SDK）、PoC チーム（DL-82） | TC-119 の開始前（G4 入場前） |
 
 本書は新規仮定を置いていない。NA-022-1・NA-022-4 は ADR-022 の新規仮定であり、前提台帳への追加は ADR-022 側で扱う [D]。
 
@@ -478,6 +500,12 @@ flowchart LR
 | # | 対象文書・箇所 | 申し送る内容 | 理由 |
 |---|---|---|---|
 | S-1 | traceability/consistency-checks.md（DL-111）§3 | 機械検査を 1 規則追加する。CON-00 §2.1・§2.6.1 の表と deliverables.md §8 に載り、実在する契約・成果物（パスと文書ID・DL-ID）について、他文書が同じ行・同じ文で「未作成」「契約なし」「契約がない」「契約ファイル未作成」と書いている箇所を検出する。主題語（例: ライフサイクル事象、G-137、client 登録、I-01、I-11、DL-42）と状態語の組を対象にし、検出したら状態の正本（CON-00 §2.1・§2.6、deliverables.md §8）の行を併記して警告する | ラウンド 2 で、CON-12・CON-13・client-registration.openapi.yaml・DL-42（DCS-06）が存在するのに、本書を含む 10_integration と 00_decision の 7 文書が「未作成」のまま残っていた（レビュー記録 R2-1）。人の通読では再発を防げない |
+| S-2 | traceability/open-items.md（POA&M） | 行を 1 つ起票する。「PoC の PEP SDK（`pep/sdk.js`）と STS/TTS が CON-11 §11.4 の差し替え点を読まない。SDK と STS/TTS を discovery 経由と §11.4 の設定名に改めるか、対応表（CON-11 §11.5）を凍結する」。閉じ方 A・C、所有者 PEP SDK・開発者支援チーム（SDK）と PoC チーム（DL-82）、期限 TC-119 の開始前（G4 入場前）、依存 G-123・TC-119（CON-11 §14.2 の同じ申し送りと 1 行にまとめてよい） | 本書 §6.3 の「PoC 基盤（G4）」行の「コード差分 0」（G-123）は、この是正なしには成り立たない（CON-11 §11.5。ラウンド 4 R4-2） |
+| S-3 | 12_poc/code/README.md（POC-03） | §4 か §2 の PEP SDK 行に、連携開発者が暫定ローカル結合環境として使う場合の条件（本書 §6.3）と、CON-11 §11.4 との対応（CON-11 §11.5）を参照する一文を置く | 入口文書（本書）と PoC の文書で使い方の条件を揃えるため |
+| S-4 | 10_integration/integration-patterns.md（INT-02）§10.1、developer-faq.md（INT-06）、definition-of-ready.md（INT-05）RD-04 | キット配布前の結合手段として、汎用モックに加え本書 §6.3 の暫定ローカル結合環境を参照する形に改める | 入口文書の間で手段の一覧を揃えるため |
+| S-5 | 11_contracts/README.md（CON-00）§2.1・§2.3、traceability/consistency-checks.md（DL-111）§3 | (1) CON-00 §2.1 の版の列を各ファイルの現行に揃え、SHA-256 の列も取り直す。2026-10-15 13:23 に本書の作成者が見た差は、CON-11 が表では 0.3（現行 0.6）、CON-14 が表では 0.1.1（現行 `info.version` 0.2.0）である。§2.3 の Prism の起動確認を CON-14 0.2.0 で再実行して記録する。(2) DL-111 に機械検査を 1 規則加える。INT-00 §1.2・CON-00 §2.1 のように他文書の版を写した表について、写した版と対象ファイル冒頭の版（Markdown は 3 行目の「版:」、OpenAPI・AsyncAPI は `info.version`）の不一致を検出する | ラウンド 6 で、本書 §1.2 の版の列が 6 文書で古く、§7.1 にも改版前の記述が残っていた（R6-1）。ラウンド 2 の S-1（状態語の検査）と同じ型の再発であり、版の写しにも機械検査が要る |
+| S-7 | 00_decision/06-gate-plan-and-plan-b.md（DCS-06）§8、11_contracts/README.md（CON-00）§2.5・§3 | (1) DCS-06 §8 の割当て案に「C7 の workload・交換可能な組の登録（CON-14 §4A）」の行を加える（本書 §7.1 は client 登録の行に揃えた案: sandbox G3、PoC 基盤 G4、本番 G6）。(2) CON-00 §3 の対応表に I-16・I-17 の行を加え（CON-14 §9 H-11）、§2.5 の役割別の表で C7 の登録が CON-14 §4A であることを示す | ラウンド 7 で、本書 §6.1・§7.1 に C7 の登録の行を加えた（R7-1）。入口文書と CON-00・DCS-06 の間で、C7 の登録手段の所在とゲートを揃えるため |
+| S-6 | 00_decision/06-gate-plan-and-plan-b.md（DCS-06）§8 | 機能ごとの提供ゲートの割当て案に、照会 API（CON-15（案））の行を加える。本書 §7.1 はライフサイクル事象の行に揃えた案（sandbox G3、PoC 基盤 G4、本番 G6）を置き、契約の GA への昇格は DEC-8 第 1 段の付議の前とした（CON-12 §4.1・§6） | 本書 §7.1 の「（案）」は DCS-06 §8 の写しとする約束（KD-INT00-3 (a)）だが、照会 API の行は DCS-06 にない |
 
 ---
 
@@ -492,6 +520,7 @@ flowchart LR
 [^7]: デジタル庁 地方業務システム基盤チーム『標準仕様書の改定・運用について（基本的な考え方）』2025-01-29. https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/c58162cb-92e5-4a43-9ad5-095b7c45100c/394352a4/20250129_policies_local_governments_outline_01.pdf （参照箇所: p.1〜p.4、確認日: 2026-10-03）（RS-16#74）
 [^8]: DORA (Google Cloud)『Capabilities: Streamlining change approval』. https://dora.dev/capabilities/streamlining-change-approval/ （参照箇所: 冒頭, Common pitfalls、確認日: 2026-10-03）（RS-16#59）
 [^9]: デジタル庁『令和6年度 共同利用方式の推進及びマルチベンダーにおけるシステム間連携の検証事業 報告書（本紙）』2026-03-27. https://www.digital.go.jp/assets/contents/node/basic_page/field_ref_resources/92d70acb-8407-4f60-8b45-363d9a2d358d/c71cd4d5/20260327_policies_local_governments_government-cloud-vendor-verification_01.pdf （参照箇所: p.7 各検証項目の検証内容・検証結果・総括（2/5）、確認日: 2026-10-03）（RS-16#79）
+[^10]: 本リポジトリ『モック・契約試験キット仕様』（CON-11、版 0.6 draft。初出時は版 0.4）2026-10-15. 11_contracts/mock-contract-test-kit.md （参照箇所: 要旨 7, §11 冒頭, §14.2 の 10_integration・11_contracts 行、確認日: 2026-10-15。版 0.6 の要旨 7 でも DL-120 が未実装であることを 13:23 に再確認）。DL-120 の定義は本リポジトリ『成果物計画』（TRC-03、版 0.3）traceability/deliverables.md §4.6・§8（確認日: 2026-10-15）
 
 ---
 
@@ -508,3 +537,42 @@ flowchart LR
 - 根拠として確認した箇所: CON-00 §2.1（CON-12・CON-13 の行）、§2.5（判定と役割別の表）、§2.6.1、§3 の client 登録行、§8 残課題 7、§9 申し送り 1・4・5・6。client-registration.openapi.yaml の `info`（x-status draft、x-freeze-classes、paths `/v1/register`・`/v1/client-registration-requests`）。lifecycle-events.asyncapi.yaml の RO-6 と LC-OI-1〜3。deliverables.md の DL-42 行（パス 00_decision/06-gate-plan-and-plan-b.md）。DCS-06 §5.4・§8。いずれも 2026-10-15 に本リポジトリで確認した [D]。
 - 是正の途中で CON-00 が版 0.4 に改版され、CON-12・CON-13・client 登録（CON-14）に DL-117〜DL-119 が割り当てられ、文書ID の衝突も解消された（CON-00 要旨 1、§2.1。deliverables.md §8）。本ラウンドの記述はこの状態（2026-10-15 確認）に合わせた [D]。
 - 対応件数: 1 件（対応済み 1、他文書への申し送り 1 項目）[D]。
+
+### ラウンド 4（模擬パネル、2026-10-15）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R4-1 | High・devlead | CON-11 版 0.4 は契約試験キット本体を DL-82（PoC 基盤、納品済み）から分けて DL-120 案としたが、本書は「キット本体 DL-82 は未実装」と書き、納品済みの DL-82 と矛盾していた。キット本体を誰がいつ配布するかを追跡できない | **対応**。「キット本体（DL-82）は未実装」の類を「DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装（期限 G3）」に、「キット（DL-82）の配布後」の類を DL-120 に改めた。DL-120 は traceability/deliverables.md 版 0.3 で所有者案（PEP SDK・開発者支援チーム）・受入れ基準・期限 G3 とともに登録された。CON-11 の原文（要旨 7、§11 冒頭、§14.2）を 2026-10-15 に確認した[^10] [D] | §0 の 3、§1.2 の CON-11 行（版を 0.4、モックを MK-01〜MK-08 に更新）、§2 の図、§5.3 の差し替え点、§6.3 のキット配布後の行、§7.1 の表 3 行、残課題 9 |
+| R4-2 | High・devlead（MP-1-31、MP-3-19。ラウンド 3 で devlead が付けた条件） | G0 からキットを配る G3 まで（NA-DCS06-7 では 12〜24 か月）、連携チームが使えるのは汎用モックだけで、その起動確認も CON-07 しかない。汎用モックは署名付き token も負例も出せず、token 検証や PDP の失敗時の振舞いを結合試験できない。12_poc/code の AS 2 issuer・STS/TTS・PDP façade・PEP SDK を暫定ローカル結合環境としてどこまで使ってよいかが入口文書にない。PoC SDK は CON-11 §11.4 の設定を読まないので、§6.3 の「コード差分 0」（G-123）は現状の PoC では成り立たない | **対応（本書の担当分は (2)）**。(1) 汎用モックの起動は CON-00 §2.3 で OpenAPI 6 本すべてについて記録され（Prism 5.12.0、全 77 operation が応答）、§6.3 の「今」行をそれに合わせた。(2) §6.3 に「暫定ローカル結合環境」行を加え、使える構成要素、業務コードが依存してよいもの、依存してはならないもの（実装・内部 API、PoC 限りの暫定）、本番と別の issuer・鍵であること、PoC にない部品、自サービスを workload として繋ぐ場合の扱いを条件表にした。(3) 「PoC 基盤（G4）」行の参照先の誤り（「§5.3」→ CON-11 §11.4）を直し、現状の PoC ではコード差分 0 が成り立たないこと（CON-11 §11.5 の対応表）を書いた。是正は残課題 10 と、POA&M への起票の申し送り S-2（所有者・期限付き）にした。キット配布後の行のモックを MK-01〜MK-08 に直した（CON-11 版 0.3 で MK-08 を追加済み） | 冒頭、§6.3、残課題 10、他文書への申し送り S-2〜S-4 |
+
+- 他文書への申し送り: 10_integration/onboarding.md（INT-04）にも同じ記載（「キット本体（DL-82）の配布は G3 の予定」、図の「キット配布（DL-82、G3）」）が残る。CON-11 §14.2 の申し送りに従い DL-120 に改める（本ラウンドの担当外）[D]。
+- R4-2 の根拠として確認した箇所: 12_poc/code/README.md（POC-03）の要旨 1、§2 の部品表、§3、§4、§5、§10.2（P-2・P-3・P-12・P-13）、§10.3。12_poc/code の `pep/sdk.js`、`lib/topology.js`、`sts/server.js`（行は CON-11 §11.5）。CON-00 §2.3 の汎用モックの実行記録。00_decision/06-gate-plan-and-plan-b.md の NA-DCS06-7 行。いずれも 2026-10-15 に本リポジトリで確認した [D]。新たな外部原典は用いていない [D]。
+- R4-2 の是正は本書、CON-00、CON-11 の 3 ファイルだけで行った。対応件数: 1 件（対応済み 1、他文書への申し送り 3 項目 S-2〜S-4）[D]。
+
+### ラウンド 6（模擬パネル、2026-10-15）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R6-1 | High・devlead | 連携開発者が最初に読む本書の記述が作業ツリーの実態と合っていない（決裁パッケージの状態表示の群 a と同じ型の再発）。(1) §1.2 の版の列が古い（INT-00 0.1、INT-03 0.2、INT-05 0.1、CON-00 0.2、CON-01「0.1 draft」、CON-11 0.4）。(2) §7.1 のモデル管理の行が「CAM の式の文法が未公開（INT-03 §15.3 G-1）」と書くが、G-1 は CON-04 §9 の CAM 式 v0 の EBNF で閉じている。(3) §7.1 の client 登録の行が「x-mock は定義済みで起動は未確認」と書くが、CON-00 §2.3 で OpenAPI 6 本の Prism での起動が確認済み。(4) §0 の 3 が「LC-OI-1〜3 が残る」と書くが、LC-OI-3 は CON-15（案、preview）として起草済みで、§6.3・§7.1 に CON-15 の行がない | **対応**。(1) §1.2 の版・状態を各ファイル冒頭のメタ情報に合わせた。INT-00 は本改版で 0.3、INT-03 0.6、INT-05 0.3、CON-00 0.6、CON-01 0.2 review、CON-11 0.6（指摘時点の 0.5 から本是正までに 0.6 に改版されていたので現行の 0.6 を採った）。INT-01・INT-02（0.2）、INT-04・INT-06（0.1）は一致していた。表題に確認時刻と HEAD を書き、版の確かめ方の注記を加えた。(2) モデル管理の行を「CAM 式 v0 は CON-04 §9 に preview で公開済み。残りは条件カタログの引数（G-5）、`validateModel`・CAM 生成器の提供、CAM 仕様全体への移管」に改めた。(3) client 登録の行を「Prism 5.12.0 で起動確認済み（CON-00 §2.3）」に改めた。確認時の契約の版は 0.1.1 で、現行 0.2.0 での再実行の記録がないことも書いた。(4) §0 の 3 を「LC-OI-1・LC-OI-2 が残る。LC-OI-3 は CON-15（案）で preview。GA への昇格は DEC-8 第 1 段の付議の前」に改め、§7.1 に照会 API の行を、§6.3 の「今」行に CON-15 の Prism 起動確認を、§6.1 に削除などの経路の着手範囲を加えた。残課題 9 と脚注 10 も合わせて直した | 冒頭（版・作成方法）、§0 の 3、§1.2、§6.1、§6.3、§7.1（モデル管理・client 登録の行、照会 API の行の新設、表の下の注記）、残課題 9、脚注 10、他文書への申し送り S-5・S-6 |
+
+- 根拠として確認した箇所（2026-10-15 13:23 JST、HEAD `a155148` に未コミットの作業ツリーを重ねた状態）[D]: 10_integration・11_contracts の各 Markdown の 3 行目の版・状態。client-registration.openapi.yaml の `info.version`（0.2.0）。INT-03 §0-6（CAM 式 v0 は CON-04 v0.2.0 に preview として定義済みで、残る待ちは条件カタログの引数・階層の決裁・CAM 生成器と `validateModel`）と §15.3 の G-1・G-5 の行。CON-04 `info.description` §8 の「CAM の構文」行（v0.2.0 で §9 に CAM 式 v0 として公開、preview）と §9。CON-00 §2.1（CON-14・CON-15 の行）、§2.3 の Prism の表（CON-14 0.1.1 で 7 operation が応答）と CON-15 の起動記録（6 operation すべて 200、12:58）、§2.6.4。CON-12 §4.1（CON-15（案）の起票、期限は DEC-8 第 1 段の付議前）、§6（照会 API が揃うまで GA の凍結を付議しない）、`x-open-issues` の LC-OI-1・LC-OI-2。traceability/deliverables.md に DL-121 の行がないこと（検索で確認。DL の確定は CON-00 §9 申し送り 14 で扱い中）。
+- 新たな外部原典は用いていない。新たに書いた事実はいずれも本リポジトリの文書の照合による [D]。
+- 他文書への申し送り: S-5（CON-00 §2.1 の版の列の是正と CON-14 0.2.0 での Prism の再実行、版の写しの機械検査の DL-111 への追加）、S-6（DCS-06 §8 への照会 API の行の追加）。本ラウンドの是正は本ファイルだけで行った [D]。
+- 対応件数: 1 件（4 項目すべて対応済み、他文書への申し送り 2 項目 S-5・S-6）[D]。
+
+### ラウンド 7（模擬パネル、2026-10-15）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| R7-1 | High・devlead | CON-14 §9 の申し送り H-9・H-10・H-13 が 10_integration に 1 か所も反映されていない。本書 §6.1 は「client 登録は CON-14 で sandbox セルフ登録」とだけ書き、C7（内部 workload）には当てはまらない（CON-14 §3）。入口文書だけを読む P-03 のチームは、SVID の登録エントリと交換可能な組の登録手段の契約にたどり着けない | **対応（本書の担当分 H-10）**。(1) §0 の 3 に、C7 は client ではなく登録エントリ（I-16）と交換可能な組（I-17）で登録すること、手段は CON-14 §4A（preview）、API 未実装で暫定手順は §4A.5 であることを書いた。(2) §6.1 の client 登録の項に「C7 には当てはまらない」を加え、C7 の登録の項（sandbox の 5 操作、本番の申請種別 `workload`・`exchange_pair` と承認者案 AR-6・AR-7・AR-3）と、API 提供前の暫定手順の項（PoC の `topology.js`・`ledger.json` の手元改変、S1 経由の手動登録）を加えた。(3) §7.1 の client 登録の行の次に「C7 の workload・交換可能な組の登録」行を加えた（契約は preview、モックは DL-120 の G3、それまでは PoC の固定一覧、共有 sandbox は K11-3 に従う）。INT-02（H-9）・INT-04（H-13）・INT-05 RD-08 は同じラウンドで各ファイルを是正した | 冒頭（版・作成方法）、§0 の 3、§1.2（INT-00・INT-02・INT-04・INT-05 の版）、§6.1、§7.1（行の新設、表の下の注記）、他文書への申し送り S-7 |
+
+- 根拠として確認した箇所（2026-10-15）[D]: 11_contracts/client-registration.openapi.yaml（CON-14、確認時の `info.version` は 0.3.0。§4A は版 0.2.0 で追加）の `info.summary`、`x-freeze-classes` の preview 行、description §1 の範囲表 5、§4A.1〜§4A.5、§5（申請の対象 `client`・`workload`・`exchange_pair`）、§6 の凍結区分の表、§9 の H-9〜H-15、`x-approval-rules` の AR-3・AR-6・AR-7、paths の operationId（`registerSandboxWorkload`・`deleteSandboxWorkload`・`registerExchangePair`・`deleteExchangePair`・`decideSandboxExchangePair`）。12_poc/code/lib/topology.js の `export const WORKLOADS`、12_poc/code/config/ledger.json の `exchange_registry`、12_poc/code/sts/server.js が起動時に `ledgerCfg.exchange_registry` から登録簿を作ること。CON-11 §5 の K11-3。deliverables.md の DL-120 行（期限 G3）。
+- 新たな外部原典は用いていない。新たに書いた事実はいずれも本リポジトリの文書とソースの照合による [D]。
+- 他文書への申し送り: S-7（DCS-06 §8 への行の追加、CON-00 §3・§2.5 への I-16・I-17 の反映）。本ファイルの是正は本ファイルだけで行った [D]。
+- 対応件数: 1 件（対応済み 1、他文書への申し送り 1 項目 S-7）[D]。

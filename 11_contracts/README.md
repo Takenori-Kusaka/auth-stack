@@ -1,9 +1,9 @@
 # 連携契約 一覧・規約
 
-> 文書ID: CON-00 / 版: 0.4 / 状態: draft / 最終更新: 2026-10-15
+> 文書ID: CON-00 / 版: 0.6 / 状態: draft / 最終更新: 2026-10-15
 > 対応要求: R-109, R-212／G-118, G-119, G-127, G-134, G-138（R/G 台帳の対応成果物欄に本書のパスか DL-69 を含む行の全件。閉じ方と状態は末尾の対応表）。関連: R-022, R-044, R-105, R-108, R-140, R-194, R-208／G-120〜G-123, G-126, G-137（§2.6 で契約側を起草）, G-140〜G-142／CL-0249, CL-0261
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-69〜DL-80、DL-117〜DL-119、§8 の 11_contracts 行、DEC-8）, 05_adr/ADR-022-integration-contract-standards.md（正本: 凍結区分・契約ごとの判定・変更管理）, 05_adr/ADR-016-versioning-deprecation.md（正本: 版の表し方・互換区分・期間）, 05_adr/ADR-021-irreversible-identifiers.md, 05_adr/ADR-005-token-profile.md, 05_adr/reconciliation-notes.md（U-01〜U-04）, 04_architecture/token-profile.md（ARC-02）, 01_governance/raci-governance.md（RACI-20、契約変更審査会）, 01_governance/assumptions-register.md（A-050, A-052, A-054）, 12_poc/preregistered-test-plan.md（TC-026, TC-119, TC-129）, research/standards-status.md, research/RS-16-parallel-development-governance.md, 11_contracts/ 配下の全契約と review-notes/CON-02〜CON-10
-> 作成方法: AI エージェント（Claude）が 11_contracts の全ファイル、ADR-022、ADR-016 を通読して起草した。§2.3 の機械検証は本書の作成者が 2026-10-15 に再実行した。判断は自己レビューであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。版 0.2 は作成者とは別の AI エージェントが独立レビューして修正した版である（末尾「レビュー記録」）。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 1 の指摘を受け、並行作業で配置されたライフサイクルイベント契約（CON-12・CON-13）を一覧・依存・着手手順・インタフェース表に組み込み、残りを申し送った版である（§2.6、§9）。版 0.4 は同パネルのラウンド 2 の指摘を受け、文書ID と DL を deliverables.md §4.5・§8 で確定し（CON-12／DL-117、CON-13／DL-118、client 登録 CON-14／DL-119）、§2.1 の版を実ファイルに揃えて SHA-256 を併記し、§2.3 の機械検証を全 12 ファイルで再実行した版である（末尾「レビュー記録」ラウンド 2）。人による照合はまだ行っていない [D]。
+> 作成方法: AI エージェント（Claude）が 11_contracts の全ファイル、ADR-022、ADR-016 を通読して起草した。§2.3 の機械検証は本書の作成者が 2026-10-15 に再実行した。判断は自己レビューであり、実在する CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。版 0.2 は作成者とは別の AI エージェントが独立レビューして修正した版である（末尾「レビュー記録」）。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 1 の指摘を受け、並行作業で配置されたライフサイクルイベント契約（CON-12・CON-13）を一覧・依存・着手手順・インタフェース表に組み込み、残りを申し送った版である（§2.6、§9）。版 0.4 は同パネルのラウンド 2 の指摘を受け、文書ID と DL を deliverables.md §4.5・§8 で確定し（CON-12／DL-117、CON-13／DL-118、client 登録 CON-14／DL-119）、§2.1 の版を実ファイルに揃えて SHA-256 を併記し、§2.3 の機械検証を全 12 ファイルで再実行した版である（末尾「レビュー記録」ラウンド 2）。版 0.5 は同パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 4 の指摘を受け、OpenAPI 6 本すべてを汎用モック（Prism 5.12.0）で起動した結果を §2.3 に記録し、§2.5 のモックの手順を直した版である（末尾「レビュー記録」ラウンド 4）。版 0.6 は同パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 5 の devlead 指摘を受け、CON-12 が RO-9・RO-12 で呼ぶことを義務とする照会 API の契約 CON-15（案、DL-121 案、preview）を CON-12 の拡張 `x-state-query-api` に起草し、一覧・検査・依存・着手手順・インタフェース表に登録した版である（§2.6.4、末尾「レビュー記録」ラウンド 5）。人による照合はまだ行っていない [D]。
 
 ---
 
@@ -11,9 +11,9 @@
 
 1. **機械可読な連携契約は 12 ファイル（OpenAPI 6 本、AsyncAPI 1 本、JSON Schema 5 本）が draft で揃い、機械検証のエラーは 0 件である。ただし DEC-8 で凍結できる状態にはまだない** [M][D]。
    - 2026-10-15 11:30〜11:36 の再実行（§2.3）で、OpenAPI 6 本と AsyncAPI 1 本は Redocly lint のエラーが 0 件だった。警告は 14 件で、うち 5 件（CON-05 1、CON-07 3、CON-12 1）は各ファイルの `x-lint-notes` に理由がある。CON-04（版 0.3.0）の 9 件は理由が記録されていない（§9 申し送り 11）[M]。JSON Schema 5 本はすべてメタスキーマ検査に合格し、ルートの examples はすべて適合した [M]。
-   - ライフサイクルイベント契約（G-137）は CON-12（`lifecycle-events.asyncapi.yaml`、AsyncAPI 3.1.0）と CON-13（`schemas/lifecycle-event.schema.json`）、client 登録は CON-14（`client-registration.openapi.yaml`）である。版 0.4 で 3 ファイルとも deliverables.md §4.5・§8 に DL-117〜DL-119 として行を加え、文書ID の衝突（client 登録とライフサイクル事象のスキーマがともに「CON-13」を名乗っていた）を解いた [D]。
+   - ライフサイクルイベント契約（G-137）は CON-12（`lifecycle-events.asyncapi.yaml`、AsyncAPI 3.1.0）と CON-13（`schemas/lifecycle-event.schema.json`）、client 登録は CON-14（`client-registration.openapi.yaml`）である。CON-12 の RO-9・RO-12 が呼ぶ照会 API は CON-15（案、DL-121 案。OpenAPI 3.1.2、preview）として版 0.6 で登録した。並行作業の約束で新しいファイルを作れなかったため、本体は CON-12 の拡張 `x-state-query-api` にあり、単独ファイルへの切出しと DL の確定は申し送った（§2.6.4、§9 申し送り 14）[D]。版 0.4 で 3 ファイルとも deliverables.md §4.5・§8 に DL-117〜DL-119 として行を加え、文書ID の衝突（client 登録とライフサイクル事象のスキーマがともに「CON-13」を名乗っていた）を解いた [D]。
    - 3 ファイルとも作成者以外の独立レビューがまだない。G-118 は §8 の登録で確認対象に入ったが、判定者である自動検査（DL-111）の再実行がまだなので、G-118 と DEC-8 の凍結条件 ④ は未達として扱う [D]。
-   - 契約試験キットは仕様（CON-11、版 0.3 draft。ライフサイクル事象の publisher モック MK-08 と sandbox の client 登録 endpoint を版 0.3 で追加）ができたが、キット本体（DL-82）は未実装である [D]。
+   - 契約試験キットは仕様（CON-11、版 0.4 draft。ライフサイクル事象の publisher モック MK-08 と sandbox の client 登録 endpoint を版 0.3 で追加し、キット本体を DL-82 から分ける判断を版 0.4 で加えた）ができた。PoC 基盤（DL-82、12_poc/code/README.md）は納品済みだがキットを含まず、キット本体（DL-120、12_poc/code/contract-kit/、所有者案は PEP SDK・開発者支援チーム）は未実装（期限 G3）である [D][^16]。
    - 互換性・非推奨ポリシー（DL-70、CON-01）は版 0.2（review）だが、期間の数値は決裁案（CON-01 KC-1 ほか）で承認されていない [D]。issuer の粒度（U-01、DEC-3）も決まっていない [D]（§6.3）。
 2. **契約は単一の規約で書く** [D]（§4）。本書で決める主な点は次の 5 つである。
    - `openapi` 欄は ADR-022 D-2 のとおり `3.1.2` に揃える。
@@ -33,7 +33,8 @@
 4. **連携開発者は、基盤の完成を待たずに、契約の GA 要素に対する実装と単体試験を今日から始められる。ただし範囲は限られる** [D]（§2.5）。
    - 始められる: token 検証、認可判定の呼出し、tuple の書込み、token exchange、監査イベントの送出、失効イベントの受信。契約ファイルの examples からモックを起動し、`x-negative-examples` を試験に入れる [D]。
    - 条件付きで始められる: client の登録。sandbox では CON-14 の `registerSandboxClient`、本番では `submitClientRegistrationRequest` を使う（いずれも preview。種別ごとの必須項目は GA）[D]。
-   - 条件付きで始められる: テナント・利用者のライフサイクル事象の受信。CON-12 の事象一覧・配送の保証・受信側の義務と、CON-13 の封筒・data の形・examples・負例に対して、受信処理（重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告）の実装と単体試験を書ける [D]。封筒・type 名・冪等と順序の規約は GA、個別の data スキーマは preview である（ADR-022 D-2）[D]。DEC-8 までは両ファイルのコミットを固定して追う [D]。
+   - 条件付きで始められる: テナント・利用者のライフサイクル事象の受信。CON-12 の事象一覧・配送の保証・受信側の義務と、CON-13 の封筒・data の形・examples・負例に対して、受信処理（重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告）の実装と単体試験を書ける [D]。封筒・type 名・冪等と順序の規約は GA、個別の data スキーマは preview である（ADR-022 D-2）[D]。削除・保全解除・付け替え・所属除去の削除経路は、CON-15 の verifyLifecycleAction の要求・応答・理由コード（LQ00〜LQ11、LQ20〜LQ24）と負例 LQN-01〜LQN-19 に対して、実装と単体試験を書ける（preview）[D]。DEC-8 までは両ファイルのコミットを固定して追う [D]。
+   - モック: OpenAPI 6 本は汎用モック（Prism 5.12.0）で起動し、全 77 operation が応答を返すことを確かめた（§2.3、版 0.5）[M]。汎用モックは署名付き token・負例・mTLS の拒否を出せないので、それらの結合確認は INT-00 §6.3 の暫定ローカル結合環境（12_poc/code）か、キット本体（DL-120、期限 G3）で行う [D]。
    - 制約: DEC-8 までは版が 0.x である。SemVer では major 0 の間は何がいつ変わってもよい [N][^2]。CON-01 も凍結前の変更には期間を約束しない [D]。連携側は契約ファイルの git コミットを固定し、差分を追う [D]。基盤側と同じ合否判定は DL-80 ができるまで共有できない [D]。
 
 ---
@@ -54,7 +55,7 @@
 ├── README.md                                 CON-00 本書（DL-69）
 ├── compatibility-deprecation-policy.md       CON-01（DL-70）
 ├── mock-contract-test-kit.md                 CON-11（DL-80）
-├── lifecycle-events.asyncapi.yaml            CON-12（DL-117）
+├── lifecycle-events.asyncapi.yaml            CON-12（DL-117）。拡張 x-state-query-api に CON-15（案、DL-121 案）の OpenAPI を内包
 ├── client-registration.openapi.yaml          CON-14（DL-119）
 ├── authorization-api.openapi.yaml            CON-03（DL-72）
 ├── relationship-model-registry.openapi.yaml  CON-04（DL-73）
@@ -82,7 +83,7 @@
 
 | 文書ID | DL | パス | 記述形式 | 版 | 状態 | 独立レビュー | 所有者（案） | SHA-256（2026-10-15 11:35〜11:36 に取得） |
 |---|---|---|---|---|---|---|---|---|
-| CON-00 | DL-69 | 11_contracts/README.md | Markdown | 0.4 | draft | 版 0.2 に対して済（本書末尾のレビュー記録） | プラットフォームチーム長（契約変更審査会の議長） | —（本書自身。自分のハッシュは本文に書けないため、git のコミットで特定する） |
+| CON-00 | DL-69 | 11_contracts/README.md | Markdown | 0.6 | draft | 版 0.2 に対して済（本書末尾のレビュー記録） | プラットフォームチーム長（契約変更審査会の議長） | —（本書自身。自分のハッシュは本文に書けないため、git のコミットで特定する） |
 | CON-01 | DL-70 | 11_contracts/compatibility-deprecation-policy.md | Markdown | 0.2 | review（数値は決裁案 KC-1〜KC-5 で未承認） | 未実施 | CTO＋CISO（SLA の承認者）、起草はプラットフォームチーム | `e28822db9a6440900a2a43308177ebc6e24d902a7e2760a8359ec24488ed7d4a` |
 | CON-02 | DL-71 | 11_contracts/schemas/common.schema.json | JSON Schema 2020-12 | 0.1.0 | draft | 済（修正 11 件） | プラットフォームチーム長 | `fe7569aeab3012150229139559b718d051112bb2f7c9f55d9aaad918a5b8a22b` |
 | CON-03 | DL-72 | 11_contracts/authorization-api.openapi.yaml | OpenAPI 3.1.2 | 0.2.0（profile 1.0） | draft | 版 0.1.x に対して済（修正 19 件）。模擬パネル ラウンド 1 による 0.2.0 の改版分は未実施 | 認可・PDP チーム | `7ec582d56559046c898b81c7c2d9c51f6beee6b3e23c4f35fb72ed2dba543231` |
@@ -93,8 +94,9 @@
 | CON-08 | DL-77 | 11_contracts/schemas/audit-event.schema.json | JSON Schema 2020-12 | 0.2（SemVer でない。§4.9 D-4） | draft | 済（RV-01〜RV-14） | プラットフォームチーム（監査収集）。CISO が協議先 | `be00beb2d26119907c9e840ae29a411369cd0966456c5f876de3e07f97d51c5d` |
 | CON-09 | DL-78 | 11_contracts/ssf-caep.openapi.yaml | OpenAPI 3.1.0 | 0.1.1 | draft | 済 | 認証・IdP チーム（失効・継続評価） | `c01c8c2fb6c51fd3a54648893b86a4cf79d7b4a0bc151748e26f2040cabe4482` |
 | CON-10 | DL-79 | 11_contracts/schemas/ssf-caep-set.schema.json | JSON Schema 2020-12 | 0.1.0 | draft | 済 | 認証・IdP チーム（失効・継続評価） | `c137a200b93e8f383278b2733eabdd6ad4f14d78a5b1bf16908583e295377662` |
-| CON-11 | DL-80 | 11_contracts/mock-contract-test-kit.md | Markdown | 0.3 | draft（キット本体 DL-82 は未実装） | 版 0.2 まで済（同書のレビュー記録） | PEP SDK・開発者支援チーム | `26d82109a7b7e489e0f73a5a70a7f215607ac6403fa05108a9398d3ed8c1fdd7` |
-| CON-12 | DL-117 | 11_contracts/lifecycle-events.asyncapi.yaml | AsyncAPI 3.1.0 | 0.2.0 | draft（ファイル内の文書ID はまだ「案」。§9 申し送り 12） | 未実施（本書の作成者は §2.3・§2.6.2 の機械検査だけを行った） | 未決（K-CON-3。案: プラットフォームチームと DL-49・DL-08 の所有者の共同） | `fb44eb5a2e9b999f89766abacc5c1096e84943329c6c797a614ce580a829cbf3` |
+| CON-11 | DL-80 | 11_contracts/mock-contract-test-kit.md | Markdown | 0.3 | draft（DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3） | 版 0.2 まで済（同書のレビュー記録） | PEP SDK・開発者支援チーム | `26d82109a7b7e489e0f73a5a70a7f215607ac6403fa05108a9398d3ed8c1fdd7` |
+| CON-12 | DL-117 | 11_contracts/lifecycle-events.asyncapi.yaml | AsyncAPI 3.1.0 | 0.4.0 | draft（版 0.4.0 でファイル内の「案」を外した） | 未実施（本書の作成者は §2.3・§2.6.2 の機械検査だけを行った） | 未決（K-CON-3。案: プラットフォームチームと DL-49・DL-08 の所有者の共同） | `25cb29bcf4e2ebbdc84598553f565e1e527f1518dc33c80b7513f4aba2f1c4d1`（版 0.4.0。2026-10-15 13:01 に取得。CON-15 を内包） |
+| CON-15（案） | DL-121（案） | 11_contracts/lifecycle-events.asyncapi.yaml の拡張 `x-state-query-api`（単独ファイル 11_contracts/lifecycle-state.openapi.yaml への切出しは §9 申し送り 14） | OpenAPI 3.1.2 | 0.1.0 | draft、preview（GA への昇格は CON-12 §4.1 Q-5 の案） | 未実施 | DL-49 の所有者＋プラットフォームチーム長（CON-12 LC-OI-3） | CON-12 のハッシュに含まれる（単独ファイル化の後に別に取る） |
 | CON-13 | DL-118 | 11_contracts/schemas/lifecycle-event.schema.json | JSON Schema 2020-12 | 0.1.1 | draft | 未実施（同上） | 同上 | `2f05ec0382c367ec5446ee53c82298061cf60a651b0c3c808ad1b5451750bcf9` |
 | CON-14 | DL-119 | 11_contracts/client-registration.openapi.yaml | OpenAPI 3.1.2 | 0.1.1 | draft | 未実施 | 認証・IdP チーム（承認者は CTO、契約管理） | `80ac093728eed758a18a5f20d25414edc8361e1f5e1b4708e92795566246dfc5` |
 
@@ -129,6 +131,7 @@
 | CON-08 | 正準スキーマは自社定義（ADR-014 D14-06）。写像先は OCSF 1.9.0（SS-I24）と CADF 1.0.0 | 共通項目（主体、tenant、actor chain、resource、action、decision、reason、policy/model revision、producer 連番、スキーマ版、相関 ID） | OCSF・CADF への写像は export 層に置き、版は契約と別に管理する（凍結しない） | OCSF の版上げは写像の版上げとして扱い、正準スキーマを変えない（ADR-022 D-2）[D] |
 | CON-09 | SSF 1.0、CAEP 1.0、RISC 1.0（final、SS-C09〜SS-C11）、RFC 8935・RFC 8936。CAEP Interoperability Profile（**draft**、Implementer's Draft 1、SS-C12） | stream 管理、push/poll、verification、受信 endpoint | `x-contract-tier` で要素ごとに記載。数値はすべて TBD（DL-20） | CAEP Interoperability Profile は監視するだけで依存しない [D] |
 | CON-10 | SSF 1.0・CAEP 1.0・RISC 1.0（final）、RFC 8417 | v1 の GA イベント 7 種の SET payload と受信義務の範囲 | 自社イベントの命名規則は preview の案で、未決（ADR-022） | draft には依存しない [D] |
+| CON-15（案） | 照会 API 自体は自社定義（該当する標準なし）。エラーは RFC 9457、キャッシュ禁止は RFC 9111 §5.2.2.5、503・429 と Retry-After は RFC 9110・RFC 6585（根拠の脚注は CON-15 の x-references） | なし（版 0.1.0 は全 operation が preview）。GA の候補は verifyLifecycleAction の要求・応答の形、受信側の規則 QC-1〜QC-7、理由コードの意味（CON-12 §4.1 Q-5） | 理由コード LQxx（開いた列挙）、状態の列挙値（DL-49 §2.1・DL-08 §4・§7.1 の写し）、`x-negative-examples` | draft には依存しない [D] |
 
 ### 2.3 機械検証（lint）の結果
 
@@ -146,6 +149,8 @@
 | CON-09 | Redocly lint | エラー 0・警告 0 | — |
 | CON-14（0.1.1） | Redocly lint | エラー 0・警告 0 | — |
 | CON-12（0.2.0） | Redocly lint | エラー 0・警告 1（info-license-strict） | License Object に url がない（CON-12 の `x-lint-notes`。§2.6.3） |
+| CON-12（0.4.0。版 0.6 で追加） | Redocly lint | エラー 0・警告 1（info-license-strict） | 同上。拡張 `x-state-query-api` は AsyncAPI の検査の対象外なので、下の CON-15 の行で別に検査した |
+| CON-15（0.1.0。版 0.6 で追加） | `x-state-query-api` の値を単独のファイルに取り出し、Redocly lint、`check_schema`、examples と要求の負例の検証 | Redocly lint はエラー 0・警告 0。`components.schemas` 19 件すべて合格。operation の examples 10 件すべて適合。要求の形の負例 5 件すべて不適合 | — |
 | OpenAPI 6 本・AsyncAPI 1 本 | YAML の構文解析（PyYAML） | 7 本とも成功 | — |
 | CON-02 | `check_schema` | 合格（ルートの examples なし。`$defs` ごとの正例 67・負例 64 は CON-02 レビュー §5 で検証済み） | — |
 | CON-06 | `check_schema`、ルートの examples | 合格。examples 3 件がすべて適合 | — |
@@ -157,8 +162,34 @@
 - （版 0.2 の記録）本書の独立レビュー担当が 2026-10-15 に、YAML の構文解析（5 本）と JSON Schema の `check_schema` およびルートの examples の検証（4 本）を同じ環境（`jsonschema` 4.26.0）で再実行し、上表と同じ結果を得た [M]。Redocly lint は再実行していない [D]。
 - 版 0.4 の再実行では、`@asyncapi/parser` による CON-12 の検査と、Ajv による CON-13 の検査は行っていない。これらの結果は §2.6.2（版 0.1.0 の CON-12・CON-13 に対するもの）にある [D]。
 - 負例、別実装の検証器（Ajv）、コード生成、モックの起動の結果は各 review-notes に記録されている [M]。
-- モックサーバーの起動を試したのは CON-07 だけである（Prism 5.12.0）。CON-03 と CON-09 は「未実施」と記録されている [D]。
+- （版 0.4 までの記録）モックサーバーの起動を試したのは CON-07 だけで、CON-03 と CON-09 は review-notes に「未実施」と記録されていた [D]。版 0.5 で下記のとおり OpenAPI 6 本すべてを起動した。
 - 契約試験キット（DL-80）では、全契約でモックを起動する試験を必須にする（§8 残課題 4）[D]。
+
+**汎用モックの起動結果（版 0.5。模擬パネル ラウンド 4 の指摘 MP-1-31・MP-3-19 への対応）**
+
+本書の作成者が 2026-10-15 12:29〜12:31 に、OpenAPI 6 本を汎用モック Prism で 1 本ずつ起動し、各 operation に 1 回ずつ要求を送った [M]。
+
+- 実行環境: Node.js v22.23.2、`@stoplight/prism-cli` 5.12.0（`prism mock -h 127.0.0.1 -p <port> <契約ファイル>`、既定の静的応答。CON-07 の review-notes と同じ版）、本書の作成者の一時作業領域に置いた起動・要求スクリプト。
+- 要求の作り方: path 引数はすべて仮値 `x1`、`Authorization: Bearer x` を付け、request body は契約に request example があればそれを、なければ送らない。これは「起動して応答を返すか」の確認であり、契約の正例・負例の試験ではない [D]。
+- 対象ファイルのハッシュは §2.1 の SHA-256 と一致した（6 本とも先頭 12 桁で照合）[M]。
+- 生データ（スクリプト、要求ごとの状態コード、Prism のログ）は作成者の一時作業領域にだけ置き、リポジトリには残していない。同じ確認はキット DL（DL-120）の CI で再現し、そこで保存する [D]。
+
+| 文書ID（版） | 起動 [M] | operation 数 | 応答の状態コードの内訳 [M] | Prism のログに出た事項 [M] |
+|---|---|---|---|---|
+| CON-03（0.2.0） | 成功 | 4 | 200 が 4 | `mutualTLS` の security scheme は扱えないという警告。生成した `Deprecation` 応答ヘッダが契約の pattern に合わないという応答検証の誤り 1 種 |
+| CON-14（0.1.1） | 成功 | 7 | 201 が 1、202 が 1、400 が 2、422 が 3 | — |
+| CON-04（0.3.0） | 成功 | 29 | 200 が 10、201 が 2、202 が 3、400 が 4、422 が 10 | `mutualTLS` の警告 |
+| CON-07（0.1.0） | 成功 | 21 | 200 が 7、204 が 2、400 が 8、401 が 2（/Bulk・/Me。契約どおり）、422 が 2 | 応答の `status` が pattern に合わないという応答検証の誤り 1 種 |
+| CON-09（0.1.1） | 成功 | 14 | 200 が 7、204 が 1、400 が 4、422 が 2 | `mutualTLS` の警告。issuer・各 endpoint の URL・`delivery` が pattern・const・oneOf に合わないという応答検証の誤り 11 種 |
+| CON-05（0.1.0） | 成功 | 2 | 400 が 2 | `mutualTLS` の警告。form の必須欄（`grant_type` 等）の欠落による要求検証の拒否 |
+
+- 6 本とも起動し、全 77 operation が応答を返した。5xx と接続失敗は 0 件だった [M]。
+- 4xx（39 件）は Prism の要求検証によるもので、仮値 `x1` が path 引数の pattern・enum に合わないこと、必須の body を送らなかったことが原因である（ログの理由で確認）[M]。契約の誤りを示すものではない [D]。
+- `mutualTLS` を使う CON-03・CON-04・CON-05・CON-09 では、Prism は client 認証を検査しない（警告の文言 "We currently do not support this type of security scheme: mutualTLS"）[M]。汎用モックで mTLS の拒否は試験できない [D]。
+- 応答検証の誤り（CON-03・CON-07・CON-09）は、抜き取りで確かめた応答（CON-09 の `GET /.well-known/ssf-configuration` と `GET /ssf/stream` の本文、CON-07 の 400 の `status: "400"`）がいずれも契約の pattern を満たしていた [M]。原因（Prism の生成値・検証器の問題か、契約の他の example の問題か）は切り分けていない [D]。連携側はこの誤りに合わせてコードを直さない（CON-11 §4.10）。切り分けはキット DL（DL-120）の実装時に行う [D]。
+- （版 0.6 で追加）CON-15（0.1.0）を同じ Prism 5.12.0 で 2026-10-15 12:58 に起動し、6 operation すべてが 200 を返した。ログは `mutualTLS` の警告だけだった [M]。要求には examples の値を使った [D]。
+- AsyncAPI 1 本（CON-12）は汎用モックでの起動を試していない。ライフサイクル事象の模擬は CON-11 §4.11 の MK-08（キット本体、未実装）で行う [D]。
+- 汎用モックは examples か生成値の正例しか返さず、署名付きの token も負例も出さない（CON-11 §4.10）[D]。token 検証と PDP の失敗時の振舞いの結合確認は、INT-00 §6.3 の暫定ローカル結合環境（12_poc/code、POC-03）か、キット配布後の MK-01〜MK-08 で行う [D]。
 
 ### 2.4 契約間の依存
 
@@ -192,6 +223,8 @@ flowchart LR
   C09 -->|payload| C10
   C03 & C04 & C05 & C07 & C09 -->|decision_id・txn ほか| C08
   LC -.->|役割分担| C09
+  C15[CON-15 照会 API（案）<br/>CON-12 に内包]
+  LC -->|RO-9・RO-12 の照会| C15
   C02 -->|識別子の型（CON-13 が $ref）| LC
 ```
 
@@ -218,16 +251,16 @@ flowchart LR
 | 他のサービスを呼ぶ・委譲する | CON-05（RFC 8693 の exchange）、§2.1 の内部取引 context 行 | exchange の要求と、`Txn-Token` ヘッダを無改変で下流へ渡す処理 | `/txn-token` と Txn-Token の claim 構成（preview、draft 依存） |
 | 監査イベントを送る | CON-08 の共通項目、CON-02 の相関 ID | 共通項目の生成と schema 検証 | 族ごとの `reason_code` の登録簿（§4.8 R-1、未作成）、`txn` を主キーにする範囲（U-02） |
 | 失効・session 終了を受ける | CON-09（stream 管理、push/poll）、CON-10（v1 の GA イベント 7 種） | 受信 endpoint と SET の検証、イベントごとの処理 | 伝播時間などの数値（DL-20）。OIDC Back-Channel Logout の位置（ADR-006 L6-2） |
-| client を登録する（BFF・RP・M2M） | CON-14 の ClientMetadata の規則（種別ごとの必須項目・禁止項目は GA。ARC-02 §6 の写し） | sandbox では `registerSandboxClient`（RFC 7591/7592 profile）でセルフ登録し、払い出された `client_id` で結合試験をする。本番では `submitClientRegistrationRequest` に、sandbox で通ったのと同じ ClientMetadata を本番の値で申請する。どちらの操作も preview（CON-14 の `x-freeze-classes`）。負例 CRN-01〜CRN-20 を試験データにする | 本番の承認者 AR-1〜AR-5 の決裁（ONB-R2、ADR-022 の改版）、workload の sandbox セルフ登録の契約（G-141(c) の残り）、モックの実装（CON-11 MK-01 の登録 endpoint は仕様のみ、キット本体 DL-82 は未実装） |
-| 顧客 IdP から利用者を受ける（SCIM） | CON-07 | 顧客 IdP 側の結合試験。CON-07 はモックの起動を確認済み（§2.3） | 拡張 URN の本番の名前空間（I-4） |
-| テナント・利用者のライフサイクル事象を受ける | CON-12（事象一覧・配送の保証・受信側の義務・完了報告）、CON-13（封筒・type 名・順序番号・冪等キーは GA、個別 data は preview） | 受信 consumer の実装、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、削除などの完了報告。CON-13 の examples と `x-negative-examples` を試験データにする | 期限 T_* の値（DL-20）、モックの実装（CON-11 版 0.3 の MK-08 は仕様のみ、キット本体 DL-82 は未実装）、`<id-domain>` の値（I-2、CON-13 の LC-OI-1） |
+| client を登録する（BFF・RP・M2M） | CON-14 の ClientMetadata の規則（種別ごとの必須項目・禁止項目は GA。ARC-02 §6 の写し） | sandbox では `registerSandboxClient`（RFC 7591/7592 profile）でセルフ登録し、払い出された `client_id` で結合試験をする。本番では `submitClientRegistrationRequest` に、sandbox で通ったのと同じ ClientMetadata を本番の値で申請する。どちらの操作も preview（CON-14 の `x-freeze-classes`）。負例 CRN-01〜CRN-20 を試験データにする | 本番の承認者 AR-1〜AR-5 の決裁（ONB-R2、ADR-022 の改版）、workload の sandbox セルフ登録の契約（G-141(c) の残り）、モックの実装（CON-11 MK-01 の登録 endpoint は仕様のみ、DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3） |
+| 顧客 IdP から利用者を受ける（SCIM） | CON-07 | 顧客 IdP 側の結合試験。CON-07 はモックの起動を確認済み（§2.3。版 0.5 で全 OpenAPI 6 本の起動を確認） | 拡張 URN の本番の名前空間（I-4） |
+| テナント・利用者のライフサイクル事象を受ける | CON-12（事象一覧・配送の保証・受信側の義務・完了報告）、CON-13（封筒・type 名・順序番号・冪等キーは GA、個別 data は preview）、CON-15（案。RO-9・RO-12 の照会 API、preview） | 受信 consumer の実装、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、削除などの完了報告。CON-13 の examples と `x-negative-examples` を試験データにする。削除・保全解除・付け替え・所属除去の経路は、CON-15 の verifyLifecycleAction を直前に呼び、proceed のときだけ実行する処理（QC-1〜QC-7）と、長期停止後の全件突合（listReconciliationSnapshot）を実装する。CON-15 の examples と LQN-01〜LQN-19 を試験データにする。照会先の URL は `LIFECYCLE_STATE_QUERY_URL`（CON-11 §11.4）から読む | 期限 T_* と Q_fresh の値（DL-20、CON-12 §7）、CON-15 の GA への昇格と単独ファイル化（§9 申し送り 14）、MK-08 の照会モックを CON-15 から作る改訂（§9 申し送り 15）、モックの実装（CON-11 版 0.3 の MK-08 は仕様のみ、DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）、`<id-domain>` の値（I-2、CON-13 の LC-OI-1） |
 
 **手順** [D]
 
 1. 連携パターン集（INT-02、DL-64）で自サービスの P-xx を決め、§3 の表で使うインタフェースと契約を確かめる。
 2. 依存してよいのは `x-freeze-class`（または §4.9 D-2 の是正前のキー）が GA の要素だけにする。preview の要素を使う場合は、使う要素と理由を Definition of Ready（INT-05、DL-67、版 0.2 draft）の RD-04 の申告に書く（ADR-022 §3 案 B のリスク対策）。
 3. 契約ファイルの git コミットを 1 つ固定し、その版を自サービスのリポジトリに記録する。版が上がったら差分を読み、互換区分（CON-01 §2）に従って追随する。
-4. モック: DL-80 ができるまでは、OpenAPI の examples から汎用のモックサーバーを起動する。ただし起動を確認したのは CON-07 だけである（§2.3）。起動できなかった場合は E0（§5.2）で契約所有者に報告する。
+4. モック: キット本体（DL-120、期限 G3）ができるまでは、OpenAPI の examples から汎用のモックサーバーを起動する。OpenAPI 6 本すべてで Prism 5.12.0 の起動を確認した（§2.3、版 0.5）[M]。汎用モックで確かめられるのは正例の形だけで、署名付き token・負例・mTLS の拒否は確かめられない（§2.3）。token 検証と PDP の失敗時の振舞いの結合確認には、INT-00 §6.3 の暫定ローカル結合環境（12_poc/code、POC-03）を、同節の条件（契約の範囲だけで使う、本番と別の issuer・鍵）で使ってよい [D]。起動できなかった場合は E0（§5.2）で契約所有者に報告する。
 5. 試験: 各契約の `x-negative-examples` と、ADR-022 D-6-2 の必須負例 13 種のうち自サービスに当たるものを単体試験に入れる。JSON Schema の検証器は 2020-12 方言で使い、Ajv なら `strict: false` にする（I-5）。
 6. 環境で変わる値（issuer、`<id-domain>`、endpoint のホスト名、`{cell}`、TBD の数値）は設定に出し、コードに直書きしない。endpoint は discovery か metadata から得る（ADR-022 D-3-2、§4.9 D-8）。
 7. ADR-022 D-3-2 の禁止事項を守る。主なものは、製品固有のヘッダ・claim への依存、client による access token の中身の解析、JWKS URL の直書き、AS・PDP・ストアへの直接接続、エラー文言の文字列一致である。
@@ -241,7 +274,8 @@ flowchart LR
 
 | 文書ID | パス | 状態 | 備考 |
 |---|---|---|---|
-| CON-12 | 11_contracts/lifecycle-events.asyncapi.yaml | 版 0.2.0 draft（2026-10-15 11:15 に版 0.1.0 の配置を確認、11:36 に 0.2.0 を確認） | 事象の一覧・配送の保証・受信側の義務・完了報告の正本。DL-117（版 0.4 で deliverables.md §4.5・§8 に行を追加）。ファイル内の表記はまだ「CON-12（案）／DL-117（案）」（§9 申し送り 12）[D] |
+| CON-12 | 11_contracts/lifecycle-events.asyncapi.yaml | 版 0.4.0 draft（2026-10-15 11:15 に版 0.1.0 の配置を確認、11:36 に 0.2.0 を確認。0.3.0 は redteam、0.4.0 は devlead のラウンド 5 の指摘による改版） | 事象の一覧・配送の保証・受信側の義務・完了報告の正本。DL-117（版 0.4 で deliverables.md §4.5・§8 に行を追加）。ファイル内の「案」の表記は版 0.4.0 で外した [D] |
+| CON-15（案） | 同ファイルの拡張 `x-state-query-api` | 版 0.1.0 draft、preview（2026-10-15 に起草） | RO-9・RO-12 の照会 API。DL-121（案）。§2.6.4 [D] |
 | CON-13 | 11_contracts/schemas/lifecycle-event.schema.json | 版 0.1.1 draft（2026-10-15 11:10 に版 0.1.0 の配置を確認。0.1.1 は文書ID・DL の確定だけの改版） | 封筒（CloudEvents 1.0.2）と data の形。DL-118（同上）[D] |
 
 - 規範の正本の分担は、事象の意味と受信側の義務が tenant-lifecycle.md（DL-49）§7 と identity-lifecycle.md（DL-08）§16.3、契約の形が CON-12・CON-13 である [D]。
@@ -271,6 +305,20 @@ flowchart LR
   - この形では、AsyncAPI の検査が CON-13 の中身を検証しない。CON-12 の payload と CON-13 の封筒が食い違わないことは、DL-80 の検査項目にする（§9 申し送り 4）[D]。
 - AsyncAPI 3.0.0 の License Object の欄は `name` と `url` だけで、`identifier` はない [N][^15]。§4.7 P-1 の `identifier` は AsyncAPI の文書には書けない [D]。
 
+#### 2.6.4 照会 API の契約 CON-15（案）（版 0.6 で追加。模擬パネル ラウンド 5 の devlead 指摘）
+
+- CON-12 は、受信側が破壊的・不可逆な処理（テナント・利用者の削除、保全解除後の削除、統合・分割の付け替え、所属除去に伴う削除）の直前に正本を照会すること（RO-12）と、W_replay を超えて停止した後に全件を突き合わせること（RO-9）を義務としている。その照会 API の契約がなかったため、削除の義務を負うほぼ全サービスが削除経路の入出力を書けなかった [D]。
+- CON-15（案）は、CON-12 §4.1 の最小要件 Q-1〜Q-5 を満たす読取り専用の API として OpenAPI 3.1.2 で起草した。operation は 6 つである [D]。
+  - verifyLifecycleAction（RO-12。事象の id・source・type・sequence と request_id・hold_ref・mapping_ref を渡し、proceed か do_not_proceed と理由コードを返す）。
+  - getTenantState・getPrincipalState・getMembershipState（状態、収容 cell、保全と hold_ref、要求の状態）。
+  - getMappingState（mapping_ref の有効性と対応表の digest）。
+  - listReconciliationSnapshot（RO-9 の全件突合。cursor で分ける）。
+- 受信側の規則は CON-15 の QC-1〜QC-7 である。要点は、200 かつ verdict=proceed のときだけ実行する（fail closed）、不一致は outcome=failed（正本不一致）、撤回は outcome=withdrawn、503・429・timeout・古い読取り（LQ11）は照会不能として保留する、の 4 点である [D]。
+- 認証は `mutualTLS` の security scheme（workload ID の相互 TLS）で、照会 API は publisher と別の workload・別の配備にする（CON-12 RO-12、§4.1 Q-2）[D]。
+- 凍結区分は版 0.1.0 では全 operation が preview で、CON-12 の GA の凍結（DEC-8 第 1 段）の付議の前に GA へ上げる候補である。条件は作成者以外の独立レビュー、モックでの LQN の実行（TC-026）、DL-49・DL-08 の所有者による状態区分の確認である（CON-15 §5）[D]。
+- 所在: 並行作業の約束で新しいファイルを作れなかったため、CON-12 の拡張 `x-state-query-api` に置いた。AsyncAPI 3.1.0 の AsyncAPI Object は `x-` で始まる拡張を持ってよい（MAY）とされている（CON-15 の脚注 [^aa31]、2026-10-15 に原文で確認）[D]。単独ファイルへの切出しは、値を変えずに行える（§9 申し送り 14）[D]。
+- 機械検査の結果は §2.3 にある [M]。
+
 ---
 
 ## 3. 外部インタフェースと契約の対応（G-138 の契約側の表）
@@ -291,7 +339,7 @@ flowchart LR
 | token exchange | CON-05 | 対応（Txn-Token の部分は preview） |
 | SCIM | CON-07（顧客 IdP からの受信） | 対応 |
 | 失効・継続評価 | CON-09・CON-10 | 対応（数値は TBD、DL-20） |
-| ライフサイクル事象 | CON-12・CON-13。§2.6 | **一部**。契約ファイルは揃い、DL も割り当てた（DL-117・DL-118）。本書の作成者の機械検査でエラー 0 件 [M]。作成者以外の判定（G-137 の判定者の条件）が残る |
+| ライフサイクル事象 | CON-12・CON-13、照会 API は CON-15（案、preview）。§2.6 | **一部**。契約ファイルは揃い、DL も割り当てた（DL-117・DL-118）。本書の作成者の機械検査でエラー 0 件 [M]。作成者以外の判定（G-137 の判定者の条件）が残る |
 | 監査イベント | CON-08 | 対応 |
 | エラー形式 | CON-02 Problem（RFC 9457）。AuthZEN の endpoint は AuthZEN §10.1.2 の形式 | 対応 |
 | レート制限の通知 | CON-03・CON-04・CON-07 がそれぞれ 429 と Retry-After を定めている | **一部**。全契約に共通の定義がない（§8 残課題 6） |
@@ -407,7 +455,7 @@ flowchart LR
 | D-6 | URL path に自社の major がない（`/token`、`/txn-token`、`/ssf/...`）。ADR-016 D16-01 は DL-74 を path に major を置く対象に挙げている | CON-05, CON-09 | 未決（ADR-016）。案: AS metadata や SSF configuration で URL を広告する endpoint は、consumer が URL を直書きしない（ADR-022 D-3-2）。そのため path の major は必須にせず、ADR-016 D16-10 の「外部 OIDC/OAuth は標準の交渉に従う」行と同じ扱いにする。ADR-016 の改訂か、例外としての承認が要る | ADR-016 の所有者（CTO） | DEC-8 前 |
 | D-7 | 共通の型が重複していて形が違う（OpaqueId の pattern、`profile_version` が必須か任意か、EntityType の pattern、KeyedRef の所在） | CON-02, CON-03, CON-08 | CON-02 へ一本化して `$ref` で参照する（CON-02 レビュー H-1・H-3、CON-03 レビュー L-2・L-3） | CON-02 の所有者と各契約の所有者 | DEC-8 前 |
 | D-8 | `servers` のホスト名に `{cell}` が入っている | CON-03, CON-04, CON-05 | 要確認。ADR-021 は識別子に cell を含めないとしている。endpoint のホスト名が ADR-021 の「識別子」に当たるかは未決（ADR-021）である。consumer が cell を意識しなくてよい経路（ADR-013）と合わせて決める | ADR-021・ADR-013 の所有者 | DEC-8 前 |
-| D-9 | モックの起動試験をしていない | CON-03〜CON-06, CON-08〜CON-10 | DL-80 で全契約のモックを起動する（TC-026） | PEP SDK・開発者支援チーム | DEC-8 前 |
+| D-9 | モックの起動試験をしていない（版 0.5 で OpenAPI 6 本は汎用モックでの起動を確認した（§2.3）。JSON Schema のみの契約と AsyncAPI（CON-12）は汎用モックの対象外で、キットのモックで確かめる） | CON-02, CON-06, CON-08, CON-10, CON-12, CON-13 | DL-80 で全契約のモックを起動する（TC-026） | PEP SDK・開発者支援チーム | DEC-8 前 |
 | D-10 | `reason_code` の登録簿の所在を「DL-69 で決める」と書いたまま。列挙が開いているか閉じているかの宣言がない | CON-08（CON-02・CON-03 も宣言を追加） | R-1 の所在を参照し、R-2 の `x-enum-kind` を付ける | CON-08 の所有者 | DEC-8 前 |
 
 - D-6 は契約ファイルではなく ADR-016 D16-01 の側を直す提案であり、「ADR への指摘」として扱う（末尾のレビュー記録）[D]。
@@ -508,7 +556,7 @@ flowchart TD
 | G-118: 全契約が OpenAPI か JSON Schema で定義され、検証エラーが 0 件 | §2.1、§2.3 | **未達**。機械可読な 12 ファイルは本書の作成者の検査でエラー 0 件 [M]。版 0.4 で CON-12〜CON-14 を deliverables.md §8 に登録し、確認対象（11_contracts 一式）に入った。判定者である自動検査（DL-111）の再実行がまだである（G-131 の §8 差分検査も同じ） |
 | G-137: ライフサイクル事象の契約と受信側の義務 | §2.6、CON-12・CON-13、DL-49 §7、DL-08 §16.3（義務の正本） | **未達**。CON-12・CON-13 には DL-49 §7.1・DL-08 §16.3 の事象と大規模な権限剥奪（`revocation.bulk`）がある [D]。期限の値（DL-20）、プライバシー担当を含む作成者以外のレビューが残る |
 | G-119: 全契約に標準・版・状態・準拠範囲・独自拡張・draft の場合の互換方針が書かれている | §2.2 | 本書で記述済み。作成者以外の AI エージェントが SS-ID と状態を standards-status.md と照合した（レビュー記録）。人による判定は未実施なので未達 |
-| G-120〜G-122: 製品非依存、負例ベクタ、consumer の契約試験 | ADR-022 D-3・D-6、DL-80 | **未達**（DL-80 は版 0.2 の仕様だけで、キット本体 DL-82 は未実装。TC-026 は計画済み） |
+| G-120〜G-122: 製品非依存、負例ベクタ、consumer の契約試験 | ADR-022 D-3・D-6、DL-80 | **未達**（DL-80 は版 0.4 の仕様だけで、DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3。TC-026 は計画済み） |
 | G-126: 互換性・非推奨の SLA と consumer 台帳 | DL-70（CON-01）、ADR-016 | **未達**（CON-01 は版 0.1 の draft。期間の数値は KC-1 で未承認、consumer 台帳は未運用） |
 | ADR-022 D-11 の条件 1〜3（SDK を使わない適合、作成者以外による模擬連携、モックと PoC 基盤の一致） | TC-026、TC-119 | **未達**（実測が必要） |
 | U-01（issuer の粒度）の決裁 | DEC-3、ADR-022 D-10b | **未決**。U-01 は不可逆区分なので preview に逃がせない。DEC-8 より前に DEC-3 で決める必要がある |
@@ -533,10 +581,10 @@ flowchart TD
 
 | # | 課題 | 閉じ方 | 所有者 | 期限 |
 |---|---|---|---|---|
-| 1 | ライフサイクルイベント契約（G-137）は CON-12・CON-13 が配置され、本書に組み込んだ（版 0.3）。DL-117・DL-118 は版 0.4 で確定した。残るのは、CON-12 のファイル内の「案」の表記の除去（§9 申し送り 12）、両ファイルの `x-open-issues`（LC-OI-1 ほか）、作成者以外の独立レビュー（プライバシー担当を含む）、DL-111 による G-118・G-131 の再検査 | A | プラットフォームチーム長 | DEC-8 前 |
-| 2 | CON-11（DL-80）は版 0.3 の draft（ライフサイクル事象の MK-08 と、client 登録のための MK-01 の拡張を含む）だが、キット本体（DL-82）は未実装である。CON-01（DL-70）は版 0.2（review）で、独立レビューと KC-1〜KC-5 の決裁が残る | A・B・C | §2.1 の所有者案 | DEC-8 前 |
+| 1 | ライフサイクルイベント契約（G-137）は CON-12・CON-13 が配置され、本書に組み込んだ（版 0.3）。DL-117・DL-118 は版 0.4 で確定した。残るのは、CON-15（照会 API、版 0.6 で登録）の単独ファイル化・DL の確定・GA への昇格（§9 申し送り 14〜16）、両ファイルの `x-open-issues`（LC-OI-1 ほか）、作成者以外の独立レビュー（プライバシー担当を含む）、DL-111 による G-118・G-131 の再検査 | A | プラットフォームチーム長 | DEC-8 前 |
+| 2 | CON-11（DL-80）は版 0.4 の draft（ライフサイクル事象の MK-08 と、client 登録のための MK-01 の拡張を含む）だが、キット本体（DL-120）は未実装（期限 G3）である。PoC 基盤（DL-82）は納品済みだがキットを含まない（CON-11 版 0.4 要旨 7）[^16]。CON-01（DL-70）は版 0.2（review）で、独立レビューと KC-1〜KC-5 の決裁が残る | A・B・C | §2.1 の所有者案 | DEC-8 前 |
 | 3 | §4.9 の差分 D-1〜D-9 の是正 | A | 各契約の所有者 | DEC-8 前 |
-| 4 | モックの起動、SDK を使わない適合、モックと PoC 基盤の一致の実測（TC-026、TC-119） | C | PEP SDK・開発者支援チーム | 段階 1 |
+| 4 | モックの起動（汎用モックによる OpenAPI 6 本の起動は版 0.5 で確認済み。キットのモックの起動が残る）、SDK を使わない適合、モックと PoC 基盤の一致の実測（TC-026、TC-119） | C | PEP SDK・開発者支援チーム | 段階 1 |
 | 5 | 人による照合がどの契約でも未実施。照合ログの traceability/ への追記も未了 | D | CTO が指名するレビュアー | DEC-8 前 |
 | 6 | レート制限の通知の共通定義（429・Retry-After・クォータの粒度）を CON-02 に置くか | A | プラットフォームチーム長 | DEC-8 前 |
 | 7 | (a) client 登録の契約は 2026-10-15 に client-registration.openapi.yaml（CON-14／DL-119、版 0.1.1、draft、Redocly lint のエラー・警告 0 件 [M]）として作成した。文書ID と DL は版 0.4 で確定した。残りは、本番の登録手段の凍結区分と承認者 AR-1〜AR-5 の確定（ADR-022 の改版、INT-04 ONB-R2）、workload の sandbox セルフ登録の契約（G-141(c) の残り）、作成者以外による独立レビュー、モックの起動と負例 CRN-01〜CRN-20 の実行（CON-11 への取込み、TC-026）である。(b) OIDC Back-Channel Logout の位置（ADR-006 L6-2）。(c) `authorization_details` の type 定義（ADR-017 L17-5） | A（承認者の確定は B、負例の実行は C） | 認証・IdP チーム（承認者は CTO、契約管理） | DEC-8 前 |
@@ -568,7 +616,10 @@ flowchart TD
 | 9 | traceability/G-goal-criteria.md | G-118・G-137 の申し送り行（「契約ファイルは §8 で申し送り」）の参照先を CON-12・CON-13（と本書 §2.6）に更新する | 台帳と本書の対応を辿れるようにする |
 | 10 | 10_integration/onboarding.md（INT-04）§4.3 の表と ONB-R2、11_contracts/mock-contract-test-kit.md（CON-11）§4.0 の client 登録行 | client 登録の契約を「CON-13 は仮番」「文書 ID は仮番。CON-13 と衝突」と書いている箇所を「CON-14（DL-119）」に直す | 版 0.4 で文書ID を確定した。CON-13 はライフサイクル事象のスキーマ（DL-118）である |
 | 11 | 11_contracts/relationship-model-registry.openapi.yaml（CON-04） | 版 0.3.0 の Redocly lint の警告 9 件（§2.3）について、`x-lint-notes` に理由を書くか、`ConditionCatalog` の参照と `SemanticChangeDeclaration` の `then` を直して警告をなくす | §4.2 の `x-lint-notes` の規約を守るため |
-| 12 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12） | `x-document-id`・`x-deliverable`・description 冒頭の「CON-12（案）」「DL-117（案）」「CON-13 案」から「案」を外し、版を上げる（CON-01 CP-60 (1)） | 版 0.4 で deliverables.md §4.5・§8 により確定した |
+| 12 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12） | **対応済み（版 0.6）**。CON-12 版 0.4.0 で「案」を外した。本書の作成者が担当ファイルとして直した | 版 0.4 で deliverables.md §4.5・§8 により確定した |
+| 14 | traceability/deliverables.md §4.5・§7・§8 | CON-15（案）を DL-121（案）として §4.5 に行を加え（照会 API、11_contracts/lifecycle-state.openapi.yaml、R-044・R-109／G-137・G-118・G-138、Phase 5、区分 A・C、証拠 E4）、§7 の件数と §8 の 11_contracts 行を更新する。ファイルは CON-12 の `x-state-query-api` の値を変えずに切り出し、CON-12 には参照だけを残す（CON-12 §10 H5-1）。DL-121 は 2026-10-15 時点の deliverables.md と全文書で未使用であることを本書の作成者が検索で確かめた案で、採番は deliverables.md の所有者が行う | ラウンド 5 の devlead 指摘。G-118（全契約が OpenAPI か JSON Schema で定義）の確認対象にする |
+| 15 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.11・§6.3・§11.4 | §4.11 の「照会 API のモック」行を、CON-15 の operation・examples・x-negative-examples から作る形に改め、暫定の path と形（L11-11）を廃止する。§11.4 の `LIFECYCLE_STATE_QUERY_URL` の注記「照会 API の契約は未作成。CON-12 LC-OI-3」を「CON-15（案）の servers に当たる URL」に改める。§6.3 のライフサイクル族に LQN-01〜LQN-19 と CON-12 の LC-CV-16 を加える。MK-08 の注入に 503・Retry-After、古い読取り（LQ11）、応答の不適合を加える（CON-12 §10 H5-2） | ラウンド 5 の devlead 指摘の修正案「CON-11 §4.11 の MK-08 の照会モックの仕様を、この契約から作る形に改める」 |
+| 16 | traceability/open-items.md（POA&M）、07_slo/numeric-contracts.md（DL-20） | POA&M の CON-12 H3-1 (2)「CON-15 の契約本体の作成」を「CON-15 の独立レビューと GA への昇格、単独ファイル化」に改める（CON-12 §10 H5-3）。Q_fresh（照会から実行までの許容時間、CON-12 §7）を DL-20 の TBD に加える | 契約本体は起草済み。値は未決 |
 | 13 | 10_integration/README.md（INT-00）残課題 7 | 本書に関する部分（CON-11・DL-65・DL-67・DL-68 を「未作成」とした記述、§2.5 を INT-00 §6 の参照にすること）は版 0.4 で反映した。残課題 7 の本書分を閉じる | 申し送りの往復を閉じるため |
 
 ---
@@ -584,7 +635,7 @@ flowchart TD
 | G-127 | 変更提案の手順、レビュー期間、決定権者 | §5.1〜§5.2 | A | 手順と決定権者は記述済み。E0 の回答目標と E2 の受付締切・意見募集期間は TBD（所有者・期限・決め方を記載） |
 | G-134 | 版とハッシュを固定した DEC-8 の凍結承認と、凍結後の変更規律 | §6、§7（ADR-022 D-11 を参照） | B | 未達（前提が未充足。決裁は未実施） |
 | G-138 | パターン × インタフェース × 契約の行列で空欄が 0 件 | §3 | A | 未達（一部対応 3 件（logout、ライフサイクル事象、レート制限の通知）。client 登録は CON-14 で対応（登録手段は preview）。パターン軸は DL-64（INT-02、draft）で、INT-02 の I-11 の判定の更新は §9 申し送り 5） |
-| （関連）G-137 | ライフサイクル事象の契約と受信側の義務 | §2.6 | A | 未達（CON-12・CON-13 は配置済み。期限の値、作成者以外のレビューが残る。義務の正本は DL-49 §7・DL-08 §16.3） |
+| （関連）G-137 | ライフサイクル事象の契約と受信側の義務 | §2.6 | A | 未達（CON-12・CON-13 は配置済み。照会 API の CON-15 は版 0.6 で preview として登録。期限の値、作成者以外のレビューが残る。義務の正本は DL-49 §7・DL-08 §16.3） |
 
 計 7 件（R 2 件、G 5 件）。G-137 は台帳の対応成果物欄に本書を含まないため件数に入れず、関連として載せた。台帳の対応成果物欄に本書を含む主張は CL-0249 と CL-0261 で、どちらも §4・§5（共通の契約・命名の具体化）で受けている [D]。
 
@@ -607,6 +658,7 @@ flowchart TD
 [^13]: S. Dalal, E. Wilde『The Deprecation HTTP Response Header Field』RFC 9745, 2025-03. https://www.rfc-editor.org/rfc/rfc9745 （参照箇所: §2.1, §4, §5, §7、確認日: 2026-10-03）（RS-16#34）
 [^14]: E. Wilde『The Sunset HTTP Header Field』RFC 8594, Informational, 2019-05. https://www.rfc-editor.org/rfc/rfc8594 （参照箇所: §3、確認日: 2026-10-03）（RS-16#35）
 [^15]: AsyncAPI Initiative『AsyncAPI Specification 3.0.0』. https://www.asyncapi.com/docs/reference/specification/v3.0.0 （参照箇所: Schema Object、Multi Format Schema Object の schemaFormat の表、License Object、確認日: 2026-10-15。research ノート（RS-16#6〜#8）にない箇所で、版 0.3 の作成者が原典を取得して文言を確認した）
+[^16]: 本リポジトリ『モック・契約試験キット仕様』（CON-11、版 0.4 draft）2026-10-15. 11_contracts/mock-contract-test-kit.md （参照箇所: 要旨 7, §11 冒頭, §14.2、確認日: 2026-10-15）。DL-120 の登録は traceability/deliverables.md（TRC-03 版 0.3）§4.6・§8（確認日: 2026-10-15）
 
 ---
 
@@ -754,3 +806,37 @@ flowchart TD
 - CON-12 のファイル内の「案」の表記、INT-04・CON-11 の「CON-13 は仮番」の表記は担当外のため直していない（§9 申し送り 10・12）。
 - §2.1 の版とハッシュは並行作業で古くなり得る。凍結版のハッシュは DEC-8 の決議文の付表（§6.2）で改めて固定する。
 - `@asyncapi/parser` による CON-12 の検査と、Ajv による CON-13 の検査は版 0.4 では再実行していない（§2.3）。
+
+### ラウンド 4（模擬パネル、2026-10-15）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 箇所 |
+|---|---|---|---|---|
+| R4-1 | High・devlead | CON-11 版 0.4 はキット本体を DL-82（PoC 基盤、納品済み）から分けたが、本書は「キット本体 DL-82 は未実装」と書き、納品済みの DL-82 と矛盾している。キット本体の DL（所有者・期限）を追跡できない | **対応**。「キット本体 DL-82 は未実装」の類を「DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装（期限 G3）」に改めた。DL-120 は traceability/deliverables.md 版 0.3 で登録された（所有者案 PEP SDK・開発者支援チーム、期限 G3）。CON-11 の版の記載を 0.4 に合わせた。根拠は CON-11 要旨 7・§11 冒頭・§14.2 を 2026-10-15 に確認した[^16] [D] | 要旨 1、§2.1 の CON-11 行（状態欄）、§7 の G-120〜G-122 行、§8 残課題 2、[^16] |
+
+- §2.1 の版欄（0.3）とハッシュは 2026-10-15 11:35〜11:36 の取得値であり、取り直していない。次回の §2.3 の機械検証で版 0.4 のハッシュに更新する [D]。
+
+### ラウンド 4 の続き（模擬パネル、2026-10-15、版 0.4 → 版 0.5。指摘 MP-1-31・MP-3-19）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。是正は本書、10_integration/README.md（INT-00）、mock-contract-test-kit.md（CON-11）の 3 ファイルだけで行い、他文書の修正は INT-00・CON-11 の申し送りにした [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 根拠 | 箇所 |
+|---|---|---|---|---|---|
+| R4-2 | High・devlead（MP-1-31、MP-3-19。ラウンド 3 で devlead が付けた条件） | G0 からキットを配る G3 まで（NA-DCS06-7 では 12〜24 か月）、連携チームが使えるのは契約の examples から起動する汎用モックだけで、その起動確認も CON-07 しか済んでいない。汎用モックは署名付き token も負例も出せず、token 検証や PDP の失敗時の振舞いを結合試験できない。12_poc/code に AS 2 issuer・STS/TTS・PDP façade・PEP SDK が動く形であるのに、暫定のローカル結合環境としての使い方がどの入口文書にもない。PoC SDK は `PEP_PDP_URL`・`PEP_JWKS_TTL_MS` を読み、CON-11 §11.4 の名前を読まないので、INT-00 §6.3 の「PoC 基盤へコード差分 0 で切り替える」（G-123）は現状の PoC では成り立たない | **対応（本書の担当分は (1)）**。(1) OpenAPI 6 本すべてを Prism 5.12.0 で起動し、operation ごとの応答と Prism のログを §2.3 に記録した。6 本とも起動し、全 77 operation が応答した（5xx 0 件）。mTLS の検査ができないこと、応答検証の誤り（原因未切り分け）があることも書いた [M]。§2.3 の「CON-07 だけ」の記述は版 0.4 までの記録として残した。§2.5 の役割別の表（SCIM 行）と手順 4、要旨 4、§4.9 D-9、§8 残課題 4 を直した。(2) 暫定ローカル結合環境の行は INT-00 §6.3 に、(3) PoC SDK の環境変数と CON-11 §11.4 の対応表は CON-11 §11.5 に置き、POA&M への起票は CON-11 §14.2・INT-00 の申し送りにした | Prism の実行（2026-10-15 12:29〜12:31、`@stoplight/prism-cli` 5.12.0、Node.js v22.23.2）[M]。対象ファイルの SHA-256 と §2.1 の照合 [M]。指摘が挙げる「OpenAPI 7 本」は、11_contracts の OpenAPI が 6 本（ほかに AsyncAPI 1 本）なので 6 本として扱い、AsyncAPI は未試行と明記した [D]。G3 までの期間は 00_decision/06-gate-plan-and-plan-b.md の NA-DCS06-7 行（G3 判定 12〜24 か月）で確認した [D] | 冒頭、要旨 4、§2.3、§2.5（役割別の表、手順 4）、§4.9 D-9、§8 残課題 4 |
+
+- 新たに確認した外部原典: なし。本ラウンドの根拠は、リポジトリ内のファイルと、本書の作成者による汎用モックの実行結果である [D]。
+- 閉じられなかったもの: AsyncAPI（CON-12）の汎用モックでの起動、Prism の応答検証の誤りの原因の切り分け、生データのリポジトリへの保存（キット DL（DL-120）の CI で行う）[D]。
+- 対応件数（R4-2）: 1 件（対応済み 1）[D]。
+
+### ラウンド 5（模擬パネル、2026-10-15、版 0.5 → 版 0.6。devlead 指摘）
+
+> 模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。是正は本書と 11_contracts/lifecycle-events.asyncapi.yaml（CON-12）の 2 ファイルだけで行い、他文書の修正は §9 申し送り 14〜16 と CON-12 §10 H5-1〜H5-3 にした [D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 根拠 | 箇所 |
+|---|---|---|---|---|---|
+| R5-1 | High・devlead（ラウンド 2 の MP-2-28 の継続） | CON-12 は RO-12（破壊的・不可逆な処理の直前の正本照会）と RO-9（W_replay を超えた停止の後の全件突合）で照会 API（LC-OI-3）を呼ぶことを義務とするが、照会 API の契約ファイルがない。CON-11 §11.4 の `LIFECYCLE_STATE_QUERY_URL` は存在しない契約を指し、CON-12 §6 も照会 API が揃うまで GA の凍結を付議しないとしている。削除の義務を負うほぼ全サービスが、削除経路の実装と単体試験の入出力を書けない | **対応（本書と CON-12 の担当分）**。(1) 照会 API の OpenAPI 3.1.2 を preview・版 0.1.0 で起草し、CON-15（案）・DL-121（案）とした。並行作業の約束で新しいファイルを作れないため、CON-12 の拡張 `x-state-query-api` に置いた。内容は、tenant・principal・membership の現在状態、request_id・hold_ref・mapping_ref と事象の照合（verifyLifecycleAction）、撤回の有無（request_status と LQ02）、mapping_ref の有効性と digest、全件突合の一覧、相互 TLS（`mutualTLS`）、不一致・到達不能・古い読取りの応答と理由コード（LQ00〜LQ11、LQ20〜LQ24）、正例 10 件、`x-negative-examples` LQN-01〜LQN-19 である。CON-12 §4.1 の最小要件 Q-1〜Q-5（redteam 指摘への同日の是正で置かれたもの）との対応を CON-15 §0 に置いた。(2) 本書の §2.1・§2.2・§2.3・§2.4・§2.5・§2.6.1・§2.6.4（新設）・§3・§8・§9・対応表に登録した。(3) CON-12 の RO-9・RO-12・§4.1・§6・§7（Q_fresh）・§8・LC-OI-3 を CON-15 に結び付け、LC-CV-16 を加え、版を 0.4.0 に上げた。§9 申し送り 12（「案」の除去）も同じ改版で閉じた。(4) DL の確定と単独ファイル化（申し送り 14）、CON-11 §4.11 の MK-08 の照会モックを CON-15 から作る形への改訂と §11.4 の注記の修正（申し送り 15）、POA&M と DL-20 の更新（申し送り 16）は担当外のため申し送った | 機械検査 [M]: Redocly lint 2.63.0（CON-15 単独でエラー 0・警告 0、CON-12 版 0.4.0 でエラー 0・警告 1）、Python jsonschema 4.26.0（schema 19 件合格、examples 10 件適合、要求の負例 5 件不適合）、Prism 5.12.0（6 operation すべて 200）。いずれも 2026-10-15 12:50〜13:01 に本書の作成者が実行し、生データは一時作業領域にだけ置いた。外部原典（OpenAPI 3.1.2 の Security Scheme Object の type、RFC 9111 §5.2.2.5、RFC 9110 §10.2.3・§15.6.4、RFC 6585 §4、AsyncAPI 3.1.0 の AsyncAPI Object と Specification Extensions）は 2026-10-15 に原文を取得して確かめ、CON-15 の x-references に脚注として置いた。DL-121 が未使用であることはリポジトリ全体の検索で確かめた [D] | 冒頭、要旨 1・4、§1 の構成図、§2.1、§2.2、§2.3、§2.4、§2.5、§2.6.1、§2.6.4、§3、§8 残課題 1、§9 申し送り 12・14〜16、対応表 G-137 |
+
+- 指摘の修正案のうち、「CON-00 §3 に登録する」は §3 の表のライフサイクル事象の行に CON-15 を加えることで行った。「deliverables.md §8 に登録する」と「CON-11 §4.11 の改訂」は担当外のため申し送った（§9 申し送り 14・15）[D]。
+- 閉じられなかったもの [D]: CON-15 の単独ファイル化と DL の確定、作成者以外による独立レビュー、GA への昇格（CON-12 §4.1 Q-5）、MK-08 の照会モックの改訂と LQN のモックでの実行（TC-026）、Q_fresh の値、`@asyncapi/parser` による CON-12 版 0.4.0 の検査（本環境に parser がなく未実行）。
+- 対応件数（R5-1）: 1 件（本書・CON-12 の担当分は対応済み 1、他文書の分は申し送り 3 件）[D]。
