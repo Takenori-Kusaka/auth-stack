@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Client Registration API（sandbox の RFC 7591/7592 profile と本番の登録申請 API）
-  version: 0.4.1
+  version: 0.5.0
   summary: OAuth/OIDC client と、C7（内部 workload）の SVID 登録エントリ・交換可能な組の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01・I-16（案）・I-17（案）、G-141(c)、OB-2(a)〜(d)）
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -34,6 +34,7 @@ info:
     - 11_contracts/mock-contract-test-kit.md（CON-11 §4.2 MK-01, §5.2 (c), CV-011）
     - 12_poc/code/lib/topology.js（WORKLOADS）、12_poc/code/config/ledger.json（exchange_registry）、12_poc/code/sts/server.js（registry の照合）。§4A.5 の暫定手順の根拠（2026-10-15 にソースを確認）
     - research/RS-16-parallel-development-governance.md（RS-16#20）, research/RS-04-oauth-oidc-profile.md（RS-04#1）, research/RS-06-*.md（RS-06#4, #25, #27）, research/standards-status.md（SS-A23）
+    - 03_threat-model/threat-catalog.md（THR-03 版 0.6 の T-098 と申し送り T98-1）、06_controls/control-mapping-ledger.md（CTL-01 C-027）、08_operations/compromise-runbooks.md（OPS-01／DL-24 の §2.5 P-K1・P-REV）、research/RS-14-b2b-customer-identity.md（RS-14#24〜#27）。版 0.5.0 の §5A（redirect ホストのドメイン検証、凍結前是正 FZ-027）の根拠
   x-requirements:
     - id: G-138
       coverage: I-01（client 登録）の登録の手段を契約にした。sandbox は preview（ADR-022 D-2）、本番の申請 API も preview（ADR-022 の改版待ち）。登録する内容（種別ごとの必須項目）は ARC-02 §6 の GA 範囲を写した。版 0.2.0 で、INT-02 §5.1 に追加を申し送る I-16（workload ID の登録）と I-17（交換可能な組の登録）の登録手段も preview で定義した（§4A、§9 H-9）。I-16・I-17 は INT-02 の行列に反映されるまで G-138 の判定には数えられない
@@ -75,11 +76,11 @@ info:
   x-freeze-classes:
     irreversible: client_id の形式と「不透明に扱う」という契約（ADR-021 D21-22、D21-13 の墓石）
     GA: 種別ごとの必須項目と禁止項目（ClientMetadata の規則。中身は ARC-02 §6 の GA 範囲の写し）。理由コード CR01〜CR14 の意味
-    preview: sandbox の登録・管理 endpoint（ADR-022 D-2 の「非本番環境の動的登録」）、本番の登録申請 API と承認規則（ADR-022 が本番の登録手段を定めていないため。x-open-issues の ADR-022 行）、workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair、WorkloadEntry・ExchangePair、CR15〜CR21。版 0.2.0）、所有テナントの同意の参照（tenant_consent）と CR22（版 0.3.0）
-    not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値
+    preview: sandbox の登録・管理 endpoint（ADR-022 D-2 の「非本番環境の動的登録」）、本番の登録申請 API と承認規則（ADR-022 が本番の登録手段を定めていないため。x-open-issues の ADR-022 行）、workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair、WorkloadEntry・ExchangePair、CR15〜CR21。版 0.2.0）、所有テナントの同意の参照（tenant_consent）と CR22（版 0.3.0）、本番の redirect ホストのドメイン検証（§5A の 2 操作、AR-10、redirect_host_verifications、RedirectHostVerification、CR25〜CR28。版 0.5.0）
+    not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値、redirect ホストの再検証の周期・猶予期間・検証用 TXT record のラベル名（版 0.5.0）
   x-preview-expires: TBD（CON-00 §4.6 F-2 の初期案では preview に置いた日から 12 か月。決める人 CTO、期限 DEC-8 前）
   description: |
-    > 文書ID: CON-14 / DL-119 / 版: 0.4.1 / 状態: draft / 最終更新: 2026-10-15（0.4.1: 模擬パネル ラウンド 10 の legal 指摘〔H-24・H-25 が宛先に未適用で、POA&M に担当と期限を持つ行がない〕により、§9 の H-24 を REQ-06 §11.4 条項 14 の起案内容に、H-25 を CTL-02 §3.5 の行と L-04・L-13 の帰結に具体化し、POA&M の起票（H-30）と RRG-076 の受容の前提（H-31）を申し送った。契約の項目・規則・理由コードは変えていない。0.4.0: 模擬パネル ラウンド 9 の legal 指摘〔AR-8 の同意が受領者・利用目的・データ区分・処理地域・保持期間を束縛せず、所在地指定テナントの管理者の同意だけで別法域・別法人の app-only client にデータが渡り得る〕により、申請に `data_processing`（DataProcessingDeclaration）を加えて同意の本体の束縛項目と同意画面の表示項目に (i)〜(v) を足し、承認規則 AR-9（処理地域が所有テナントの所在地群の外にあるか受領法人が基盤運営法人と別法人なら DL-34 の判定記録を必須）、理由コード CR24、負例 CRN-42〜CRN-46 を追加した。REQ-06 の責任分界と CTL-02 §3.5 は §9 H-24〜H-28 で申し送った。0.3.1（PoC/R7反映）: POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存し、検査されない欄から越境が成立した兆候）を受け、`platform_owning_tenant` の値そのものの検証（受付時の実在・状態・環境、変更時の再同意、払出し後の token の `tid` への固定、同意の撤回とテナントの終了）を §5 に加え、理由コード CR23 と負例 CRN-38〜CRN-41 を追加した。PoC は client 登録の部品を含まず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない。0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
+    > 文書ID: CON-14 / DL-119 / 版: 0.5.0 / 状態: draft / 最終更新: 2026-10-15（0.5.0 の追記（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。契約の項目・規則・理由コード・負例は変えていないので版は上げない）: §9 の H-24・H-25・H-30・H-31 に宛先での反映状況を記した（REQ-06 §16、CTL-02 §12、TRC-11 申し送り 70）。0.5.0（凍結前是正 FZ-027）: 模擬パネル ラウンド 10 の redteam 指摘〔THR-03 T-098（登録済み redirect URI のホストのドメイン失効・dangling DNS による乗っ取り）の予防が本契約になく、THR-03 申し送り T98-1 が未適用。MP-6-16〕により、§5A を新設し、本番の client の create・update で redirect_uris の各ホストのドメイン検証（CTL-01 C-027 の DNS TXT 方式を流用し、client と所有テナントに束縛。public suffix と共有ホスティングの suffix の直下は拒否）を必須にした。検証の発行・状態の 2 操作、承認規則 AR-10（自動検査）、申請の `redirect_host_verifications`、定期の再検証と NS・登録者・CNAME の宛先の変更の検知、失効時の redirect URI の即時の無効化と猶予後の client の停止（DL-24 の P-K1）、理由コード CR25〜CR28、負例 CRN-47〜CRN-54 を加えた。THR-03・CTL-01・OPS-01 ほかへの同期は §9 H-32〜H-39 で申し送った。0.4.1: 模擬パネル ラウンド 10 の legal 指摘〔H-24・H-25 が宛先に未適用で、POA&M に担当と期限を持つ行がない〕により、§9 の H-24 を REQ-06 §11.4 条項 14 の起案内容に、H-25 を CTL-02 §3.5 の行と L-04・L-13 の帰結に具体化し、POA&M の起票（H-30）と RRG-076 の受容の前提（H-31）を申し送った。契約の項目・規則・理由コードは変えていない。0.4.0: 模擬パネル ラウンド 9 の legal 指摘〔AR-8 の同意が受領者・利用目的・データ区分・処理地域・保持期間を束縛せず、所在地指定テナントの管理者の同意だけで別法域・別法人の app-only client にデータが渡り得る〕により、申請に `data_processing`（DataProcessingDeclaration）を加えて同意の本体の束縛項目と同意画面の表示項目に (i)〜(v) を足し、承認規則 AR-9（処理地域が所有テナントの所在地群の外にあるか受領法人が基盤運営法人と別法人なら DL-34 の判定記録を必須）、理由コード CR24、負例 CRN-42〜CRN-46 を追加した。REQ-06 の責任分界と CTL-02 §3.5 は §9 H-24〜H-28 で申し送った。0.3.1（PoC/R7反映）: POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存し、検査されない欄から越境が成立した兆候）を受け、`platform_owning_tenant` の値そのものの検証（受付時の実在・状態・環境、変更時の再同意、払出し後の token の `tid` への固定、同意の撤回とテナントの終了）を §5 に加え、理由コード CR23 と負例 CRN-38〜CRN-41 を追加した。PoC は client 登録の部品を含まず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない。0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
     > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-251, R-255（全件は info.x-requirements）
     > 依存文書: info.x-depends-on
     > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。版 0.2.0 の §4A（workload と交換可能な組の登録）は、ラウンド 6 の指摘に答えて ARC-04 §3.1・§3.2、ADR-009 D09-12〜D09-15、INT-04 §4.3、12_poc/code のソースを読んで加えた。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -92,6 +93,7 @@ info:
     4. **本番の承認者は既存の変更区分（operating-model §7.2）に当てはめた案である** [D]。標準の登録は認証・IdP チームの有資格者による作成者≠承認者の審査（CP-2 相当）、層 F（FAPI）や privileged scope は CISO 組織のセキュリティレビュアーを加え、app-only の権限（client_credentials の client が要求する scope）の付与は、単一テナントか複数テナントかを問わず CP-1 相当の別報告系統の二者とする（AR-4。ADR-008 D8-54）。顧客テナントを所有テナントとする client が app-only の権限か低リスクでない scope を要求するときは、そのテナントの管理者の同意記録がなければ払い出さない（AR-8。ADR-005 D7-2。版 0.3.0）（x-approval-rules）。承認者の確定は ONB-R2 と ADR-022 の改版による（未決（ADR-022））[D]。
     5. **内部 workload（C7）は client ではなく、SVID の登録エントリと交換可能な組で登録する** [D]（§4A、版 0.2.0 で追加、preview）。約 300 サービスのサービス間同期呼出し（INT-02 の P-03）が token exchange を使うには、この 2 つが要る（ADR-009 D09-13・D09-14、INT-04 OB-2(a)〜(c)）。sandbox ではどちらもセルフ登録（`registerSandboxWorkload`、`registerExchangePair`。呼出し先が他チームのサービスなら呼出し先の所有者の承認を待つ）、本番は申請 API の申請種別 `workload`・`exchange_pair` で承認付きにする [D]。selector は基盤が管理し workload が書き換えられない属性に限る（ARC-04 W55-08）[D]。sandbox がまだないため、それまでの暫定手順を §4A.5 に置いた [D]。
     6. **凍結区分**: sandbox の登録手段と本番の申請 API はどちらも preview である [D]。ADR-022 D-2 は非本番の動的登録を preview に置き、本番の登録手段は定めていないためである。種別ごとの必須項目は ARC-02 §6（GA）の写しなので GA とする [D]。ADR-022 D-2-3 は空欄を GA か preview の契約で埋めることを求めるので、G-138 の I-01 は本契約で「対応（登録手段は preview）」になる [D]。
+    7. **本番の redirect URI のホストは、登録時に所有を確かめ、払出し後も確かめ続ける** [D]（§5A、版 0.5.0、凍結前是正 FZ-027、preview）。exact string matching は文字列の一致しか確かめず、ドメイン失効・dangling DNS で乗っ取られたホストにも認可応答を返す（THR-03 T-098）[D]。本番の create・update では、redirect_uris の各ホストに client と所有テナントに束縛した DNS TXT の検証を必須にし（CR25）、public suffix などは拒否し（CR26）、定期の再検証と NS・登録者・CNAME の宛先の変更の検知で失効を見つけたら、その redirect URI への応答を止め、猶予の後に client を停止する（CR28）[D]。
 
     ## 1. 範囲
 
@@ -267,6 +269,58 @@ info:
     - 本書が新たに置いた承認者はない。AR-1〜AR-8 は既存の区分（CP-1・CP-2、ADR-005 D7-1・D7-2、ADR-008 D8-54、K-3、INT-04 OB-2(b)、ADR-009 D09-13）への当てはめである [D]。AR-9 は承認者ではなく、DL-34（CTL-02、法務責任者）の判定記録の有無を検査する規則である（版 0.4.0）[D]。ただし、当てはめ自体は本書の案であり、確定は ONB-R2 による [D]。
     - 申請から払出しまでの時間は SLI が未採番である（INT-04 ONB-R3）[D]。
 
+    ## 5A. 本番の redirect URI のホストのドメイン検証（版 0.5.0、凍結前是正 FZ-027、preview）
+
+    ### 5A.1 なぜ要るか
+
+    - redirect URI は登録値と要求値を exact string matching で照合しなければならない（MUST）[N][^7]（§2.1、RS-04#1）。この照合が確かめるのは文字列の一致であり、そのホストを今誰が支配しているかではない [D]。版 0.4.1 までの本契約は、wildcard・fragment・loopback 以外の http を拒否し（CR03）、sandbox の登録に本番のホストを含めることを拒否する（CR04）だけで、redirect_uris のホストの所有確認も、払出し後の再検証もなかった [D]。
+    - このため、連携事業者・顧客がドメインの更新を怠って第三者に再登録された場合や、redirect URI のホストが CNAME で指すクラウドの資源が解放されて第三者に取得された場合（dangling DNS）に、AS は登録値と一致する乗っ取られたホストへ認可コードと state・iss を返す（THR-03 T-098 の攻撃経路 (a)〜(c)）[D]。PKCE の verifier を同じ origin のブラウザ保存領域に置く公開 client では、乗っ取った origin から配信したスクリプトで verifier を読める場合があり、PKCE は防御にならない（T-098）[D]。
+    - 本節は THR-03 申し送り T98-1 の (1)〜(4) を本契約に写したものである [D]。AR-2 の checks の「redirect URI のホストの所有」は人の確認だったが、本節で機械検査（AR-10）にした [D]。
+
+    ### 5A.2 対象
+
+    - 対象は、本番の申請 API の `subject: client` の create と、redirect_uris を変える update である [D]。redirect_uris に含まれる `https` のホストのすべてが対象になる [D]。
+    - 対象外: C2 の loopback の IP リテラルと private-use scheme（DNS のホストを持たない）、C5・C8（redirect_uris を登録しない）、sandbox の登録（本番のホストは CR04 で拒否済み。sandbox のホストの乗っ取りは sandbox の client に限られる）[D]。sandbox を対象外にした残余は §5A.6 に書いた。
+    - 版 0.5.0 より前に払い出した本番の client は、移行期間内に検証を済ませる。移行期間の長さは TBD（所有者 認証・IdP チーム、期限 DEC-8 前）で、期間が過ぎて検証のない redirect ホストは §5A.4 の失効と同じに扱う [D]。
+
+    ### 5A.3 登録時の検証（CTL-01 C-027 の DNS TXT 方式の流用）
+
+    - 申請者は、申請の前に `createRedirectHostVerification` でホストごとの検証を作り、基盤が払い出した TXT record（ラベルと値）をそのホストの DNS に置いてから、申請の `redirect_host_verifications` に検証 ID を入れる [D]。基盤は受付時と払出しの直前に TXT record を引き直して照合する [D]。
+    - 方式は CTL-01 C-027（DNS TXT によるドメイン検証と、失効・再登録時の再検証。登録時＋定期再検証）を流用する [D]。IETF DNSOP の草案（Internet-Draft、未 RFC。状態は脚注 17）は、persistent 型の検証は検証を特定の利用者の口座に束縛し続ける場合にだけ適切で、DNS に token が残っていることだけを支配の証拠として扱ってはならないとしている [N][^17]（§3、RS-14#24）。Internet-Draft なので設計の参照にとどめる [D]。本 profile は次のとおり束縛する [D]。
+      - 検証は、(a) ホスト（完全一致。親ドメインの検証で子のホストを覆わない）、(b) 所有テナント（`platform_owning_tenant`。ないときは所有者の consumer_id）、(c) 申請（request_id）か払出し後の client_id に束縛する。TXT の値は基盤が生成する一度きりの乱数で、申請者に選ばせない。
+      - 別の client・別の所有テナント・別の consumer の検証を流用した申請は CR25 で拒否する（CRN-48）。同じホストを別の client が使うときも、その client の検証を別に作る。
+    - DNS の照合は、信頼できる DNSSEC 検証リゾルバで行い（草案の MUST）、AD bit が立たない応答では地理的に分散した複数のリゾルバで照合する（草案の SHOULD）[N][^17]（§9.7、RS-14#26）。
+    - **public suffix と共有ホスティングの拒否（CR26）**。草案は、Public Suffix List の ICANN division の public suffix の所有者検証を許可しないこと（SHOULD NOT）としている [N][^17]（§9.9、RS-14#26）。本 profile は、ホストそのものが ICANN division の public suffix である場合に加え、PSL の private division の suffix（共有ホスティング・PaaS の利用者ごとの名前）そのものか、その直下のホストも本番では拒否する [D]。直下の名前は利用者が資源を解放すると第三者が取得し得る、dangling DNS の典型の形だからである（T-098 の (b)）[D]。独自ドメインから CNAME で共有ホスティングを指す形は受け付け、§5A.4 の CNAME の宛先の監視の対象にする [D]。PSL の版の固定と更新の扱いは x-open-issues に置いた。
+    - **CNAME の宛先の検査（CR27）**。ホストが CNAME の連鎖を持つ場合、連鎖の末端が解決できない（NXDOMAIN）か、宛先の資源が未割当てと判定できるときは拒否する（CRN-50）[D]。未割当ての判定の方法（宛先の事業者ごとの応答の型）は TBD（所有者 CISO、期限 G3）。判定できない宛先は拒否しない（判定の限界は §5A.6）。
+    - AR-10 は承認者を持たない自動検査の規則で、基盤側の承認者は decide で代わりに記録できない（403。CRN-54）[D]。
+
+    ### 5A.4 払出し後の再検証と変更の検知
+
+    - 草案は、persistent 型では record の削除による取消の手順と再検証の頻度を明示すること（MUST）、ドメイン所有者の変更を監視して新しい token で再確認を求めてよいこと（MAY）を定める [N][^17]（§6.3、RS-14#25）。本 profile は次を行う [D]。
+      - (1) 定期の再検証: 本番の client の redirect ホストのすべてについて TXT record を引き直す。周期は TBD（所有者 CISO、期限 G3、決め方 TH-TC-098 と運用試験。T98-1）。取消の手順（TXT を消すと次の再検証で失効する）と周期は、連携開発者向けの案内（INT-04 OB-2(d)）に載せる（§9 H-38）。
+      - (2) 変更の検知: ホストの登録可能ドメインの NS の変更、登録者（登録データ）の変更、ホストの CNAME の宛先の変更と宛先の未割当て化を監視する。登録データの取得方法と監視の周期は TBD（所有者 CISO、期限 G3）。
+      - (3) 再投入への備え: 草案は新しい所有者による旧 record の再投入の危険を挙げる [N][^17]（§9.11、RS-14#27）。NS か登録者の変更を検知したら、TXT record が残っていても検証を失効させ、新しい値での再検証を求める（旧い値は二度と受け付けない。CRN-52）[D]。
+      - (4) 再有効化の扱い: 草案は、別の利用者による再検証を「再有効化」として扱うと旧所有者の資源へのアクセスを新所有者に与え得るとする [N][^17]（§9.13、RS-14#27）。失効した検証を、別の consumer・別の所有テナントの新しい検証で復活させない。失効した client の再開は、その client の所有者による update の申請と新しい検証を要する（CRN-53）[D]。
+    - **失効時の動作（CR28。DL-24 との接続）**。
+      - (a) 即時: 失効した検証のホストを含む redirect URI を、その client の有効な redirect URI から外したものとして扱う。その redirect URI を指定した認可要求に対し、AS はエラーを利用者に示し、その URI へ自動で redirect しない。RFC 6749 は、redirect URI が無効か一致しない場合に、AS はエラーを資源所有者に知らせるべき（SHOULD）で、無効な redirect URI へ user-agent を自動で redirect してはならない（MUST NOT）としている [N][^11]（§4.1.2.1）。所有者（`platform_owner` の consumer_id と副所有者）と、所有テナントがあればその管理者に通知する [D]。
+      - (b) 猶予の後: 猶予期間（TBD。所有者 認証・IdP チーム、期限 DEC-8 前）の間に再検証が済まなければ、client を停止する。停止は OPS-01（DL-24）§2.5 の P-K1（client 単位の遮断）を使い、新しい token の発行と refresh を止める [D]。払出し後の client の状態（`platform_client_state`）を suspended にし、`suspension_reason_code` に CR28 を記録する [D]。
+      - (c) 即時の停止: NS と登録者の変更が同時に検知された場合、または CNAME の宛先が未割当てになった場合は、猶予を置かずに (b) を行う。失効の検知の前の最後の成功した再検証の時刻から後に、その redirect URI へ返した認可コードで発行した grant と token は、P-REV（client 範囲の失効下限時刻の前進）で失効させる [D]。
+      - (d) 再開: 所有者が新しい検証（新しい値）を済ませ、redirect URI の update を AR-1 と AR-10 で通した場合に限る。自動では再開しない [D]。
+    - 停止は権限を減らす方向の変更なので、中央の承認を待たずに基盤が行う（AR-0 と同じ考え方）[D]。
+
+    ### 5A.5 申請の項目と応答
+
+    - 申請の `redirect_host_verifications` は、redirect_uris に含まれる `https` のホストごとに 1 つの検証 ID の配列である。ホストの集合と検証の集合が一致しない申請は CR25 で拒否する [D]。
+    - 検証の状態（`RedirectHostVerification.status`）は `pending`（TXT 未確認）、`verified`、`failing`（再検証の失敗。猶予中）、`lapsed`（失効）、`superseded`（新しい検証に置き換え）の 5 つである [D]。
+
+    ### 5A.6 限界と残余
+
+    - 再検証の周期の間に乗っ取られたホストへは、次の再検証か変更の検知まで認可応答が返り得る（T-098 の残余 (1)）[D]。
+    - 旧所有者の TXT の値をそのまま引き継いだ新しい所有者は、NS・登録者の変更が登録データに現れない形（同じ DNS 事業者の口座の譲渡など）では検知できない（T-098 の残余 (2)）[D]。
+    - CNAME の宛先の未割当ての判定は、宛先の事業者が判定可能な応答を返す場合に限られる [D]。
+    - sandbox の redirect ホストは検証しない。sandbox の client の token は本番の検証点で拒否される（CON-11 CV-011）ので、被害は sandbox の試験データに限られる [D]。
+    - 2026-10-15 時点で、本節の規則は実装も実行もない。PoC（12_poc/code）は client 登録の部品を持たない [D]。
+
     ## 6. 凍結区分（ADR-022 D-1・D-2）
 
     | 要素 | 区分 |
@@ -276,6 +330,7 @@ info:
     | sandbox の登録・管理 endpoint（RFC 7591/7592 profile） | preview（ADR-022 D-2 の「非本番環境の動的登録」） |
     | 本番の登録申請 API、承認規則 AR-1〜AR-9、所有テナントの同意の参照（tenant_consent）と理由コード CR22（版 0.3.0）・CR23（版 0.3.1、PoC/R7反映）、データ処理の申告（data_processing）・AR-9・CR24（版 0.4.0） | preview（ADR-022 が本番の登録手段を定めていない。改版で区分を決める） |
     | workload の登録エントリと交換可能な組の登録（§4A の 5 操作、申請種別 workload・exchange_pair）、WorkloadEntry・ExchangePair のスキーマ、理由コード CR15〜CR21 | preview（版 0.2.0 で追加。ADR-022 D-2 に該当する行がない。§9 H-11） |
+    | 本番の redirect ホストのドメイン検証（§5A の 2 操作、AR-10、`redirect_host_verifications`、RedirectHostVerification、払出し後の `platform_client_state`、理由コード CR25〜CR28） | preview（版 0.5.0、凍結前是正 FZ-027。本番の申請 API と同じ扱い） |
     | ホスト名、initial access token の寿命、登録数の上限、承認の SLI | 凍結しない |
 
     - GA の ClientMetadata 規則は、preview の endpoint に必須で依存していない。規則は申請 API と sandbox の両方で同じスキーマとして使うので、endpoint が変わっても規則は残る（ADR-022 D-1-1）[D]。
@@ -290,7 +345,7 @@ info:
 
     ## 8. 未決
 
-    info.x-open-issues に一覧化した。主なものは、本番の登録手段の正式な区分と承認者（未決（ADR-022）、ONB-R2）、本番での動的登録の採否（ARC-02 AR-3）、§4A の API の実装と暫定手順の解消（G-141(c) の workload）、selector の型の一覧の確定（ARC-04 W55-08・DL-71）、拡張項目の名前空間（未決（ADR-021））、Back-Channel Logout の登録項目（未決（ADR-006 L6-2））である [D]。
+    info.x-open-issues に一覧化した。主なものは、本番の登録手段の正式な区分と承認者（未決（ADR-022）、ONB-R2）、本番での動的登録の採否（ARC-02 AR-3）、§4A の API の実装と暫定手順の解消（G-141(c) の workload）、selector の型の一覧の確定（ARC-04 W55-08・DL-71）、拡張項目の名前空間（未決（ADR-021））、Back-Channel Logout の登録項目（未決（ADR-006 L6-2））、redirect ホストの再検証の周期・猶予期間・移行期間と共有ホスティングの suffix の扱い（§5A、版 0.5.0）である [D]。
 
     ## 9. 他文書への申し送り（本契約は編集していない）
 
@@ -319,18 +374,26 @@ info:
     | H-21 | 07_slo/numeric-contracts.md（DL-20） | （PoC/R7反映、版 0.3.1）所有テナントの同意の撤回とテナントの状態遷移から、その client の token の拒否までの時間の SLI を採番する（値は TBD。CRN-41） |
     | H-22 | 04_architecture/token-profile.md（ARC-02）、05_adr/ADR-005 | （PoC/R7反映、版 0.3.1）`platform_owning_tenant` を持つ client に発行する token の `tid` を、要求の値ではなく登録記録の値に固定する発行規則を明記する（§5 の (3)、CRN-40） |
     | H-23 | 03_threat-model/threat-catalog.md（THR-03）、00_decision/05-residual-risk-register.md（DCS-05） | （PoC/R7反映、版 0.3.1）H-16 の起票のとき、検証欄に CRN-38〜CRN-41 を写し、POC-02 X-D と同じ類型（検査されない欄を経由する越境）として関連付ける。同意の撤回から無効化までの窓を、H-18 の残余に加える |
-    | H-24 | 02_requirements/customer-admin-responsibility.md（REQ-06）の第三者連携の行と責任分界条項 | （ラウンド 9）「テナント管理者による app-only の client への同意」の責任分界条項を加える。(1) 同意の権限の所在: 同意できるのはテナントの管理者の役割を持つ者だけで、顧客（委託元）の内部で誰に権限を与えるかは顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録するのは当社の責任。(2) 受領者の義務: 受領者（client の運用法人）は同意された利用目的・データ区分・地域・保持期間の範囲でだけ扱い、範囲を変えるときは再同意を得る。(3) 侵害時の通知の流れ: 受領者の侵害を知った当社が所有テナントの管理者へ通知する経路と期限（CTL-02 §3.7 の法定期限との関係）。あわせて IPY-SaaS-02 の行に、本契約 §5 の (i)（検証済みの受領者の表示）を対応箇所として書く。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: REQ-06 は版 0.1（2026-10-03）のままで、§11.4 の条項 1〜13 に app-only・AR-8・CON-14 の記載が 0 件）** §11.4 の表に条項 14「テナント管理者による app-only の client への同意」を、既存の列（条項案・根拠・法務の判断事項）で起案する。(i) 同意できる者と保護操作の扱い: 同意できるのはテナント管理者の役割を持つ者だけとし、同意と撤回を保護操作（再認証と記録の対象）に入れる。顧客内部での役割の付与は顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録・撤回で無効化するのは当社の責任（本契約 AR-8・§5 の (4)）。(ii) 同意が束縛するもの: 受領者（運用法人・事業ドメイン）、利用目的、データ区分（REQ-04 §3.2）、処理・保存の所在地群、保持期間の 5 項目で、範囲の変更は再同意（本契約 AR-8 (i)〜(v)・CR22）。(iii) 受領者側の義務と責任の区分: 受領者は同意の範囲内でだけ取り扱い、侵害を知ったら当社と所有テナントの管理者へ遅滞なく通知する。受領者を経た漏えいの責任は、受領者が当社の委託先か、顧客から見た第三者かで区分する（委託先なら委託元の監督義務〔個人情報保護法 25 条〕と処理者契約〔GDPR 28 条 3 項〕、処理者から管理者への遅滞ない通知〔GDPR 33 条 2 項〕。脚注 14・15）[N]。法務の判断事項欄: 受領者の法的位置づけ（委託・第三者提供・共同利用）、管理者の同意で本人同意（個人情報保護法 28 条）に代えられるか、通知の期限（CTL-02 §3.7 との関係）、責任の上限。法的十分性は OI-P02（非机上）に残す |
-    | H-25 | 06_controls/applicability.md（CTL-02）§3.5、§9 L-04・L-13 | （ラウンド 9）§3.5 の基盤への具体要件に 1 行加える:「テナント管理者の同意による app-only の client への提供（CON-14 AR-8・AR-9）を、移転・第三者提供の判定対象とする。処理地域が所有テナントの所在地群の外にあるか、受領法人が別法人の場合は、DL-34 の判定記録なしに払い出さない」。L-04・L-13 の帰結に、管理者の同意と判定記録の組で足りるかの判断を加える（OI-P02 に束ねる）。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: CTL-02 は版 0.4（ラウンド 6）のままで、CON-14・AR-9 の記載が 0 件）** §3.5 の行には、AR-9 の判定記録と CR24 の拒否の記録を、移転根拠の台帳（RS-02 §3 の「SCC 等の移転根拠台帳」、CTL-02 の H-A06 と同じ記録先）の入力にすることを加える。L-04 と L-13 の帰結にはそれぞれ「CON-14 AR-9（所在地群の外か別法人の受領者への app-only の払出しに DL-34 の判定記録を要する）」を加える。法的十分性の判断は OI-P02（非机上）に残す |
+    | H-24 | 02_requirements/customer-admin-responsibility.md（REQ-06）の第三者連携の行と責任分界条項 | （ラウンド 9）「テナント管理者による app-only の client への同意」の責任分界条項を加える。(1) 同意の権限の所在: 同意できるのはテナントの管理者の役割を持つ者だけで、顧客（委託元）の内部で誰に権限を与えるかは顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録するのは当社の責任。(2) 受領者の義務: 受領者（client の運用法人）は同意された利用目的・データ区分・地域・保持期間の範囲でだけ扱い、範囲を変えるときは再同意を得る。(3) 侵害時の通知の流れ: 受領者の侵害を知った当社が所有テナントの管理者へ通知する経路と期限（CTL-02 §3.7 の法定期限との関係）。あわせて IPY-SaaS-02 の行に、本契約 §5 の (i)（検証済みの受領者の表示）を対応箇所として書く。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: REQ-06 は版 0.1（2026-10-03）のままで、§11.4 の条項 1〜13 に app-only・AR-8・CON-14 の記載が 0 件）** §11.4 の表に条項 14「テナント管理者による app-only の client への同意」を、既存の列（条項案・根拠・法務の判断事項）で起案する。(i) 同意できる者と保護操作の扱い: 同意できるのはテナント管理者の役割を持つ者だけとし、同意と撤回を保護操作（再認証と記録の対象）に入れる。顧客内部での役割の付与は顧客の責任、同意画面に (i)〜(v) を検証済みの値で示し同意を記録・撤回で無効化するのは当社の責任（本契約 AR-8・§5 の (4)）。(ii) 同意が束縛するもの: 受領者（運用法人・事業ドメイン）、利用目的、データ区分（REQ-04 §3.2）、処理・保存の所在地群、保持期間の 5 項目で、範囲の変更は再同意（本契約 AR-8 (i)〜(v)・CR22）。(iii) 受領者側の義務と責任の区分: 受領者は同意の範囲内でだけ取り扱い、侵害を知ったら当社と所有テナントの管理者へ遅滞なく通知する。受領者を経た漏えいの責任は、受領者が当社の委託先か、顧客から見た第三者かで区分する（委託先なら委託元の監督義務〔個人情報保護法 25 条〕と処理者契約〔GDPR 28 条 3 項〕、処理者から管理者への遅滞ない通知〔GDPR 33 条 2 項〕。脚注 14・15）[N]。法務の判断事項欄: 受領者の法的位置づけ（委託・第三者提供・共同利用）、管理者の同意で本人同意（個人情報保護法 28 条）に代えられるか、通知の期限（CTL-02 §3.7 との関係）、責任の上限。法的十分性は OI-P02（非机上）に残す。**状態（凍結前の同期、2026-10-15T10:35Z）: 宛先は REQ-06 版 0.2（凍結前是正 FZ-024）で適用済み（§11.4 条項 14、§8.1・§8.3 の IPY-SaaS-02 の行。REQ-06 §16 の申し送り）。法務の採否は REQ-06 残課題 17 で未了。AR-8 の「テナントの管理者の役割」を REQ-06 §3.1 のテナント所有者ロールと読むか、同意の付与・撤回を保護操作 P-14 として AR-8・§5 の (4)・H-17 に反映するかは未決（契約の項目に関わるため本同期では変えていない）** |
+    | H-25 | 06_controls/applicability.md（CTL-02）§3.5、§9 L-04・L-13 | （ラウンド 9）§3.5 の基盤への具体要件に 1 行加える:「テナント管理者の同意による app-only の client への提供（CON-14 AR-8・AR-9）を、移転・第三者提供の判定対象とする。処理地域が所有テナントの所在地群の外にあるか、受領法人が別法人の場合は、DL-34 の判定記録なしに払い出さない」。L-04・L-13 の帰結に、管理者の同意と判定記録の組で足りるかの判断を加える（OI-P02 に束ねる）。**（ラウンド 10 で具体化。2026-10-15 の作業ツリーで宛先は未適用: CTL-02 は版 0.4（ラウンド 6）のままで、CON-14・AR-9 の記載が 0 件）** §3.5 の行には、AR-9 の判定記録と CR24 の拒否の記録を、移転根拠の台帳（RS-02 §3 の「SCC 等の移転根拠台帳」、CTL-02 の H-A06 と同じ記録先）の入力にすることを加える。L-04 と L-13 の帰結にはそれぞれ「CON-14 AR-9（所在地群の外か別法人の受領者への app-only の払出しに DL-34 の判定記録を要する）」を加える。法的十分性の判断は OI-P02（非机上）に残す。**状態（凍結前の同期、2026-10-15T10:35Z）: 宛先は CTL-02 版 0.5（凍結前是正 FZ-025）で適用済み（§3.5 に「AR-9」「CR24」を含む行、L-04・L-13 の帰結に判定記録の扱い。CTL-02 §12 の申し送り）。POA&M では OI-G20（H-25 の内訳）と OI-G26 で追う。上の「宛先は未適用」は 2026-10-15 の版 0.4.1 の時点の記録である** |
     | H-26 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3、12_poc/preregistered-test-plan.md（DL-22） | （ラウンド 9）MK-01 の本番の申請 API のモックに AR-9・CR24 と、同意の本体の (i)〜(v) の照合（CR22）を加え、§6.3 の登録族に CRN-42〜CRN-46 を加える。TC-ID の採番は H-20 と同じ扱い |
     | H-27 | 03_threat-model/threat-catalog.md（THR-03）T-081、00_decision/05-residual-risk-register.md（DCS-05） | （ラウンド 9）T-081（データ所在地・越境移転の違反）の予防欄に AR-9・CR24 と CRN-42・CRN-45 を写す。残余リスク: `processing_regions` は申告であり、外部で動く client が申告外の地域で処理しても登録時には検知できない。検知の案（token 要求の送信元地域と mTLS 証明書の記録）の採否を決める |
     | H-28 | 02_requirements/data-classification.md（REQ-04）、操作の分類登録（DL-67） | （ラウンド 9）scope から REQ-04 の区分コードを導く対応表を作る（AR-8 の (iii) の下限の判定に使う）。未作成の間は、所有テナントのデータに届く scope を CUS と PII を含むものとして扱う（fail-closed）[D] |
     | H-29 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)、ONB-R2、所有テナントの管理画面の承認 API（H-17） | （ラウンド 9）OB-2(d) の承認者案を AR-1〜AR-9 に読み替える。H-17 の承認 API の契約に、同意画面の表示項目 (i)〜(v) と同意の本体の 9 項目を加える |
-    | H-30 | traceability/open-items.md（TRC-11）§4.11.1 | （ラウンド 10）H-24・H-25 の宛先への適用を、担当と期限を持つ POA&M の行として起票する（ID は TRC-11 の所有者が採番。案は OI-G11）。項目: 「CON-14 §9 H-24・H-25 の宛先への適用（REQ-06 §11.4 条項 14 の起案、CTL-02 §3.5 の行と L-04・L-13 の帰結への CON-14 AR-9 の追加）」。区分 A。担当: REQ-06 の所有者、CTL-02 の所有者、法務責任者。期限: DEC-8 の付議前（RRG-076 を段 2 の受容に付議する前でもある）。完了条件: REQ-06 と CTL-02 の改版（H-24・H-25 の参照を本文に含む）。法的十分性は OI-P02 に残す。2026-10-15 の作業ツリーで、リポジトリの .md ファイルに CON-14 の H-24・H-25 を引く行は 0 件で、OI-G05 は H-18・H-23 の残余リスクの写像だけを扱う [D] |
-    | H-31 | 00_decision/05-residual-risk-register.md（DCS-05）RRG-076 | （ラウンド 10）RRG-076 の受容（段 2）の前提に、H-30 の行の完了（REQ-06 条項 14 と CTL-02 §3.5 の改版）を書く。完了前に付議する場合は、同意の責任分界条項がないことを受容票の残余に明記する [D] |
+    | H-30 | traceability/open-items.md（TRC-11）§4.11.1 | （ラウンド 10）H-24・H-25 の宛先への適用を、担当と期限を持つ POA&M の行として起票する（ID は TRC-11 の所有者が採番。案は OI-G11）。項目: 「CON-14 §9 H-24・H-25 の宛先への適用（REQ-06 §11.4 条項 14 の起案、CTL-02 §3.5 の行と L-04・L-13 の帰結への CON-14 AR-9 の追加）」。区分 A。担当: REQ-06 の所有者、CTL-02 の所有者、法務責任者。期限: DEC-8 の付議前（RRG-076 を段 2 の受容に付議する前でもある）。完了条件: REQ-06 と CTL-02 の改版（H-24・H-25 の参照を本文に含む）。法的十分性は OI-P02 に残す。2026-10-15 の作業ツリーで、リポジトリの .md ファイルに CON-14 の H-24・H-25 を引く行は 0 件で、OI-G05 は H-18・H-23 の残余リスクの写像だけを扱う [D]。**状態（凍結前の同期、2026-10-15T10:35Z）: 反映済み（TRC-11 版 0.17 の OI-G26。凍結前是正 FZ-017）。上の「案は OI-G11」は、OI-G11 が T-097 の行に使われたため OI-G26 と読み替える（TRC-11 申し送り 70）。宛先のうち REQ-06 は版 0.2、CTL-02 は版 0.5 で改版済みで、完了条件の残りは条項 14 の法務の採否と作成者以外の照合である。上の「H-24・H-25 を引く行は 0 件」は版 0.4.1 の時点の記録である** |
+    | H-31 | 00_decision/05-residual-risk-register.md（DCS-05）RRG-076 | （ラウンド 10）RRG-076 の受容（段 2）の前提に、H-30 の行の完了（REQ-06 条項 14 と CTL-02 §3.5 の改版）を書く。完了前に付議する場合は、同意の責任分界条項がないことを受容票の残余に明記する [D]。**状態（凍結前の同期、2026-10-15T10:35Z）: 反映済み。DCS-05 版 0.16 の RRG-076 の期限の欄に、受容の前提として OI-G26 の完了（CTL-02 §3.5 は版 0.5 で改版済み、REQ-06 条項 14 は版 0.2 で起案済みで法務の採否は未了）と、採否の前に付議する場合の残余への明記を置いた（TRC-11 申し送り 70）** |
+    | H-32 | 03_threat-model/threat-catalog.md（THR-03）T-098・申し送り T98-1・§12 残課題 22 | （凍結前是正 FZ-027、版 0.5.0）T98-1 の (1)〜(4) を本契約 §5A に写した。T-098 の「予防」を「CON-14 版 0.5.0 §5A（AR-10、CR25〜CR28、CRN-47〜CRN-54）」に、「根拠」と残余 (3) の「CON-14 に規則は 0 件」を版 0.5.0 の状態に改め、T98-1 の状態を「CON-14 分は反映済み（C-027 の対象脅威は H-33）」とする。検証欄の TH-TC-098 に CRN-47〜CRN-54 を対応付ける。脚注 123 の参照先を版 0.5.0 に改める |
+    | H-33 | 06_controls/control-mapping-ledger.md（CTL-01）C-027 | （凍結前是正 FZ-027）C-027 の対象脅威に T-098 を、検証に TH-TC-098 を加え、適用範囲に「本番の client の redirect URI のホスト（CON-14 §5A、AR-10）」を加える。現状は対象脅威が T-067 だけ、検証は TH-TC-067 だけである（2026-10-15 の作業ツリー）[D] |
+    | H-34 | 08_operations/compromise-runbooks.md（OPS-01／DL-24）§2.5・RB-10 | （凍結前是正 FZ-027）redirect ホストの検証の失効（CR28）を P-K1（client 単位）の起動条件に加え、§5A.4 (c) の即時停止の条件と、最後に成功した再検証の時刻からの P-REV（client 範囲）を手順にする。再開は自動で行わず、所有者の新しい検証と update の承認を要することを RB-10（連携事業者）の復旧に書く。停止の通知先（client の所有者・所有テナントの管理者・利用者への通知判断）を通知判断の欄に加える |
+    | H-35 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3、12_poc/preregistered-test-plan.md（DL-22） | （凍結前是正 FZ-027）MK-01 の本番の申請 API のモックに検証の 2 操作、AR-10、CR25〜CR28 を加え（本契約 x-mock の追加案）、§6.3 の登録族に CRN-47〜CRN-54 を加える。DL-22 で TH-TC-098 を事前登録し、CRN-47〜CRN-54 の TC-ID を採番する（H-20 と同じ扱い。PoC 系統 1 には登録の部品がない） |
+    | H-36 | 07_slo/numeric-contracts.md（DL-20） | （凍結前是正 FZ-027）redirect ホストの再検証の周期、NS・登録者・CNAME の宛先の変更の検知から redirect URI の無効化までの時間、猶予期間、移行期間を採番する（値は TBD。所有者 CISO と認証・IdP チーム、期限 G3。T-098 の残余 (1) の窓の大きさを決める値） |
+    | H-37 | 00_decision/05-residual-risk-register.md（DCS-05）§8.1 | （凍結前是正 FZ-027）T98-2 の T-098 の行の写像先に、本契約 §5A.6 の残余（再検証の周期の間の窓、登録データに現れない所有の移転、判定できない CNAME の宛先、sandbox の対象外）を含める。§5A の規則の決定前に受容に付議する場合は、規則が未実装であることを受容票の残余に明記する |
+    | H-38 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)・ONB-R2、10_integration/README.md（INT-00） | （凍結前是正 FZ-027）OB-2(d) の手順に、申請の前の redirect ホストの検証（`createRedirectHostVerification` と TXT record の設置）、AR-10、取消の手順（TXT を消すと次の再検証で失効する）と再検証の周期を加える（草案 §6.3 の MUST の「明示」をここで果たす）。承認者案の読替えは AR-1〜AR-10 とする（H-29 の更新） |
+    | H-39 | traceability/open-items.md（TRC-11）§4.11.1、05_adr/ADR-004・04_architecture/token-profile.md（ARC-02）§6・§9.2 行 25 | （凍結前是正 FZ-027）(1) POA&M: THR-03 T98-3 の (1)（MP-6-16、T-098）の行の完了条件に、本契約 §5A の実装と CRN-47〜CRN-54 の実行（TH-TC-098）を書く。担当 CON-14 の所有者＋CISO、期限 DEC-8 の前（TC の実行は G4）。(2) ADR-004 の domain verification（HRD）と本契約 §5A は同じ C-027 の部品を使うので、検証の記録・再検証の処理・PSL の版を共用するかを ADR-004 の所有者と決める。(3) ARC-02 §6 と §9.2 行 25 の redirect URI の規則に、本番のホストのドメイン検証（§5A）を加える |
 
     ## 10. 誠実性
 
-    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。版 0.2.0 で加えた §4A の 5 操作と申請種別は、実装も負例 CRN-21〜CRN-30 の実行もない [D]。版 0.3.0 の AR-8・CR22・CRN-31〜CRN-37 も同じく実装・実行していない。所有テナントの管理画面の承認 API はまだどの契約にもない（§9 H-17）[D]。版 0.3.1 の CR23・CRN-38〜CRN-41 も実装・実行していない。版 0.3.1 は POC-02 の X-C・X-D からの設計推論で、PoC は client 登録の経路を試験しておらず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない（PoC/R7反映）[D]。版 0.4.0 の data_processing・AR-9・CR24・CRN-42〜CRN-46 も実装・実行していない。管理者の同意と DL-34 の判定記録で移転・第三者提供の要件を満たすかは法的判断であり、本契約は判断していない（L-04・L-13、OI-P02）[D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+    本契約は設計段階のもので、モックの起動と、AS・申請 API に対する負例の実行（TC-026）は行っていない [D]。版 0.2.0 で加えた §4A の 5 操作と申請種別は、実装も負例 CRN-21〜CRN-30 の実行もない [D]。版 0.3.0 の AR-8・CR22・CRN-31〜CRN-37 も同じく実装・実行していない。所有テナントの管理画面の承認 API はまだどの契約にもない（§9 H-17）[D]。版 0.3.1 の CR23・CRN-38〜CRN-41 も実装・実行していない。版 0.3.1 は POC-02 の X-C・X-D からの設計推論で、PoC は client 登録の経路を試験しておらず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない（PoC/R7反映）[D]。版 0.4.0 の data_processing・AR-9・CR24・CRN-42〜CRN-46 も実装・実行していない。管理者の同意と DL-34 の判定記録で移転・第三者提供の要件を満たすかは法的判断であり、本契約は判断していない（L-04・L-13、OI-P02）[D]。版 0.5.0 の §5A（redirect ホストのドメイン検証、AR-10、CR25〜CR28、CRN-47〜CRN-54）も実装・実行していない。再検証の周期・猶予期間・移行期間は TBD で、T-098 の残余の窓の大きさはこれらの値で決まる [D]。Redocly lint とスキーマ検査（examples の適合、負例 10 件のスキーマでの拒否）の結果は info.x-lint-notes に記した [M]。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 
     ## 参考文献
 
@@ -354,7 +417,7 @@ info:
 
     [^10]: J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02, 2026-07-06（Internet-Draft）. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5、確認日: 2026-10-03。RS-06#25）
 
-    [^11]: D. Hardt (Ed.) / IETF『The OAuth 2.0 Authorization Framework』RFC 6749, Standards Track, 2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §1.3.4、§4.4 冒頭（client 自身の管理下の資源か、事前に AS と取り決めた他の資源所有者の資源に限る。取決めの方法は範囲外）、確認日: 2026-10-15。§10.4 は RS-04#70。§1.3.4・§4.4 は research ノート外で、是正の作成者が RFC Editor から取得して照合）
+    [^11]: D. Hardt (Ed.) / IETF『The OAuth 2.0 Authorization Framework』RFC 6749, Standards Track, 2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §1.3.4、§4.4 冒頭（client 自身の管理下の資源か、事前に AS と取り決めた他の資源所有者の資源に限る。取決めの方法は範囲外）、§4.1.2.1（redirect URI が無効・不一致のときはエラーを資源所有者に知らせるべき（SHOULD）で、無効な redirect URI へ自動で redirect してはならない（MUST NOT）。版 0.5.0 の §5A.4 で参照。是正の作成者が 2026-10-15 に RFC Editor の本文で確認）、確認日: 2026-10-15。§10.4 は RS-04#70。§1.3.4・§4.4 は research ノート外で、是正の作成者が RFC Editor から取得して照合）
 
     [^12]: Microsoft『Configure the admin consent workflow』Microsoft Entra ID, Microsoft Learn, ms.date 2024-12-29. https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow （参照箇所: 冒頭、Enable the admin consent workflow、確認日: 2026-10-03。RS-17#63。製品の挙動の先行例として引き、規範の根拠にはしない）
 
@@ -365,6 +428,8 @@ info:
     [^15]: European Parliament and Council『Regulation (EU) 2016/679 (General Data Protection Regulation)』27 April 2016. https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng （参照箇所: Art. 44, Art. 46(1)、版 0.4.1 の §9 H-24 で Art. 28(3)・Art. 33(2)〔RS-14#42 と脚注 23、RS-02 §3〕、確認日: 2026-10-03。RS-02#47。CTL-02 の脚注 26 と同じ原典）
 
     [^16]: European Parliament and Council『Regulation (EU) 2022/2554 (DORA)』14 December 2022. https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554 （参照箇所: Art. 30(2)(b)、確認日: 2026-10-03。RS-02#58。CTL-02 の脚注 37 と同じ原典）
+
+    [^17]: S. Sahib ほか / IETF DNSOP『Domain Control Validation using DNS』draft-ietf-dnsop-domain-verification-techniques-13, 2026-06-22（Internet-Draft、未 RFC。BCP 予定）. https://datatracker.ietf.org/doc/draft-ietf-dnsop-domain-verification-techniques/ （参照箇所: §3（persistent 型は検証を利用者に束縛し続ける場合に限る）、§6.3（取消の手順と再検証の頻度の明示、MUST。所有者の変更の監視、MAY）、§9.7（DNSSEC 検証リゾルバ、MUST。複数リゾルバでの照合、SHOULD）、§9.9（ICANN division の public suffix の検証を許可しない、SHOULD NOT）、§9.11（新しい所有者による旧 record の再投入）、§9.13（別の利用者の再検証を再有効化として扱わない）、確認日: 2026-10-03。RS-14#24〜#27。THR-03 の脚注 75 と同じ原典。版 0.5.0 の是正の作成者は RS-14 の検証済み主張を引き、原典の再取得はしていない）
 
     ## レビュー記録
 
@@ -437,6 +502,16 @@ info:
     | R10-1 | High・legal | 版 0.4.0 が起こした H-24（app-only の client への管理者の同意の責任分界条項）と H-25（CTL-02 §3.5 の 1 行）が宛先に未適用である。REQ-06 は版 0.1 のままで §11.4 に app-only・AR-8・CON-14 の記載がなく、CTL-02 は版 0.4 のままで CON-14・AR-9 の記載がない。リポジトリの .md に H-24・H-25 を引く行がなく、POA&M（TRC-11）にも担当と期限を持つ行がない（OI-G05 は H-18・H-23 だけ）。RRG-076 は段 2 で受容される残余であり、責任分界の条項案がないまま受容の議題に載る。G-130 の申し送り追跡の欠落（群 g、OI-K07）の再発 | **対応（本ファイル分）。他文書は申し送り**。(1) 指摘の事実を 2026-10-15 の作業ツリーで確かめた（REQ-06 の冒頭は版 0.1・最終更新 2026-10-03、§11.4 は条項 1〜13。CTL-02 の冒頭は版 0.4。TRC-11 §4.11.1 は OI-G01〜OI-G10 で H-24・H-25 の行なし）[D]。(2) H-24 を REQ-06 §11.4 の条項 14 の起案内容に具体化した（同意できる者と保護操作、同意が束縛する 5 項目、受領者の義務と委託先・第三者による責任の区分、法務の判断事項欄）。責任の区分の根拠は個人情報保護法 25 条（RS-02#10）、GDPR 28 条 3 項（RS-14#42）・33 条 2 項（RS-02 §3）で、原典は脚注 14・15 と同じ（参照箇所を追記）。(3) H-25 に、AR-9・CR24 の記録を移転根拠の台帳の入力にすることと、L-04・L-13 の帰結への CON-14 AR-9 の追加を書いた。(4) 担当と期限を持つ POA&M の行（案 OI-G11。担当は REQ-06・CTL-02 の所有者と法務責任者、期限 DEC-8 の付議前、完了条件は両文書の改版）を H-30、RRG-076 の受容の前提への反映を H-31 で申し送った。(5) 法的十分性は OI-P02（非机上）に残した。版は申し送りと記録だけの変更（契約の項目・規則・理由コードの変更なし）なので 0.4.1 とした（CON-01 CP-60 の通知の対象）[D] | info（version）、description 冒頭・§9 H-24・H-25・H-30・H-31・脚注 14・15、x-open-issues（法的十分性の行）、本表 |
 
     - 本ラウンドで閉じられなかったもの [D]: H-24・H-25 の宛先への適用そのもの（H-30 の行の起票と、REQ-06・CTL-02 の改版）、RRG-076 の受容の前提（H-31）、法的十分性の判断（OI-P02。非机上）、条項 14 の作成者以外による照合。
+
+    ### 凍結前是正（traceability/freeze-list.md、2026-10-15、版 0.4.1 → 版 0.5.0）
+
+    > 指摘の出典は模擬パネル ラウンド 10 の redteam（MP-6-16 の再出。ラウンド 8 の MP-8-28 も同じ趣旨）で、模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。並行作業の約束により、本是正で編集したのは本ファイルだけである。他文書の同期は §9 の H-32〜H-39 で申し送った [D]。
+
+    | # | 重大度 | 指摘（要旨） | 対応 | 箇所 |
+    |---|---|---|---|---|
+    | FZ-027 | High | THR-03 T-098（登録済み redirect URI のホストのドメイン失効・dangling DNS による乗っ取り）の予防がない。拒否するのは wildcard・http・sandbox のホストだけで、redirect_uris のホストの所有確認も定期的な再検証もない。THR-03 申し送り T98-1 が未適用（ラウンド 10 redteam、MP-6-16） | **対応（本ファイル分）。他文書は申し送り**。指摘の事実を 2026-10-15 の作業ツリーで確かめた（版 0.4.1 に redirect ホストの所有確認・再検証の規則は 0 件。THR-03 版 0.6 の T-098 と T98-1、CTL-01 の C-027 の対象脅威は T-067 だけ）[D]。(1) §5A を新設し、本番の client の create と redirect_uris を変える update で、`https` の各ホストのドメイン検証を必須にした（AR-10、CR25）。方式は C-027 の DNS TXT を流用し、検証をホスト（完全一致）・所有テナント（ないときは consumer）・申請か client_id に束縛し、TXT の値は基盤が生成する。ICANN division の public suffix と、PSL の private division の suffix とその直下のホストは拒否し（CR26）、CNAME の連鎖の末端が解決できないか未割当てなら拒否する（CR27）。DNS の照合は DNSSEC 検証リゾルバと複数リゾルバによる。根拠は DNSOP の草案 §3・§9.7・§9.9（Internet-Draft。RS-14#24・#26。脚注 17）。(2) 定期の再検証と、NS・登録者・CNAME の宛先の変更の検知を置いた。NS か登録者が変わったら TXT が残っていても失効させ、旧い値を受け付けず、別の利用者の再検証を再有効化として扱わない（草案 §6.3・§9.11・§9.13。RS-14#25・#27）。周期は TBD（所有者 CISO、期限 G3）。(3) 失効したら、その redirect URI への自動の redirect を即時に止め（RFC 6749 §4.1.2.1 の MUST NOT。脚注 11 に参照箇所を追記し原典で確認）、猶予の後に client を停止する（DL-24 の P-K1。NS と登録者の同時変更か CNAME の宛先の未割当てなら即時。最後に成功した再検証の時刻から後の grant・token は P-REV で失効）。払出し後の `platform_client_state` と `suspension_reason_code` を加え、再開は所有者の新しい検証と update の承認に限った（CR28）。(4) 理由コード CR25〜CR28、負例 CRN-47〜CRN-54、検証の 2 操作（`createRedirectHostVerification`・`getRedirectHostVerification`）、申請の `redirect_host_verifications`、スキーマ RedirectHostVerification・RedirectHostVerificationCreate、ApprovalItem・ApprovalDecision の AR-10、x-mock の追加案、x-open-issues の行を加えた。(5) THR-03 の T-098・T98-1 の状態（H-32）、CTL-01 C-027 の対象脅威（H-33）、OPS-01 の P-K1 の起動条件（H-34）、CON-11・DL-22（H-35）、DL-20 の周期・猶予（H-36）、DCS-05 の残余（H-37）、INT-04 の手順と取消の案内（H-38）、POA&M・ADR-004・ARC-02（H-39）は担当外のため申し送った。版は操作・申請の項目・承認規則・理由コードの追加なので 0.5.0 に上げた（CON-01 CP-60 の通知の対象）[D] | info（version、x-depends-on、x-freeze-classes、x-open-issues、x-approval-rules、x-reason-codes、x-negative-examples、x-mock、x-lint-notes）、description 冒頭・§0 の 7・§5A・§6・§8・§9 H-32〜H-39・§10・脚注 11・17、paths（検証の 2 操作、申請 API の説明）、components（ClientRegistrationRequest の redirect_host_verifications、IssuedMetadata の platform_client_state・suspension_reason_code、RedirectHostVerification、RedirectHostVerificationCreate、ApprovalItem、ApprovalDecision、RegistrationRequestStatus、VerificationIdPath） |
+
+    - 本是正で閉じられなかったもの [D]: 再検証の周期・猶予期間・移行期間の値（H-36）、CNAME の宛先の未割当ての判定方法、登録データの取得方法、PSL の版の固定、§5A の実装と CRN-47〜CRN-54 の実行（TH-TC-098。H-35）、THR-03・CTL-01・OPS-01 ほかへの反映（H-32〜H-39）、作成者以外による照合。Redocly lint とスキーマ検査は版 0.5.0 で再実行し、エラー 0・警告 0 だった（x-lint-notes）。
   x-lint-notes:
     - rule: Redocly CLI 2.63.0 lint（recommended 規則、設定ファイルなし）
       result: エラー 0・警告 0（起草者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置き、リポジトリには残していない）
@@ -456,6 +531,9 @@ info:
     - rule: 版 0.4.0 の再検査（ラウンド 9。Python PyYAML と jsonschema 4.26.0 の Draft202012Validator、FormatChecker あり）
       result: YAML として読み込め、components.schemas の 34 件（DataProcessingDeclaration を追加）が check_schema に合格し、requestBody の examples 8 件（data_processing を加えた createTenantAppOnlyClient を含む）が適合した。DataProcessingDeclaration は、recipient の欠落、enum 外の区分コード、空の processing_regions、ISO 8601 でない retention（30d、P）、未知の項目の 6 件を拒否した。x-reason-codes に CR24、x-negative-examples は 46 件（CRN-01〜CRN-46）、x-approval-rules に AR-9（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた。TC-ID のない作成者の確認なので [M] は付けない）
       reason: Redocly CLI は本作業の環境に導入されておらず、版 0.4.0 では lint を実行していない。スキーマを追加したので、版 0.3.0 の lint の結果は当てはまらない。再実行は CON-00 の所有者による [D]。CR22 の (i)〜(v) の照合と CR24（所在地群・法人台帳・判定記録）は状態に依存するため、スキーマでは検査できない
+    - rule: 版 0.5.0 の再検査（凍結前是正 FZ-027。Redocly CLI 2.63.0 lint（recommended 規則、設定ファイルなし）、Python PyYAML と jsonschema 4.26.0 の Draft202012Validator、FormatChecker あり）
+      result: Redocly はエラー 0・警告 0。YAML として読み込め、components.schemas の 36 件（RedirectHostVerificationCreate・RedirectHostVerification を追加）が check_schema に合格し、paths の requestBody と応答の examples 16 件（検証の 2 操作の 3 件と、redirect_host_verifications を加えた createFapiClient を含む）が適合した。host の pattern は wildcard（*.partner.example）、IP リテラル、単一ラベル（localhost）、大文字を含む名前を拒否した。x-reason-codes は CR01〜CR28、x-negative-examples は 54 件（CRN-01〜CRN-54）、x-approval-rules に AR-10（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた。TC-ID のない作成者の確認なので [M] は付けない）
+      reason: AR-10 の判定（検証の束縛・TXT の照合・PSL・CNAME の宛先）と CR28 の失効は DNS と台帳の状態に依存するため、スキーマでは検査できない。redirect_host_verifications を必須にする条件も redirect_uris の値に依存するのでスキーマに書かず、受付時の検査（CR25）で表す。版 0.4.0 で未実行だった lint は本版で再実行した
   x-open-issues:
     - id: ADR-022（本番の登録手段）
       text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-9 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
@@ -463,6 +541,8 @@ info:
       text: 受付時の CR23（REQ-05 の主状態 A に限る）、変更時の再同意、token の tid を登録記録に固定する発行規則、同意の撤回とテナントの終了での無効化（§5）。発行規則の正本は ARC-02・ADR-005 に置く（§9 H-22）。撤回から無効化までの SLI は TBD（§9 H-21）。所有者 認証・IdP チーム、期限 DEC-8 前
     - id: 同意の束縛項目と AR-9（版 0.4.0、ラウンド 9 legal）
       text: 管理者の同意と DL-34 の判定記録の組で移転・第三者提供の要件を満たすかは L-04・L-13・OI-P02（非机上）で決める。REQ-06 の責任分界条項（条項 14）と CTL-02 §3.5 の行は宛先に未適用で、POA&M の起票を §9 H-30 で申し送った（ラウンド 10）。受領者の運用法人を検証する法人台帳の置き場所、scope と REQ-04 の区分の対応表（§9 H-28）、申告された処理地域と実際の稼働地域の照合（§9 H-27）は未定。所有者 認証・IdP チーム（法務責任者と協議）、期限 DEC-8 前
+    - id: redirect ホストのドメイン検証（版 0.5.0、凍結前是正 FZ-027）
+      text: §5A の再検証の周期、猶予期間、版 0.5.0 より前の client の移行期間、登録データ（NS・登録者）の取得方法と監視の周期、CNAME の宛先の未割当ての判定方法、PSL の版の固定と更新、検証用 TXT record のラベル名は TBD。PSL の private division の suffix の直下を一律に拒否する案が既存の連携を妨げる場合の例外（受容票の要否）も未定。所有者 CISO（周期・検知）と認証・IdP チーム（猶予・移行）、期限 G3（周期・検知）と DEC-8 前（猶予・移行）。ADR-004 の HRD の domain verification との部品の共用は §9 H-39
     - id: ARC-02 AR-3
       text: 本番の AS で RFC 7591 の動的登録を許すか。本契約は無効を前提とする。許す場合は発行者確認（ADR-005 D7-1）を経た client に限る
     - id: G-141(c) の workload
@@ -499,6 +579,7 @@ info:
       - { id: AR-7, applies: "subject が exchange_pair で、kind が create か update", approver: "呼出し先の所有者", basis: "ADR-009 D09-13、INT-04 OB-2(c)", checks: "呼出しの必要性、max_scope の最小化" }
       - { id: AR-8, applies: "subject が client の create・update で、platform_owning_tenant が顧客テナントであり、scope に app-only の権限（grant_types に client_credentials を含む client の scope すべて）か、操作の分類登録（DL-67）で低リスクに分類されていない scope（未分類を含む）がある。update では scope・grant_types・platform_owning_tenant を変えるとき（版 0.3.0）", approver: "所有テナント（platform_owning_tenant）の管理者。基盤側の承認者は記録できない（CRN-34）。同意画面には data_processing の (i) 受領者（検証済みの運用法人・事業ドメイン）、(ii) 利用目的、(iii) データ区分、(iv) 処理・保存の所在地群、(v) 保持期間を表示する（版 0.4.0）", basis: "ADR-005 D7-2、ARC-02 §6（テナント管理者の同意は privileged、F2）、RFC 6749 §1.3.4・§4.4、先行例 RS-17#63", checks: "tenant_consent（consent_ref）があり、tenant_id が platform_owning_tenant と一致し、同意が本申請（request_id か target_client_id）と要求する scope の集合を覆い、期限内で、同意の時点で同意者がそのテナントの管理者であること。同意の本体が data_processing の (i)〜(v) と一致すること（版 0.4.0）。満たさなければ CR22。検査に通るまで status は pending_review のままで払い出さない" }
       - { id: AR-9, applies: "AR-8 に当てはまる申請のうち、(a) data_processing.processing_regions に所有テナントの所在地群（A-062、テナント配置表）にない所在地群がある、または (b) data_processing.recipient の運用法人が基盤運営法人と別法人（不明を含む）であるもの。update では data_processing か platform_owning_tenant を変えるとき（版 0.4.0）", approver: "承認者なし。DL-34（CTL-02、法務責任者）の判定記録の参照（data_processing.transfer_assessment_ref）で満たす。基盤側の承認者は decide で記録できない（403）", basis: "個人情報保護法 28 条、GDPR 44 条・46 条 1 項、DORA 30 条 2 項 (b)（CTL-02 §3.5）、CTL-02 §1.4 (β)・L-04・L-13、relationship-model-registry の export の destination_region（ADR-018 D18-12(d)）", checks: "判定記録があり、本申請の受領法人・処理地域・データ区分・利用目的を覆い、有効であること。満たさなければ CR24。法的十分性の判断は L-04・L-13・OI-P02" }
+      - { id: AR-10, applies: "subject が client の create と、redirect_uris を変える update で、redirect_uris に https のホストがあるもの（本番だけ。版 0.5.0、凍結前是正 FZ-027）", approver: "承認者なし。基盤の自動検査（redirect_host_verifications の各検証の照合）で満たす。基盤側の承認者は decide で記録できない（403。CRN-54）", basis: "THR-03 T-098・T98-1、CTL-01 C-027、DNSOP 草案 §3・§6.3・§9.7・§9.9・§9.11・§9.13（Internet-Draft。RS-14#24〜#27）", checks: "redirect_uris の https のホストの集合と検証の集合が一致し、各検証が status=verified で、ホスト（完全一致）・platform_owning_tenant（ないときは consumer_id）・本申請（request_id か target_client_id）に束縛され、受付時と払出しの直前の TXT の照合に通ること（CR25）。ホストが public suffix か PSL の private division の suffix とその直下でないこと（CR26）。CNAME の連鎖の末端が解決でき、未割当てでないこと（CR27）。払出し後は定期の再検証と NS・登録者・CNAME の宛先の変更の検知を続け、失効したら CR28（§5A.4）" }
       - { id: AR-0, applies: "kind が retire", approver: "不要（所有者だけで成立）", basis: "権限を減らす変更", checks: "払出し後、その client の grant と token を無効化する（RFC 7592 §2.3 の SHOULD を本番にも適用）" }
   x-reason-codes:
     CR01: { error: invalid_client_metadata, http: 400, meaning: token_endpoint_auth_method がない、または共有秘密の方式（client_secret_basic・client_secret_post・client_secret_jwt）、または種別と合わない方式 }
@@ -525,6 +606,10 @@ info:
     CR22: { error: invalid_tenant_consent, http: 400, meaning: "所有テナントの同意記録（tenant_consent）が AR-8 を満たさない。tenant_id が platform_owning_tenant と異なる（他テナントの同意の流用）、別の申請・client に対するもの、要求する scope の集合を覆わない、期限切れ、同意の時点で同意者がそのテナントの管理者でない（ADR-005 D7-2。版 0.3.0、preview）、または同意の本体が data_processing の (i) 受領者・(ii) 利用目的・(iii) データ区分・(iv) 処理地域・(v) 保持期間と一致しないか、申請に data_processing がない（版 0.4.0）" }
     CR23: { error: invalid_owning_tenant, http: 400, meaning: "platform_owning_tenant が未知、REQ-05 §2.1 の主状態が A（有効）でない（P・S1・S2・M・N・R 以降）、または申請先と別の環境（sandbox）のテナント（版 0.3.1、PoC/R7反映、preview）" }
     CR24: { error: transfer_assessment_required, http: 400, meaning: "AR-9 に当てはまる申請（処理地域が所有テナントの所在地群の外、または受領法人が基盤運営法人と別法人か不明）で、DL-34 の判定記録の参照（data_processing.transfer_assessment_ref）がない、無効、または本申請の受領法人・処理地域・データ区分・利用目的を覆わない（版 0.4.0、ラウンド 9 legal、preview）" }
+    CR25: { error: invalid_redirect_uri, http: 400, meaning: "本番の申請で、redirect_uris の https のホストに有効なドメイン検証がない。検証が status=verified でない、ホストの集合と検証の集合が一致しない、別のホスト・別の client か申請・別の所有テナントか consumer に束縛された検証の流用、TXT の値が一致しない、または失効・置換された検証の再使用（AR-10、§5A.3。版 0.5.0、凍結前是正 FZ-027、preview）" }
+    CR26: { error: invalid_redirect_uri, http: 400, meaning: "本番の申請で、redirect_uris のホストが Public Suffix List の ICANN division の public suffix そのもの、または private division の suffix（共有ホスティング・PaaS の利用者ごとの名前）そのものかその直下（§5A.3。版 0.5.0、preview）" }
+    CR27: { error: invalid_redirect_uri, http: 400, meaning: "本番の申請で、redirect_uris のホストの CNAME の連鎖の末端が解決できない（NXDOMAIN）か、宛先の資源が未割当てと判定された（dangling DNS。§5A.3。版 0.5.0、preview）" }
+    CR28: { error: redirect_host_verification_lapsed, http: 400, meaning: "払出し後の再検証の失敗、または NS・登録者・CNAME の宛先の変更の検知で redirect ホストの検証が失効した。その redirect URI への自動の redirect を止め、猶予の後（条件により即時）に client を停止した（platform_client_state=suspended、suspension_reason_code=CR28）。停止中の client を対象とする update は、新しい検証がそろうまで CR28 で拒否する（§5A.4。版 0.5.0、preview）" }
   x-negative-examples:
     description: 登録族の負例。期待結果はすべて拒否（または払出し 0 件）と、理由コード付きの記録。CON-11 §6.3 に「登録族」として追加する（申し送り H-3）。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
     items:
@@ -574,6 +659,14 @@ info:
       - { ref: CRN-44, op: submitClientRegistrationRequest, case: "払出し済みの client（T の同意あり、地域 [jp]）の update で processing_regions を [jp, eu] に、または recipient を別法人に変え、旧い consent_ref と旧い判定記録を再使用する", expect: "400 / CR22（新しい同意がない）。新しい同意がそろっても判定記録が新しい地域・受領者を覆わなければ CR24。払出し 0 件（版 0.4.0）" }
       - { ref: CRN-45, op: submitClientRegistrationRequest, case: "処理地域は T の所在地群の内だが、recipient の運用法人がグループ内の別法人（または法人台帳で判定できない）。同意はそろい、transfer_assessment_ref なし", expect: "400 / CR24。払出し 0 件（CTL-02 §1.4 (β)、L-13。版 0.4.0）" }
       - { ref: CRN-46, op: decideClientRegistrationRequest, case: "認証・IdP チームの有資格者が rule=AR-9 の approve を記録して判定記録の代わりにする", expect: "403。AR-9 は未充足のまま。払出し 0 件（版 0.4.0）" }
+      - { ref: CRN-47, op: submitClientRegistrationRequest, case: "C3 の create で redirect_uris=[https://sync.partner-apps.example/oauth/callback]、redirect_host_verifications を省略する（または TXT を置く前の status=pending の検証 ID を入れる）", expect: "400 Problem（code=invalid_redirect_uri、reason_code=CR25）。払出し 0 件（版 0.5.0、凍結前是正 FZ-027）" }
+      - { ref: CRN-48, op: submitClientRegistrationRequest, case: "platform_owning_tenant=T の申請に、同じホストについてテナント U（または別の consumer・別の client）に束縛して作られた verified の検証 ID を入れる。親ドメイン partner-apps.example の検証で子のホストを覆おうとする場合も含む", expect: "400 / CR25。検証の流用と親ドメインによる被覆は認めない。払出し 0 件（版 0.5.0）" }
+      - { ref: CRN-49, op: submitClientRegistrationRequest, case: "redirect_uris のホストが ICANN division の public suffix そのもの、または PSL の private division の suffix の直下（例 https://partner-sync.<共有ホスティングの suffix>/cb）", expect: "400 / CR26。createRedirectHostVerification も同じホストでは 400 / CR26（版 0.5.0）" }
+      - { ref: CRN-50, op: submitClientRegistrationRequest, case: "ホスト login.partner-apps.example の TXT は verified だが、CNAME の宛先（クラウドの静的サイトの名前）が解放されて NXDOMAIN を返す", expect: "400 / CR27。払出し 0 件（dangling DNS。版 0.5.0）" }
+      - { ref: CRN-51, op: "（本番 AS の authorization endpoint、定期の再検証）", case: "払出し済みの C3 の client で、redirect ホストの TXT record が消えて再検証に失敗した後、正規の client_id とその redirect_uri で認可要求を送る。猶予期間が過ぎても再検証されない", expect: "失効の直後から、AS はエラーを利用者に示し、その URI へ自動で redirect しない（RFC 6749 §4.1.2.1）。所有者と所有テナントの管理者に通知。猶予の後、client は platform_client_state=suspended（suspension_reason_code=CR28）になり、token の発行と refresh を拒否する（P-K1）（版 0.5.0）" }
+      - { ref: CRN-52, op: "（定期の再検証、変更の検知）", case: "redirect ホストの登録可能ドメインの NS と登録者が変わり、新しい所有者が旧い TXT の値を再投入したので TXT の照合だけは通る", expect: "検証は lapsed になり、猶予なしで client を停止する（CR28）。最後に成功した再検証の時刻から後に発行した grant・token は失効する（P-REV）。旧い値での再検証は受け付けず、新しい値の検証を求める（草案 §9.11。版 0.5.0）" }
+      - { ref: CRN-53, op: submitClientRegistrationRequest, case: "CR28 で停止した client（所有テナント T）について、ドメインを取得した別の consumer が同じホストの新しい検証を作り、停止した client の再開を申請する。または停止した client の所有者が、新しい検証なしで kind=update を送る", expect: "前者は 403（target_client_id の所有者でない）で、停止した client は再開しない（草案 §9.13 の再有効化の禁止）。後者は 400 / CR28。再開は所有者の新しい検証と AR-1・AR-10 を通した update に限る（版 0.5.0）" }
+      - { ref: CRN-54, op: decideClientRegistrationRequest, case: "認証・IdP チームの有資格者が rule=AR-10 の approve を記録して、ドメイン検証の代わりにする", expect: "403。AR-10 は未充足のまま。払出し 0 件（版 0.5.0）" }
   x-mock:
     description: CON-11 の MK-01（開発用 AS・IdP）への追加案（申し送り H-3）。CON-11 の作成者が取り込むまでは本節を仕様とする
     MK-01:
@@ -588,6 +681,7 @@ info:
       - （版 0.3.1 の追加案。PoC/R7反映）本番の申請 API のモックは、テナントの主状態を制御 API（POST /__kit/fixtures）で登録し、CR23 を返す（CRN-38・CRN-39）。MK-01 の issuer A（本番役）は、platform_owning_tenant を持つ client の token の tid を登録値に固定する（CRN-40）。同意の撤回とテナントの状態遷移は制御 API の inject で模す（CRN-41）
       - （版 0.4.0 の追加案。申し送り H-26）本番の申請 API のモックは、テナントの所在地群・法人台帳・DL-34 の判定記録を制御 API（POST /__kit/fixtures）で登録し、同意の本体と data_processing の照合（CR22。CRN-43・CRN-44）と AR-9（CR24。CRN-42・CRN-45）を返す。decide での AR-9 の記録は 403（CRN-46）
       - 割り当て済みの namespace と参照サービスの一覧を制御 API（POST /__kit/fixtures）で登録し、CR21 と即時有効の判定に使う
+      - （版 0.5.0 の追加案。凍結前是正 FZ-027、申し送り H-35）本番の申請 API のモックに createRedirectHostVerification・getRedirectHostVerification を置き、ホストごとの TXT record・NS・登録者・CNAME の宛先の解決結果と PSL の抜粋を制御 API（POST /__kit/fixtures）で登録して、AR-10 と CR25〜CR27 を返す（CRN-47〜CRN-50・CRN-54）。再検証の失敗と NS・登録者の変更は制御 API の inject で模し、MK-01 の issuer A（本番役）は失効した redirect URI へ redirect せず、猶予の後（条件により即時）に client を停止して CR28 を記録する（CRN-51〜CRN-53）
 servers:
   - url: https://sandbox-as.id-domain.example
     description: sandbox の AS（issuer B）。ホスト名は仮置きで凍結しない。consumer は AS metadata の registration_endpoint から URL を得る
@@ -975,6 +1069,7 @@ paths:
         client_credentials の client には AR-4（CP-1）が要る。`platform_owning_tenant` が顧客テナントで、app-only の権限か低リスクでない scope を要求する申請には、そのテナントの管理者の同意記録 `tenant_consent` が要り、検査に通るまで払い出さない（AR-8、CR22。版 0.3.0）。AR-8 に当てはまる申請には `data_processing`（受領者・利用目的・データ区分・処理地域・保持期間）が要り、同意の本体と一致しなければ CR22、処理地域が所有テナントの所在地群の外か受領法人が別法人で DL-34 の判定記録がなければ CR24（AR-9。版 0.4.0）。
         申請を受け付け、必要な承認（x-approval-rules）を `required_approvals` に入れて 202 を返す。ClientMetadata の規則に反する申請は、受付の時点で 400 を返す（理由コードは CR01〜CR13 と同じ。同意記録の不備は CR22。所有テナントの値の不備（未知、主状態が A でない、別環境のテナント）は CR23。版 0.3.1、PoC/R7反映）。
         sandbox と同じ ClientMetadata を使えるが、`client_id` は本番で別の値が払い出される（ADR-021 D21-22）。
+        redirect_uris に https のホストがある create と、redirect_uris を変える update には、ホストごとのドメイン検証の ID（`redirect_host_verifications`。`createRedirectHostVerification` で作る）が要る。検証がない・流用・未確認は CR25、public suffix と共有ホスティングの suffix とその直下は CR26、CNAME の宛先が解決できないか未割当ては CR27（AR-10、§5A。版 0.5.0、凍結前是正 FZ-027）。
       security:
         - workforceOidc: []
       requestBody:
@@ -985,10 +1080,11 @@ paths:
               $ref: '#/components/schemas/ClientRegistrationRequest'
             examples:
               createFapiClient:
-                summary: 正例。C3 第三者サーバー型、層 F（AR-1・AR-2・AR-3 の承認が要る）
+                summary: 正例。C3 第三者サーバー型、層 F（AR-1・AR-2・AR-3 の承認と、redirect ホストのドメイン検証 AR-10 が要る。AR-10 は版 0.5.0）
                 value:
                   kind: create
                   justification: 顧客テナント管理の外部連携（F3 の write）
+                  redirect_host_verifications: [hv3qk7mz2xr9tn4bw6pd8ce5ya]
                   metadata:
                     platform_client_category: C3
                     platform_owner: { consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve, secondary_contact: partner-oncall@partner-team.example }
@@ -1047,6 +1143,7 @@ paths:
                       - { rule: AR-1, role: authn-idp-reviewer }
                       - { rule: AR-2, role: authn-idp-reviewer }
                       - { rule: AR-3, role: ciso-security-reviewer }
+                      - { rule: AR-10, role: redirect-host-verification, decision: approve, verification_ids: [hv3qk7mz2xr9tn4bw6pd8ce5ya] }
         '400':
           $ref: '#/components/responses/ProblemBadRequest'
         '401':
@@ -1131,6 +1228,97 @@ paths:
           $ref: '#/components/responses/ProblemForbidden'
         '404':
           $ref: '#/components/responses/ProblemNotFound'
+  /v1/redirect-host-verifications:
+    servers:
+      - url: https://onboarding.id-domain.example
+        description: 本番の登録申請 API（仮置き）
+    post:
+      operationId: createRedirectHostVerification
+      tags: [production-registration-request]
+      summary: 本番の redirect URI のホストのドメイン検証を作り、置くべき TXT record を受け取る（版 0.5.0、§5A）
+      x-freeze-class: preview
+      description: |
+        申請の前に、redirect_uris の https のホストごとに 1 回呼ぶ。基盤はホスト（完全一致）・所有テナント（ないときは consumer_id）・申請か client に束縛した一度きりの値を生成し、`txt_name` と `txt_value` を返す。申請者はこの TXT record をホストの DNS に置く。
+        基盤は DNSSEC 検証リゾルバ（AD bit がなければ複数のリゾルバ）で照合し、照合に通ると status=verified にする。ホストが public suffix か共有ホスティングの suffix とその直下なら 400（CR26）、CNAME の宛先が解決できないか未割当てなら 400（CR27）。CTL-01 C-027 の方式の流用（§5A.3。凍結前是正 FZ-027）。
+      security:
+        - workforceOidc: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedirectHostVerificationCreate'
+            examples:
+              forPartnerSync:
+                summary: 正例。createFapiClient の redirect ホストの検証
+                value:
+                  host: sync.partner-apps.example
+                  platform_owner_consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve
+                  platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+      responses:
+        '201':
+          description: 検証を作った（status=pending。TXT record を置いた後に基盤が照合する）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedirectHostVerification'
+              examples:
+                pending:
+                  summary: TXT 待ち
+                  value:
+                    verification_id: hv3qk7mz2xr9tn4bw6pd8ce5ya
+                    host: sync.partner-apps.example
+                    platform_owner_consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve
+                    platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    txt_name: _platform-redirect-verification.sync.partner-apps.example
+                    txt_value: rhv1-7Qm2Xk9pZr4Tn6Vb8Hc3We5Ya
+                    status: pending
+                    created_at: "2026-10-15T08:30:00Z"
+        '400':
+          $ref: '#/components/responses/ProblemBadRequest'
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '403':
+          $ref: '#/components/responses/ProblemForbidden'
+  /v1/redirect-host-verifications/{verification_id}:
+    servers:
+      - url: https://onboarding.id-domain.example
+        description: 本番の登録申請 API（仮置き）
+    parameters:
+      - $ref: '#/components/parameters/VerificationIdPath'
+    get:
+      operationId: getRedirectHostVerification
+      tags: [production-registration-request]
+      summary: redirect ホストの検証の状態を読む（版 0.5.0、§5A）
+      x-freeze-class: preview
+      description: 検証の状態（pending・verified・failing・lapsed・superseded）、最後に成功した照合の時刻、失効の理由を返す。束縛先の consumer の人と、所有テナントの管理者だけが読める。
+      security:
+        - workforceOidc: []
+      responses:
+        '200':
+          description: 検証の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedirectHostVerification'
+              examples:
+                lapsed:
+                  summary: NS と登録者の変更の検知で失効（CRN-52）
+                  value:
+                    verification_id: hv3qk7mz2xr9tn4bw6pd8ce5ya
+                    host: sync.partner-apps.example
+                    platform_owner_consumer_id: c9f3k2m7qx4tz8rb5wn6pda2ve
+                    platform_owning_tenant: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    bound_client_id: p2nd6vq9hx4kz7mc3tr8bwe5ya
+                    txt_name: _platform-redirect-verification.sync.partner-apps.example
+                    status: lapsed
+                    created_at: "2026-10-15T08:30:00Z"
+                    last_verified_at: "2026-10-15T09:00:00Z"
+                    lapse_reason: ns_and_registrant_changed
+        '401':
+          $ref: '#/components/responses/ProblemUnauthorized'
+        '404':
+          $ref: '#/components/responses/ProblemNotFound'
 components:
   securitySchemes:
     sandboxInitialAccessToken:
@@ -1172,6 +1360,13 @@ components:
       in: path
       required: true
       description: 申請 ID（不透明値）
+      schema:
+        $ref: '#/components/schemas/OpaqueId'
+    VerificationIdPath:
+      name: verification_id
+      in: path
+      required: true
+      description: redirect ホストの検証 ID（不透明値。版 0.5.0）
       schema:
         $ref: '#/components/schemas/OpaqueId'
   headers:
@@ -1408,6 +1603,7 @@ components:
         - "sandbox: redirect_uris のホストと jwks の鍵が、本番の一覧に含まれない（CR04・CR13。設定に依存するためスキーマでは表せない）"
         - "C3 で dpop_bound_access_tokens=true とする場合は platform_acceptance_ref が必須（AR-5）"
         - "software_id・software_version の組が別の consumer_id で登録済みでない（CR12）"
+        - "本番: redirect_uris の https のホストごとに、ホスト・所有テナント・申請に束縛した verified のドメイン検証があり、ホストが public suffix・共有ホスティングの suffix とその直下でなく、CNAME の宛先が解決できる（AR-10、CR25〜CR27。DNS と台帳に依存するためスキーマでは表せない。版 0.5.0）"
     AuthMethodRules:
       additionalProperties: true
       description: 認証方式ごとの必須項目（CR05・CR08）
@@ -1561,6 +1757,14 @@ components:
           description: 払い出した環境。sandbox の client_id は本番で未知（CRN-12）
           type: string
           enum: [sandbox, production]
+        platform_client_state:
+          description: 払出し後の client の状態（版 0.5.0、§5A.4）。suspended の間は token の発行と refresh を拒否する（DL-24 の P-K1）
+          type: string
+          enum: [active, suspended]
+        suspension_reason_code:
+          description: platform_client_state が suspended のときだけ。停止の理由コード（CR28 など。版 0.5.0）
+          type: string
+          pattern: '^CR[0-9]{2}$'
         platform_client_category: { type: string }
         platform_owner: { $ref: '#/components/schemas/Owner' }
         platform_owning_tenant: { $ref: '#/components/schemas/OpaqueId' }
@@ -1633,6 +1837,13 @@ components:
         data_processing:
           description: 受領者・利用目的・データ区分・処理地域・保持期間の申告。AR-8 に当てはまる申請で必須で、同意の本体と一致しなければ CR22（CRN-43）。AR-9 の判定にも使う（版 0.4.0）。必須とする条件は scope の分類（DL-67）に依存するのでスキーマでは表さない
           $ref: '#/components/schemas/DataProcessingDeclaration'
+        redirect_host_verifications:
+          description: redirect_uris の https のホストごとの検証 ID（createRedirectHostVerification で作る）。subject が client の create と、redirect_uris を変える update で必須で、ホストの集合と検証の集合が一致しなければ CR25（AR-10、§5A。版 0.5.0）。必須とする条件は redirect_uris の値に依存するのでスキーマでは表さない
+          type: array
+          uniqueItems: true
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/OpaqueId'
       anyOf:
         - properties: { subject: { const: client }, kind: { const: create } }
           required: [metadata]
@@ -1850,10 +2061,10 @@ components:
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9, AR-10]
         role:
           type: string
-          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control, platform-workload-reviewer, callee-owner, tenant-admin, transfer-assessment]
+          enum: [authn-idp-reviewer, ciso-security-reviewer, cp1-dual-control, platform-workload-reviewer, callee-owner, tenant-admin, transfer-assessment, redirect-host-verification]
         decision:
           type: string
           enum: [approve, reject]
@@ -1868,6 +2079,11 @@ components:
           description: rule が AR-9 のときだけ。検査に通った DL-34 の判定記録の参照（版 0.4.0）
           type: string
           maxLength: 128
+        verification_ids:
+          description: rule が AR-10 のときだけ。基盤の自動検査に通った redirect ホストの検証 ID（版 0.5.0）
+          type: array
+          items:
+            $ref: '#/components/schemas/OpaqueId'
     RegistrationRequestStatus:
       type: object
       required: [request_id, kind, status, submitted_at, required_approvals]
@@ -1906,23 +2122,83 @@ components:
           description: subject が exchange_pair で status が provisioned のときだけ
           $ref: '#/components/schemas/ExchangePairInfo'
         reason_code:
-          description: 却下・受付拒否の理由コード（CR01〜CR13、CR15〜CR24。CR23 は版 0.3.1、CR24 は版 0.4.0）
+          description: 却下・受付拒否の理由コード（CR01〜CR13、CR15〜CR28。CR23 は版 0.3.1、CR24 は版 0.4.0、CR25〜CR28 は版 0.5.0）
           type: string
           pattern: '^CR[0-9]{2}$'
     ApprovalDecision:
-      description: 基盤側の承認者の判断。AR-8 はテナント側の同意記録、AR-9 は DL-34 の判定記録で満たし、本操作では記録できない（403。CRN-34・CRN-46。版 0.3.0・0.4.0）
+      description: 基盤側の承認者の判断。AR-8 はテナント側の同意記録、AR-9 は DL-34 の判定記録、AR-10 は redirect ホストのドメイン検証の自動検査で満たし、本操作では記録できない（403。CRN-34・CRN-46・CRN-54。版 0.3.0・0.4.0・0.5.0）
       type: object
       required: [rule, decision]
       properties:
         rule:
           type: string
-          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9]
+          enum: [AR-1, AR-2, AR-3, AR-4, AR-5, AR-6, AR-7, AR-8, AR-9, AR-10]
         decision:
           type: string
           enum: [approve, reject]
         comment:
           type: string
           maxLength: 1000
+    RedirectHostVerificationCreate:
+      description: redirect ホストのドメイン検証の作成要求（版 0.5.0、§5A.3、preview）。TXT の値は基盤が生成し、要求には含めない
+      type: object
+      additionalProperties: false
+      required: [host, platform_owner_consumer_id]
+      properties:
+        host:
+          description: redirect_uris のホスト（完全一致。小文字の FQDN。IP リテラル・wildcard は不可）
+          type: string
+          maxLength: 253
+          pattern: '^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$'
+        platform_owner_consumer_id:
+          description: 検証を束縛する consumer（申請の platform_owner.consumer_id と一致しなければ CR25）
+          $ref: '#/components/schemas/OpaqueId'
+        platform_owning_tenant:
+          description: 検証を束縛する所有テナント（申請の platform_owning_tenant と一致しなければ CR25。所有テナントのない client では省略）
+          $ref: '#/components/schemas/OpaqueId'
+        target_client_id:
+          description: 払出し済みの client の update・再開のための検証で指定する（その client に束縛する）
+          $ref: '#/components/schemas/ClientId'
+    RedirectHostVerification:
+      description: redirect ホストのドメイン検証の記録（版 0.5.0、§5A、preview）。束縛先（ホスト・consumer・所有テナント・申請か client）が申請と一致しない検証は使えない（CR25）
+      type: object
+      required: [verification_id, host, platform_owner_consumer_id, txt_name, status, created_at]
+      properties:
+        verification_id:
+          $ref: '#/components/schemas/OpaqueId'
+        host:
+          type: string
+          maxLength: 253
+        platform_owner_consumer_id:
+          $ref: '#/components/schemas/OpaqueId'
+        platform_owning_tenant:
+          $ref: '#/components/schemas/OpaqueId'
+        bound_request_id:
+          description: 検証を最初に使った申請（受付時に束縛する）
+          $ref: '#/components/schemas/OpaqueId'
+        bound_client_id:
+          description: 払出し後に束縛した client
+          $ref: '#/components/schemas/ClientId'
+        txt_name:
+          description: TXT record を置く名前（ラベル名は凍結しない）
+          type: string
+        txt_value:
+          description: 置くべき値。基盤が生成する一度きりの値で、作成の応答でだけ返す。失効・置換の後は二度と受け付けない（CRN-52）
+          type: string
+        status:
+          type: string
+          enum: [pending, verified, failing, lapsed, superseded]
+        created_at:
+          type: string
+          format: date-time
+        last_verified_at:
+          description: 最後に照合に通った時刻。失効時の P-REV の起点（§5A.4 (c)）
+          type: string
+          format: date-time
+        lapse_reason:
+          description: status が failing か lapsed のときだけ
+          type: string
+          enum: [txt_missing, txt_mismatch, ns_changed, registrant_changed, ns_and_registrant_changed, cname_target_unassigned, cname_target_changed, migration_deadline_passed]
     RegistrationErrorBody:
       description: RFC 7591 §3.2.2 のエラー。error は REQUIRED、error_description は OPTIONAL。reason_code は本 profile の追加メンバで、受信側は理解しないメンバを無視しなければならない（RFC 7591 §3.2.2 の MUST）
       type: object

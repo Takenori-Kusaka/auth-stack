@@ -1,6 +1,6 @@
 # ADR-008 管理面と CI/CD の保護（二者承認・JIT・特権アクセス端末・循環依存の切断・環境間の信頼分離・SLSA・署名付き段階配布）
 
-> 文書ID: ADR-008 / 版: 0.1 / 状態: proposed（決裁前。CONVENTIONS §1 の区分では draft）/ 最終更新: 2026-10-15
+> 文書ID: ADR-008 / 版: 0.2 / 状態: proposed（決裁前。CONVENTIONS §1 の区分では draft）/ 最終更新: 2026-10-15（0.2 追補（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。決定は変えていない）: §6.3 RR8-09 の受容者案に「DCS-05 RRG-042 に写す（版 0.16）」を記した（DCS-05 §12.1 の 99 (3)）。0.2: 凍結前是正 FZ-028。THR-03 T-099（消費側ビルドでの PEP SDK の取違え）の申し送り T99-1 を受け、D8-66、RR8-09、TC-08-13、§9.3 他文書への申し送りを加えた。模擬パネル ラウンド 10 redteam・MP-6-17 の指摘による。模擬パネルは自己レビューであり実在の CTO/CISO の決裁ではない）
 > 可逆性: **可逆**（ただし一部は移行費用が大きい）。管理用 IdP の製品、特権アクセス端末の方式、CI 基盤の製品、SLSA の目標水準、二者承認の対象範囲は、すべて後から差し替え・引上げ・引下げができる。不可逆な識別子・鍵階層・cell の原則は ADR-007・ADR-013・ADR-021 が決め、本書はそれらに従う側に立つ。移行費用が大きいのは「管理面の全変更を版管理された宣言と単一の配布経路に通す」原則（D8-20）で、後から外すと証跡の連続性（E10）が途切れる [D]。
 > DEC-3 対象: いいえ（traceability/deliverables.md §5 の ADR-008 行の DEC-3 列は「—」）。ただし §2.12 の決裁案 KD8-1〜KD8-5 は CTO・CISO の決裁を要する。
 > 対応要求: R-054, R-056, R-073（deliverables.md §5 の ADR-008 行）／R-054, R-246（R-requirements.md の対応成果物欄に本書のパスを含む行）／G-049, G-091（G-goal-criteria.md の対応成果物欄に本書のパスを含む行）、G-020（05_adr の全 ADR）。関連: R-012, R-069, R-072, R-149, R-155, R-156, R-164, R-166, R-168, R-174, R-180, R-207, R-210, R-258, R-268, R-057, R-176, R-231, R-256／G-084, G-092, G-093, G-062, G-090, G-112, G-141（全件と閉じ方は末尾の対応表）
@@ -14,7 +14,7 @@
 - **自社 IdP で自社 IdP 管理者を認証する循環依存は、管理者専用の独立した IdP（管理用 IdP）と、製品ごとのローカル break-glass で断つ** [D]。管理用 IdP は本基盤の AS（ADR-001 の cell ごとの自社 AS）にも、それが broker する社内 workforce IdP にも依存させない（D8-10〜D8-14）[D]。KMS/HSM・JWKS 公開・CI 署名鍵の管理者認証を本基盤の AS に依存させない ADR-007 D7-55 と、ADR-013 D13-22 を具体化するものである [D]。
 - **常設の本番特権は持たない**。privileged/P の拡大方向の操作は JIT と、別々の報告系統の二者による承認で行い、管理者は特権アクセス端末（PAW）からだけ操作する（D8-30〜D8-35）[D]。縮小方向の操作は REQ-03 の規則 J8 に従い事前承認を求めない [D]。
 - **非本番と本番の間に信頼の経路を置かない**（Midnight Blizzard の教訓）[I][^11][^12]（RS-12#15, #16）。非本番の主体・アプリ・資格情報・trust anchor は本番資源に一切の権限を持たず、これを機械検査で 0 件に保つ（D8-50〜D8-55）[D]。
-- **SLSA v1.2 の目標水準は、基盤の成果物と policy・model・設定の bundle に Build L3、基盤・policy・IaC のリポジトリに Source L4（二者合意）とする** [N][^2][^3][^4]（RS-05#76〜#78）[D]。配備時に provenance と署名を検証し、通らない成果物は配備しない（D8-60〜D8-65、policy リポジトリは D8-70〜D8-73）[D]。
+- **SLSA v1.2 の目標水準は、基盤の成果物と policy・model・設定の bundle に Build L3、基盤・policy・IaC のリポジトリに Source L4（二者合意）とする** [N][^2][^3][^4]（RS-05#76〜#78）[D]。配備時に provenance と署名を検証し、通らない成果物は配備しない（D8-60〜D8-65、policy リポジトリは D8-70〜D8-73）[D]。依存サービスのビルドが取り込む PEP SDK も、消費側のビルドで署名と provenance を検証し、通らなければビルドを止める（D8-66）[D]。
 - **配布物は「署名・対象 cell 集合と wave・版の単調性・有効期限」を検証してから有効化する**。段階展開の正本は ADR-013 D13-30〜D13-36 であり、本書はその配布経路の統制（誰が署名でき、誰が wave を飛ばせるか）を決める（D8-80〜D8-84、D8-90〜D8-93）[D]。CrowdStrike の事後報告は、Template Instance を段階展開すべきだったと認めている [I][^15]（RS-09#65）。
 - **主要 ADR との矛盾はない** [D]。ただし 3 点を申し送る（§9.2）。(1) bundle の有効期限を ADR-013 の上限時間 H と同じ値にすること、(2) ADR-001 の製品評価軸に管理 API の宣言適用とローカル break-glass を加えること、(3) Source L4 の適用範囲を攻撃者モデルの決裁案 AM-3 と連動させること、である [D]。
 
@@ -80,7 +80,7 @@
 | ATK-08 クラウド管理者 | 管理 API による key policy・ログ設定の変更、本番 token の生成 | T-045, T-046, T-047 |
 | ATK-10 policy author | 過大付与、旧版の再配布、全域 allow／deny | T-027, T-028, T-050 |
 | ATK-17 内部不正の開発者 | 正規権限による検証の弱体化、保護ブランチの迂回 | T-050, T-052 |
-| ATK-18 供給網の侵害 | 依存ライブラリ・ベースイメージ・CI アクションへの混入 | T-051 |
+| ATK-18 供給網の侵害 | 依存ライブラリ・ベースイメージ・CI アクションへの混入。依存サービスのビルドでの PEP SDK の取違え（dependency confusion・typosquatting・配布経路での差替え） | T-051, T-099 |
 | ATK-19 変更と自動化の誤り（非敵対） | 全域へ同時に届く設定・鍵 metadata の誤り | T-028, T-043 |
 | ATK-01（L3）→ATK-03 の連鎖 | 非本番アカウントを足場にした本番への到達 | T-071, T-046 |
 | ATK-09 内部 support | 管理面の変更は PC-07 の権限であり ATK-09 の想定外（attacker-model §3.9）。support 経路は ADR-029 | T-049 |
@@ -222,6 +222,12 @@
 - **D8-63（CI の秘密）** CI から外部（クラウド、KMS、成果物レジストリ）への認証は、CI の OIDC token と workload federation による短命資格情報に置き換え、静的な長寿命秘密を新規に作らない [D][A-011, A-113]。CircleCI は顧客に、長寿命の資格情報を保管する代わりに OIDC token を使うよう推奨した [I][^25]（RS-12#47）。基盤リポジトリへの書込みに PAT を使わない。使わざるを得ない例外は寿命 7 日以下とし、例外台帳に載せる [D]。Microsoft は PAT の寿命を 7 日に短縮したと報告した [I][^26]（RS-05#32）。
 - **D8-64（SCM の管理者）** SCM の組織管理者・保護ブランチ設定の変更権限は CP-0 とし、保護設定そのものの変更を二者承認にする [D]。保護ブランチの設定は宣言で管理し、定期に署名付きスナップショット（E10）を取る（T-052）[D]。
 - **D8-65（依存の取込み）** 依存ライブラリ・ベースイメージ・CI アクションは digest で固定し、更新は通常の二者レビューを経る [D]。XZ Utils 型の上流混入（ATK-18）は公表前には予防できないため、残余リスク RR8-04 とする [D]。
+- **D8-66（消費側ビルドでの PEP SDK の検証）** 依存サービス（約 300）と連携ベンダーのビルドが取り込む PEP SDK の配布物について、次の (1)〜(3) を決める（案）[D]。D8-61 の provenance 検証は基盤自身の配備を対象とし、依存サービスのビルドが取り込む SDK を扱っていなかった（THR-03 T-099、申し送り T99-1）[D][^38]。改ざん・取違えの SDK は、`tid` の照合・`cnf` の束縛検証・PDP 不達時の fail-closed を外した fail-open の PEP になり、PEP の迂回（T-018・T-022）と同じ結果になり得るため、どの検証も失敗したらビルドを止める（fail-closed）[D][^38]。
+  1. **署名と provenance の消費側検証**: 基盤の build は PEP SDK の配布物に D8-62 の方式で署名し、Build L3 の provenance を付ける（D8-60 の表の「基盤の成果物」に PEP SDK を含める）[D]。消費側のビルドは使用前に、provenance の封筒の署名、信頼する builder ID、正規の source リポジトリ、buildType と externalParameters の期待値を検証し、1 つでも合わなければビルドを失敗させる [D]。SLSA v1.2 は、消費者が client 側の検証ツールで成果物の provenance を使用前に期待値と照合する形を示し、封筒の署名の検証と builder ID の照合を挙げ、正規の source リポジトリ・buildType・externalParameters の期待値との比較を SHOULD とする [N][^36]。検証ツールと期待値（公開鍵・builder ID・source リポジトリ）は基盤チームが配り、ベンダーの手書きにしない [D]。
+  2. **registry の scope の予約と依存の固定**: PEP SDK を置く private registry の scope（名前空間）を基盤が公開 registry でも予約し、消費側のビルド設定の既定で scope ごとの取得元を private registry に固定して、内部の名前を公開 registry から解決させない [D]。SDK とその依存は版と digest で固定（lockfile の integrity）し、更新は D8-65 と同じく二者レビューを経る [D]。SLSA v1.2 は dependency confusion の緩和として、内部 package を Build L2 以上の build 基盤で作り、provenance の期待値を内部 package の導入時に検証することを挙げる [N][^37]。
+  3. **consumer 台帳での照合**: consumer 台帳の照合（INT-01 CK-21）を、SDK の版差から、各サービスが組み込んだ SDK の名前・版・digest と正規の配布物との照合へ拡張する [D][^38]。不一致は該当サービスの配備停止の判断材料とし、停止の権限は GOV-06 に従う [D]。
+  - 範囲外と残余: typosquatting は SLSA v1.2 が「現在扱っていない」とする脅威であり [N][^37]、(2) の取得元の固定と (3) の名前・digest の照合に依存する（RR8-09）[D]。自前実装の PEP（INT-05 RD-09 で選べる）は本決定の対象外で、ARC-06 の外形試験に依存する（RR8-09）[D]。THR-03 T-099 の予防案 (4)（PEP が判定要求に SDK の名前・版・digest を自己申告し PDP が照合する）は、改ざんされた SDK が申告を偽れるため予防にはならず検知の補助にとどまる。本書では決めず、要否を INT-00 の所有者に申し送る（§9.3 H8-2）[D]。
+  - 期限案: 決定は KD8-2 と同時（G3）、consumer 台帳の照合の実装と TC-08-13 の実行は G4 [D][^38]。
 
 ### 2.8 policy リポジトリの二者レビュー（Q5）
 
@@ -395,6 +401,7 @@
 | RR8-06 | break-glass の立会人を含む共謀と、緊急時の判断の誤り | 同時二者、全使用の警報、第 2 線の事後レビュー | 段2 案（T-047 と同じ） |
 | RR8-07 | 管理用 IdP の事業者側の侵害（KD8-1 (a) の場合） | 事業者の第三者保証報告、local break-glass、AM-2 の決裁 | AM-2 の決裁に従う（段2〜段3） |
 | RR8-08 | canary の範囲内で起きる誤配布 | 段階展開（ADR-013） | 段1〜段2（T-028 と同じ） |
+| RR8-09 | PEP SDK の取違え・改ざんのうち D8-66 で閉じないもの。(1) typosquatting（SLSA v1.2 の範囲外 [N][^37]）、(2) 自前実装の PEP、(3) 消費側の検証をビルド設定から外したサービス（T-099） | 取得元の固定と consumer 台帳の名前・digest の照合（D8-66 の 2・3）、公開 registry での類似名の登録の監視、ARC-06 の外形試験、TC-08-13 | 段2 案（T-099 の受容者案と同じ）[^38]。DCS-05 RRG-042 に写す（版 0.16。凍結前の同期で追記。DCS-05 §12.1 の 99 (3)） |
 
 - 受容者の段の割当は TBD（所有者: CISO が起案、期限: G2〜G4、決め方: 攻撃者モデル §6 と同じく DL-02 の封じ込め単位と DL-01 の許容度から）[D]。
 
@@ -425,6 +432,7 @@
 | TC-08-10 | 管理 session の窃取が無効化される | 管理 session の cookie・token を別端末・別ネットワークで再利用、本番 token の生成を試行 | 再認証の要求、JIT と step-up の要求 | D8-31, D8-32, CB-TC-05, CB-TC-15 |
 | TC-08-11 | 保護ブランチの迂回ができない | PAT・force push・保護設定の変更を単独で試行 | 成功 0 件、設定変更は二者承認を要求 | D8-63, D8-64, TH-TC-052 |
 | TC-08-12 | 宣言と実状態の乖離を検出できる | break-glass で設定を変更し、検出までの時間を測る | 検出される。時間は TBD（所有者: SRE 責任者、期限: G4） | D8-20 |
+| TC-08-13 | 消費側のビルドは不正な PEP SDK を取り込まない | 依存サービスの雛形で、未署名、承認外 builder、正規外 source リポジトリ、digest 不一致の SDK を取り込ませる。公開 registry に内部の SDK と同名で高い版を置いた状態でビルドする。consumer 台帳に digest の異なる SDK を組み込んだサービスを登録する | ビルド成功 0 件、公開 registry からの解決 0 件、台帳の照合で不一致をすべて検出 | D8-66, RR8-09, T-099, TH-TC-099 |
 
 - 合否基準の数値は、事前登録前の実測を合否判定に使わない規則（deliverables §2.1）に従い、DL-22 の凍結時に確定する [D]。
 
@@ -484,6 +492,19 @@
 
 - U-01（issuer の粒度）は JWKS 公開経路の数を変えるが、本書の決定（公開経路を CP-0 とし二者承認にする）はどちらの結論でも変わらない [D]。
 
+### 9.3 他文書への申し送り
+
+本書は他文書を編集していない。D8-66（FZ-028）に合わせて、次の同期を各所有者に申し送る [D]。
+
+| # | 相手 | 内容 | 所有者 | 期限案 |
+|---|---|---|---|---|
+| H8-1 | 03_threat-model/threat-catalog.md（THR-03）T-099、申し送り T99-1 | T-099 の「予防」(1)(2)(3) の先を D8-66 に、「残余リスク」(3) の「ADR-008 に規定はない」を D8-66・RR8-09 に、「証拠」の TH-TC-099 の対応先に TC-08-13 を加え、T99-1 を反映済みにする。脚注 114 の ADR-008 の版を 0.2 に改める | THR-03 の担当 | 次版 |
+| H8-2 | 10_integration/README.md（INT-00）、dependency-tiers.md（INT-01）CK-21、onboarding.md（INT-04）、definition-of-ready.md（INT-05）RD-09（申し送り T99-2） | (1) INT-00・INT-04 に、D8-66 の 1・2（消費側ビルドでの署名・provenance の検証、検証ツールと期待値の配布、scope の取得元の固定、版と digest の固定）の手順を加える。(2) CK-21 を版差から名前・版・digest の照合へ拡張する。(3) RD-09 に SDK の取得元と digest の記録を加え、自前実装の PEP を選ぶ場合は RR8-09 を受け入れる旨を明記する。(4) T-099 の予防案 (4)（SDK の自己申告の PDP 側照合）を検知の補助として採るかを決める | INT-00〜INT-05 の所有者（プラットフォームチーム長） | G3 |
+| H8-3 | DL-22 PoC 試験計画、TH-TC 一覧 | TC-08-13 を TH-TC-099 と対応づけて採番し、合否基準を凍結時に確定する | DL-22 の作成者 | G3（実行は G4） |
+| H8-4 | 00_decision/05-residual-risk-register.md（DCS-05）、traceability/open-items.md（TRC-11、POA&M） | RR8-09 を RRG-042（SDK・OSS の供給網侵害）に写す案と、§8.1 の T-099 行（THR-03 申し送り T98-2）。POA&M に MP-6-17 の行を、担当 ADR-008 の所有者＋プラットフォームチーム長、期限 G3 で起こす（THR-03 申し送り T98-3 の (2)） | DCS-05 の担当、POA&M の担当 | DEC-1 の付議前 |
+| H8-5 | 06_controls/control-mapping-ledger.md（CTL-01） | 対象脅威 T-099 に D8-66 の 3 統制（消費側の provenance 検証、scope と digest の固定、台帳の照合）を加える（THR-03 申し送り T98-5 の (2)） | CTL-01 の所有者 | G3 |
+| H8-6 | traceability/mock-panel-report.md（TRC-10）§4.2 | MP-6-17 の追跡先に D8-66・RR8-09・TC-08-13 を加える | TRC-10 の担当 | 次版 |
+
 ---
 
 ## 対応表（R/G）
@@ -494,7 +515,7 @@
 |---|---|---|---|---|
 | R-054 | 二者統制 | D8-02, D8-21〜D8-24, D8-41, D8-70, D8-92、TC-08-04 | C（担い手の指名は B） | 1 名では実行できないことを TC-08-04・TC-08-03 と DL-14 の ceremony 記録で示すまで閉じない。担い手の名簿は DL-27 |
 | R-056 | 対象範囲 AS/PAP/CI-CD/KMS/HSM/JWKS | D8-01（10 系統）、D8-02 | A | 鍵の詳細は DL-14（04_architecture/root-of-trust.md）で閉じる |
-| R-073 | 供給網レビュー（SLSA 1.2） | D8-60〜D8-65、§7.2 | D | 第三者の供給網レビュー（DL-30）は未実施。未達 |
+| R-073 | 供給網レビュー（SLSA 1.2） | D8-60〜D8-66、§7.2 | D | 第三者の供給網レビュー（DL-30）は未実施。未達 |
 | R-246 | SLSA 1.2 を CI/CD・policy bundle に適用 | D8-60（目標水準の表）、D8-61, D8-62, D8-80 | C | TC-08-06・TC-08-07 の実測と E10（署名付きスナップショット）。09_assurance/self-assessments.md の自己評価 |
 | G-049 | 基盤に依存してはならないものの列挙と代替手段、循環依存 0 件 | D8-10〜D8-14, D8-22, D8-40〜D8-42、TC-08-01, TC-08-02 | A（本書の範囲は管理面。列挙全体は ADR-023・DL-63） | 状況連絡手段・status page・顧客連絡先台帳は ADR-023・DL-63 が担う。本書は管理面の循環だけを閉じる |
 | G-091 | 管理面（二者承認、JIT、専用端末）、bundle 署名、policy リポジトリの二者レビュー、ビルド来歴と署名、第三者のクラウド設定・供給網レビュー | §2.3, §2.4, §2.7〜§2.9, §7.2 | D | 設計は本書で示した。実装、第三者報告書（E6）、未解決 Critical/High 0 件の判定は未達 |
@@ -563,6 +584,9 @@
 [^33]: Sigstore『Sigstore overview』. https://docs.sigstore.dev/about/overview/ （参照箇所: How Sigstore works（Cosign/Fulcio/Rekor、keyless signing）、確認日: 2026-10-03。RS-05#81）
 [^34]: SLSA Community『Announcing SLSA v1.2』2025-11-24. https://slsa.dev/blog/2025/11/announce-slsa-v1.2 （参照箇所: 本文冒頭（Source Track の新設、v1.1 との後方互換）、確認日: 2026-10-03。RS-05#76）
 [^35]: LastPass『Incident 2 – Additional details of the attack』2023-03（Wayback Machine 2023-03-05 版）. https://web.archive.org/web/20230305/https://support.lastpass.com/help/incident-2-additional-details-of-the-attack （参照箇所: 攻撃の経過（2022-08-12〜10-26、自宅 PC、keylogger、4 名の DevOps）、確認日: 2026-10-03。RS-12#64）
+[^36]: SLSA (OpenSSF)『SLSA v1.2: Build: Verifying artifacts』Approved. https://slsa.dev/spec/v1.2/verifying-artifacts （参照箇所: Verifying provenance（封筒の署名の検証、信頼する builder ID の照合、正規の source リポジトリ・buildType・externalParameters の期待値との比較（SHOULD））、検証の担い手（package ecosystem の upload 時、consumer の client 側検証、monitor）、確認日: 2026-10-15。research ノート外。FZ-028 の是正時に原典を取得して照合した）
+[^37]: SLSA (OpenSSF)『SLSA v1.2: Threats & mitigations』Approved. https://slsa.dev/spec/v1.2/threats （参照箇所: (H) Package selection の Dependency confusion（緩和: 内部 package を Build L2 以上で build し、provenance の期待値を内部 package の導入時に検証する）と Typosquatting（"This threat is not currently addressed by SLSA."）、確認日: 2026-10-15。research ノート外。FZ-028 の是正時に原典を取得して照合した）
+[^38]: 本リポジトリ『脅威カタログ』THR-03 版 0.6（03_threat-model/threat-catalog.md。§5.10 T-099 の分類・攻撃経路・予防 (1)〜(4)・残余リスク・受容者案、申し送り T99-1・T99-2・T98-3）、『依存の段階』INT-01 版 0.3（10_integration/dependency-tiers.md。CK-21 は SDK の版差を consumer 台帳で照合する）（確認日: 2026-10-15）
 
 ---
 
@@ -611,3 +635,11 @@
 | U8-R3 | 管理用 IdP が FAL3 を提供できるか（D8-10 条件 3）は製品依存で未確認 | KD8-1 の製品評価項目に加える |
 | U8-R4 | PAT の寿命上限 7 日（D8-63）は Microsoft の報告値（RS-05#32）を借りた値であり、本基盤の根拠からは導いていない | DL-61 の自己評価時に見直す |
 | U8-R5 | ADR-016・018・019 との照合は未実施（並行作成中のため） | Phase 4 の整合確認で行う |
+
+### 凍結前是正（FZ-ID）
+
+> 是正日: 2026-10-15 / 是正者: AI エージェント（Claude）。固定リスト traceability/freeze-list.md の指摘による。模擬パネル由来の指摘であり、自己レビューで、実在の CTO/CISO の決裁ではない [D]。
+
+| FZ-ID | 重大度 | 箇所 | 指摘 | 是正 |
+|---|---|---|---|---|
+| FZ-028 | High | D8-61 の近く（§2.7）、§6.3、§7.1 | T-099（消費側ビルドでの PEP SDK の依存取違え・typosquat）への決定がない。改ざんされた SDK は fail-open の PEP になる。THR-03 申し送り T99-1 が未適用（ラウンド 10 redteam、MP-6-17） | D8-66 を新設した（(1) SDK 配布物の署名と Build L3 provenance、消費側ビルドでの検証と失敗時のビルド停止、(2) private registry の scope の予約と取得元・版・digest の固定、(3) consumer 台帳での名前・版・digest の照合（INT-01 CK-21 の拡張））。§6.3 に RR8-09（typosquatting、自前実装の PEP、検証を外したビルド）、§7.1 に TC-08-13（TH-TC-099 に対応）を加えた。§1.4 の ATK-18 に T-099、要旨と対応表 R-073 に D8-66 を加えた。SLSA v1.2 の 2 文書（脚注 36・37）を原典で照合し、THR-03・INT-01 を脚注 38 とした。他文書の同期は §9.3 H8-1〜H8-6 に申し送った |

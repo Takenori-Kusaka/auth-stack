@@ -1,6 +1,6 @@
 # OAuth/OIDC セキュリティ profile（token profile）
 
-> 文書ID: ARC-02 / 版: 0.3 / 状態: review / 最終更新: 2026-10-15（0.3（PoC/R7反映）: PoC 実測レポート POC-02（§6.5 TC-004〜007 の未実施、§6.3 の TC-016 行、§6.4 の TC-015 行）と模擬パネル ラウンド 7 の指摘により、§14 の注記、残課題、レビュー記録を加えた）
+> 文書ID: ARC-02 / 版: 0.4 / 状態: review / 最終更新: 2026-10-15（0.4（凍結前是正 FZ-031。固定リスト TRC-13、ラウンド 10 redteam 由来。模擬パネルは AI の自己レビューであり実在の CTO/CISO の決裁ではない）: §4.4.1 に許容時刻差の前提となる時刻源の要件（TS-1・TS-2）、skew の監視（TS-3）、閾値超過時に止める対象（TS-4）を加え、AR-5、「他文書への申し送り」、残課題、レビュー記録を加えた。0.3（PoC/R7反映）: PoC 実測レポート POC-02（§6.5 TC-004〜007 の未実施、§6.3 の TC-016 行、§6.4 の TC-015 行）と模擬パネル ラウンド 7 の指摘により、§14 の注記、残課題、レビュー記録を加えた）
 > 対応要求: R-046, R-158, R-159, R-160, R-161, R-162, R-163, R-189（R-189.1, R-189.2, R-189.6）, R-239, R-240, R-249, R-251, R-259, R-270, R-283／G-087, G-088, G-138（全件と閉じ方は末尾の対応表）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-16 行）, 05_adr/ADR-005-token-profile.md（正本）, 05_adr/ADR-020-fapi2-applicability.md, 05_adr/ADR-007-key-hierarchy-kms-hsm.md, 05_adr/ADR-015-crypto-agility-pqc.md, 05_adr/ADR-021-irreversible-identifiers.md, 05_adr/ADR-004-b2b-federation-linking-scim.md, 05_adr/ADR-006-revocation-continuous-evaluation.md, 05_adr/ADR-009-workload-identity-token-exchange.md, 05_adr/ADR-022-integration-contract-standards.md, 05_adr/reconciliation-notes.md, 01_governance/assumptions-register.md, 01_governance/business-impact-analysis.md, 01_governance/loss-scenarios.md, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md, 03_threat-model/threat-catalog.md, 03_threat-model/attacker-model.md, 06_controls/applicability.md, 04_architecture/claims-catalog.md（ARC-15、並行作成）, research/RS-03, RS-04, RS-06, RS-11, RS-13, RS-17, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が、上記 ADR の決定を実装可能な profile に展開して起草した。決定の正本は ADR であり、本書は ADR に反する設計を置かない。ADR で未決の点は「未決（ADR-0xx）」と記す。research ノートにない原典（OIDC Back-Channel Logout 1.0、RFC 8417 §2.2・§2.3・§4、RFC 8725 §2・§3.2〜§3.4・§3.10〜§3.12、OIDC Core §3.1.3.7）は起草者が 2026-10-15 に取得して照合した。このうち RFC 8725 §2.1・§3.2・§3.4・§3.10〜§3.12、RFC 8417 §2.2・§2.3・§4.1〜§4.3、OIDC Back-Channel Logout 1.0 §2.4・§2.6・§4 は、作成者以外のレビュアー（AI エージェント）が同日に原典を再取得して照合した（末尾「レビュー記録」）。OIDC Core §3.1.3.7 の作成者以外による照合は未了である。本書の判断は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -231,6 +231,28 @@ RFC 8725 §3.12 は、同じ issuer が複数種類の JWT を発行する場合
 
 - FAPI の「未来 10 秒は受理・60 秒超は拒否」は、AS が受け取る JWT への規定である [N][^2]。それを内部 RS の未来方向の許容に準用するのは自社判断である（ADR-005 V7）[D]。
 - 時刻差の値（R-189.2）は、NA-TP-2 の観測と H-05 の拒否率で決める（所有者 CTO＋SRE 責任者、期限 G4、DL-20）[D]。値が決まるまで、本書の S_int の初期値は ADR-005 V7 のものを使う [D]。
+
+#### 4.4.1 許容時刻差の前提: 検証点の時刻源と、閾値超過時に止める対象（T-100）
+
+上の許容時刻差（S_int・S_ext・S_dpop・W）は、検証点の時計が正しいことを前提にしている。時刻源が改ざん・誤設定されると、窓の値に関係なく、期限切れの token・DPoP proof・SAML assertion を受理する（時計を過去へずらす）か、正規の token を一斉に拒否する（未来へずらす）（THR-03 T-100 の攻撃経路 (a)(b)）[D][^49]。このため、許容時刻差の前提として次を置く。版 0.4 の凍結前是正（FZ-031、THR-03 申し送り T100-2）で加えた [D][^49][^51]。
+
+| ID | 要件 | 対象 | 値・所有者 |
+|---|---|---|---|
+| TS-1 | 時刻源の認証: 本番の検証点と発行点は、認証付きの時刻同期（NTS 等）を使い、認証のない時刻同期を使わない（THR-03 T-100 予防 (1)）。NTS は NTP に時刻源の認証と replay 防止を加える仕組みである [N][^50] | 検証点（共通 SDK・sidecar・edge・RS）、発行点（AS・内部 issuer・STS） | 方式の選定は ADR-013 の決定（T100-1）に従う。ADR-013 の決定までは本書の profile 案 [D] |
+| TS-2 | 独立した複数の時刻源: 互いに独立した複数の時刻源を使い、相互の差を常時比較する（THR-03 T-100 予防 (2)、ARC-07 H-5 の「cell 内に複数の時刻源。時刻のずれの警報」を予防として置く）[D][^49][^52] | 同上 | 時刻源の数と独立性の条件（運営者・経路を分ける等）は ADR-013 で決める（T100-1） |
+| TS-3 | skew の監視: 検証点・発行点ごとに、時刻源とのずれ（skew）と時刻源間の差を監視する [D][^49] | 同上 | 閾値 T_skew: TBD（所有者 SRE 責任者＋CTO、期限 G4、DL-20）。NA-TP-2 の観測と S_int から決める。skew は受理の窓をそのままずらすので、S_int との関係を値の決定に含める [D] |
+| TS-4 | 閾値超過時の fail-closed: skew が T_skew を超えた、または時刻源間の差が T_skew を超えて正しい時刻を決められない検証点・発行点では、下の「止める対象」を止める [D][^49] | 同上 | 単位は時刻源を共有する範囲（cell。上流の時刻源を共有するなら全域）[D][^49] |
+
+閾値超過時に止める対象（TS-4）:
+
+1. **新規の token 受理**: 時刻で検査する種別（K3・K5・K1'・K6・K9・補-3。§4.4 の表で exp・iat・nbf・NotOnOrAfter を見るもの）の新規の受理を止め、拒否として扱う。その検証点・cell は切離し（ADR-013 の停止権限）に回す [D][^49]。止めずに受理を続けると、期限切れの受理（過去方向）を検知できないためである。
+2. **時刻依存の確定処理**: 鍵の撤去（§5.4 の P_post の満了判定）、失効 epoch の確定（ADR-006）、特権操作・break-glass・期限付き例外の発効を止める [D][^49]。これらは時計を未来へずらすと早く確定し、全域の検証失敗や剥奪の取りこぼしになる（THR-03 T-100 の攻撃経路 (b)〜(d)）。
+3. **監査の記録**: 受付は止めず、「時刻不確か」の印を付けて保全する（THR-03 T-100 予防 (3)）[D][^49]。記録を止めると事後の立証ができなくなるためである。
+
+- 発行点（K3・K5・K7 の発行）も TS-4 の対象に含める。ずれた時計で発行した token は、正しい時計の検証点で一斉に拒否される（未来方向）か、寿命を超えて使われる（過去方向）[D]。
+- 検知の指標は、時刻源間の差、検証点ごとの skew、`iat` の未来方向の拒否率と `exp` 超過の拒否率の急変（H-05 の拒否率）とする [D][^49]。
+- 復帰（受理の再開）の条件と権限者は ADR-013 の停止・復帰の手順で決める。決まるまでは、skew が T_skew 以内に戻り、時刻源間の差も T_skew 以内であることを SRE 責任者が確かめてから再開する（本書の暫定案）[D]。
+- ADR-013 には時刻源の決定がまだない（THR-03 申し送り T100-1、「ADR への指摘」AR-5）[D][^49]。
 
 ### 4.5 検証の流れ（共通 SDK・sidecar・edge）
 
@@ -692,7 +714,7 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | R-163 | DPoP の限界の明記と BFF・CSP・短命化・鍵保護の併用 | §7.2 | C | 要実測（H-05・H-07、NV-29・NV-54・NV-55） |
 | R-189 | 数値契約: token（指標 R-189.1〜R-189.6） | §5（.1・.2・.6 を本書で扱う。.3〜.5 は ADR-007・DL-20） | C | 要実測（値は DL-20） |
 | R-189.1 | access と refresh の寿命を別値で定める（一律値は不可） | §5.2・§5.3 | C | 要実測（式と所有者は本書で記述、値は TBD） |
-| R-189.2 | clock skew | §4.4、KP-2 | C | 要実測（NA-TP-2、H-05） |
+| R-189.2 | clock skew | §4.4、§4.4.1（時刻源の前提 TS-1〜TS-4）、KP-2 | C | 要実測（NA-TP-2、H-05） |
 | R-189.6 | JWKS cache 最大齢 | §5.4、TP-03 | C | 要実測（BIA、DL-20） |
 | R-239 | RFC 9700・RFC 9068・RFC 8725・RFC 9449 を PKCE、redirect 完全一致、refresh rotation か sender constraint、JWT 厳格検証、DPoP の準拠基準にする | §9、§4、§7、§10 | A | 本書で閉じた |
 | R-240 | FAPI 2.0 を高価値 API の攻撃者モデル・PAR・mTLS/DPoP・非対称 client 認証・適合試験の比較基準 profile にする | §1.3、§8、§9.3 | A | 本書で閉じた（採否は R-160） |
@@ -709,7 +731,7 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 
 ## ADR への指摘（レビューで追加）
 
-本書は ADR に反する設計を置かない。次の 4 点は、ADR の文言どおりには実装できないか、ADR が決めていない点である。ADR の改版か決裁で解消するまで、本書は右列の扱いで運用する [D]。
+本書は ADR に反する設計を置かない。次の 5 点は、ADR の文言どおりには実装できないか、ADR が決めていない点である。ADR の改版か決裁で解消するまで、本書は右列の扱いで運用する [D]。
 
 | ID | 対象 ADR | 指摘 | 本書の扱い（ADR 改版まで） | 解消の場 |
 |---|---|---|---|---|
@@ -717,6 +739,22 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | AR-2 | ADR-005 V2・D2、ADR-007 D7-10 | OIDC Back-Channel Logout §2.4 は logout token を ID Token と同じ鍵で署名させる [N][^21]。このため K1 と K7 の組では「1 鍵 1 種別」（V2）と「(iss, typ, 鍵集合, aud の形) の 4 要素を異ならせる」（D2）を満たせない。ADR-007 D7-10 の族 1 も logout token の同居を明記していない [D] | K1 と K7 は typ・必須／禁止 claim（`events`・`nonce`）・受理位置で排他にする（§4.3）。族 1 の鍵で K1 と K7 だけを署名し、他の種別は載せない | ADR-005 の改版（V2・D2 に仕様由来の例外を明記）、ADR-007 の改版（族 1 に logout token を明記） |
 | AR-3 | ADR-005、ADR-020、ADR-022 | 層 B の外部 RP に hybrid response type を許すか、本番で動的クライアント登録（RFC 7591）を許すかを決めた ADR がない。ADR-022 は非本番の動的登録を preview に置くだけである [D] | どちらも本番の AS では無効にする（§6 C6、§9.2 行 34）。必要になった時点で ADR を起票する | ADR-022 の改版、または新規 ADR |
 | AR-4 | ADR-005 D1-6 | privileged・break-glass/B・層 F の stateful 照合が「発行台帳にあるか」だけを見るのか、失効状態も返すのかが明記されていない。失効状態を返すなら LP-1 の寿命は U2 に縛られないが、返さないなら U2 が効く [D] | 返すと決まるまで LP-1 にも U2 を適用する（§5.3 K3） | ADR-005 の改版（ADR-006 の失効状態配布と合わせる） |
+| AR-5 | ADR-013 | 許容時刻差（§4.4）の前提になる時刻源の認証・複数化と、skew の閾値超過時の切離しを決めた ADR がない。THR-03 によれば ADR-013 に「時刻同期」「時刻源」の語は 0 件である [D][^49] | §4.4.1 の TS-1〜TS-4 を本書の profile 案として置く。閾値 T_skew は TBD（G4） | ADR-013 の改版（THR-03 申し送り T100-1） |
+
+---
+
+## 他文書への申し送り
+
+本書からは他の文書を編集しない。版 0.4（FZ-031）で生じた同期の必要を次に記す [D]。
+
+| ID | 宛先 | 内容 | 所有者 | 期限 |
+|---|---|---|---|---|
+| TP-H1 | 05_adr/ADR-013-cell-partitioning-fail-mode.md（ADR-013） | §4.4.1 の TS-1〜TS-4（認証付きの時刻同期、独立した複数の時刻源と相互比較、skew の監視、閾値超過時の切離しと時刻依存の確定処理の停止）を決定として置く。THR-03 申し送り T100-1 と同件。復帰の条件と権限者も決める（AR-5） | ADR-013 の所有者（CTO） | G3 |
+| TP-H2 | 03_threat-model/threat-catalog.md（THR-03）T100-2 の行・脚注 127 | T100-2 の「現状: §4.4 は…時刻源の認証と閾値超過時の挙動はない」を、ARC-02 版 0.4 の §4.4.1 で適用済みに改め、脚注 127 の版を 0.4・参照箇所に §4.4.1 を加える | THR-03 の作成者 | DEC-1 の付議前 |
+| TP-H3 | 04_architecture/cell-blast-radius.md（ARC-07）H-5、04_architecture/audit-privacy.md（ARC-10）R-193.6 | H-5 の対策を、本書 TS-2・TS-4 の切離しの単位（時刻源を共有する範囲）と揃える。R-193.6 の時刻同期精度の目標を T_skew と揃える（THR-03 申し送り T100-3 と同件） | ARC-07・ARC-10 の所有者 | G4 |
+| TP-H4 | 数値契約・DL-20、01_governance/assumptions-register.md の NA-TP-2 | 閾値 T_skew を DL-20 の決める値に加える。NA-TP-2 の観測の対象に、検証点ごとの skew と時刻源間の差を加える | DL-20 の所有者（CTO＋SRE 責任者）、前提台帳の所有者 | G4 |
+| TP-H5 | 12_poc/preregistered-test-plan.md（POC-01） | TS-4 の「新規の token 受理の停止」と「時刻依存の確定処理の停止」を、TC-18-06（ARC-07）・TH-TC-100 の期待結果に入れる（誤 allow 0 件に加え、閾値超過時に受理と確定処理が止まること） | PoC リード | 事前登録は G4 の TC 実行の前 |
+| TP-H6 | traceability/freeze-list.md（TRC-13）FZ-031 | 本書版 0.4 で是正済みであることの記録（固定リストの状態の更新は TRC-13 の所有者が行う） | TRC-13 の所有者 | 凍結の前 |
 
 ---
 
@@ -734,10 +772,11 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | ARC-15（claims-catalog.md、並行作成）との名前・必須性の突合せ | 本書と ARC-15 の作成者 | G3 |
 | 本書で新たに照合した原典（OIDC Back-Channel Logout 1.0、RFC 8417、RFC 8725 §2・§3、OIDC Core §3.1.3.7）の照合ログを traceability/ に追記し、作成者以外が検証する | 照合ログの所有者 | G3 |
 | OIDF 適合試験・認定と pentest（§14） | CISO、独立評価者 | G5 |
-| 「ADR への指摘」AR-1〜AR-4 の ADR 側での解消 | ADR-005・ADR-007・ADR-022 の所有者 | G3 |
+| 「ADR への指摘」AR-1〜AR-5 の ADR 側での解消 | ADR-005・ADR-007・ADR-013・ADR-022 の所有者 | G3 |
 | 外部 JWKS の取り直し頻度の上限（TP-02）の値 | CTO | G3（DL-20） |
 | OIDC Core §3.1.3.7・Back-Channel Logout §4.1・RFC 8725 §2.7〜§2.9・§3.3 の作成者以外による照合 | 照合ログの所有者 | G3 |
 | PoC/R7反映（版 0.3）: POC-01 TC-004〜007 に入れる負例の事前登録と初回実行、契約 schema の `issuedAlg`・`opaqueId` と実装のずれの解消 | PoC リード（TC）、契約の所有者（schema） | 事前登録は DEC-4 第 1 段の付議前、実行は G4 |
+| skew の閾値 T_skew の値（§4.4.1 TS-3）と、ADR-013 での時刻源の決定（AR-5、申し送り TP-H1） | SRE 責任者＋CTO（値）、ADR-013 の所有者（決定） | 決定は G3、値は G4 |
 | 本書の判断は自己レビューであり、実在の CTO/CISO の決裁は未達 | CTO・CISO | G3 |
 
 ---
@@ -792,6 +831,10 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 [^46]: OpenID Foundation Shared Signals WG (A. Tulshibagwale ほか)『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所: RS-04 [^30] と同じ Abstract, §4.1.1, §4.1.5, §6.1.1, §6.1.2 のうち SET の明示的な型付け（typ: secevent+jwt、MUST）を述べる箇所、確認日: 2026-10-03）RS-04#77、SS-C09。レビューで追加
 [^47]: 本リポジトリ『高保証 PoC 実測レポート（系統 1）』POC-02 版 0.1（draft）. 12_poc/measurement-report.md （参照箇所: §4.1 の TC-004〜007・TC-015・TC-016 行、§5.6 DEV-19、§6.3 の TC-016 行、§6.4 の TC-015 行、§6.5、§7.1 R-2、§9 MR-10、確認日: 2026-10-15。AI エージェントによる自己実行の報告で、独立立会人・作成者以外の確認を経ていない。Gate 4 の証拠ではない）
 [^48]: 本リポジトリ『模擬パネル報告』TRC-10 版 0.4. traceability/mock-panel-report.md （参照箇所: §4.2 ラウンド 7、§5.1、確認日: 2026-10-15。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
+[^49]: 本リポジトリ『脅威カタログ・残余リスク記録』THR-03 版 0.6. 03_threat-model/threat-catalog.md （参照箇所: T-100（攻撃経路 (a)〜(e)、予防 (1)〜(4)、検知、封じ込め）、申し送り T100-1・T100-2・T100-3、確認日: 2026-10-15。AI エージェントによる起草で、作成者以外の確認を経ていない）
+[^50]: IETF (D. Franke, D. Sibold, K. Teichel, M. Dansarie, R. Sundblad)『RFC 8915: Network Time Security for the Network Time Protocol』Proposed Standard, 2020-09. https://www.rfc-editor.org/rfc/rfc8915 （参照箇所: Abstract、§1.1 Objectives（Identity、Authentication、Replay prevention）、確認日: 2026-10-15。THR-03 [^120] の照合による。本書の改版では原典を再取得していない）
+[^51]: 本リポジトリ『凍結前の未解消指摘 固定リスト』TRC-13 版 0.1. traceability/freeze-list.md （参照箇所: FZ-030・FZ-031 の行、確認日: 2026-10-15。固定リストの指摘はラウンド 10 redteam に由来し、模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない）
+[^52]: 本リポジトリ『cell・影響半径の設計』ARC-07 版 0.2. 04_architecture/cell-blast-radius.md （参照箇所: §3.3 の H-5（時刻源（NTP）、cell 内に複数の時刻源・時刻のずれの警報、TC-18-06）、確認日: 2026-10-15）
 
 ---
 
@@ -849,3 +892,11 @@ G-138 は、連携パターン（P-xx）が使う外部インタフェースが�
 | 指摘・入力 | 対応 |
 |---|---|
 | 模擬パネル ラウンド 7（cto・ciso・sre）: POC-02 の結果が設計文書に入っていない [D][^48]。POC-02 §6.5、§6.3 の TC-016 行、§6.4 の TC-015 行、§9 MR-10 | §14 に TC-004〜007 の未実施の扱いと TC-015・TC-016 の観測、残課題に 1 行を加えた |
+
+### 凍結前是正（版 0.4）
+
+> 固定リスト TRC-13 の指摘による。指摘はラウンド 10 redteam に由来する。模擬パネルは AI エージェントによる自己レビューであり、実在の CTO/CISO の決裁ではない [D][^51]。本是正はパネルの再審査を経ていない。
+
+| FZ-ID | 箇所 | 指摘 | 対応 |
+|---|---|---|---|
+| FZ-031（High） | §4.4 の許容時刻差 | 許容時刻差（S_int・S_ext・S_dpop）は定めるが、検証点の時刻源の要件と、skew の閾値を超えたときに fail-closed にする対象がない。THR-03 申し送り T100-2 が未適用 | §4.4.1 を新設し、時刻源の要件 TS-1（認証付きの時刻同期）・TS-2（独立した複数の時刻源と相互比較）（FZ-030 の (1)(2) に当たる）、skew の監視 TS-3（閾値 T_skew は TBD、所有者 SRE 責任者＋CTO、期限 G4）、閾値超過時の fail-closed TS-4（新規の token 受理の停止と切離し、時刻依存の確定処理〔鍵の撤去・失効 epoch の確定・特権・break-glass・期限付き例外の発効〕の停止、監査は印を付けて保全）を加えた。発行点も対象にした。ADR-013 に決定がない点を AR-5、他文書の同期を「他文書への申し送り」TP-H1〜TP-H6、残課題に 1 行、対応表 R-189.2 に §4.4.1、脚注 [^49]〜[^52] を加えた |

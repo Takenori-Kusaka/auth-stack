@@ -1,6 +1,6 @@
 # 連携パターン集（P-01〜P-27）
 
-> 文書ID: INT-02 / 版: 0.5（ラウンド 8: P-08 に ADR-017 D17-07 (a)〜(c) の実行単位分離・tid 一致検査・配備禁止と負例 NP08-7〜NP08-9（TC-017-15）を反映。版 0.4 は PoC/R7反映: P-16・P-22 と §5.1 I-01 に POC-02 と CON-14 版 0.3.0・0.3.1 を反映。版 0.3 は模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
+> 文書ID: INT-02 / 版: 0.6（凍結前是正 FZ-035: §10.1 に CON-13 版 0.2.0 の注意 4 点を置き、始められないものを 4 つにした（INT-00 §6.1・INT-06 FQ-02 と揃えた）。版 0.5 はラウンド 8: P-08 に ADR-017 D17-07 (a)〜(c) の実行単位分離・tid 一致検査・配備禁止と負例 NP08-7〜NP08-9（TC-017-15）を反映。版 0.4 は PoC/R7反映: P-16・P-22 と §5.1 I-01 に POC-02 と CON-14 版 0.3.0・0.3.1 を反映。版 0.3 は模擬パネル ラウンド 7 の是正。末尾の「レビュー記録」）/ 状態: draft / 最終更新: 2026-10-15
 > 対応要求: G-098, G-099, G-100, G-106, G-135, G-136, G-138, G-139, R-059, R-100, R-163, R-206（DL-64 の主な対応要求）、R-058（G-135・G-136 経由）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-64、§6.3）, 05_adr/README.md, 05_adr/ADR-001〜ADR-029, 05_adr/reconciliation-notes.md, 04_architecture/（token-profile.md, pep-contract.md, authorization-model.md, revocation-continuous-evaluation.md, workload-identity-delegation.md, data-outside-pep.md, claims-catalog.md, fail-mode-matrix.md, audit-privacy.md, reference-architecture-v2.md, cell-blast-radius.md）, 11_contracts/（authorization-api.openapi.yaml, relationship-model-registry.openapi.yaml, token-exchange.openapi.yaml, scim.openapi.yaml, ssf-caep.openapi.yaml, schemas/*.json, README.md（CON-00、DL-69）, mock-contract-test-kit.md（CON-11、DL-80））, 10_integration/dependency-tiers.md（INT-01、DL-63）, 10_integration/authz-modeling-guide.md（INT-03、DL-65）, 02_requirements/operation-risk-tiers-assurance.md, 02_requirements/identity-lifecycle.md, 02_requirements/principal-catalog.md, 03_threat-model/threat-catalog.md, 03_threat-model/fraud-abuse-controls.md, 06_controls/applicability.md, 07_slo/numeric-contracts.md, 01_governance/assumptions-register.md, research/RS-17-integration-patterns-modeling.md, research/RS-06-workload-identity-delegation-agents.md, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が上記の ADR・設計文書・契約・調査ノートを読み、連携パターンの正式定義（P-ID の定義場所。deliverables.md §8）として起草した。本書は ADR の決定を決め直さない。食い違いがあれば ADR を正とし、本書を直す [D]。版 0.2 は、作成者と別の AI エージェント（Claude）が ADR・上流文書・RS-17 等の調査ノートと照合し、RFC 9421 の原典を再取得して独立レビューした版である（末尾「レビュー記録」）。人による照合と実在の CTO/CISO の決裁は経ていない（CONVENTIONS §8）[D]。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 7 の指摘を受け、CON-14 §9 の申し送り H-9 を反映し、§5.1 に I-16（workload の登録エントリ）・I-17（交換可能な組）を、§5.2 にその列を加え、P-03 のチェックリストを登録手段の契約（CON-14 §4A）に結び付けた版である。新たな外部原典は用いていない（末尾「レビュー記録」ラウンド 7）[D]。
@@ -1543,17 +1543,27 @@ sequenceDiagram
   - INT-06（10_integration/developer-faq.md）FQ-60: エージェント製品の実行単位をテナント主体ごとに分けること、テナントをまたぐ共有実行単位は本番に配備できないことを 1 行加える（INT-06 の所有者へ）[D]。
   - INT-00（10_integration/README.md）§6.3: 「PoC の結果から連携実装に持ち帰る点」の並びに、エージェント製品の実行単位分離と tool 側 PEP の `tid` 一致検査（D17-07 (a)(b)、TC-017-15）を 1 行加える。PoC の観察ではなく ADR の決定であることを明記する（INT-00 の所有者へ）[D]。
   - ADR-017 H17-1・H17-3 の未反映（THR-03 に T-094（案）なし、POC-01 に TC-017-15 なし。2026-10-15 に文字列検索で各 0 件）は ADR-017 H17-5 で open-items に起票を求めている。本書は状態を P-08 に記しただけである [D]。
+- 凍結前是正 FZ-035（§10.1 への CON-13 版 0.2.0 の注意 4 点の適用）により、次の同期が要る。本書の担当外なので申し送る [D]。
+  - CON-13（11_contracts/schemas/lifecycle-event.schema.json）`x-handoffs` R8-H4: status を「適用済み（INT-00 版 0.6 の §0 の 3・§6.1、INT-02 版 0.6 の §10.1。FZ-035）」に改める（CON-13 の所有者へ）[D]。
+  - INT-00（10_integration/README.md）: 他文書への申し送り S-8 を適用済み（INT-02 版 0.6）と記し、§1.2 の INT-02 の行の版を 0.6 に改める（INT-00 の所有者へ）[D]。
+  - INT-06（10_integration/developer-faq.md）: 申し送り S10-2 を適用済み（INT-02 版 0.6 §10.1）と記す（INT-06 の所有者へ）[D]。
+  - traceability/open-items.md（TRC-11）OI-G10 (4): 照合対象の INT-02 §10.1 が版 0.6 で注記済みになったので、INT-00 §6.1・INT-02 §10.1・INT-06 FQ-02 の 3 文書の照合を本書の改訂の担当以外の者が行う（INT-06 S10-1 と同件。統括者へ）[D]。
 - CON-00 §3 の I-14 の記載は CON-03・CON-04・CON-07 だけを挙げるが、CON-09（ssf-caep.openapi.yaml）にも 429 の定義がある（2026-10-15 に grep で確認）[M]。CON-00 の所有者へ申し送る [D]。
 
 ---
 
 ## 10. 連携開発者の着手判定（基盤の完成を待たずに始める）
 
-### 10.1 判定（2026-10-15、版 0.2）
+### 10.1 判定（2026-10-15、版 0.2。版 0.6 で FZ-035 を反映）
 
 - 本書と 11_contracts だけで、主パターンの選定、entry point 台帳への記載、token 検証・PEP 呼出し・exchange・監査送出の実装と単体試験は始められる [D]。契約側の着手手順の正本は CON-00 §2.5、モック・負例ベクタ・sandbox の正本は CON-11 §16 であり、本節はパターンごとの差分だけを書く [D]。
-- 始められないもの: (1) 自チームの CI で合否を出す契約試験（DL-82（PoC 基盤）は納品済みだが、キット本体 DL-120 が未実装。CON-11 残課題 1、期限 G3）、(2) Webhook の署名検証・署名送信（I-15 が KD64-1 の決裁待ち）、(3) 保管庫を使う outbound 連携（保管庫 API が KD64-2 の決裁待ち）[D]。
+- 始められないもの（4 つ。INT-00 §0 の 3・INT-06 FQ-02 と同じ）: (1) 自チームの CI で合否を出す契約試験（DL-82（PoC 基盤）は納品済みだが、キット本体 DL-120 が未実装。CON-11 残課題 1、期限 G3）、(2) Webhook の署名検証・署名送信（I-15 が KD64-1 の決裁待ち）、(3) 保管庫を使う outbound 連携（保管庫 API が KD64-2 の決裁待ち）、(4) ライフサイクル事象の署名検証（CON-12 RO-11）の正例の試験（検証に通る事象を受理すること）。CON-13 の正例の `lcsig` は形を示すダミーで実鍵の署名ではなく、キットの試験鍵と鍵マニフェストの配布（DL-120、G3）以降になる [D]（CON-13 `x-schema-limits`、CON-11 §4.11・§16.3、INT-00 §6.1）。
 - 条件付きで始められるもの: ライフサイクル事象の受信。CON-12・CON-13（draft）に対して、受信 consumer、(source, id) による重複除去、順序番号による欠番検知、未知の type の受理と無視、完了報告の実装と単体試験を書ける。CON-13 の examples と `x-negative-examples` を試験データにする。封筒・type 名・冪等と順序は GA、個別 data は preview である。配送の保証に依存する結合試験はモック MK-08（CON-11 版 0.3 で仕様化。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）の提供後になり、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]（CON-00 §2.5・§2.6）。
+  - **CON-13 の版の注意（INT-00 §6.1 と同じ 4 点。FZ-035）** [D]。
+    1. 試験データは CON-13 版 0.2.0 以降（2026-10-15 時点の最新は版 0.2.1）を使い、版 0.1.1 の examples では受信処理を始めない。版 0.1.1 には封筒の `lcsig`（CON-12 PO-13）も撤回事象もなく、それに合わせた処理は署名のない事象を正常として処理し得る。RO-11（署名の検証）・RO-13（削除の猶予と撤回）は CON-12 を正とする（CON-13 `x-handoffs` R8-H4）[D]。
+    2. tenant.deletion.withdrawn・user.deletion.withdrawn は版 0.2.0 で既知の type（KnownTypes）になった。「未知の type として受理し無視する」扱いにしてはならず、準備した削除を戻して DeletionReport を outcome=withdrawn で報告する（CON-12 RO-13）[D]。撤回事象の欠落・偽造に備え、猶予満了時は撤回事象の有無にかかわらず照会 API で確かめる（CON-12 RO-12、CON-15 LQ02）[D]。
+    3. outcome=failed で報告するときは failure_reason（既知の値は source_of_truth_mismatch・state_query_unavailable・processing_error・other。開いた列挙）が必須である（CON-13 `$defs/DeletionReport`、CON-12 RO-8・RO-12）[D]。
+    4. 署名検証の正例の試験は、上の「始められないもの」(4) のとおりキットの試験鍵の配布（DL-120、G3）以降になる。それまでに書けるのは、`lcsig` の負例（LC-NE-08・09・11）を拒否する試験と、自チームで作った鍵で署名した事象による検証論理の単体試験である。鍵マニフェストの形式は未決（ADR-007、CON-11 L11-11）なので、その部分は差し替えられるように作る [D]（CON-11 §4.11・§16.3）。
 - client 登録は契約（client-registration.openapi.yaml、preview）があるので、申請内容（ClientMetadata）の作成と sandbox のセルフ登録の client 実装を始められる。共有 sandbox の提供（K11-3）と本番の承認者の決裁（INT-04 ONB-R2）は待つ [D]（CON-00 §3、INT-04 §4.3）。
 - 基盤の本番提供より前に本番を迎えるサービスの暫定方式（既存方式の継続、契約互換のアダプタ）と機能ごとの提供ゲートは、INT-00 §7（暫定方式の正本は OPS-04 §10.5）と DCS-06 §8（ゲートの割当て案）にある。日付とサービスごとの期限は未定である（残課題 11）[D]。この場合は §2.4 の段 6 と同じく、例外台帳（DL-05）に期限付きで登録してから本番に出す [D]。
 
@@ -1575,7 +1585,7 @@ sequenceDiagram
 |---|---|---|
 | P-01・P-02・P-25 | BFF 参照実装を使う前提での画面・session 処理、cookie 属性の CI 検査（NP01-1）、OS ブラウザ＋PKCE＋DPoP の client 実装（P-02）、public 宣言と session 再生成（P-25） | BFF 参照実装（ADR-005 D6-2）の提供時期（INT-00 §7.1。DCS-06 §8 の案では sandbox G3）、MK-01（開発用 AS）の配布（DL-120）、Back-Channel Logout の位置（ADR-006 L6-2） |
 | P-03・P-09・P-10・P-16・P-18 | 内部 JWT の検証（V1〜V14）、evaluateAccess／evaluateAccessBatch の呼出し、exchange の要求、Txn-Token の無改変伝播、一覧ヘルパ前提の post-check、URL 発行前の判定と寿命の設定化 | SDK の提供言語（ADR-022 NA-022-1）、MK-02・MK-03、SPIFFE trust domain の数（§9）、L_url(t) の値（KD64-5）。P-03 の workload と交換可能な組の登録（I-16・I-17）は CON-14 §4A の API とモック（DL-120、G3）。それまでは CON-14 §4A.5 の暫定手順（INT-00 §6.1） |
-| P-04・P-05・P-24 | メッセージを参照だけにする設計と静的検査（NP04-3、NP24-1）、型 A1〜A4 の宣言、デッドレターと通知、outbox | requestTxnToken（preview、draft 依存）、内部開始の `tctx` の意味（ADR-026 L26-1・L26-2）、ライフサイクル事象のモック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）・期限 T_* の値（受信の実装と単体試験は CON-12・CON-13 に対して今できる） |
+| P-04・P-05・P-24 | メッセージを参照だけにする設計と静的検査（NP04-3、NP24-1）、型 A1〜A4 の宣言、デッドレターと通知、outbox | requestTxnToken（preview、draft 依存）、内部開始の `tctx` の意味（ADR-026 L26-1・L26-2）、ライフサイクル事象のモック（MK-08。DL-82（PoC 基盤）は納品済み。キット本体 DL-120 は未実装、期限 G3）・期限 T_* の値、署名検証の正例の試験に使うキットの試験鍵（DL-120、G3）（受信の実装と単体試験は CON-12・CON-13 版 0.2.0 以降に対して今できる。§10.1 の注意 4 点） |
 | P-06 | 送信元の PC-15 登録の設計、受信の edge 経由化、payload の参照化、配信直前の再 Check | **Webhook 署名 profile（I-15、KD64-1）**。決裁までは署名方式を固定した実装をしない |
 | P-07・P-22・P-23 | private_key_jwt（`aud`＝issuer 単独）か mTLS の client 実装、scope の最小化、テナントごとの client・grant の設計 | client 登録の承認者の決裁（INT-04 ONB-R2。契約は client-registration.openapi.yaml、preview）、共有 sandbox（CON-11 §5、K11-3）、device grant の例外（KD64-3） |
 | P-08 | tool 目録の草案、RFC 9728 の metadata、tool ごとの `resource` 指定、下流の exchange、実行単位のテナント主体ごとの分離（D17-07 (a)）、`tid` 一致検査と拒否監査の実装と単体試験（NP08-7〜NP08-9） | 起点エージェント主体の欄名（ADR-017 L17-2）、`tctx` のテナント欄の名前（ADR-009 D09-29 が DL-115 に委ねる。claims-catalog の草案は `tid`）、承認 grant の画面（AS） |
@@ -1822,3 +1832,14 @@ sequenceDiagram
 - 新たな外部原典は用いていない。D17-07 が引く外部原典（NIST SP 800-53 SC-4、RFC 9700、AIMS 草案、X.509-SVID）は ADR-017 の脚注で検証済みであり、本書では ADR-017 の決定として引いた（本書は ADR の決定を決め直さない）[D]。
 - 他文書への申し送り: §9.1 に 5 項目（CON-11 §6.3、INT-05 DD-14、INT-06 FQ-60、INT-00 §6.3、ADR-017 H17-1・H17-3 の未反映の状態）を加えた [D]。
 - 対応件数: 1 件（対応済み 1。本書の担当分は反映し、他文書分 4 件は申し送り）[D]。
+
+### 凍結前是正（2026-10-15、版 0.5 → 版 0.6）
+
+> 凍結前是正の指摘は模擬パネル（AI エージェントによる自己レビュー）ラウンド 10 に由来し、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
+
+| # | 重大度・指摘者 | 指摘（要旨） | 対応 | 修正箇所 |
+|---|---|---|---|---|
+| FZ-035 | High・devlead（ラウンド 10） | CON-13 版 0.2.0 の注意（版 0.1.1 の examples で始めない、撤回事象を無視せず outcome=withdrawn で報告、failed では failure_reason 必須、署名検証の正例は試験鍵の配布後）が INT-00 §6.1・INT-06 FQ-02 にはあるが本書 §10.1 にはなく（`withdrawn`・`lcsig` が 0 件）、3 文書で「始められないもの」が揃わない。INT-00 申し送り S-8、INT-06 申し送り S10-2 が未適用 | **対応**。(1) §10.1 の「始められないもの」に (4) ライフサイクル事象の署名検証の正例の試験を加えて 4 つにし、INT-00 §0 の 3・INT-06 FQ-02 と同じであることを明記した。(2) §10.1 の「条件付きで始められるもの」の下に INT-00 §6.1 と同じ 4 点の注記（版 0.2.0 以降を使い 0.1.1 で始めない、withdrawn 系を無視せず準備を戻して outcome=withdrawn で報告、failed では failure_reason 必須、署名検証の正例は試験鍵の配布（DL-120、G3）以降でそれまでは負例と自前の鍵で書く）を置いた。(3) §10.3 の P-04・P-05・P-24 行の「待つもの」に試験鍵を加えた。(4) 他文書の同期（CON-13 R8-H4 の status、INT-00 S-8 と §1.2、INT-06 S10-2、OI-G10）は担当外のため §9.1 に申し送った | 冒頭（版）、§9.1、§10.1、§10.3 の P-04・P-05・P-24 行 |
+
+- 根拠として確認した箇所（2026-10-15）[D]: 11_contracts/schemas/lifecycle-event.schema.json（CON-13 版 0.2.1。冒頭 `$comment`、`$defs/DeletionReport` の outcome・failure_reason の `x-known-values`、KnownTypes の description、負例 LC-NE-08・09・11、`x-handoffs` R8-H4 の status「INT-02 §10.1 は未適用」）、11_contracts/lifecycle-events.asyncapi.yaml（CON-12。RO-11・RO-13 の記載）、10_integration/README.md（INT-00 版 0.8）§0 の 3・§6.1・申し送り S-8、10_integration/developer-faq.md（INT-06 版 0.3）FQ-02・申し送り S10-1〜S10-3。新たな外部原典は用いていない（CON-12 が引く RFC 9967 などは CON-12 の脚注で検証済み）[D]。
+- 対応件数: 1 件（対応済み 1。他文書への申し送り 4 項目を §9.1 に追加）[D]。
