@@ -1,0 +1,15 @@
+{
+  "schema": "failmode-config/1",
+  "config_version": "0.1.0",
+  "env": "kit",
+  "issued_at": "2026-10-15T00:00:00Z",
+  "values_status": "provisional",
+  "pdp": {
+    "read-sensitive": { "deadline_ms": 300, "max_attempts": 1, "on_no_decision": { "status": 503, "retry_after_seconds": 5 }, "known_good": { "enabled": false, "max_age_ms": null } },
+    "write": { "deadline_ms": 300, "max_attempts": 1, "on_no_decision": { "status": 503, "retry_after_seconds": 5 }, "known_good": { "enabled": false } },
+    "privileged": { "deadline_ms": 300, "max_attempts": 1, "on_no_decision": { "status": 503, "retry_after_seconds": 5 }, "known_good": { "enabled": false } }
+  },
+  "decision_cache_max_age_ms": 0,
+  "revocation_state_max_age_ms": 60000,
+  "audit_spool": { "read_sensitive_max_events": 10000, "write_max_events": 1000 }
+}

@@ -1,0 +1,2125 @@
+{
+  "run_at": "2026-10-15T13:37:09.764Z",
+  "node": "v22.23.2",
+  "total": 79,
+  "na": 5,
+  "pass": 72,
+  "fail": [
+    {
+      "id": "CV-014b",
+      "status": 401,
+      "code": "invalid_token",
+      "failed": [
+        {
+          "name": "outcome no_decision",
+          "ok": false,
+          "detail": 401
+        },
+        {
+          "name": "profile no_decision",
+          "ok": false,
+          "detail": "401 Bearer error=\"invalid_token\""
+        }
+      ]
+    },
+    {
+      "id": "CV-061d",
+      "status": 401,
+      "code": "invalid_token",
+      "failed": [
+        {
+          "name": "profile resource_denied",
+          "ok": false,
+          "detail": "401 Bearer error=\"invalid_token\""
+        }
+      ]
+    }
+  ],
+  "groups": {
+    "token_reject": {
+      "members": 24,
+      "identical": true
+    },
+    "tenant_denied": {
+      "members": 5,
+      "identical": true
+    },
+    "resource_denied": {
+      "members": 5,
+      "identical": true
+    }
+  },
+  "results": [
+    {
+      "id": "CV-003b",
+      "vector": "CV-003",
+      "na": "CR-4（RP）を担わない（BFF は本検証の範囲外）"
+    },
+    {
+      "id": "CV-009a",
+      "vector": "CV-009",
+      "na": "options.sender_constrained=false"
+    },
+    {
+      "id": "CV-011c",
+      "vector": "CV-011",
+      "na": "CR-10（client 登録）を担わない"
+    },
+    {
+      "id": "CV-012b",
+      "vector": "CV-012",
+      "na": "接続確立の遅延を Windows の自前スタブで作れない（kit/README §5.3、対象外＝注入不成立）"
+    },
+    {
+      "id": "CV-012c",
+      "vector": "CV-012",
+      "na": "mTLS がないため TLS ハンドシェイクの停止を注入できない（対象外）"
+    },
+    {
+      "id": "CV-001a",
+      "vector": "CV-001",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-001b",
+      "vector": "CV-001",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-002a",
+      "vector": "CV-002",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-002b",
+      "vector": "CV-002",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-002c",
+      "vector": "CV-002",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-002d",
+      "vector": "CV-002",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-003a",
+      "vector": "CV-003",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_other.discovery <= 0",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_other.jwks <= 0",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-003c",
+      "vector": "CV-003",
+      "note": null,
+      "checks": [
+        {
+          "name": "startup refused (CV-003c (a))",
+          "ok": true,
+          "detail": "discovery issuer mismatch (configured http://127.0.0.1:62941)"
+        }
+      ],
+      "startup_refused": "discovery issuer mismatch (configured http://127.0.0.1:62941)"
+    },
+    {
+      "id": "CV-004a",
+      "vector": "CV-004",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-004b",
+      "vector": "CV-004",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-004c",
+      "vector": "CV-004",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-004d",
+      "vector": "CV-004",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-005a",
+      "vector": "CV-005",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "profile success",
+          "ok": true,
+          "detail": "200 "
+        },
+        {
+          "name": "fetches issuer_A.jwks <= 2",
+          "ok": true,
+          "detail": 2
+        }
+      ],
+      "status": 200
+    },
+    {
+      "id": "CV-005b",
+      "vector": "CV-005",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-006a",
+      "vector": "CV-006",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-007a",
+      "vector": "CV-007",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-007b",
+      "vector": "CV-007",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-007c",
+      "vector": "CV-007",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-007d",
+      "vector": "CV-007",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "profile success",
+          "ok": true,
+          "detail": "200 "
+        }
+      ],
+      "status": 200
+    },
+    {
+      "id": "CV-008a",
+      "vector": "CV-008",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-008b",
+      "vector": "CV-008",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-008c",
+      "vector": "CV-008",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-010a",
+      "vector": "CV-010",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-011a",
+      "vector": "CV-011",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_B.discovery <= 0",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_B.jwks <= 0",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-011b",
+      "vector": "CV-011",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_B.discovery <= 0",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "fetches issuer_B.jwks <= 0",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-012a",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012d",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012e",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012f",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012g",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012h",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012i",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012j",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012k",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012l",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012m",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-012n",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-012o",
+      "vector": "CV-012",
+      "note": null,
+      "checks": [
+        {
+          "name": "first request allowed before revoke",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-013a",
+      "vector": "CV-013",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "profile success",
+          "ok": true,
+          "detail": "200 "
+        }
+      ],
+      "status": 200
+    },
+    {
+      "id": "CV-013b",
+      "vector": "CV-013",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "profile success",
+          "ok": true,
+          "detail": "200 "
+        },
+        {
+          "name": "must_not_contain admin",
+          "ok": true,
+          "detail": null
+        },
+        {
+          "name": "must_not_contain user@example.invalid",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 200
+    },
+    {
+      "id": "CV-014a",
+      "vector": "CV-014",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-014b",
+      "vector": "CV-014",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": false,
+          "detail": 401
+        },
+        {
+          "name": "profile no_decision",
+          "ok": false,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-014b(variant)",
+      "vector": "CV-014",
+      "note": "write に正規の Txn-Token を添えた版（CV-012 と同じ扱い）",
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-045a",
+      "vector": "CV-045",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-045b",
+      "vector": "CV-045",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-045c",
+      "vector": "CV-045",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "audit field corr.txn_absence",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-058a",
+      "vector": "CV-058",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "audit field corr.txn_absence",
+          "ok": true,
+          "detail": null
+        },
+        {
+          "name": "audit must not contain corr.txn",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-058b",
+      "vector": "CV-058",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "audit field corr.txn_absence",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-058c",
+      "vector": "CV-058",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "audit field corr.txn_absence",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-059a",
+      "vector": "CV-059",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "profile success",
+          "ok": true,
+          "detail": "200 "
+        }
+      ],
+      "status": 200
+    },
+    {
+      "id": "CV-059b",
+      "vector": "CV-059",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-060a",
+      "vector": "CV-060",
+      "note": null,
+      "checks": [
+        {
+          "name": "consume rejected",
+          "ok": true,
+          "detail": {
+            "ok": false,
+            "why": "tenant_or_subject_mismatch"
+          }
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "dead_letter_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "notifications_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        }
+      ],
+      "consume": {
+        "ok": false,
+        "why": "tenant_or_subject_mismatch"
+      }
+    },
+    {
+      "id": "CV-060b",
+      "vector": "CV-060",
+      "note": null,
+      "checks": [
+        {
+          "name": "consume rejected",
+          "ok": true,
+          "detail": {
+            "ok": false,
+            "why": "recheck_denied"
+          }
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "dead_letter_min",
+          "ok": true,
+          "detail": 1
+        },
+        {
+          "name": "notifications_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        }
+      ],
+      "consume": {
+        "ok": false,
+        "why": "recheck_denied"
+      }
+    },
+    {
+      "id": "CV-060c",
+      "vector": "CV-060",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome no_decision",
+          "ok": true,
+          "detail": 503
+        },
+        {
+          "name": "profile no_decision",
+          "ok": true,
+          "detail": "503 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 503,
+      "code": "service_unavailable"
+    },
+    {
+      "id": "CV-060d",
+      "vector": "CV-060",
+      "note": null,
+      "checks": [
+        {
+          "name": "consume accepted",
+          "ok": true,
+          "detail": {
+            "ok": true,
+            "notified": 1
+          }
+        },
+        {
+          "name": "re-check subject.type is saved core/user",
+          "ok": true,
+          "detail": "core/user"
+        }
+      ],
+      "consume": {
+        "ok": true,
+        "notified": 1
+      }
+    },
+    {
+      "id": "CV-061a",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061b",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "grant": "oqx62qbxdvvxbds6jirisw6mid",
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061c",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "grant": "x5f2l6gpckfjoz353yk5cme4v2",
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061d",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": false,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "grant": "kma2sy5buq5cdk7wpucwbsmqxr",
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-061d(variant)",
+      "vector": "CV-061",
+      "note": "Txn-Token の sub を access token と同じゲストにした版",
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "grant": "bceoogywqouahd37deaayxwgpk",
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061e",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "readable before revoke",
+          "ok": true,
+          "detail": 200
+        },
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "grant": "zgsgwn4qqeh6kw33pqtd4qoa2s",
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061f",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "revokeExternalGrantsByAnchor called once",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "grant": "r2m5vq4jv6pdm6qaxyquzz7pif",
+      "cancel_status": 200,
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-061g",
+      "vector": "CV-061",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome accept",
+          "ok": true,
+          "detail": 201
+        },
+        {
+          "name": "must_not_contain guest-kit@partner.test.invalid",
+          "ok": true,
+          "detail": null
+        }
+      ],
+      "status": 201
+    },
+    {
+      "id": "CV-062a",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-062a(variant)",
+      "vector": "CV-062",
+      "note": "Txn-Token の sub を access token（エージェント）と揃え、AD-02 の経路を通す版",
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "forbidden"
+    },
+    {
+      "id": "CV-062b",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "forbidden"
+    },
+    {
+      "id": "CV-062c",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "insufficient_scope"
+    },
+    {
+      "id": "CV-062d",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "audit events_min",
+          "ok": true,
+          "detail": 1
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    },
+    {
+      "id": "CV-062e",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "approval_required"
+    },
+    {
+      "id": "CV-062f",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "approval_required"
+    },
+    {
+      "id": "CV-062g",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "approval_required"
+    },
+    {
+      "id": "CV-062h",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 403
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 403,
+      "code": "approval_required"
+    },
+    {
+      "id": "CV-062i",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 401
+        },
+        {
+          "name": "profile auth_failure",
+          "ok": true,
+          "detail": "401 Bearer error=\"invalid_token\""
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "pdp_calls_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 401,
+      "code": "invalid_token"
+    },
+    {
+      "id": "CV-062j",
+      "vector": "CV-062",
+      "note": null,
+      "checks": [
+        {
+          "name": "outcome reject",
+          "ok": true,
+          "detail": 404
+        },
+        {
+          "name": "profile resource_denied",
+          "ok": true,
+          "detail": "404 "
+        },
+        {
+          "name": "business_execution",
+          "ok": true,
+          "detail": 0
+        },
+        {
+          "name": "tool_executions_max",
+          "ok": true,
+          "detail": 0
+        }
+      ],
+      "status": 404,
+      "code": "not_found"
+    }
+  ]
+}

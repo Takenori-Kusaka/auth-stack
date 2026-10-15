@@ -1,0 +1,160 @@
+{
+  "id": "CV-060",
+  "title": "内部開始（遅延実行・非同期 consumer）の再 Check とテナント照合",
+  "source": [
+    "13_integration-trial/room-booking/report.md M-4・L-5",
+    "CON-16 §2.10（v1.2）",
+    "ARC-06 §3.11（OB-14）",
+    "ADR-026 D26-02・D26-09・D26-11",
+    "CON-05 registerAcceptanceRecord・requestTxnToken（internalStart）",
+    "INT-02 §3.9 NP24-4〜NP24-7"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "manifest に consumer（queue・job・配信）の entry point がある"
+    }
+  ],
+  "status": "conditional",
+  "stub_requirements": [
+    "TTS 役（ST-2）が受付記録の job_run_id から内部開始の Txn-Token（tctx.ptxn 付き）を発行できる。汎用モックを使う場合は echo proxy の R9・R10（kit/README.md §2.2）",
+    "受付台帳のスタブ（STUB-LEDGER）が registerAcceptanceRecord を受け、試験から 503 にできる",
+    "PDP スタブ（ST-3）が consumer の再 Check に deny を返せる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-060a",
+      "description": "メッセージの tid が tenant.2、受付記録（と内部開始の Txn-Token の tctx.tid）が tenant.1 の配信",
+      "stimulus": {
+        "deliver": {
+          "message": {
+            "tid": "{{tenant.2}}",
+            "job_run_id": "{{job_run.t1}}",
+            "resource": "{{resource.t1.own}}"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "dead_letter_min": 1,
+          "notifications_max": 0
+        },
+        "audit": {
+          "events_min": 1
+        },
+        "notes": "DB 文脈はメッセージの tid ではなく tctx.tid から設定し、食い違えば拒否（deny_l0:mismatch）してデッドレターへ（CON-16 §2.10）"
+      }
+    },
+    {
+      "case_id": "CV-060b",
+      "description": "正規の配信。実行直前の再 Check に PDP スタブが deny を返す（受付後の権限剥奪を模す）",
+      "stimulus": {
+        "deliver": {
+          "message": {
+            "tid": "{{tenant.1}}",
+            "job_run_id": "{{job_run.t1}}",
+            "resource": "{{resource.t1.own}}"
+          }
+        },
+        "inject": {
+          "target": "MK-03",
+          "kind": "deny"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "dead_letter_min": 1,
+          "notifications_max": 0
+        },
+        "audit": {
+          "events_min": 1
+        },
+        "notes": "受付時の判定を実行の根拠にしない。黙って捨てず、黙って再試行もしない（CON-16 §2.10）"
+      }
+    },
+    {
+      "case_id": "CV-060c",
+      "description": "A1 の受付（利用者の要求の処理中）で、受付台帳（registerAcceptanceRecord）が 503 を返す",
+      "stimulus": {
+        "inject": {
+          "target": "STUB-LEDGER",
+          "kind": "overload_503"
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ],
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "受付記録のないジョブを投入しない（CON-05 registerAcceptanceRecord の説明）。本ケースは、受付と業務の更新を 1 つの単位にすると manifest で申告した SUT（options.acceptance_atomic）に適用する。業務を確定させてジョブだけを投入しない設計の SUT は、業務の応答が成功でもよいが、ジョブの投入 0 件と、受付の失敗が利用者と監査に見える形で残ることを確かめる（黙って落とさない。CON-16 §2.10 v1.2）"
+      },
+      "applies_when": "options.acceptance_atomic == true"
+    },
+    {
+      "case_id": "CV-060d",
+      "description": "再 Check の subject.type を決めるときに、メッセージに書かれた主体種別（例 core/workload）を使う実装を検出する。受付時に検証済み token の ptype から求めて保存した値と、メッセージの値が食い違う配信",
+      "stimulus": {
+        "deliver": {
+          "message": {
+            "tid": "{{tenant.1}}",
+            "job_run_id": "{{job_run.t1}}",
+            "resource": "{{resource.t1.own}}",
+            "subject_type": "core/workload"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "notes": "PDP スタブの記録で、再 Check の subject.type が受付時に保存した値（core/user）であり、メッセージの値でないこと。メッセージの主体種別は使わない（L-5 の暫定。CON-16 §2.10 v1.2）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit",
+    "kit_record"
+  ],
+  "strength": "D: ARC-06 §3.11、ADR-026 D26-09・D26-11",
+  "notes": [
+    "v1.2 で新設（13_integration-trial/room-booking/report.md M-4・L-5）。CON-11 §6.9 に登録",
+    "{{job_run.t1}} は fixture が tenant.1 の起点主体で登録した受付記録の job_run_id（kit/README.md §4 v1.2）"
+  ],
+  "since": "0.3.0（v1.2）",
+  "deprecated": null
+}

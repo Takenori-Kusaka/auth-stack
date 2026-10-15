@@ -1,0 +1,12 @@
+{
+  "name": "support-ticket-trial",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI simulated integration trial (v1.2): customer support ticket service depending on the auth stack. Not a real team's verification.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/01-positive.test.js test/02-vectors.test.js",
+    "lock": "node scripts/lock-contracts.mjs"
+  }
+}

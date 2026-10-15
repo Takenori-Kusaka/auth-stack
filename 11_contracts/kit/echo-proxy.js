@@ -31,19 +31,31 @@
 //   --no-echo --no-placeholder-headers --no-metadata --no-consistency --no-fill
 //   --no-fresh-decision-id  disable R1/R2/R3/R4/R5/R6 individually
 //   --no-search-type        disable R8 (v1.1 sync: search results[].type follows the request type)
+//   --no-txn-remint         disable R9 (v1.2, M-2: re-mint the CON-05 /txn-token example with the test key)
+//   --no-acceptance         disable R10 (v1.2, M-2: fresh job_run_id / origin_txn on /acceptance-records)
+//
+// v1.2 (13_integration-trial/room-booking/report.md M-2): a generic mock started from CON-05 returns the
+// static Txn-Token example, which is already expired (exp = iat + 60) and whose tid/sub/ptxn do not match the
+// request, so the internal-start positive path could not pass. R10 records the identity carried by the
+// Txn-Token presented to registerAcceptanceRecord and returns a fresh job_run_id; R9 re-mints the /txn-token
+// example (fresh iat/exp/txn, aud/scope from the request, sub/tid/root_jti/gref/ptxn from the subject_token or
+// from the R10 record) and signs it with the CON-05 info.x-test-signing-key (kid test-only-tts-c07-01), which
+// the CON-05 /txn-token-jwks example already publishes. The test key is public, so these signatures prove
+// nothing; production profiles reject kid test-only-* (CON-05 section 8). The proxy never verifies tokens --
+// that is the SUT's job -- and it never logs a whole token (only kid and txn).
 // Environment: ECHO_PROXY_ARGS may hold the same options (split on whitespace) for CI files.
 
 import http from 'node:http';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-const VERSION = '0.2.0'; // kit/echo-proxy.js version (CON-11 v1.1; 0.2.0 adds R8 in the v1.1 sync, CON-03 §12 N-2 (c)). Not the kit (DL-120) version.
+const VERSION = '0.3.0'; // kit/echo-proxy.js version (CON-11 v1.1; 0.2.0 adds R8 in the v1.1 sync, CON-03 §12 N-2 (c); 0.3.0 adds R9/R10 in v1.2, room-booking M-2). Not the kit (DL-120) version.
 
 // ---------- options ----------
 function parseArgs(argv) {
   const o = {
     target: null, listen: '127.0.0.1:0', publicBase: null, log: null, fill: 'cycle', prefer: [],
-    echo: true, placeholderHeaders: true, metadata: true, consistency: true, fillOn: true, freshDecisionId: true, searchType: true,
+    echo: true, placeholderHeaders: true, metadata: true, consistency: true, fillOn: true, freshDecisionId: true, searchType: true, txnRemint: true, acceptance: true,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -68,6 +80,8 @@ function parseArgs(argv) {
       case '--no-fill': o.fillOn = false; break;
       case '--no-fresh-decision-id': o.freshDecisionId = false; break;
       case '--no-search-type': o.searchType = false; break;
+      case '--no-txn-remint': o.txnRemint = false; break;
+      case '--no-acceptance': o.acceptance = false; break;
       case '--version': console.log(VERSION); process.exit(0); break;
       case '-h': case '--help': console.log(fs.readFileSync(new URL(import.meta.url)).toString().split('\n').filter((l) => l.startsWith('//')).join('\n')); process.exit(0); break;
       default: throw new Error(`unknown option ${a}`);
@@ -92,6 +106,25 @@ function opaqueId() { const b = crypto.randomBytes(26); let s = ''; for (const x
 const DEPRECATION_RE = /^@-?[0-9]{1,15}$/; // CON-03 components.headers / x-conditional-response-headers
 const isHttpDate = (v) => /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(v) && !Number.isNaN(Date.parse(v));
 const HOP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'content-length', 'proxy-connection', 'upgrade', 'te', 'trailer']);
+
+
+// ---------- v1.2: CON-05 test key (R9/R10) ----------
+// Copied from 11_contracts/token-exchange.openapi.yaml info.x-test-signing-key (CON-05 v1.1, I-9). Test only:
+// the private part is published in the contract, so a signature made with it is not evidence of anything.
+const TTS_TEST_KID = 'test-only-tts-c07-01';
+const TTS_TEST_JWK = { kty: 'EC', crv: 'P-256', x: 'quEADo3I33Cyq9_fQEwLm_QZaVL38FDQNEshjig6rkg', y: 'eM9udSIVg2klnfEAZl0X6_YwTZuUYS-zz0Xy8R35vpw', d: 'SVVvB-LrBoh6-w4hi2OxS2BuGG2Jej3c69CQcDx1Srk' };
+const URN_ACCESS_TOKEN = 'urn:ietf:params:oauth:token-type:access_token';
+const URN_INTERNAL_START = 'urn:uuid:569d2793-a1dc-493e-a1ef-ca2904f77173'; // CON-05 v1.1 internal-start subject_token_type
+let ttsKey = null;
+function ttsPrivateKey() { if (!ttsKey) ttsKey = crypto.createPrivateKey({ key: TTS_TEST_JWK, format: 'jwk' }); return ttsKey; }
+const b64u = (buf) => Buffer.from(buf).toString('base64url');
+function decodeJwtPart(tok, i) { try { return JSON.parse(Buffer.from(String(tok).split('.')[i], 'base64url').toString('utf8')); } catch { return null; } }
+function signEs256(header, payload) {
+  const input = `${b64u(JSON.stringify(header))}.${b64u(JSON.stringify(payload))}`;
+  const sig = crypto.sign('sha256', Buffer.from(input), { key: ttsPrivateKey(), dsaEncoding: 'ieee-p1363' });
+  return `${input}.${b64u(sig)}`;
+}
+const nowSec = () => Math.floor(Date.now() / 1000);
 
 function profileOf(o) { return o && typeof o === 'object' ? o.context?.['x-authz-profile'] : undefined; }
 
@@ -119,6 +152,8 @@ function main() {
   const log = (rec) => logStream.write(JSON.stringify({ t: new Date().toISOString(), proxy: 'kit/echo-proxy.js', v: VERSION, ...rec }) + '\n');
 
   let publicBase = opt.publicBase;
+  // R10 -> R9: job_run_id -> identity taken from the Txn-Token presented to registerAcceptanceRecord (memory only)
+  const acceptance = new Map();
 
   const server = http.createServer(async (req, res) => {
     const rid = crypto.randomUUID();
@@ -211,7 +246,70 @@ function main() {
         }
       }
 
-      if (json && rewrites.some((r) => /^R[3-68]/.test(r.rule))) body = Buffer.from(JSON.stringify(json));
+
+      // R10 (v1.2, M-2): registerAcceptanceRecord on a generic mock returns a static job_run_id. Return a fresh
+      // one, set origin_txn from the presented Txn-Token, and remember the identity for R9. The real ledger
+      // verifies the Txn-Token (CON-05 J02); this proxy does not, so it only copies what the SUT itself sent.
+      let mutated = false;
+      if (opt.acceptance && req.method === 'POST' && /\/acceptance-records$/.test(path) && (up.status === 201 || up.status === 200) && json && typeof json.job_run_id === 'string') {
+        const tt = req.headers['txn-token'];
+        const p = tt ? decodeJwtPart(tt, 1) : null;
+        const nid = opaqueId();
+        rewrites.push({ rule: 'R10-job-run-id', from: json.job_run_id, to: nid, origin_txn: p?.txn ?? null });
+        json.job_run_id = nid;
+        if (p && typeof p.txn === 'string') json.origin_txn = p.txn;
+        json.accepted_at = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+        if (p) acceptance.set(nid, { sub: p.sub, tid: p.tctx?.tid, root_jti: p.tctx?.root_jti, gref: p.tctx?.gref, txn: p.txn });
+        mutated = true;
+      }
+
+      // R9 (v1.2, M-2): re-mint the static /txn-token example so that a faithful PEP can verify it: fresh
+      // iat/exp/txn, aud and scope from the request, identity from the subject_token (edge sync) or from the
+      // R10 record (internal start). Only examples signed with the CON-05 test key are re-signed. An unknown
+      // job_run_id leaves the identity as in the example (the SUT should then fail L0 -- never forge a match).
+      if (opt.txnRemint && req.method === 'POST' && /\/txn-token$/.test(path) && up.status === 200 && json && typeof json.access_token === 'string') {
+        const h = decodeJwtPart(json.access_token, 0); const p = decodeJwtPart(json.access_token, 1);
+        if (!h || !p || h.kid !== TTS_TEST_KID) { rewrites.push({ rule: 'R9-skip', reason: 'not a CON-05 test-key example', kid: h?.kid ?? null }); }
+        else {
+          const form = new URLSearchParams(reqBuf.toString('utf8'));
+          const ttl = Number.isInteger(json.expires_in) && json.expires_in > 0 ? json.expires_in : (Number.isInteger(p.exp - p.iat) && p.exp > p.iat ? p.exp - p.iat : 60);
+          const iat = nowSec(); const fromTxn = p.txn;
+          p.iat = iat; p.exp = iat + ttl; p.txn = opaqueId();
+          if (form.get('audience')) p.aud = form.get('audience');
+          if (form.get('scope')) p.scope = form.get('scope');
+          p.tctx = p.tctx && typeof p.tctx === 'object' ? p.tctx : {};
+          const stt = form.get('subject_token_type'); const st = form.get('subject_token');
+          let source = 'example';
+          if (stt === URN_ACCESS_TOKEN && st) {
+            const at = decodeJwtPart(st, 1);
+            if (at) {
+              source = 'subject_token';
+              if (typeof at.sub === 'string') p.sub = at.sub;
+              if (typeof at.tid === 'string') p.tctx.tid = at.tid;
+              if (typeof at.jti === 'string') p.tctx.root_jti = at.jti;
+              if (typeof at.sid === 'string') p.tctx.sid = at.sid; else delete p.tctx.sid;
+              if (typeof at.gref === 'string') p.tctx.gref = at.gref;
+              delete p.tctx.ptxn;
+            }
+          } else if (stt === URN_INTERNAL_START && st) {
+            const rec = acceptance.get(st);
+            if (rec) {
+              source = 'acceptance_record';
+              if (rec.sub) p.sub = rec.sub;
+              if (rec.tid) p.tctx.tid = rec.tid;
+              if (rec.root_jti) p.tctx.root_jti = rec.root_jti;
+              if (rec.gref) p.tctx.gref = rec.gref; else delete p.tctx.gref;
+              if (rec.txn) p.tctx.ptxn = rec.txn;
+              delete p.tctx.sid;
+            } else rewrites.push({ rule: 'R9-unknown-job-run', job_run_id_known: false });
+          }
+          json.access_token = signEs256({ typ: h.typ, alg: 'ES256', kid: TTS_TEST_KID }, p);
+          rewrites.push({ rule: 'R9-txn-remint', kid: TTS_TEST_KID, from_txn: fromTxn, txn: p.txn, exp: p.exp, identity_from: source });
+          mutated = true;
+        }
+      }
+
+      if (json && (mutated || rewrites.some((r) => /^R[3-68]/.test(r.rule)))) body = Buffer.from(JSON.stringify(json));
       res.writeHead(up.status, out);
       res.end(body);
       log({ id: rid, method: req.method, path, status: up.status, rewrites });

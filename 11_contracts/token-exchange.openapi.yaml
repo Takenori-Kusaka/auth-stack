@@ -2,7 +2,7 @@ openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Token Exchange API（RFC 8693 社内 profile と Transaction Token 要求）
-  version: 0.2.0
+  version: 0.3.0
   summary: cell 内 STS の利用者委任 token exchange、TTS への Txn-Token 要求、内部開始の受付記録登録と TTS の検証鍵公開の契約（DL-74）
   x-document-id: CON-05
   x-deliverable: DL-74
@@ -120,9 +120,9 @@ info:
       kid: test-only-tts-c07-01
       alg: ES256
   description: |
-    > 文書ID: CON-05 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15
+    > 文書ID: CON-05 / 版: 0.3（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15
     > 対応要求: R-100, R-206, R-251, R-255, G-102, G-118, G-119, G-138（全件は info.x-requirements）
-    > 改訂: v1.1（I-9、P-11、P-19）。変更点は §7、他文書への申し送りは §9、改版履歴は末尾
+    > 改訂: v1.1（I-9、P-11、P-19）。変更点は §7、他文書への申し送りは §9、改版履歴は末尾。v1.2 の同期（版 0.3.0）: 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。AI による模擬であり実在の連携チームの検証ではない）を受けた申し送り CON-18 HO12-AG-04、CON-11 §14.5 H12-2・H12-3、CON-16 IE-15・IE-16 を反映した。記録は §10
     > 依存文書: info.x-depends-on
 
     ## 0. 要旨
@@ -218,6 +218,19 @@ info:
     | HO-08 | 10_integration/integration-patterns.md（P-04・P-05 の enqueue の図）、10_integration/developer-faq.md | 「PEP SDK の enqueue（基盤内部）」に、SDK を使わない場合は CON-05 `registerAcceptanceRecord` を呼ぶ旨を加える |
     | HO-09 | 配置スナップショットの文書（ADR-022 D-2 の配布物） | ジョブ台帳と TTS JWK Set の URL を配置スナップショットに載せる（本契約は URL を凍結しない） |
 
+    ## 10. v1.2 の同期（他文書からの申し送りの反映）
+
+    v1.2 の各改訂が本書に宛てた申し送りを、v1.2 の同期作業（AI エージェント）で反映した。人による照合・独立レビューは未実施で、負例は実行していない [D]。
+
+    | 申し送り | 内容 | 反映 |
+    |---|---|---|
+    | CON-18 HO12-AG-04（room-booking C-2） | edge の最初の exchange の代理拡張 ED-1〜ED-4、正例 edgeFirstAgent、負例 AGN-15・AGN-26 | `/token` の説明 (a) に例外を加え、要求例・応答例 `edgeFirstAgent` と負例 AGN-15・AGN-26・X74-N15 を加えた。いずれも preview（CON-18 と同じ）。GA 候補の (a)・(b) の既存の振舞いは変えていない [D] |
+    | CON-11 §14.5 H12-2（room-booking M-2） | `/txn-token` の例が静的で期限切れ・不一致になること、echo proxy R9・R10、要求と応答の例の `sub`・`tid` の一致 | `/txn-token` の説明に「応答例の限界」を加え、要求例 `edgeSync` の subject_token のダミー payload に応答例と同じ `sub`・`tid` を入れた [D] |
+    | CON-11 §14.5 H12-3、CON-16 IE-15（room-booking M-4） | 受付記録の有効期限、A2 の委任 grant と job_definition_id、受付台帳の可用性との結合 | x-open-issues の既存項目に追記し、2 項目を加えた。決定は ADR-026「v1.2 で判明した論点」に記録した（本書では決めていない）[D] |
+    | CON-16 IE-16、CON-18 HO12-AG-06 (c)（room-booking L-5） | 再 Check の `subject.type` を決める手段 | x-open-issues に案 (a)(b) と所有者・期限を置いた。CON-06 側にも同じ未決を置いた [D] |
+
+    - 互換性: 追加は preview の例・説明・未決だけで、GA 候補の `/token` の要求・応答の形は変えていない。要求例 `edgeSync` の subject_token の値が変わったので、例の値を期待値に固定していた試験は値を替える必要がある [D]。
+
     ## 参考文献
 
     [^1]: M. Jones, A. Nadalin, B. Campbell, J. Bradley, C. Mortimore / IETF『RFC 8693: OAuth 2.0 Token Exchange』Standards Track, 2020-01. https://www.rfc-editor.org/rfc/rfc8693 （参照箇所: §1.1, §2.1, §4.1, §4.4 は RS-06#43〜#45・RS-04#66（確認日 2026-10-03）。§2.1 の各パラメータの強度、§2.2.1, §2.2.2, §3 は起草者が 2026-10-15 に確認。research ノート外）
@@ -248,6 +261,7 @@ info:
     |---|---|---|
     | 0.1.0 | 2026-10-15 | 初版（提出版 v1.0、タグ v1.0-submission） |
     | 0.2.0 | 2026-10-15 | v1.1（I-9、P-11、P-19）。§7 の変更一覧のとおり。GA 候補の /token の形は不変、preview の内部開始の subject_token_type を変更 |
+    | 0.3.0 | 2026-10-15 | v1.2 の同期。§10 のとおり。edge 初回 exchange の代理拡張（preview）、`/txn-token` の例の限界の注記、未決 3 件の追加 |
   x-lint-notes:
     - rule: info-license
       result: warning（1 件）
@@ -266,7 +280,13 @@ info:
     - id: v1.1（I-9）受付記録の登録の範囲
       text: registerAcceptanceRecord は A1・A2（利用者の要求を受けた時点での登録）だけを扱う。A3（定期ジョブ。起点の Txn-Token がない）はプラットフォームのスケジューラが内部で書き、A4（イベント consumer）は DL-71 の受付記録参照形式とあわせて決める。所有者 CTO、期限 DL-115 凍結前
     - id: v1.1（I-9）受付記録の保持と重複排除
-      text: 受付記録の有効期限（TTS が内部開始を受け付ける期間）と dedup_key の保持期間の値は TBD（ADR-026 の A1 寿命・DL-20 と合わせる）。所有者 CTO、期限 G3
+      text: 受付記録の有効期限（TTS が内部開始を受け付ける期間）と dedup_key の保持期間の値は TBD（ADR-026 の A1 寿命・DL-20 と合わせる）。所有者 CTO、期限 G3。v1.2（CON-11 H12-3 (1)、CON-16 IE-15）。決め方は ADR-026「v1.2 で判明した論点」V12-26-1 に記録した。期限が TBD の間の連携側の暫定は CON-16 §2.10 v1.2（数日後の通知のような遅延実行は A1 で受け付け、期限を超えるものは実装しない）
+    - id: v1.2 A2 の委任 grant と job_definition_id
+      text: v1.2（CON-11 H12-3 (2)、CON-16 IE-15。room-booking M-4）A2（利用者の委任による長時間・定期の処理）の委任 grant を作る契約と、job_definition_id を登録する手段が本契約にない。registerAcceptanceRecord の grant_ref は既存の grant の参照を受けるだけである。ADR-026「v1.2 で判明した論点」V12-26-2 で決める。所有者 CTO、期限 DL-115 凍結前
+    - id: v1.2 受付台帳の可用性との結合
+      text: v1.2（CON-11 H12-3 (3)、CON-16 IE-15）A1 の受付記録は起点の Txn-Token の寿命内に登録する必要があるため、利用者の要求の処理が受付台帳（本契約 /acceptance-records）の可用性に結合する（台帳が止まれば遅延実行を伴う要求を受け付けられない）。この結合の受容者を ADR-026「v1.2 で判明した論点」V12-26-3 で決める。決まるまで連携側は CON-16 §2.10 v1.2 の暫定（登録の失敗は要求全体の失敗として返す）による
+    - id: v1.2 再 Check の主体種別
+      text: v1.2（CON-16 IE-16、CON-18 HO12-AG-06 (c)。room-booking L-5）Txn-Token は主体種別（ptype）を持たないため、内部開始の consumer が再 Check の subject.type を決められない。案は (a) registerAcceptanceRecord の応答と受付記録に subject_type（CON-02 x-subject-type-map で写した値）を残す、(b) 内部開始の Txn-Token の tctx に主体種別を持たせる（DL-115 の claim 名の決定と同時）。(b) は Txn-Token の claim の追加で CON-06 と同時に決める。所有者 CTO、期限 DL-115 凍結前。決まるまでの暫定は CON-16 §2.10 v1.2
     - id: v1.1（I-9）検証鍵の配布経路
       text: 受信側 SDK は TTS 鍵を配置スナップショットの trust 設定から得るのが既定で、/txn-token-jwks は SDK を使わない実装と試験のための経路である。両者の優先と更新間隔（鍵更新時に未知の kid を受けた場合の再取得の頻度上限）は TBD（ADR-005 の鍵更新、DL-20）。所有者 CISO、期限 G3
     - id: Txn-Token の置換（ADR-026 D26-03 の段内置換、draft-11 §13.15）
@@ -349,6 +369,9 @@ info:
       - { ref: X74-N10, op: registerAcceptanceRecord, case: "v1.1（I-9）本文に sub・tid を入れて他人・他テナントの受付記録を作ろうとする", expect: "400 invalid_request / J06（本文に未定義の項目。sub・tid は本文で受け付けず Txn-Token からだけ取るので、他人名義の記録は 0 件）" }
       - { ref: X74-N11, op: registerAcceptanceRecord, case: "v1.1（I-9）A2 で他人の grant_ref を指定", expect: "400 invalid_request / J05" }
       - { ref: X74-N12, op: registerAcceptanceRecord, case: "v1.1（I-9）同じ dedup_key で params_hash の異なる再送", expect: "409 conflict / J07" }
+      - { ref: AGN-15, op: exchangeToken, case: "v1.2（CON-18 HO12-AG-04、preview）エージェントがさらに別のエージェントへ再委任し、act の深さ上限を超える交換", expect: "400 invalid_request / R08（TC-017-06）" }
+      - { ref: AGN-26, op: exchangeToken, case: "v1.2（CON-18 HO12-AG-04、preview）利用者が委任 grant を取り消した後、またはエージェント主体の停止後に、委任用 client の外部 AT で edge の最初の exchange を行う", expect: "400 invalid_request / R10（CON-18 ED-4。取消しから拒否までの時間を記録。TC-017-07・TC-017-13）" }
+      - { ref: X74-N15, op: exchangeToken, case: "v1.2（CON-18 ED-1）edge が要求に act やエージェント主体を示す値を加えて、委任用 client 以外に発行された外部 AT の出力に act を付けさせようとする", expect: "出力に act を付けない（act の値は AS の委任 grant 台帳からだけ取る）。未定義のパラメータは RFC 6749 §3.2 により無視" }
       - { ref: X74-N13, op: requestTxnToken, case: "v1.1（I-9）他の実行主体が登録した job_run_id で内部開始を要求（ADR-026 D26-11 の差替え）", expect: "400 invalid_request / T07" }
       - { ref: X74-N14, op: getTxnTokenJwks, case: "v1.1（I-9）応答に秘密鍵成分（d）・対称鍵（kty=oct）を含む JWK", expect: "契約違反（JwkSet スキーマで不適合）。受信側は当該 JWK を使わない" }
       - { ref: N-34, op: requestTxnToken, case: 期限切れ subject_token による発行・scope 拡大（ARC-04 の N-34 のうち置換・txn 変更の部分は、置換要求を v0.1 で定義しないため T03 で拒否。x-open-issues「Txn-Token の置換」）, expect: "400 invalid_request / T03、400 invalid_scope / T06" }
@@ -378,7 +401,7 @@ paths:
         RFC 8693 の token exchange で、呼出し先 1 サービスを `aud` とし要求元インスタンスの SVID に `cnf` で束縛した内部 access token（RFC 9068 の at+jwt）を発行する [D]（ADR-009 D09-10〜D09-12、ADR-005 D1-4）。
 
         - 要求の本文は `application/x-www-form-urlencoded` で送る [N][^1]（§2.1）。
-        - 2 つの使い方がある [D]。(a) edge の最初の exchange: subject_token は外部 opaque token、要求元は edge の SVID に限る。出力は `act` なし（edge は経路上の PEP であって代理人ではない。ADR-005 D1-4）。(b) 業務サービスの hop: subject_token は自分が受け取った内部 access token（`aud`＝要求元）で、出力の `act` の最外に要求元の主体を加える。
+        - 2 つの使い方がある [D]。(a) edge の最初の exchange: subject_token は外部 opaque token、要求元は edge の SVID に限る。出力は `act` なし（edge は経路上の PEP であって代理人ではない。ADR-005 D1-4）。v1.2（CON-18 HO12-AG-04、preview）: 例外として、subject_token が AI エージェントの委任用 client に発行された外部 AT なら、STS は出力の `act` を `{sub: エージェント主体, ptype: ai_agent}` とし、値は AS の委任 grant 台帳から取る（要求元 edge の申告や要求パラメータから取らない。CON-18 ED-1）。この出力には `scope` を必ず入れる（委任 grant の scope ∩ 交換登録簿の上限。ED-3）。委任 grant の失効・期限切れ、委任元の利用者の停止、エージェント主体の停止は R10 で拒否する（ED-4）。edge は外部 AT の `cnf` と提示証明書の一致、第一者のエージェントなら SVID の登録テナントと `tid` の一致を確かめる（ED-2）。正例は `edgeFirstAgent`、負例は info.x-negative-examples の AGN-15・AGN-26。(b) 業務サービスの hop: subject_token は自分が受け取った内部 access token（`aud`＝要求元）で、出力の `act` の最外に要求元の主体を加える。
         - 受信した token を下流へ素通しせず、下流ごとに本操作で取り直す [D]（ADR-009 D09-32 の 5）。
         - RFC 6749 は token endpoint が認識しないパラメータを無視しなければならない（MUST）とする [N][^3]（§3.2）。本 profile が「拒否」とするのは RFC 8693・RFC 9396 で定義済みのパラメータ（actor_token、audience、authorization_details）に限る [D]。
         - 成功応答には `Cache-Control: no-store` と `Pragma: no-cache` を付ける（MUST）[N][^3]（§5.1）。
@@ -446,6 +469,14 @@ paths:
                   subject_token: opq_2YQx8mWm4rT1kZ9vA0cN
                   subject_token_type: urn:ietf:params:oauth:token-type:access_token
                   resource: https://svc.id-domain.example/s/a3m8p1zt
+              edgeFirstAgent:
+                summary: v1.2（CON-18 HO12-AG-04、preview）正例。edge の最初の exchange で、subject_token が AI エージェントの委任用 client に発行された外部 AT（CON-18 ED-1〜ED-4）。出力の act はエージェント主体（AS の委任 grant 台帳から）、scope は委任 grant の範囲
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token: opq_7HbK2nQw5rZ8mT1xV4cA
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+                  resource: https://svc.id-domain.example/s/r5vn2kq8
+                  scope: rsv.book
       responses:
         '200':
           description: |
@@ -468,6 +499,14 @@ paths:
                     token_type: Bearer
                     expires_in: 120
                     scope: invoice.read
+                edgeFirstAgent:
+                  summary: v1.2（CON-18 HO12-AG-04、preview）正例。会議室予約サービス宛ての K3。sub=利用者、act={sub=エージェント主体, ptype=ai_agent}、scope=rsv.book（署名はダミー。payload は sub・tid・act・scope を CON-18 info.x-pdp-request-example と揃えた）
+                  value:
+                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL3I1dm4ya3E4Iiwic3ViIjoibWZyZ2d6ZGZtenR3cTJsa25ud2cyM3Rwb2IiLCJ0aWQiOiJvenh3NHpsdG5memdrM2RmbnpxeGkybHBueSIsImFjdCI6eyJzdWIiOiJneHkycXJ6enF3enpiam43NGpyb3RkdTZ2diIsInB0eXBlIjoiYWlfYWdlbnQifSwic2NvcGUiOiJyc3YuYm9vayJ9.ZHVtbXktc2lnbmF0dXJl
+                    issued_token_type: urn:ietf:params:oauth:token-type:access_token
+                    token_type: Bearer
+                    expires_in: 120
+                    scope: rsv.book
                 hopToPayment:
                   summary: v1.1（P-19）正例。支払サービス宛て、scope=payment.create
                   value:
@@ -513,6 +552,7 @@ paths:
         - 草案は subject_token に署名なし JSON や自己署名 JWT も使えるとするが [N][^4]（RS-06#32）、本 profile は `unsigned_json`・`self_signed` を受け付けない [D]（ADR-009 D09-24、T-040）。
         - `request_context`・`request_details`（草案で RECOMMENDED）[N][^4] は、txn-v1 が `rctx` を発行しないので（ADR-009 D09-30）、送られても Txn-Token の生成に使わず無視する [D]。v2 で `rctx` に載せる候補は ADR-009 P09-3 で扱う。
         - Txn-Token は Authorization ヘッダではなく `Txn-Token` ヘッダで下流へ無改変で渡し、全文をログに残さない [N][^4]（RS-06#35, #41）。これらは受信側の義務で、本操作の範囲外（正本 ADR-009 D09-24、ARC-04 §6.2）である。
+        - v1.2（CON-11 §14.5 H12-2。room-booking M-2）**応答例の限界**: 応答例 `edgeSync`・`internalStart` は試験鍵で署名済みの静的な JWT で、`exp` は 1792051260（2026-10-15T08:01:00Z）に固定されている。`tctx.tid`・`sub`・`ptxn`・`txn` は要求の値に合わせて変わらないので、汎用モックの応答をそのまま自サービスの要求の検証に使うと、期限切れ・`tid` 不一致・`ptxn` 不一致で正しく拒否される [D]。汎用モックで正例を確かめるときは、kit の echo proxy の書換え規則 R9（要求に合わせて `tid`・`sub`・`ptxn` を書き換え、試験鍵で署名し直す）と R10（`iat`・`exp` を現在時刻に合わせる）を前に置く（11_contracts/kit/README.md §2.5）か、時計を `iat`〜`exp` に固定する（§8）[D]。PEP の検証（期限・`tid` 照合）を外して例に合わせない [D]。
       x-negative-request-examples:
         description: 負例の要求本文（期待は拒否）。スキーマに適合しない値を意図して含むため media type の examples ではなく本拡張に置く。DL-80 の負例ベクタへ供給する
         negUnsignedJson:
@@ -534,13 +574,13 @@ paths:
               $ref: '#/components/schemas/TxnTokenRequest'
             examples:
               edgeSync:
-                summary: 正例。edge が外部要求 1 件について Txn-Token を要求
+                summary: 正例。edge が外部要求 1 件について Txn-Token を要求。v1.2（CON-11 H12-2）subject_token のダミー payload に、応答例 edgeSync と同じ sub・tid を入れた（署名はダミー）
                 value:
                   grant_type: urn:ietf:params:oauth:grant-type:token-exchange
                   requested_token_type: urn:ietf:params:oauth:token-type:txn_token
                   audience: txn-td-c07
                   scope: op.invoice.approve
-                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2EzbThwMXp0In0.ZHVtbXktc2lnbmF0dXJl
+                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2EzbThwMXp0Iiwic3ViIjoiazN2cTdtMnhoNWQ0dGE2cHpyMm5idzd5Y3UiLCJ0aWQiOiJ0NXdxMmh6cjdubWM0a2EzdmQ2cHhlMmJmeSJ9.ZHVtbXktc2lnbmF0dXJl
                   subject_token_type: urn:ietf:params:oauth:token-type:access_token
               internalStart:
                 summary: 正例（preview・本契約の提案 X74-01）。ジョブ実行主体が job_run_id（registerAcceptanceRecord の応答値）で内部開始を要求。v1.1（I-9）subject_token_type を URN に変更

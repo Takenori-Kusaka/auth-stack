@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.example/auth-stack/schemas/audit-event/1/audit-event.schema.json",
-  "$comment": "文書ID: CON-08 / DL-77 / 版: 0.3.1（v1.1 改訂と同期）/ 状態: draft / 最終更新: 2026-10-15（v1.1 の同期（版 0.3.1）: CON-03 §12 N-4 の action.name の例 can_read → read、CON-02 HO-I7-2 の tier の表記の参照化、x-subject-type-map の正本を CON-02 x-subject-type-map に移したことの反映、CON-11 §14.3 H11-6 の負例への id の付与。変更は x-changes-v1.1 の末尾。v1.1（I-3・I-5）: 13_integration-trial/report.md の P-03・P-06 を解消するため、decision_id が無い enforcement 記録、Txn-Token の無い write の txn、prev_fp の初期値と連鎖の単位、参照値（subj_ref・res_ref・jti_ref）の求め方と鍵の取得経路、subject.type の値と ptype からの写像を定めた。変更一覧は x-changes-v1.1、他文書への申し送りは x-handoff-v1.1。v1.0（タグ v1.0-submission）時点の記録: 作成者以外による独立レビュー RV-01〜RV-14 を反映。記録は 11_contracts/review-notes/CON-08.md）。対応要求: R-118, R-119, R-127, R-128, R-232, R-257（R-requirements.md で本ファイルを対応成果物に含む行は R-119, R-127, R-232, R-257。R-118・R-127 は deliverables.md の DL-77 行）、関連 R-102, R-109, R-134, R-193.1〜R-193.6; G-118, G-063, G-064, G-095, G-134。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-77 行・§2.3）, 05_adr/ADR-014-audit-data.md（正本。D14-06〜D14-27・D14-43〜D14-45・D14-54）, 05_adr/ADR-009-workload-identity-token-exchange.md（D09-16・D09-35・D09-36）, 05_adr/ADR-011（D6-1 の reason・consistency・model_revision）, 05_adr/ADR-013（D13-26 の判定記録項目）, 05_adr/ADR-021（D21-09・D21-26・D21-36 の識別子・正規名の形式）, 05_adr/ADR-005（D9-3 の要求 context の範囲）, 11_contracts/schemas/common.schema.json（CON-02。値の形式を揃える）, 05_adr/ADR-022（監査イベント行・記述形式）, 05_adr/reconciliation-notes.md（§3.2 の相関 8 欄、C-34）, 04_architecture/audit-privacy.md（ARC-10 §2・§3・§5.4）, 04_architecture/claims-catalog.md（ARC-15 §3.7・§2.5）, 02_requirements/data-classification.md（§3 の基本区分・加重ラベル）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-10（#1〜#16, #22, #33, #42）, RS-06（#41, #45, #73）, RS-07（#66, #68）, research/standards-status.md（SS-I17, SS-I24, SS-C13, SS-A09, SS-B04）。作成方法: AI エージェント（Claude）が ADR-014 を正本として起草した。自己レビューであり、実在の CTO/CISO・契約変更審査会の承認ではない（CONVENTIONS §8）。凍結（DEC-8）前の draft であり、欄名・列挙値は変わり得る。 機械利用: x- で始まる欄は JSON Schema 2020-12 の未知 keyword（注釈）であり検証に影響しない。Ajv（ajv/dist/2020）は strict:false で使うか、x- の keyword を addKeyword で登録する（既定の strict モードは未知 keyword で compile を止める）。if/then 内の properties・required に type を重ねていないため、Ajv の strictTypes は警告を出す（検証結果は変わらない）。モックは examples（E1・E7・E2・E4・E10 の 5 族）を起点に作る。v1.1（I-3）: examples[5]〜[7] に判定の無い E2（L0 拒否・PDP 不達かつ Txn-Token なし・token 検証失敗）を加えた。",
+  "$comment": "文書ID: CON-08 / DL-77 / 版: 0.4.0（v1.2 の同期）/ 状態: draft / 最終更新: 2026-10-15（v1.2 の同期（版 0.4.0）: 2 回目の模擬連携検証 13_integration-trial/room-booking/report.md（AI による模擬であり実在の連携チームの検証ではない）の L-4・L-7・C-1・C-2 を受けた申し送り CON-16 IE-14、CON-11 §14.5 H12-4、CON-18 HO12-AG-08、CON-17 §12 V12-XG-5 を反映した。no_decision_cause に subject_unmapped（reason_code deny_subject_unmapped）、DetailEnforcement にエージェント関連の任意の欄（agent_principal・delegation_mode・tool_id・approval_id・external_grant_id）、E6 に外部付与・招待の event_type と object_type external_grant を加え、examples の can_update・can_submit を update・submit に改めた。追加のみのため minor。変更は x-changes-v1.2。v1.1 の同期（版 0.3.1）: CON-03 §12 N-4 の action.name の例 can_read → read、CON-02 HO-I7-2 の tier の表記の参照化、x-subject-type-map の正本を CON-02 x-subject-type-map に移したことの反映、CON-11 §14.3 H11-6 の負例への id の付与。変更は x-changes-v1.1 の末尾。v1.1（I-3・I-5）: 13_integration-trial/report.md の P-03・P-06 を解消するため、decision_id が無い enforcement 記録、Txn-Token の無い write の txn、prev_fp の初期値と連鎖の単位、参照値（subj_ref・res_ref・jti_ref）の求め方と鍵の取得経路、subject.type の値と ptype からの写像を定めた。変更一覧は x-changes-v1.1、他文書への申し送りは x-handoff-v1.1。v1.0（タグ v1.0-submission）時点の記録: 作成者以外による独立レビュー RV-01〜RV-14 を反映。記録は 11_contracts/review-notes/CON-08.md）。対応要求: R-118, R-119, R-127, R-128, R-232, R-257（R-requirements.md で本ファイルを対応成果物に含む行は R-119, R-127, R-232, R-257。R-118・R-127 は deliverables.md の DL-77 行）、関連 R-102, R-109, R-134, R-193.1〜R-193.6; G-118, G-063, G-064, G-095, G-134。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-77 行・§2.3）, 05_adr/ADR-014-audit-data.md（正本。D14-06〜D14-27・D14-43〜D14-45・D14-54）, 05_adr/ADR-009-workload-identity-token-exchange.md（D09-16・D09-35・D09-36）, 05_adr/ADR-011（D6-1 の reason・consistency・model_revision）, 05_adr/ADR-013（D13-26 の判定記録項目）, 05_adr/ADR-021（D21-09・D21-26・D21-36 の識別子・正規名の形式）, 05_adr/ADR-005（D9-3 の要求 context の範囲）, 11_contracts/schemas/common.schema.json（CON-02。値の形式を揃える）, 05_adr/ADR-022（監査イベント行・記述形式）, 05_adr/reconciliation-notes.md（§3.2 の相関 8 欄、C-34）, 04_architecture/audit-privacy.md（ARC-10 §2・§3・§5.4）, 04_architecture/claims-catalog.md（ARC-15 §3.7・§2.5）, 02_requirements/data-classification.md（§3 の基本区分・加重ラベル）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-10（#1〜#16, #22, #33, #42）, RS-06（#41, #45, #73）, RS-07（#66, #68）, research/standards-status.md（SS-I17, SS-I24, SS-C13, SS-A09, SS-B04）。作成方法: AI エージェント（Claude）が ADR-014 を正本として起草した。自己レビューであり、実在の CTO/CISO・契約変更審査会の承認ではない（CONVENTIONS §8）。凍結（DEC-8）前の draft であり、欄名・列挙値は変わり得る。 機械利用: x- で始まる欄は JSON Schema 2020-12 の未知 keyword（注釈）であり検証に影響しない。Ajv（ajv/dist/2020）は strict:false で使うか、x- の keyword を addKeyword で登録する（既定の strict モードは未知 keyword で compile を止める）。if/then 内の properties・required に type を重ねていないため、Ajv の strictTypes は警告を出す（検証結果は変わらない）。モックは examples（E1・E7・E2・E4・E10 の 5 族）を起点に作る。v1.1（I-3）: examples[5]〜[7] に判定の無い E2（L0 拒否・PDP 不達かつ Txn-Token なし・token 検証失敗）を加えた。",
   "title": "監査イベント（正準スキーマ v1）",
   "description": "本基盤の監査の正本である正準スキーマ（ADR-014 D14-06）。1 インスタンスが 1 件の監査レコードを表す。族は E1 判定〜E10 集約の 10 族（D14-08）。各欄には x-field-class（structural=構造欄・平文、correlation=相関欄・不透明値、pseudonymous=仮名欄、protected=保護欄・暗号文）を付け、CI で WORM 層の形を検査する（D14-09、TC-014-13）。OCSF は正準ではなく版固定の写像先（OCSF 1.9.0、x-ocsf-mapping）であり、CADF 1.0.0 は任意の写像先である（D14-07）。最小化: 全階層で unevaluatedProperties=false とし、未定義の欄を受理しない。token・session cookie・Txn-Token の全文・資格情報・password・OTP・回復コードを置く欄は定義しない（D14-10）。自然人の識別子・IP・資源 ID の原文は平文で置かず、仮名欄（subj_ref・res_ref・ip_ref）と保護欄（prot）に置く（D14-43〜D14-45、AP-01、AP-02）。",
   "type": "object",
@@ -495,8 +495,20 @@
             "$ref": "#/$defs/DetailAdminChange"
           },
           "event_type": {
+            "$comment": "v1.2（CON-17 §12 V12-XG-5、ADR-024 D24-20）: 外部付与と招待の事象を E6 に加えた。名前は ADR-024 D24-20・CON-17 §7 の案をそのまま採り、最終決定は ADR-014・DL-77 の所有者による（ADR-024 の申し送りのまま）。identity-lifecycle の membership.external.granted・membership.removed との対応は CON-17 §12 V12-XG-6 で決める [D]。",
             "enum": [
-              "admin.change"
+              "admin.change",
+              "share.grant.created",
+              "share.grant.changed",
+              "share.grant.revoked",
+              "share.grant.expired",
+              "invitation.sent",
+              "invitation.accepted",
+              "invitation.declined",
+              "invitation.held",
+              "invitation.resolved",
+              "invitation.expired",
+              "invitation.revoked"
             ]
           },
           "tier": {
@@ -1240,6 +1252,37 @@
         "properties": {
           "reason_code": {
             "pattern": "^deny_failmode$"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "v1.2（CON-16 IE-14、CON-11 H12-4、CON-18 HO12-AG-08 (b)）: no_decision_cause=subject_unmapped の reason_code。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          },
+          "detail": {
+            "properties": {
+              "no_decision_cause": {
+                "const": "subject_unmapped"
+              }
+            },
+            "required": [
+              "no_decision_cause"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "pattern": "^deny_subject_unmapped$"
           }
         }
       }
@@ -2102,6 +2145,32 @@
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
         },
+        "agent_principal": {
+          "$ref": "#/$defs/NhiId",
+          "description": "v1.2（任意。CON-18 HO12-AG-08 (a)、ADR-017 D17-47）: エージェント経由の要求のエージェント主体（K3 の最外 act.sub、または自律動作の sub）。平文の NHI ID（D14-44）[D]。"
+        },
+        "delegation_mode": {
+          "enum": [
+            "delegated",
+            "autonomous"
+          ],
+          "description": "v1.2（任意。CON-18 HO12-AG-08 (a)）: delegated=利用者の代理（sub=利用者、act=エージェント主体）、autonomous=エージェント自身の資格情報による動作（sub=エージェント主体）[D]。agent_principal を書くときは必須。"
+        },
+        "tool_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "description": "v1.2（任意。CON-18 HO12-AG-08 (a)）: 呼ばれた tool の ID（CON-18 の tool 目録の ID）[D]。"
+        },
+        "approval_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+          "description": "v1.2（任意。CON-18 HO12-AG-08 (a)、ADR-017 D17-21）: 承認要の tool で消費した承認 grant の ID（CON-18 consumeApprovalGrant）[D]。ADR-017 L17-5 の決定までは承認要の tool は拒否なので、書かれるのは決定後である。"
+        },
+        "external_grant_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+          "description": "v1.2（任意。CON-17 XGC-12・§12 V12-XG-5）: 判定の根拠になった外部付与の ID（CON-03 ProfileDecision.external_grant_id の写し）、または自サービスが CON-17 で作成を依頼した付与の ID [D]。"
+        },
         "decision_source": {
           "enum": [
             "pdp",
@@ -2116,9 +2185,10 @@
             "l0_reject",
             "pdp_unreachable",
             "pdp_timeout",
-            "pdp_response_invalid"
+            "pdp_response_invalid",
+            "subject_unmapped"
           ],
-          "description": "v1.1（I-3、P-03）: decision_source=none の理由。token_invalid=OB-02 の token 検証失敗（主体が未検証のため subject・actor を書かない）、l0_reject=L0（PEP SDK のテナント照合 OB-04）で拒否し PDP を呼ばなかった、pdp_unreachable=façade に接続できない、pdp_timeout=締切（DL-19）までに応答が無い、pdp_response_invalid=応答に形式どおりの decision_id が無い・応答が解釈できない [D]（pep-contract §3.7 の内部理由表に対応）。reason_code との対応は x-enforcement-without-decision。"
+          "description": "v1.2（CON-16 IE-14、CON-11 H12-4、CON-18 HO12-AG-08。room-booking L-4）: subject_unmapped=主体の写像が未決（sub が ai_agent など CON-02 x-subject-type-map で subject_type が null の ptype、表にない ptype）、または CON-18 AD-02〜AD-07（entry point に agent_delegation の宣言がない、scope が tool_scope を含まない、承認要の tool に承認 grant がない等）で PDP を呼ばずに拒否した。reason_code は deny_subject_unmapped、result は denied、fail_mode は不要。名前は CON-11 の案 subject_unmapped と CON-18 の案 unmapped_principal を 1 つに決めたもの（v1.2 の同期）[D]。v1.1（I-3、P-03）: decision_source=none の理由。token_invalid=OB-02 の token 検証失敗（主体が未検証のため subject・actor を書かない）、l0_reject=L0（PEP SDK のテナント照合 OB-04）で拒否し PDP を呼ばなかった、pdp_unreachable=façade に接続できない、pdp_timeout=締切（DL-19）までに応答が無い、pdp_response_invalid=応答に形式どおりの decision_id が無い・応答が解釈できない [D]（pep-contract §3.7 の内部理由表に対応）。reason_code との対応は x-enforcement-without-decision。"
         }
       },
       "required": [
@@ -2199,6 +2269,19 @@
                 "const": "known_good"
               }
             }
+          }
+        },
+        {
+          "$comment": "v1.2（CON-18 HO12-AG-08 (a)）: エージェント主体を書く記録は委任／自律の区分を必須にする。",
+          "if": {
+            "required": [
+              "agent_principal"
+            ]
+          },
+          "then": {
+            "required": [
+              "delegation_mode"
+            ]
           }
         },
         {
@@ -2490,9 +2573,11 @@
             "principal_lifecycle",
             "exchange_registry",
             "entry_point",
-            "ssf_stream"
+            "ssf_stream",
+            "external_grant",
+            "agent_delegation"
           ],
-          "description": "変更対象の種別。ssf_stream は CON-05（ssf-caep.openapi.yaml）が監査に残すとする stream 設定の変更。値の追加は minor 版。"
+          "description": "変更対象の種別。ssf_stream は CON-05（ssf-caep.openapi.yaml）が監査に残すとする stream 設定の変更。値の追加は minor 版。v1.2: external_grant は CON-17 の外部付与と招待（event_type share.grant.*・invitation.*）、agent_delegation は CON-18 の委任 grant の付与・取消し（event_type admin.change）[D]。"
         },
         "operation": {
           "enum": [
@@ -2503,8 +2588,16 @@
             "pin",
             "rollback",
             "suspend",
-            "resume"
-          ]
+            "resume",
+            "revoke",
+            "expire",
+            "send",
+            "accept",
+            "decline",
+            "hold",
+            "resolve"
+          ],
+          "description": "v1.2: revoke〜resolve は外部付与・招待（object_type external_grant）と委任 grant（agent_delegation）の状態遷移の写し（CON-17 §7、CON-18）[D]。"
         },
         "change_ticket": {
           "type": "string",
@@ -3178,7 +3271,7 @@
         "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
       },
       "action": {
-        "name": "can_update"
+        "name": "update"
       },
       "corr": {
         "iss": "https://sts.jp1.id-domain.example",
@@ -3333,7 +3426,7 @@
         "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
       },
       "action": {
-        "name": "can_update"
+        "name": "update"
       },
       "corr": {
         "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
@@ -3491,7 +3584,7 @@
         "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
       },
       "action": {
-        "name": "can_update"
+        "name": "update"
       },
       "corr": {
         "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
@@ -3557,7 +3650,7 @@
         "res_ref": "rr_k1.Wc1Ds5Fe0Gh2Ji4Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb"
       },
       "action": {
-        "name": "can_submit"
+        "name": "submit"
       },
       "corr": {
         "txn_absence": "not_presented",
@@ -3976,7 +4069,9 @@
     "未決（v1.1・I-3、ADR-012 L-05）: L0 拒否の reason_code（deny_l0:<missing|mismatch|not_found|indeterminate>）は pep-contract §3.7 の暫定値。確定時に本スキーマの規則を合わせる",
     "暫定（v1.1・I-3、DL-77 付属）: fingerprint の正準化（RFC 8785 JCS）と 0x1F 区切りの参照値入力。確定時に minor 版で改める",
     "未作成（v1.1・I-3）: 参照値 API と監査送信 API（cell 内の耐久ジャーナルへの送信）の契約。x-handoff-v1.1 の申し送り 3",
-    "未決（v1.1・I-5、ADR-017 D17-16）: ai_agent の AuthZEN Subject.type。監査側は ai_agent を書く"
+    "未決（v1.1・I-5、ADR-017 D17-16）: ai_agent の AuthZEN Subject.type。監査側は ai_agent を書く。v1.2: 委任の actor としては CON-18 §5 の暫定写像で PDP に進める（監査側は agent_principal・delegation_mode で記録する）",
+    "未決（v1.2・CON-11 H12-4 (3)、CON-16 §2.10）: 参照値 API の契約の作成期限。v1.2 の同期の案は G3（DL-120 のキット本体と同時。MK-07 のスタブが要るため）、所有者 DL-77・ADR-014。決定は ADR-014 の所有者による",
+    "暫定（v1.2・CON-17 V12-XG-5）: share.grant.*・invitation.* の event_type の名前（ADR-024 D24-20 の案）。identity-lifecycle の membership.external.granted・membership.removed との対応（CON-17 V12-XG-6）とあわせて確定する"
   ],
   "x-references": [
     "[1] Open Cybersecurity Schema Framework『ocsf-schema Release 1.9.0』2026-08-03. https://github.com/ocsf/ocsf-schema/releases/tag/1.9.0 （確認日 2026-10-03）RS-10#1, #9",
@@ -4100,6 +4195,14 @@
         "corr.decision_id": "書かない",
         "reason_code": "deny_token",
         "detail.result / fail_mode": "denied / （不要）。subject・actor は書かない。tid は経路・資源から導いたテナント（L0 の (iii)）、導けなければ ~platform"
+      },
+      {
+        "場面": "v1.2: 主体の写像が未決（sub が ai_agent 等）、または CON-18 AD-02〜AD-07 で PDP を呼ばずに拒否",
+        "decision_source": "none",
+        "no_decision_cause": "subject_unmapped",
+        "corr.decision_id": "書かない",
+        "reason_code": "deny_subject_unmapped",
+        "detail.result / fail_mode": "denied / （不要）。subject・actor は検証済みの token の値を書く。エージェント経由なら agent_principal・delegation_mode・tool_id を書く。CON-16 §2.8 v1.2 の暫定（deny_failmode と内部ログ）は本版で置き換わる"
       }
     ],
     "rules": [
@@ -4172,6 +4275,9 @@
     "v1.1（I-5、P-06）: subject.type・actor.*.type は ptype の値をそのまま写すことを明記し、AuthZEN Subject.type との対応を x-subject-type-map に記述。",
     "v1.1（I-3・I-5）: examples[5]〜[7] と負例 12 件を追加。",
     "v1.1 の同期（版 0.3.1）: (1) action.name の説明と examples の can_read を read に改めた（CON-03 §12 N-4、I-5）。(2) properties.tier の enum の写しを CON-02 OperationTierClass への参照にした（CON-02 HO-I7-2、I-7。値の集合は同じ）。$defs.TenantId は値の集合が CON-02 TenantId と異なるため置き換えず、$comment に未決として記した。(3) x-subject-type-map の正本を CON-02 x-subject-type-map と明記した（申し送り 4 のうち CON-02 の部分）。(4) x-negative-examples の各項目に id（AEN-01〜AEN-32）を付けた（CON-11 §14.3 H11-6、I-11）。既存の負例の内容と順序は変えていない [D]。"
+  ],
+  "x-changes-v1.2": [
+    "v1.2 の同期（版 0.4.0）: (1) DetailEnforcement.no_decision_cause に subject_unmapped を加え、reason_code を deny_subject_unmapped に固定する規則と x-enforcement-without-decision の行を加えた（CON-16 IE-14、CON-11 H12-4 (1)、CON-18 HO12-AG-08 (b)。名前は 2 案を 1 つにした）。(2) DetailEnforcement にエージェント関連の任意の欄 agent_principal・delegation_mode・tool_id・approval_id と external_grant_id を加えた（CON-18 HO12-AG-08 (a)、CON-17 V12-XG-5）。(3) E6 の event_type に share.grant.*・invitation.* を、object_type に external_grant・agent_delegation を、operation に revoke・expire・send・accept・decline・hold・resolve を加えた（CON-17 V12-XG-5）。(4) examples の action.name can_update（3 か所）・can_submit（1 か所）を update・submit に改めた（CON-16 IE-14、CON-11 H12-4 (2)、CON-18 HO12-AG-08 (c)。v1.1 の I-5 の取りこぼし）。(5) 参照値 API の契約の期限は x-open-issues に案として置いた（H12-4 (3)。決定ではない）。既存の欄の意味・既存の負例は変えていない [D]。"
   ],
   "x-handoff-v1.1": {
     "title": "他文書への申し送り（v1.1）",

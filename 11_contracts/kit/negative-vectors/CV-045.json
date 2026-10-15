@@ -15,13 +15,13 @@
   "status": "conditional",
   "stub_requirements": [
     "issuer A（本番役）の discovery と JWKS を配る",
-    "TTS 役の JWK Set（CON-05 の TTS の検証鍵）を配る",
-    "access token と Txn-Token を自前の鍵で鋳造できる。claim を個別に上書きできる"
+    "TTS 役の JWK Set（CON-05 の TTS の検証鍵）を、issuer A と別の鍵・別の URL で配る（AUTH_TTS_JWKS_URL）",
+    "access token と Txn-Token を自前の鍵で鋳造できる。Txn-Token は TTS 役の鍵（TTS.current）で署名し、claim を個別に上書きできる"
   ],
   "cases": [
     {
       "case_id": "CV-045a",
-      "description": "正規の access token（tid=t1）と、正規に署名されているが tctx.tid が t2 の Txn-Token を、write の entry point に提示する",
+      "description": "正規の access token（tid=t1）と、TTS 役の鍵で正規に署名されているが tctx.tid が t2 の Txn-Token を、write の entry point に提示する。v1.2（M-3）: signer を TTS.current に改めた（A.current では鍵族を分けて検証する SUT が署名で落とし、l0_mismatch を検出できない）",
       "stimulus": {
         "setup": [
           {
@@ -39,7 +39,7 @@
         "mint": {
           "base": "txn_token",
           "claimed_issuer": "A",
-          "signer": "A.current",
+          "signer": "TTS.current",
           "claims": {
             "tctx": {
               "tid": "{{tenant.2}}"
@@ -88,7 +88,7 @@
         "mint": {
           "base": "txn_token",
           "claimed_issuer": "A",
-          "signer": "A.current"
+          "signer": "TTS.current"
         },
         "present": {
           "as": "txn_token_header"
@@ -106,6 +106,59 @@
           "pdp_calls_max": 0
         }
       }
+    },
+    {
+      "case_id": "CV-045c",
+      "description": "v1.2（M-3）: claim はすべて正しい（tctx.tid=t1、sub は access token と同じ）Txn-Token を、TTS 役ではなく access token の issuer A の鍵（A.current）で署名して write の entry point に提示する（K3 と K5 の鍵族の取違えを検出する。CON-16 §1.6 (2)）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "access_token": {
+              "claimed_issuer": "A",
+              "signer": "A.current",
+              "claims": {
+                "tid": "{{tenant.1}}"
+              }
+            },
+            "present_access_token_as": "authorization_bearer"
+          }
+        ],
+        "mint": {
+          "base": "txn_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "tctx": {
+              "tid": "{{tenant.1}}"
+            }
+          }
+        },
+        "present": {
+          "as": "txn_token_header"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "audit": {
+          "events_min": 1,
+          "fields": [
+            "corr.txn_absence"
+          ]
+        },
+        "notes": "Txn-Token を検証できないので txn は書かず txn_absence=unverified（CON-08）。拒否の内部理由は deny_token"
+      }
     }
   ],
   "observe": [
@@ -115,8 +168,9 @@
   "strength": "D: ADR-005 V 規則と ADR-009（Txn-Token の検証は自社 profile txn-v1）。Transaction Tokens は Internet-Draft で規範根拠にしない",
   "notes": [
     "v1.1 の同期で新設（CON-16 IE-3）。CON-11 §6.8 に登録",
-    "access token とのテナントの照合は CON-11 §6.2 CV-001（cross-tenant）と別の観点（Txn-Token 側の改ざん・食い違い）である"
+    "access token とのテナントの照合は CON-11 §6.2 CV-001（cross-tenant）と別の観点（Txn-Token 側の改ざん・食い違い）である",
+    "v1.2（13_integration-trial/room-booking/report.md M-3）: CV-045a・b の signer を TTS.current に改め、旧 CV-045a が実際に検出していた「access token の鍵で署名した Txn-Token」を CV-045c として分けた。CV-045a の期待（l0_mismatch）は変えていない"
   ],
-  "since": "0.2.0（v1.1 の同期。CON-16 IE-3）",
+  "since": "0.2.0（v1.1 の同期。CON-16 IE-3）。v1.2 で CV-045c を追加（0.3.0）",
   "deprecated": null
 }

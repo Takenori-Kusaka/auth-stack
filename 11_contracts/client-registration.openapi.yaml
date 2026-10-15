@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Client Registration API（sandbox の RFC 7591/7592 profile と本番の登録申請 API）
-  version: 0.5.1
+  version: 0.6.0
   summary: OAuth/OIDC client と、C7（内部 workload）の SVID 登録エントリ・交換可能な組の登録手段の契約。sandbox はセルフ登録、本番は承認付きの申請（G-138 の I-01・I-16（案）・I-17（案）、G-141(c)、OB-2(a)〜(d)）
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -80,7 +80,7 @@ info:
     not-frozen: endpoint のホスト名、initial access token の寿命と発行窓口、登録数の上限値、承認の SLI 値、redirect ホストの再検証の周期・猶予期間・検証用 TXT record のラベル名（版 0.5.0）
   x-preview-expires: TBD（CON-00 §4.6 F-2 の初期案では preview に置いた日から 12 か月。決める人 CTO、期限 DEC-8 前）
   description: |
-    > 文書ID: CON-14 / DL-119 / 版: 0.5.1 / 状態: draft / 最終更新: 2026-10-15（0.5.1（v1.1 の同期。v1.1（I-7）。AI エージェントによる同期で独立レビューは未実施）: CON-02 HO-I7-4 に従い、TenantConsentRef の `tenant_id` を本契約の OpaqueId の写しから CON-02 TenantId（`./schemas/common.schema.json#/$defs/TenantId`）への参照に改めた。項目名 `tenant_id` は変えていない（変更は破壊的）。受理する値の範囲は CON-02 の受信側の既定（印字可能 ASCII 1〜64 文字）に広がり、基盤が払い出す tid（CON-02 IssuedTenantId）はどちらでも受理される。その他の項目・規則・理由コード・負例は変えていない [D]。0.5.0 の追記（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。契約の項目・規則・理由コード・負例は変えていないので版は上げない）: §9 の H-24・H-25・H-30・H-31 に宛先での反映状況を記した（REQ-06 §16、CTL-02 §12、TRC-11 申し送り 70）。0.5.0（凍結前是正 FZ-027）: 模擬パネル ラウンド 10 の redteam 指摘〔THR-03 T-098（登録済み redirect URI のホストのドメイン失効・dangling DNS による乗っ取り）の予防が本契約になく、THR-03 申し送り T98-1 が未適用。MP-6-16〕により、§5A を新設し、本番の client の create・update で redirect_uris の各ホストのドメイン検証（CTL-01 C-027 の DNS TXT 方式を流用し、client と所有テナントに束縛。public suffix と共有ホスティングの suffix の直下は拒否）を必須にした。検証の発行・状態の 2 操作、承認規則 AR-10（自動検査）、申請の `redirect_host_verifications`、定期の再検証と NS・登録者・CNAME の宛先の変更の検知、失効時の redirect URI の即時の無効化と猶予後の client の停止（DL-24 の P-K1）、理由コード CR25〜CR28、負例 CRN-47〜CRN-54 を加えた。THR-03・CTL-01・OPS-01 ほかへの同期は §9 H-32〜H-39 で申し送った。0.4.1: 模擬パネル ラウンド 10 の legal 指摘〔H-24・H-25 が宛先に未適用で、POA&M に担当と期限を持つ行がない〕により、§9 の H-24 を REQ-06 §11.4 条項 14 の起案内容に、H-25 を CTL-02 §3.5 の行と L-04・L-13 の帰結に具体化し、POA&M の起票（H-30）と RRG-076 の受容の前提（H-31）を申し送った。契約の項目・規則・理由コードは変えていない。0.4.0: 模擬パネル ラウンド 9 の legal 指摘〔AR-8 の同意が受領者・利用目的・データ区分・処理地域・保持期間を束縛せず、所在地指定テナントの管理者の同意だけで別法域・別法人の app-only client にデータが渡り得る〕により、申請に `data_processing`（DataProcessingDeclaration）を加えて同意の本体の束縛項目と同意画面の表示項目に (i)〜(v) を足し、承認規則 AR-9（処理地域が所有テナントの所在地群の外にあるか受領法人が基盤運営法人と別法人なら DL-34 の判定記録を必須）、理由コード CR24、負例 CRN-42〜CRN-46 を追加した。REQ-06 の責任分界と CTL-02 §3.5 は §9 H-24〜H-28 で申し送った。0.3.1（PoC/R7反映）: POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存し、検査されない欄から越境が成立した兆候）を受け、`platform_owning_tenant` の値そのものの検証（受付時の実在・状態・環境、変更時の再同意、払出し後の token の `tid` への固定、同意の撤回とテナントの終了）を §5 に加え、理由コード CR23 と負例 CRN-38〜CRN-41 を追加した。PoC は client 登録の部品を含まず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない。0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
+    > 文書ID: CON-14 / DL-119 / 版: 0.6.0（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15（0.6.0（v1.2 の同期。2 回目の模擬連携検証 13_integration-trial/room-booking/report.md（AI による模擬であり実在の連携チームの検証ではない）の C-2 を受けた CON-18 HO12-AG-05 の反映。AI エージェントによる同期で独立レビューは未実施）: (a) §1 の範囲外「AI エージェントの委任 grant」を CON-18（agent-delegation.openapi.yaml）への参照に改め、(b) §3 と ClientMetadata に AI エージェントの委任用 client の種別 C8d（仮称、preview）を加え、既存の C8 を自律用と明記し、(c) エージェント主体の登録手段は本契約に置かず x-open-issues に未決として置いた。C8d の追加は enum と規則の追加で、既存の種別の規則は変えていない（minor）。記録は §9 の H-40〜H-42。0.5.1（v1.1 の同期。v1.1（I-7）。AI エージェントによる同期で独立レビューは未実施）: CON-02 HO-I7-4 に従い、TenantConsentRef の `tenant_id` を本契約の OpaqueId の写しから CON-02 TenantId（`./schemas/common.schema.json#/$defs/TenantId`）への参照に改めた。項目名 `tenant_id` は変えていない（変更は破壊的）。受理する値の範囲は CON-02 の受信側の既定（印字可能 ASCII 1〜64 文字）に広がり、基盤が払い出す tid（CON-02 IssuedTenantId）はどちらでも受理される。その他の項目・規則・理由コード・負例は変えていない [D]。0.5.0 の追記（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。契約の項目・規則・理由コード・負例は変えていないので版は上げない）: §9 の H-24・H-25・H-30・H-31 に宛先での反映状況を記した（REQ-06 §16、CTL-02 §12、TRC-11 申し送り 70）。0.5.0（凍結前是正 FZ-027）: 模擬パネル ラウンド 10 の redteam 指摘〔THR-03 T-098（登録済み redirect URI のホストのドメイン失効・dangling DNS による乗っ取り）の予防が本契約になく、THR-03 申し送り T98-1 が未適用。MP-6-16〕により、§5A を新設し、本番の client の create・update で redirect_uris の各ホストのドメイン検証（CTL-01 C-027 の DNS TXT 方式を流用し、client と所有テナントに束縛。public suffix と共有ホスティングの suffix の直下は拒否）を必須にした。検証の発行・状態の 2 操作、承認規則 AR-10（自動検査）、申請の `redirect_host_verifications`、定期の再検証と NS・登録者・CNAME の宛先の変更の検知、失効時の redirect URI の即時の無効化と猶予後の client の停止（DL-24 の P-K1）、理由コード CR25〜CR28、負例 CRN-47〜CRN-54 を加えた。THR-03・CTL-01・OPS-01 ほかへの同期は §9 H-32〜H-39 で申し送った。0.4.1: 模擬パネル ラウンド 10 の legal 指摘〔H-24・H-25 が宛先に未適用で、POA&M に担当と期限を持つ行がない〕により、§9 の H-24 を REQ-06 §11.4 条項 14 の起案内容に、H-25 を CTL-02 §3.5 の行と L-04・L-13 の帰結に具体化し、POA&M の起票（H-30）と RRG-076 の受容の前提（H-31）を申し送った。契約の項目・規則・理由コードは変えていない。0.4.0: 模擬パネル ラウンド 9 の legal 指摘〔AR-8 の同意が受領者・利用目的・データ区分・処理地域・保持期間を束縛せず、所在地指定テナントの管理者の同意だけで別法域・別法人の app-only client にデータが渡り得る〕により、申請に `data_processing`（DataProcessingDeclaration）を加えて同意の本体の束縛項目と同意画面の表示項目に (i)〜(v) を足し、承認規則 AR-9（処理地域が所有テナントの所在地群の外にあるか受領法人が基盤運営法人と別法人なら DL-34 の判定記録を必須）、理由コード CR24、負例 CRN-42〜CRN-46 を追加した。REQ-06 の責任分界と CTL-02 §3.5 は §9 H-24〜H-28 で申し送った。0.3.1（PoC/R7反映）: POC-02 の X-C・X-D（テナント境界の検査が 1 つの層・1 つの欄に依存し、検査されない欄から越境が成立した兆候）を受け、`platform_owning_tenant` の値そのものの検証（受付時の実在・状態・環境、変更時の再同意、払出し後の token の `tid` への固定、同意の撤回とテナントの終了）を §5 に加え、理由コード CR23 と負例 CRN-38〜CRN-41 を追加した。PoC は client 登録の部品を含まず、POC-02 の値は立会人なしの自己実行であり Gate 4 の証拠ではない。0.3.0: 模擬パネル ラウンド 7 の redteam 指摘〔所有テナント側の同意なしに本番の app-only client を払い出せる〕により、承認規則 AR-8（所有テナントの管理者の同意記録）を新設し、AR-4 の適用を ADR-008 D8-54 に合わせて app-only の権限の付与すべてに広げ、理由コード CR22 と負例 CRN-31〜CRN-37 を加えた。末尾「レビュー記録」）
     > 対応要求: G-138, G-141, G-118, G-119, G-124, R-158, R-251, R-255（全件は info.x-requirements）
     > 依存文書: info.x-depends-on
     > 作成方法: AI エージェント（Claude）が ARC-02 §6・§8・§9、ADR-005・ADR-008・ADR-009・ADR-021・ADR-022、INT-04 §4.3、CON-11 §5 を読み、模擬パネル（ラウンド 1）の指摘に答えて起草した。版 0.2.0 の §4A（workload と交換可能な組の登録）は、ラウンド 6 の指摘に答えて ARC-04 §3.1・§3.2、ADR-009 D09-12〜D09-15、INT-04 §4.3、12_poc/code のソースを読んで加えた。research ノートにない原典（RFC 7591 §2・§3・§3.2.1・§3.2.2・§5、RFC 7592 全体、RFC 8705 §2.1.2・§3.4、RFC 9449 §5.2、RFC 9126 §6、OIDC Dynamic Client Registration 1.0 §2）は起草者が 2026-10-15 に RFC Editor・OpenID Foundation から取得して照合した。作成者以外による照合は未実施である。模擬パネルの判定は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
@@ -102,7 +102,7 @@ info:
     | sandbox の client 登録・読取り・更新・削除（RFC 7591/7592 profile） | SVID の発行・更新そのもの、attestation の実装、trust domain と SPIFFE ID の path の形式（ARC-04 W55-02・W55-03・W55-07〜W55-10、DL-71） |
     | 本番の client 登録・変更・廃止の申請、承認、払出し結果の取得 | STS の exchange の判定そのもの（ADR-009 D09-11〜D09-16、CON-05） |
     | **C7 の workload の SVID 登録エントリ（ARC-04 W55-08、OB-2(a)(b)）の sandbox セルフ登録と本番の申請（§4A、版 0.2.0、preview）** | 登録簿の版管理と監査の仕組み（ADR-016、ADR-009 D09-13） |
-    | **交換可能な組（ADR-009 D09-13、OB-2(c)）の sandbox 登録と本番の申請（§4A、版 0.2.0、preview）** | AI エージェントの委任 grant（ADR-017・ADR-026） |
+    | **交換可能な組（ADR-009 D09-13、OB-2(c)）の sandbox 登録と本番の申請（§4A、版 0.2.0、preview）** | AI エージェントの委任 grant（ADR-017・ADR-026）。v1.2: 委任の付与・範囲・期限・承認・取消しの契約は CON-18（`agent-delegation.openapi.yaml`、preview）。委任用 client（C8d）の登録の中身は本契約 §3 |
     | 種別ごとの登録内容の検査規則、理由コード、負例 | token の取得・検証そのもの（ARC-02、CON-06） |
     | 承認の要否を決める規則（案） | 本基盤が RP として顧客 IdP に接続する C9（ADR-004。顧客 IdP 側の登録） |
     | | OIDC Back-Channel Logout の `backchannel_logout_uri` の登録（位置が未決。ADR-006 L6-2） |
@@ -140,7 +140,8 @@ info:
     | C2 第一者ネイティブ・CLI | authorization_code、refresh_token | `["code"]` | none | `dpop_bound_access_tokens: true` | 任意 | B・H（F1〜F6 は発行しない） | loopback の IP リテラルか、`<id-domain>` を逆順にした private-use scheme（ADR-021 D21-24） |
     | C3 第三者サーバー型 | authorization_code、refresh_token | `["code"]` | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true`（既定）。DPoP は K-3 の例外で受容票が要る | 層 F なら必須 | B・H・F | https のみ |
     | C4 第三者ブラウザ内 | authorization_code、refresh_token | `["code"]` | none | `dpop_bound_access_tokens: true` | 任意 | B のみ | https のみ |
-    | C5 外部 M2M、C8 AI エージェント（自身の資格情報） | client_credentials のみ | 空か省略 | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true` | 該当なし | B・F | 登録しない |
+    | C5 外部 M2M、C8 AI エージェント（自身の資格情報。v1.2: 自律動作用と明記） | client_credentials のみ | 空か省略 | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true` | 該当なし | B・F | 登録しない |
+    | C8d AI エージェントの委任用 client（v1.2、仮称、preview。CON-18 HO12-AG-05） | authorization_code（PKCE S256）、refresh_token | `["code"]` | private_key_jwt か tls_client_auth | `tls_client_certificate_bound_access_tokens: true` | `require_pushed_authorization_requests: true` | B・F | https のみ |
     | C6 外部 RP | authorization_code、refresh_token | `["code"]`（hybrid は未決のため不可） | private_key_jwt か tls_client_auth | C1・C3 と同じ | 層 F なら必須 | B・H・F | https のみ |
 
     - 全種別に共通の規則 [D]。
@@ -157,6 +158,7 @@ info:
       - C6 の `id_token_signed_response_alg` は、省略すると RS256 になる [N][^6]。ARC-02 K1 は ES256 か PS256 で登録させるとしているので、本 profile は必須項目にする。層 F の client は、PS256 の鍵がない間（XR-04）は ES256 に限る [D]。層 B の既定 alg は ARC-02 KP-1 で未決である。
       - `client_id` と `client_secret` を登録者が要求に入れることはできない（ADR-021 D21-22）。`client_id` は基盤が払い出す不透明値で、環境ごとに別の値になる [D]。
       - 所有者（`platform_owner`）と所有テナント（`platform_owning_tenant`）は metadata に持たせ、`client_id` から推論させない（ADR-021 D21-22）[D]。所有者のない client は登録できない（ADR-008 D8-54 の棚卸し）[D]。
+    - v1.2（CON-18 HO12-AG-05 (b)、preview）: C8d は利用者の委任を受けて代理で動く AI エージェントの client で、`client_credentials` を登録できない（委任用 client が `sub`＝エージェントの token を得る経路を作らない。CON-18 AG02、ADR-017 D17-09）。`platform_agent_definition_ref`（エージェント定義の参照。エージェント主体・tool サーバー・自律度区分を引く鍵）を必須にする。種別名 C8d は ARC-02 §6 に無い仮称で、ARC-02 の改版で確定する [D]。エージェント主体（テナントごと）の登録手段は本契約に置かない（x-open-issues）[D]。
     - C7（内部 workload）は ClientMetadata では登録しない。§4A の WorkloadEntry と ExchangePair で登録する [D]。C7 は STS への client 認証に X.509-SVID の mTLS（RFC 8705 の `tls_client_auth` で SAN URI を照合）を使うので（ADR-009 D09-14・D09-19）、STS 側の client の設定は登録エントリから基盤が作り、利用者に ClientMetadata を書かせない [D]。
     - RFC 7591 が定めない項目名（`platform_` で始まる 5 項目）は本契約の名前案であり、名前空間の規則（ADR-021 D21-28）で確定する（未決（ADR-021））[D]。RFC 7591 は、AS が理解しない client metadata を無視しなければならない（MUST）としている [N][^1]（§2）。そのため、他の AS 製品へ移る場合もこれらの項目は登録記録の側（本契約の申請 API と台帳）に持ち、AS 製品の拡張機能に依存しない [D]。
     - RFC 9126 は、RFC 7591 の metadata が、動的登録を使わない場合にも client の一般的なデータモデルとして役に立つと述べている [N][^5]（§6）。本番の申請 API が RFC 7591 の項目名を使うのはこのためである [D]。
@@ -390,6 +392,9 @@ info:
     | H-37 | 00_decision/05-residual-risk-register.md（DCS-05）§8.1 | （凍結前是正 FZ-027）T98-2 の T-098 の行の写像先に、本契約 §5A.6 の残余（再検証の周期の間の窓、登録データに現れない所有の移転、判定できない CNAME の宛先、sandbox の対象外）を含める。§5A の規則の決定前に受容に付議する場合は、規則が未実装であることを受容票の残余に明記する |
     | H-38 | 10_integration/onboarding.md（INT-04）§4.3 OB-2(d)・ONB-R2、10_integration/README.md（INT-00） | （凍結前是正 FZ-027）OB-2(d) の手順に、申請の前の redirect ホストの検証（`createRedirectHostVerification` と TXT record の設置）、AR-10、取消の手順（TXT を消すと次の再検証で失効する）と再検証の周期を加える（草案 §6.3 の MUST の「明示」をここで果たす）。承認者案の読替えは AR-1〜AR-10 とする（H-29 の更新） |
     | H-39 | traceability/open-items.md（TRC-11）§4.11.1、05_adr/ADR-004・04_architecture/token-profile.md（ARC-02）§6・§9.2 行 25 | （凍結前是正 FZ-027）(1) POA&M: THR-03 T98-3 の (1)（MP-6-16、T-098）の行の完了条件に、本契約 §5A の実装と CRN-47〜CRN-54 の実行（TH-TC-098）を書く。担当 CON-14 の所有者＋CISO、期限 DEC-8 の前（TC の実行は G4）。(2) ADR-004 の domain verification（HRD）と本契約 §5A は同じ C-027 の部品を使うので、検証の記録・再検証の処理・PSL の版を共用するかを ADR-004 の所有者と決める。(3) ARC-02 §6 と §9.2 行 25 の redirect URI の規則に、本番のホストのドメイン検証（§5A）を加える |
+    | H-40 | 04_architecture/token-profile.md（ARC-02）§6 | （v1.2 の同期、版 0.6.0）種別 C8d（AI エージェントの委任用 client。CON-18 HO12-AG-05 (b)）を ARC-02 §6 の種別表に加え、仮称を確定する。既存の C8 を自律動作用と明記する |
+    | H-41 | 11_contracts/mock-contract-test-kit.md（CON-11）§4.2・§6.3 | （v1.2 の同期）MK-01 の sandbox 登録に C8d を加え、登録族の負例に「C8d が client_credentials を含む」「PAR なし」「`platform_agent_definition_ref` なし」を加える（CON-18 AGN-10 と対） |
+    | H-42 | 05_adr/ADR-017（D17-39）、DL-48 | （v1.2 の同期）エージェント主体の登録手段を本契約の preview に置くか DL-48 の別契約にするかを決める（x-open-issues「v1.2 エージェント主体の登録手段」） |
 
     ## 10. 誠実性
 
@@ -535,6 +540,10 @@ info:
       result: Redocly はエラー 0・警告 0。YAML として読み込め、components.schemas の 36 件（RedirectHostVerificationCreate・RedirectHostVerification を追加）が check_schema に合格し、paths の requestBody と応答の examples 16 件（検証の 2 操作の 3 件と、redirect_host_verifications を加えた createFapiClient を含む）が適合した。host の pattern は wildcard（*.partner.example）、IP リテラル、単一ラベル（localhost）、大文字を含む名前を拒否した。x-reason-codes は CR01〜CR28、x-negative-examples は 54 件（CRN-01〜CRN-54）、x-approval-rules に AR-10（是正の作成者が 2026-10-15 に実行。生データは作成者の一時作業領域だけに置いた。TC-ID のない作成者の確認なので [M] は付けない）
       reason: AR-10 の判定（検証の束縛・TXT の照合・PSL・CNAME の宛先）と CR28 の失効は DNS と台帳の状態に依存するため、スキーマでは検査できない。redirect_host_verifications を必須にする条件も redirect_uris の値に依存するのでスキーマに書かず、受付時の検査（CR25）で表す。版 0.4.0 で未実行だった lint は本版で再実行した
   x-open-issues:
+    - id: v1.2 エージェント主体の登録手段（CON-18 HO12-AG-05 (c)）
+      text: エージェント主体（テナントごと。ADR-017 D17-39 の必須項目 主・副所有者、用途、自律度区分、tool サーバー、テナント、有効期限）を登録する手段が契約にない。案は (a) 本契約 §4A に倣って preview の operation を置く、(b) DL-48（非人間 ID の台帳）の別契約にする。v1.2 の同期では決めず、C8d の `platform_agent_definition_ref` は参照の欄だけを置いた。決めるのは認証・IdP チーム＋ADR-017 の所有者、期限は ADR-017 L17-5 の決定と同時。それまで sandbox での委任用 client の試験はエージェント定義を固定値で置く（CON-16 ST-1・ST-9）
+    - id: v1.2 C8d の種別名と ARC-02 §6
+      text: C8d は ARC-02 §6 にない仮称。ARC-02 の改版で種別名と層を確定する（v1.2 の同期では 04_architecture を編集していない）
     - id: ADR-022（本番の登録手段）
       text: ADR-022 D-2 は非本番の動的登録を preview に置くだけで、本番の登録手段を契約に含めるかを決めていない。本契約は申請 API を preview として置いた。区分と承認者 AR-1〜AR-9 の確定は ADR-022 の改版と ONB-R2。決める人 CTO（契約管理）、CISO 協議。期限 DEC-8 前
     - id: platform_owning_tenant の検証と実行時の束縛（版 0.3.1、PoC/R7反映）
@@ -1479,7 +1488,7 @@ components:
         platform_client_category:
           description: ARC-02 §6 の client 種別。C7（内部 workload）と C9（本基盤が RP）は範囲外
           type: string
-          enum: [C1, C2, C3, C4, C5, C6, C8]
+          enum: [C1, C2, C3, C4, C5, C6, C8, C8d]
         platform_owner:
           $ref: '#/components/schemas/Owner'
         platform_owning_tenant:
@@ -1599,6 +1608,7 @@ components:
             - $ref: '#/components/schemas/RulesC4'
             - $ref: '#/components/schemas/RulesC5C8'
             - $ref: '#/components/schemas/RulesC6'
+            - $ref: '#/components/schemas/RulesC8d'
       x-constraint:
         - "sandbox: redirect_uris のホストと jwks の鍵が、本番の一覧に含まれない（CR04・CR13。設定に依存するためスキーマでは表せない）"
         - "C3 で dpop_bound_access_tokens=true とする場合は platform_acceptance_ref が必須（AR-5）"
@@ -1710,6 +1720,27 @@ components:
         redirect_uris: { maxItems: 0 }
         tls_client_certificate_bound_access_tokens: { const: true }
         platform_risk_layer: { enum: [B, F] }
+    RulesC8d:
+      additionalProperties: true
+      description: v1.2（CON-18 HO12-AG-05 (b)、preview）。AI エージェントの委任用 client（仮称 C8d）。authorization_code＋PKCE S256、PAR 必須、送信者束縛は mTLS、redirect_uris は https のみ、エージェント定義の参照を必須にする [D]
+      allOf:
+        - $ref: '#/components/schemas/ConfidentialAuth'
+        - $ref: '#/components/schemas/CodeFlowGrants'
+      required: [require_pushed_authorization_requests, tls_client_certificate_bound_access_tokens, platform_agent_definition_ref]
+      properties:
+        platform_client_category: { const: C8d }
+        require_pushed_authorization_requests: { const: true }
+        tls_client_certificate_bound_access_tokens: { const: true }
+        platform_risk_layer: { enum: [B, F] }
+        platform_agent_definition_ref:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+          description: v1.2（仮の項目名。ADR-021 D21-28 の名前空間の規則で確定）。エージェント定義（ADR-017 D17-39 の登録項目を持つ記録）の参照。登録手段は未決（x-open-issues）
+        redirect_uris:
+          items:
+            $ref: '#/components/schemas/HttpsRedirectUri'
     RulesC6:
       additionalProperties: true
       allOf:

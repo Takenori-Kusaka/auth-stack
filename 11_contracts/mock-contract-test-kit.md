@@ -1,8 +1,8 @@
 # モック・契約試験キット仕様
 
-> 文書ID: CON-11 / 版: 0.13（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15（0.13＝v1.1 の同期: 他文書の v1.1 改訂が本書と kit/ に宛てた申し送りを反映した（§14.4）。CON-15 の単独ファイル（state-query.openapi.yaml）への照会モックの付け替え、照会の不適合応答の注入、再署名の補助の仕様、§11.4 の差し替え点（照会の timeout・Q_fresh、TTS、鍵マニフェストと env）、echo proxy の R8、§6.8 の追加ベクタ（CV-003c・CV-007c・CV-007d・CV-045〜CV-057）、MK-04・MK-07 の追記、§16 の入口の参照。AI エージェントによる同期で、独立レビューは未実施。0.12＝v1.1: AI エージェントによる模擬連携検証（13_integration-trial/report.md。実在の連携チームの検証ではない）の P-01・P-10・P-14・P-22〜P-25 と改善提案 I-1・I-8・I-11・I-14 の一部を反映した。汎用モックの制約と echo proxy の同梱（§4.10、§16.2 #8、`11_contracts/kit/echo-proxy.js`）、負例形式の統一と取込みの写像（§6.1）、応答の型と 401 の形（§6.1）、CV-001〜CV-014 の JSON の先行配布（§6.2、`11_contracts/kit/negative-vectors/`）、CV-003 と CV-011 の区別（§6.2）、認可モデルの試験と fga CLI の版（§6.7）、§11.4 の差し替え点への aud・検証設定（alg・profile 版）・環境名・自サービスの SPIFFE ID の追加と fail-mode 設定文書・検証設定文書のスキーマ（§11.4、§11.6）。他文書への申し送りは §14.3、記録は末尾「レビュー記録」の「v1.1 改訂」。0.11: 模擬パネル ラウンド 10 の devlead 指摘により、ADR-017 D17-07 (b) の負例（INT-02 P-08 の NP08-7〜NP08-9、ADR-017 TC-017-15）を §6.3 のパターン族に CV-036〜CV-038 として払い出し、§4.9 の `fixtures`・`mint` に 2 テナントのエージェント主体と `tid`・`tctx`・SVID・鍵を別々に指定する指示を加えた。§14.2・残課題 18、末尾「レビュー記録」の「ラウンド 10」。同じラウンドの devlead の 2 件目（R10-2）により、CON-14 版 0.4.0（ラウンド 9 legal）の AR-9・CR24、同意の本体と `data_processing` の照合を §4.2 MK-01 に、CRN-42〜CRN-46 を §6.3 の登録族に取り込み、CV-039〜CV-043 を払い出した（CON-14 §9 H-26）。§14.2、残課題 15、末尾「レビュー記録」の「ラウンド 10 の 2 件目」。0.10: 模擬パネル ラウンド 9 の devlead 指摘により、CON-13 版 0.2.0 の改版（封筒の required に `lcsig`、withdrawn 系の type、DeletionReport の failure_reason）と同契約の x-handoffs R8-H3 を取り込んだ。§4.11 の署名行・LC-CV-11 の行・封筒の負例の行、§6.3 のライフサイクル族、§9.1 P-7 の試行結果（3 回目）、§14.2 の CON-13 行、§16.3、残課題 10。末尾「レビュー記録」の「ラウンド 9 devlead（版 0.10）」。0.9: 模擬パネル ラウンド 9 の指摘により、§4.4 MK-03 に接続確立・TLS・応答本文の段ごとの遅延と締切後の allow の注入 4 種を加え、CV-012 の合否基準に「締切後の応答を判定に使った件数 0」を加えた（ARC-06 TC-06-07、ADR-013 RR13-13）。末尾「レビュー記録」の「ラウンド 9」。0.8: PoC/R7反映。POC-02 の TC-026・X-D・F-2 と CON-14 版 0.3.1 の AR-8・CR22・CR23・CRN-31〜CRN-41（同契約 §9 H-19・H-20）を取り込んだ。末尾「レビュー記録」の「PoC/R7反映」）
+> 文書ID: CON-11 / 版: 0.14（v1.2） / 状態: draft / 最終更新: 2026-10-15（0.14＝v1.2: AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。会議室予約サービス。実在の連携チームの検証ではない）の M-1〜M-4・M-6・L-1〜L-3・L-6・L-11・L-12 と新契約（CON-17 外部付与、CON-18 AI エージェント代理）の試験を反映した。§4.3 MK-02 の内部開始の Txn-Token、§4.4 の要素単位の reason の注入、§6.9 の追加ベクタ（CV-058〜CV-062、CV-045c、CON-17 の XGN の取込み）、§11.4 の差し替え点（受付台帳・外部付与 API・cell と法域）と issuer の期待値の出所、§11.6.2 の注記、§14.5 の申し送り。記録は末尾「レビュー記録」の「v1.2 改訂」。AI エージェントによる改訂で、独立レビューは未実施。0.13＝v1.1 の同期: 他文書の v1.1 改訂が本書と kit/ に宛てた申し送りを反映した（§14.4）。CON-15 の単独ファイル（state-query.openapi.yaml）への照会モックの付け替え、照会の不適合応答の注入、再署名の補助の仕様、§11.4 の差し替え点（照会の timeout・Q_fresh、TTS、鍵マニフェストと env）、echo proxy の R8、§6.8 の追加ベクタ（CV-003c・CV-007c・CV-007d・CV-045〜CV-057）、MK-04・MK-07 の追記、§16 の入口の参照。AI エージェントによる同期で、独立レビューは未実施。0.12＝v1.1: AI エージェントによる模擬連携検証（13_integration-trial/report.md。実在の連携チームの検証ではない）の P-01・P-10・P-14・P-22〜P-25 と改善提案 I-1・I-8・I-11・I-14 の一部を反映した。汎用モックの制約と echo proxy の同梱（§4.10、§16.2 #8、`11_contracts/kit/echo-proxy.js`）、負例形式の統一と取込みの写像（§6.1）、応答の型と 401 の形（§6.1）、CV-001〜CV-014 の JSON の先行配布（§6.2、`11_contracts/kit/negative-vectors/`）、CV-003 と CV-011 の区別（§6.2）、認可モデルの試験と fga CLI の版（§6.7）、§11.4 の差し替え点への aud・検証設定（alg・profile 版）・環境名・自サービスの SPIFFE ID の追加と fail-mode 設定文書・検証設定文書のスキーマ（§11.4、§11.6）。他文書への申し送りは §14.3、記録は末尾「レビュー記録」の「v1.1 改訂」。0.11: 模擬パネル ラウンド 10 の devlead 指摘により、ADR-017 D17-07 (b) の負例（INT-02 P-08 の NP08-7〜NP08-9、ADR-017 TC-017-15）を §6.3 のパターン族に CV-036〜CV-038 として払い出し、§4.9 の `fixtures`・`mint` に 2 テナントのエージェント主体と `tid`・`tctx`・SVID・鍵を別々に指定する指示を加えた。§14.2・残課題 18、末尾「レビュー記録」の「ラウンド 10」。同じラウンドの devlead の 2 件目（R10-2）により、CON-14 版 0.4.0（ラウンド 9 legal）の AR-9・CR24、同意の本体と `data_processing` の照合を §4.2 MK-01 に、CRN-42〜CRN-46 を §6.3 の登録族に取り込み、CV-039〜CV-043 を払い出した（CON-14 §9 H-26）。§14.2、残課題 15、末尾「レビュー記録」の「ラウンド 10 の 2 件目」。0.10: 模擬パネル ラウンド 9 の devlead 指摘により、CON-13 版 0.2.0 の改版（封筒の required に `lcsig`、withdrawn 系の type、DeletionReport の failure_reason）と同契約の x-handoffs R8-H3 を取り込んだ。§4.11 の署名行・LC-CV-11 の行・封筒の負例の行、§6.3 のライフサイクル族、§9.1 P-7 の試行結果（3 回目）、§14.2 の CON-13 行、§16.3、残課題 10。末尾「レビュー記録」の「ラウンド 9 devlead（版 0.10）」。0.9: 模擬パネル ラウンド 9 の指摘により、§4.4 MK-03 に接続確立・TLS・応答本文の段ごとの遅延と締切後の allow の注入 4 種を加え、CV-012 の合否基準に「締切後の応答を判定に使った件数 0」を加えた（ARC-06 TC-06-07、ADR-013 RR13-13）。末尾「レビュー記録」の「ラウンド 9」。0.8: PoC/R7反映。POC-02 の TC-026・X-D・F-2 と CON-14 版 0.3.1 の AR-8・CR22・CR23・CRN-31〜CRN-41（同契約 §9 H-19・H-20）を取り込んだ。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-062, R-172, R-242／G-072, G-088, G-103, G-121, G-122, G-123, G-134, G-141, G-142（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-80 を含む全行）。補足: R-071（deliverables.md の DL-80 行が挙げる。閉じ方 D）
-> 依存文書: CONVENTIONS.md, 13_integration-trial/report.md（v1.1 で追加。AI による模擬連携検証）, 11_contracts/kit/（v1.1 で新設。echo-proxy.js、negative-vectors/、README.md）, traceability/deliverables.md（DL-80, DL-22, DL-82, DEC-8）, 12_poc/code/README.md（POC-03。DL-82 の納品物）, 05_adr/ADR-022（D-1〜D-11, H-1〜H-11）, ADR-005, ADR-006, ADR-008（D8-50〜D8-55）, ADR-011, ADR-012（D12-41）, ADR-016（D16-08）, ADR-021, ADR-024, ADR-025（D25-22）, 05_adr/reconciliation-notes.md（U-01〜U-04）, 04_architecture/pep-contract.md（ARC-06）, token-profile.md（ARC-02 §10）, claims-catalog.md（ARC-15 §3.8）, architecture-reconciliation-notes.md（XR-17）, 11_contracts/*.openapi.yaml・schemas/*.json・review-notes/CON-02〜CON-10（版 0.3 で lifecycle-events.asyncapi.yaml（CON-12 案）、schemas/lifecycle-event.schema.json（CON-13 案）、client-registration.openapi.yaml（client 登録契約。文書 ID は仮番で未確定。のちに deliverables.md §8 で CON-14／DL-119 に確定）を追加。版 0.6 で CON-12 版 0.4.0 の拡張 `x-state-query-api`（照会 API の契約 CON-15（案）、DL-121（案）。OpenAPI 3.1.2、版 0.1.0、preview）を追加。版 0.7 で CON-14 版 0.2.0 §4A（workload の SVID 登録エントリと交換可能な組の sandbox セルフ登録、preview）と ADR-009（D09-13）を追加）, 10_integration/integration-patterns.md（INT-02 §申し送り 3）, 12_poc/preregistered-test-plan.md（TC-002, TC-003, TC-025, TC-026, TC-028, TC-119）, 01_governance/kri.md（K-03, K-06, K-31）, 01_governance/assumptions-register.md（A-050〜A-054）, 07_slo/numeric-contracts.md（SLI-086〜SLI-091）, research/RS-16, RS-08, RS-12, standards-status.md（SS-K34〜SS-K36）
+> 依存文書: CONVENTIONS.md, 13_integration-trial/report.md（v1.1 で追加。AI による模擬連携検証）, 13_integration-trial/room-booking/report.md（v1.2 で追加。AI による 2 回目の模擬連携検証）, 11_contracts/external-grant.openapi.yaml（CON-17。v1.2 の同期で確定。v1.2 新設）, 11_contracts/agent-delegation.openapi.yaml（CON-18。v1.2 の同期で確定。v1.2 新設）, 11_contracts/kit/（v1.1 で新設。echo-proxy.js、negative-vectors/、README.md）, traceability/deliverables.md（DL-80, DL-22, DL-82, DEC-8）, 12_poc/code/README.md（POC-03。DL-82 の納品物）, 05_adr/ADR-022（D-1〜D-11, H-1〜H-11）, ADR-005, ADR-006, ADR-008（D8-50〜D8-55）, ADR-011, ADR-012（D12-41）, ADR-016（D16-08）, ADR-021, ADR-024, ADR-025（D25-22）, 05_adr/reconciliation-notes.md（U-01〜U-04）, 04_architecture/pep-contract.md（ARC-06）, token-profile.md（ARC-02 §10）, claims-catalog.md（ARC-15 §3.8）, architecture-reconciliation-notes.md（XR-17）, 11_contracts/*.openapi.yaml・schemas/*.json・review-notes/CON-02〜CON-10（版 0.3 で lifecycle-events.asyncapi.yaml（CON-12 案）、schemas/lifecycle-event.schema.json（CON-13 案）、client-registration.openapi.yaml（client 登録契約。文書 ID は仮番で未確定。のちに deliverables.md §8 で CON-14／DL-119 に確定）を追加。版 0.6 で CON-12 版 0.4.0 の拡張 `x-state-query-api`（照会 API の契約 CON-15（案）、DL-121（案）。OpenAPI 3.1.2、版 0.1.0、preview）を追加。版 0.7 で CON-14 版 0.2.0 §4A（workload の SVID 登録エントリと交換可能な組の sandbox セルフ登録、preview）と ADR-009（D09-13）を追加）, 10_integration/integration-patterns.md（INT-02 §申し送り 3）, 12_poc/preregistered-test-plan.md（TC-002, TC-003, TC-025, TC-026, TC-028, TC-119）, 01_governance/kri.md（K-03, K-06, K-31）, 01_governance/assumptions-register.md（A-050〜A-054）, 07_slo/numeric-contracts.md（SLI-086〜SLI-091）, research/RS-16, RS-08, RS-12, standards-status.md（SS-K34〜SS-K36）
 > 作成方法: AI エージェント（Claude）が上記を通読し、ADR-022 D-6 の決定を、モック・試験キットの実装と判定ができる仕様に落として起草した。その後、起草者と別の AI エージェント（Claude）が独立レビューを行い修正した（末尾「レビュー記録」）。実在の CTO/CISO の判定ではない（CONVENTIONS §8）[D]。research ノートにない原典として OWASP API2:2023 を起草者が 2026-10-15 に取得して確認した。版 0.3 は模擬パネル（自己レビューであり、実在の CTO/CISO の決裁ではない）のラウンド 2 の指摘を受け、ライフサイクル事象と client 登録のモック・役割・ベクタ族・一致検査を加えた版である（末尾「レビュー記録」ラウンド 2）。この版で新たに確認した原典は RFC 7592（2026-10-15 に RFC Editor から取得）である。版 0.4 はラウンド 3 の指摘を受け、キット本体を DL-82（PoC 基盤）から分け、独立した DL（DL-120）として登録を申し送った版である（末尾「レビュー記録」ラウンド 3）。ラウンド 3 で新たな外部原典は用いず、根拠は deliverables.md の DL-82 行と 12_poc/code/README.md（POC-03）の照合である。版 0.5 はラウンド 4 の指摘を受け、PoC 基盤（12_poc/code）の設定の読み方と §11.4 の差し替え点の対応表（§11.5）と、汎用モックの起動結果の反映（§4.10）を加えた版である（末尾「レビュー記録」ラウンド 4）。ラウンド 4 で新たな外部原典は用いず、根拠は 12_poc/code のソース（`pep/sdk.js`、`lib/topology.js`、`lib/audit.js`、`sts/server.js`）と POC-03 の照合、および CON-00 §2.3 の汎用モックの実行記録である。版 0.6 はラウンド 6 の指摘を受け、MK-08 の照会モックの暫定の path と形を廃し、CON-12 版 0.4.0 の拡張 `x-state-query-api`（CON-15（案））から生成する形に改め、LC-CV-15・LC-CV-16 と負例 LQN-01〜LQN-19 を取り込み、「DL-120 案」を「DL-120」に統一した版である（末尾「レビュー記録」ラウンド 6）。ラウンド 6 で新たな外部原典は用いず、根拠は CON-12 版 0.4.0 と CON-00 §9・§3 の照合である。版 0.7 はラウンド 7 の指摘を受け、CON-14 版 0.2.0 §4A の workload・交換可能な組の登録を MK-02 に取り込み（§4.3）、§5.2 (c)・§4.0 の古い記述（「契約はまだない」、仮番）を改め、負例 CRN-21〜CRN-30 を CV-015〜CV-024 として採番した版である（末尾「レビュー記録」ラウンド 7）。ラウンド 7 で新たな外部原典は用いず、根拠は CON-14 版 0.2.0、ADR-009 D09-13、deliverables.md の DL-119・DL-120 行の照合である。人による照合は未実施である [D]。
 > 表記: モックは MK-xx、consumer の役割は CR-x、試験ベクタは CV-xxx、決裁案は K11-x、新規仮定は NA-11-x（前提台帳へ追加要）、未決・申し送りは L11-x と書く。表のセルのうちタグのないものは設計推論 [D] であり、本注記で個別のタグに代える。「必須」「禁止」は本書が定める自社規範であり、外部規範の強度は脚注の原典どおりに写した。
 
@@ -191,6 +191,7 @@ consumer は 1 つ以上の役割を持つ。適用するモックとベクタ�
 | 登録の負例（版 0.7 で追加） | CON-14 の `x-negative-examples` の CRN-21〜CRN-30（§6.3 の CV-015〜CV-024）。CRN-28・CRN-30 は登録の操作と exchange の要求を続けて行う状態つきのベクタで、`/token` の拒否までを 1 件として判定する |
 | 判定 | CON-05 の判定順（mTLS → actor_token の有無 → subject_token → resource → 登録簿 → scope → act の深さ・循環 → 失効状態）で、最初に該当した理由コード（R01〜R10、T01〜T08）で拒否する。理由コードは `error_description` に入れず、制御 API の記録にだけ残す（CON-05 §2 の 5） |
 | 負例 | CON-05 `x-negative-examples` の全件（N-08〜N-21、N-26、N-34、N-39、N-42、X74-N1〜N6）。複数 `resource`（N-11）は JSON で表せないため、生の form 本文のベクタとして持つ（review-notes/CON-05.md） |
+| 内部開始の Txn-Token と受付記録（v1.2、room-booking M-2・M-4） | `registerAcceptanceRecord` は要求に添えた Txn-Token を検証して受付記録（起点主体・tid・起点 `txn`・`root_jti`・grant 参照）を作り、毎回新しい `job_run_id` を返す。`/txn-token` の内部開始は受付記録から `sub`・`tctx.tid`・`tctx.ptxn` を入れ、現在時刻の `iat`・`exp` で、キットの TTS 試験鍵で署名して返す（静的な例を返さない）。受付記録の有効期限は CON-05 で TBD のため、MK-02 は制御 API で設定できる値（既定は無期限）とし、期限切れの受付記録からの発行要求を拒否する注入を持つ（CV-060 の拡張。値の確定は CON-05 の所有者。§14.5 H12-3）。配布前は kit の echo proxy の R9・R10（kit/README.md §2.5）が汎用モックで同じ形を作る |
 | 注意 | `not: {}` で表した拒否パラメータ（`actor_token`・`audience`）は、要求検証つきのモックではツール固有の 400 になる。MK-02 は要求検証をツールに任せず、RFC 6749 §5.2 形式の `invalid_request` 等を自ら返す（CON-05 §4、review-notes/CON-05.md #11） |
 
 ### 4.4 MK-03 PDP façade（AuthZEN）
@@ -214,6 +215,7 @@ consumer は 1 つ以上の役割を持つ。適用するモックとベクタ�
 | クォータ超過 | 429＋Retry-After | 同上。再試行は Retry-After に従う |
 | engine 不達 | 200、decision=false、`deny_unavailable` | 同上 |
 | 評価不能 | 200、decision=false、`deny_indeterminate` | 同上 |
+| evaluations の要素単位の reason（v1.2、room-booking M-1） | evaluations の応答のうち指定した要素（`index`）だけを指定の decision・reason（`deny_no_relation`・`deny_indeterminate`・`deny_unavailable` など）にし、他の要素は allow を返す | `deny_no_relation` の要素は一覧から除き、他を返す。「判定が得られない」に当たる reason の要素が 1 つでもあれば一覧全体を利用不可にし、空の一覧や部分の一覧を返さない（CON-16 §2.6 v1.2、CV-059） |
 | 未対応 profile | `unsupported_profile` | 同上 |
 | deny | 200、decision=false | 資源単位の拒否は他テナント・不存在と同じ応答 |
 | 失効 | 制御 API の「剥奪」以後、同じ要求に decision=false | 次の要求から拒否。allow を PEP の外で cache しない（DEV-9） |
@@ -627,6 +629,8 @@ ARC-15 §3.8 の DEV-1〜DEV-9、ADR-021 の依存サービスの 4 義務、ARC
 
 ### 6.8 v1.1 の同期で加えたベクタ（CV-045〜CV-057 と既存 CV の追加ケース）
 
+（v1.2 の追加は §6.9）
+
 他文書の v1.1 改訂が本書に求めたベクタを登録する。機械可読の版があるものは `11_contracts/kit/negative-vectors/` に置いた。それ以外はキット本体（DL-120）で §6.1.1 の統一形式にする [D]。ライフサイクル族・登録族・承認経路族は §6.3 と同じく preview として不合格を記録する（LC-CV-16 の例外と、下表で必須とした行を除く）[D]。
 
 | CV | 内容 | 期待結果 | 出所 | 状態 |
@@ -649,6 +653,27 @@ ARC-15 §3.8 の DEV-1〜DEV-9、ADR-021 の依存サービスの 4 義務、ARC
 
 - CV-046〜CV-057 の機械可読の版（§6.1.1 の統一形式）はキット本体（DL-120）で作る。CV-046・CV-047 は CON-03 の `x-negative-examples` に、CV-052・CV-053 は CON-04 の負例に、CV-057 は CON-15 の `x-negative-examples` に入力があり、§6.1.1 の写像で取り込める [D]。
 - CV-048 の静的検査器と、CV-049 の照合の手順はキット本体の範囲とし、DL-120 の受入れに加えることを traceability/deliverables.md に申し送る（§14.4）[D]。
+
+### 6.9 v1.2 で加えたベクタ（CV-058〜CV-062、CV-045c、CON-17 の負例の取込み）
+
+AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。会議室予約サービス。実在の連携チームの検証ではない）の詰まった点と、v1.2 の新契約の試験を登録する。依存サービス側（CR-1・CR-2）で観測できるものは `11_contracts/kit/negative-vectors/` に機械可読の版を置いた [D]。
+
+| CV | 内容 | 期待結果 | 出所 | 状態 |
+|---|---|---|---|---|
+| CV-010a・CV-045a・b（改訂） | Txn-Token の署名鍵を TTS 役の鍵（`TTS.current`）に改めた | 期待結果は変えない | room-booking M-3 | 既存の状態のまま |
+| CV-045c | claim は正しいが、access token の issuer の鍵で署名した Txn-Token（鍵族の取違え） | 拒否（`token_reject` 群）。業務処理 0 件、PDP 0 回 | room-booking M-3、CON-16 §1.6 (2) | 条件付き（write 以上） |
+| CV-012（改訂） | write の 14 ケースに正規の Txn-Token の提示を加えた | 期待結果は変えない | room-booking L-6 | 必須のまま |
+| CV-058 | write 以上で Txn-Token が無い（a）、Txn-Token ヘッダに access token（b）、TTS の鍵がどこからも得られない（c） | a・b は `auth_failure`（`token_reject` 群）、c は `no_decision`。いずれも業務処理 0 件、監査に `txn_absence` | room-booking L-6、CON-16 §1.9 v1.2 | 条件付き（write 以上） |
+| CV-059 | evaluations の要素単位の reason（`deny_no_relation` は除く、`deny_indeterminate` は一覧全体を利用不可） | §4.4 の v1.2 の行 | room-booking M-1、CON-16 §2.6 v1.2 | 条件付き（一覧を持つ SUT） |
+| CV-060 | 内部開始の consumer: メッセージの tid と `tctx.tid` の食い違い、再 Check の deny、受付台帳の 503、メッセージの主体種別を使わないこと | 拒否とデッドレター、503 で業務を確定しない、再 Check の `subject.type` は受付時に保存した値 | room-booking M-4・L-5、CON-16 §2.10 v1.2 | 条件付き（consumer を持つ SUT） |
+| CV-061 | 越境ゲストの PEP 側: home 側 token、期限切れ・取消し後・付与のない資源・外部付与可でない操作、起点の資源の取消し後、招待の宛先の email を残さない | `resource_denied`（同一群）、業務処理 0 件。f は revokeExternalGrantsByAnchor の呼出し 1 件、g は記録に email なし | room-booking C-1、INT-02 P-16、CON-17 XGN-17・XGN-18・XGN-20 | 条件付き（P-16 の entry point） |
+| CV-062 | AI エージェント代理の tool 側 PEP（CON-18 AGN-12〜AGN-14・AGN-16〜AGN-23 の tool 側・AGN-25）: 自律主体、宣言のない entry point、scope に tool_scope なし、tid と tctx.tid の食い違い、承認 grant なし・消費済み・不一致・状態ストア不達、自己申告の承認、外部 AT の直接提示、権限外の資源 | 拒否。代理としての実行 0 件。PDP を呼ばない段（AD-01〜AD-06）は PDP 呼出し 0 回 | room-booking C-2・L-13、CON-18、INT-02 P-08、ADR-017 §2.2〜§2.4 | preview（CON-18 が preview で、承認 grant は ADR-017 L17-5 の決定まで無効のため、不合格を記録だけする） |
+| CON-18 AGN-01〜AGN-11・AGN-15・AGN-18〜AGN-20・AGN-22（消費側）・AGN-24・AGN-26〜AGN-28 | AI エージェント代理の AS・STS・承認の消費の側の拒否（全権 scope、resource の欠落、期限超、自律用 client の委任要求、allowlist 外の tool、他テナントの主体の流用、code の横取り、絶対期限の超過、client_credentials、L17-5 前の authorization_details、再委任の上限、引数の改変、再提示、他主体の grant、状態ストア不達、下流への素通し、取消し後の交換、allowlist 外の宛先、他人の委任の取消し） | 各 AGN の `expect`（CON-18 `x-negative-examples`） | CON-18 §9 HO12-AG-10 | 基盤側（provider verification、§9.1）。ST-1・ST-4 への鋳造の追加と承認の消費のスタブ（ST-9 案）は CON-16 §4 v1.2 |
+| CON-17 XGN-01〜XGN-16・XGN-19 | 外部付与の発行・受諾・照会の façade 側の拒否（Txn-Token なし、テナント結合の違反、付与者の permission なし、外部付与可でない relation、期限なし、inbound 無効、書込宣言なし、再共有、受諾 token の再利用、人間以外の受諾者、outbound の証跡なし・不許可、信頼リスト外、法域、依存サービスによる受諾の呼出し、宛先の不一致の held、他の名前空間の grant_id） | 各 XGN の `expect`（CON-17 `x-negative-examples`） | CON-17 §12 V12-XG-7 | 基盤側（provider verification、§9.1）。機械可読の版は §6.1.1 の写像でキット本体（DL-120）が取り込む |
+
+- 追加したベクタの置換子（`{{guest.sub}}`・`{{agent.sub}}`・`{{job_run.t1}}` ほか）は kit/README.md §4 に加えた。`vector.schema.json` は minor の追加（`TTS.current`・`TTS.other_cell`、`deliver`、`dead_letter_min`・`notifications_max`・`tool_executions_max`、`STUB-LEDGER`）だけを行い、既存の項目の意味は変えていない（§12 の minor の範囲）[D]。
+- CV-062 は、AI エージェント代理の契約 CON-18（`11_contracts/agent-delegation.openapi.yaml`、v1.2 新設、preview。actor の写像は §5 の暫定、承認 grant は ADR-017 L17-5 の決定まで無効）に依存するので preview とした。契約の確定後に、契約の負例を §6.1.1 の写像で取り込み、required に上げるかを本書の改版で決める [D]。
+- 確認（2026-10-15、本書の作成者による自己実行。立会人なし）[M]: kit の全 20 ファイルが `python -m json.tool` で JSON として読め、jsonschema 4.26.0（Draft 2020-12）で `vector.schema.json` に適合した（76 ケース）。ベクタを SUT に流した実行はしていない（未実施）。
 
 ## 7. consumer-driven contract test
 
@@ -907,9 +932,14 @@ SUT がモックから PoC 基盤・共有 sandbox・本番へ移るときに変
 | 照会の timeout と Q_fresh（v1.1 の同期。CON-15 §8 V11-Q4） | `LIFECYCLE_STATE_QUERY_TIMEOUT_MS`（照会 1 回の締切。RC-1 の判定に使う）、`LIFECYCLE_STATE_QUERY_FRESH_MS`（CON-15 QC-1 の Q_fresh。proceed の `checked_at` から実行までの許容時間）。いずれも値は TBD（CON-12 §7、CON-15 §5）で、試験では設定値として外から与える |
 | TTS の issuer・aud・検証鍵（v1.1 の同期。CON-16 IE-7、CON-05 §9 HO-04） | `AUTH_TTS_ISSUER`、`AUTH_TTS_AUDIENCE`、`AUTH_TTS_JWKS_URL`（CON-05 v1.1（I-9）の TTS の JWK Set の取得先）。Txn-Token の検証（CON-16 §1.6）の期待値で、access token の issuer・aud とは別に持つ。本番・検証環境の TTS の trust 設定に `kid` が `test-only-` で始まる鍵を入れない（CON-05 §8） |
 | 自サービスの SPIFFE ID（v1.1） | `WORKLOAD_SPIFFE_ID`（期待値。キットでは MK-02 の `registerSandboxWorkload` の応答の値、キット配布前は CON-14 §4A.5 の暫定手順の値） |
+| 受付台帳（v1.2、room-booking L-2。CON-05 `registerAcceptanceRecord`） | `AUTH_JOB_LEDGER_URL`（CON-05 の `/acceptance-records` の servers に当たる URL。会議室予約の模擬検証が独自に付けた名前をそのまま採った）。キットでは MK-02（配布前は echo proxy を挟んだ CON-05 の汎用モック）を指す |
+| 外部付与 API（v1.2。CON-17 §12 V12-XG-7） | `EXTERNAL_GRANT_API_URL`（CON-17 `external-grant.openapi.yaml` の servers に当たる URL） |
+| 承認 grant の消費（v1.2。CON-18 AD-07） | `AGENT_APPROVAL_CONSUME_URL`（CON-18 `agent-delegation.openapi.yaml` の consumeApprovalGrant の servers に当たる URL。`agent_delegation` を宣言し承認要の tool を持つ依存サービスだけが使う）。キットでは承認の消費のスタブ（ST-9 案） |
+| 監査の cell・法域（v1.2、room-booking M-6） | `AUTH_CELL_ID`（CON-08 `cell_id` の値。`^[a-z0-9]{4,16}$`）、`AUTH_JURISDICTION`（CON-08 `jurisdiction` の値。`jp`・`eu`・`us`）。配置スナップショット（CON-05 §9 HO-09 と同じ配布物）が環境ごとに与える値で、token・要求・ホスト名から導かない。キットの値は `kit0`・`jp` |
 | ライフサイクル事象の購読先・完了報告と replay の送信先（版 0.3） | `LIFECYCLE_BINDING_CONFIG`（binding の種別と接続先。CON-12 の channel の論理名 `lifecycle.v1.*` と配備上の名前の対応を含む） |
 | ライフサイクル事象の署名鍵マニフェスト・照会 API（版 0.3） | `LIFECYCLE_KEY_MANIFEST_URL`（(iss, typ, kid) → {alg, 公開鍵} の鍵マニフェストの取得先。v1.1 の同期（CON-12 §10.1 V11-L3）: 受信側は自分の `AUTH_ENVIRONMENT` と一致しない `env` の事象を拒否する。鍵マニフェストの正式な形式は ADR-007（LC-OI-8）で未決なので、受信側は差し替えられる形で持つ。受信側の単体試験は CON-12 §8.1 S-2 の試験用の値（`env`=`test`、kid `lc-test-k1`）を使い、この URL を通さない）、`LIFECYCLE_STATE_QUERY_URL`（CON-15（`11_contracts/state-query.openapi.yaml`）の servers に当たる URL。v1.1 の同期（CON-15 §8 V11-Q4）で、CON-12 の拡張を指す記述を改めた。モックでは MK-08 の照会モックの URL を、本番・PoC では照会 API の配備の URL を入れる。CON-15 QC-5 は URL をこの設定から得てコードに直書きしないことを求める。版 0.6 で改訂） |
 
+- issuer の期待値（v1.2、room-booking L-3）: 期待値は `AUTH_OIDC_DISCOVERY_URL` から `/.well-known/openid-configuration` を除いた URL とする。これは設定の値（V4 の「設定から読む」）であり、discovery の応答の `issuer` から取らない。応答の `issuer` がこの期待値と完全一致しなければ設定誤りとして起動しない（CON-16 §1.8 EN-2、CV-003c）。OpenID Connect Discovery 1.0 は、応答の `issuer` が discovery の URL を組み立てた issuer と同一であることを MUST とする [N]（RS-16#17、§4.3）。CON-16 §1.8 と §11.6.2 の書き方が違って見えたのは、この導き方を書いていなかったためで、規則は同じである [D]。issuer の期待値を別の環境変数に重ねて持たない（2 つの値が食い違う設定を作れるため）[D]。
 - client 登録の endpoint は環境変数に置かない。consumer は issuer B の discovery（AS metadata）の `registration_endpoint` から得る（client-registration.openapi.yaml の servers の注記）[D]。
 - workload・交換可能な組の登録（CON-14 §4A）は、SUT の業務コードではなく試験の準備と CI の手順が呼ぶので、§11.4 の差し替え点に加えない（版 0.7）[D]。登録窓口の URL は CON-14 の path ごとの servers で仮置きされ凍結しない（同契約の servers の description）。キットでは MK-02 の業務ポートを指す [D]。
 - v1.1（I-8）: 上の 4 行（aud、検証設定、環境名、自サービスの SPIFFE ID）を加えた。v1.0 の差し替え点には fail-mode 設定の取得先だけがあり、取得先の文書の形も、aud・alg・profile 版・環境名・自 SPIFFE ID の読み方もなかったため、模擬連携検証では独自の環境変数（`EXPENSE_SERVICE_AUDIENCE`、`AUTH_ALG_ALLOWLIST`、`AUTH_MIN_PROFILE_MAJOR`、`LIFECYCLE_ENV`、`WORKLOAD_ID`、`AUTHZ_PDP_DEADLINE_MS` 等）で読んだ（13_integration-trial/report.md P-10・P-22）[D]。独自の名前は G-123 の「コード差分 0」の切替で必ず差分になる [D]。
@@ -1046,7 +1076,7 @@ INT-00 §6.3 は、キット配布前の暫定ローカル結合環境として 
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.example/kit/config/verifier-config.schema.json",
   "title": "token 検証設定文書（AUTH_VERIFIER_CONFIG_URL が指す文書）",
-  "$comment": "CON-11 §11.6.2（v1.1、I-8）。alg の allowlist は版付き暗号 profile（CP。ADR-015）、最低受理 profile 版は ADR-016 D16-11、許容時刻差は ARC-02 §4.4 の S_int に従う。aud は AUTH_SERVICE_AUDIENCE、issuer は AUTH_OIDC_DISCOVERY_URL で別に渡し、本文書に重ねて書かない。",
+  "$comment": "CON-11 §11.6.2（v1.1、I-8）。alg の allowlist は版付き暗号 profile（CP。ADR-015）、最低受理 profile 版は ADR-016 D16-11、許容時刻差は ARC-02 §4.4 の S_int に従う。aud は AUTH_SERVICE_AUDIENCE、issuer は AUTH_OIDC_DISCOVERY_URL で別に渡し、本文書に重ねて書かない。v1.2（L-3）: issuer の期待値は AUTH_OIDC_DISCOVERY_URL から /.well-known/openid-configuration を除いた URL で、discovery の応答の issuer から取らない（§11.4 の注記）。",
   "type": "object",
   "required": ["schema", "config_version", "env", "crypto_profile_version", "alg_allowlist", "min_profile_version", "clock_skew_seconds", "jwks"],
   "additionalProperties": false,
@@ -1252,7 +1282,37 @@ v1.1 の各改訂が本書と `11_contracts/kit/` に宛てた申し送りを、
 | INT-03 §16.4 HO-V11-7 | `core/unit` の種データ、WF-01〜WF-09 | §4.5、§6.8 CV-054 |
 | INT-00 申し送り（v1.1）V-3、CON-00 申し送り（v1.1）V-4 | 読み始めの入口と汎用モックの手順の参照 | §16.2 の 8 |
 
-- 本書の版を 0.13 に上げた [D]。DL-120 の受入れに CV-048 の静的検査器、CV-049 の照合手順、CON-05 の試験鍵・署名済み例の収録、再署名の補助を加えることは traceability/deliverables.md（DL-120 行）への申し送りとする [D]。
+- 本書の版を 0.13 に上げた [D]。
+
+### 14.5 他文書への申し送り（v1.2）
+
+v1.2 の改訂（13_integration-trial/room-booking/report.md の M-1〜M-4・M-6・L-1〜L-3・L-6・L-11・L-12、新契約の試験）は、並行作業の約束により本書・`11_contracts/kit/`・CON-16・INT-00・INT-03・INT-06 だけを編集した。次は各文書の所有者に申し送る [D]。
+
+| # | 宛先 | 内容 | 出所 |
+|---|---|---|---|
+| H12-1 | 11_contracts/authorization-api.openapi.yaml（CON-03）evaluations の例 `mixed` | 2 件目の `deny_indeterminate` を `deny_no_relation` に改めるか、「存在しない資源の扱いは PEP の L0（`l0_not_found`）で同一化し、`deny_indeterminate` は判定が得られない」と例の説明を改める。要素単位の扱い（CON-16 §2.6 v1.2）を evaluations の説明に書く | room-booking M-1 |
+| H12-2 | 11_contracts/token-exchange.openapi.yaml（CON-05）`/txn-token` の例 | 静的な例は期限切れで、`tid`・`sub`・`ptxn` が要求と一致しないことを例の説明に書き、汎用モックでは kit の echo proxy の R9・R10（kit/README.md §2.5）が要ると明記する。要求の例と応答の例の `sub`・`tid` を揃える | room-booking M-2 |
+| H12-3 | CON-05 `registerAcceptanceRecord`・x-open-issues、ADR-026 | (1) 受付記録の有効期限（TBD）の決め方と期限、(2) A2 の委任 grant を作る契約と `job_definition_id` を登録する手段、(3) A1 の登録を起点の Txn-Token の寿命内に行う必要から、利用者の要求の処理が受付台帳の可用性に結合すること（CON-16 §2.10 v1.2 の暫定）の受容者を決める | room-booking M-4 |
+| H12-4 | 11_contracts/schemas/audit-event.schema.json（CON-08） | (1) `no_decision_cause` に「主体の写像が未決のため PDP を呼ばない」に当たる値（案 `subject_unmapped`、reason_code 案 `deny_subject_unmapped`）を加える（CON-16 §2.8 v1.2 の暫定）。(2) examples の `can_update`・`can_submit` を動詞の permission 名に改める（v1.1 の I-5 の取りこぼし）。(3) 参照値 API の契約の作成（x-handoff-v1.1 の 3）の期限を決める | room-booking L-4・L-7・M-6 |
+| H12-5 | traceability/deliverables.md（DL-120 行） | 受入れに、echo proxy 0.3.0（R9・R10）、CV-058〜CV-062、MK-02 の内部開始の振舞い（§4.3 v1.2）、MK-03 の要素単位の reason の注入（§4.4 v1.2）を加える | 本書 §4.3・§4.4・§6.9 |
+| H12-6 | 10_integration/integration-patterns.md（INT-02）P-04・P-05・§3.9 | A1〜A4 の選び方（数日後の通知のような遅延実行は A1 か A2 か）と、受付記録の期限が TBD の間の暫定（CON-16 §2.10 v1.2）を参照する。P-16 の NP16-x と CV-061、P-08 の NP08-x と CV-062 の対応を書く | room-booking M-4、本書 §6.9 |
+| H12-7 | 05_adr/ADR-022（D-4-2）、DL-62 | §11.4 に加えた `AUTH_JOB_LEDGER_URL`・`EXTERNAL_GRANT_API_URL`・`AGENT_APPROVAL_CONSUME_URL`・`AUTH_CELL_ID`・`AUTH_JURISDICTION` を凍結の対象に含める | room-booking L-2・M-6 |
+| H12-8 | 12_poc/code/README.md（POC-03）§11.5 の対応表 | v1.2 の 4 つの差し替え点を加える（PoC は読まない） | 本書 §11.4 |
+
+DL-120 の受入れに CV-048 の静的検査器、CV-049 の照合手順、CON-05 の試験鍵・署名済み例の収録、再署名の補助を加えることは traceability/deliverables.md（DL-120 行）への申し送りとする [D]。
+
+**v1.2 の同期での反映状況（2026-10-15）**: AI エージェントによる同期で、人による照合は未実施（CONVENTIONS §8）[D]。
+
+| # | 反映 |
+|---|---|
+| H12-1 | 一部。CON-03 版 0.4.0 で例 `mixed` の説明と evaluations の要素単位の扱いを改めた（例の値は据え置き）。ARC-06 §3.5 は同期の範囲外 |
+| H12-2 | 済。CON-05 版 0.3.0 の `/txn-token` の「応答例の限界」と要求例 `edgeSync` の `sub`・`tid` |
+| H12-3 | 論点として記録。CON-05 版 0.3.0 の x-open-issues と ADR-026 版 0.2 §8A V12-26-1〜V12-26-3。決定は未了 |
+| H12-4 | 済（(3) は案のみ）。CON-08 版 0.4.0 の `subject_unmapped`・`deny_subject_unmapped` と examples の動詞化。(3) 参照値 API の期限は CON-08 x-open-issues に案（G3）を置いた |
+| H12-5 | 済。traceability/deliverables.md 版 0.8 の DL-120 の受入れ (9)〜(13)。本節末尾の DL-120 への申し送り（CV-048・CV-049 ほか）は v1.1 の同期の (5)〜(7) で反映済み |
+| H12-6 | 済。INT-02 版 0.10 の P-04・P-05・P-08・P-16 の「v1.2 の参照」の行と §3.9 BN-7 |
+| H12-7 | 論点として記録。ADR-022 版 0.2 §8A V12-22-1 |
+| H12-8 | 未反映（12_poc は同期の範囲外） |
 
 ## 15. 残余リスク
 
@@ -1558,6 +1618,29 @@ v1.1 の各改訂が本書と `11_contracts/kit/` に宛てた申し送りを、
 - 新たに確認した外部原典: なし。AR-9 の根拠の条文（個人情報保護法 28 条、GDPR 44 条・46 条 1 項、DORA 30 条 2 項 (b)）は CON-14 の脚注 14〜16 にあり、本書は規範として直接引用していない [D]。
 - 未解決として残すもの: (1) CV-039〜CV-043 は仕様だけで、キット（DL-120）には未実装・未実行である（残課題 15）。(2) 法人台帳の置き場所と NA-8、scope と区分の対応表（CON-14 §9 H-28）が未定なので、fixtures の形は暫定である。(3) OPS-01 の「CRN-42 案」との ID の衝突は宛先の作業として未了である。(4) 本改訂の照合は改訂の担当によるもので、作成者以外の照合は TRC-11 OI-G25 で追跡する [D]。
 - 対応件数: 1 件（対応済み 1、他文書への申し送り 3 項目（§14.2 の CON-14・DL-22・OPS-01 行））[D]。
+
+### v1.2 改訂（2 回目の模擬連携検証の反映。版 0.14）
+
+> 13_integration-trial/room-booking/report.md（AI エージェントが会議室予約サービスの開発チームを演じた模擬連携検証。実在の連携チームによる検証ではない）を反映した。改訂は AI エージェント（Claude）が行い、独立レビュー・人による照合は未実施（CONVENTIONS §8）[D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| V12-1 | M-1 | 要素単位の reason の注入と期待、CV-059 | §4.4、§6.9 |
+| V12-2 | M-2 | MK-02 の内部開始の振舞い、kit の echo proxy の R9・R10 | §4.3、kit/README.md §2.2・§2.5 |
+| V12-3 | M-3 | CV-010a・CV-045a・b の signer、CV-045c | §6.9、kit |
+| V12-4 | M-4・L-5 | CV-060、受付記録の期限の注入、CON-05・ADR-026 への申し送り | §4.3、§6.9、§14.5 H12-3 |
+| V12-5 | M-6 | `AUTH_CELL_ID`・`AUTH_JURISDICTION`、参照値の固定値表（kit/README.md §5.5） | §11.4 |
+| V12-6 | L-1 | 契約の版の固定の手順 | kit/README.md §5.4 |
+| V12-7 | L-2 | `AUTH_JOB_LEDGER_URL` | §11.4 |
+| V12-8 | L-3 | issuer の期待値の導き方 | §11.4、§11.6.2 |
+| V12-9 | L-6 | CV-012 の write に Txn-Token、CV-058 | §6.9、kit |
+| V12-10 | L-11 | 接続確立の遅延の再現条件 | kit/README.md §5.3、CV-012b |
+| V12-11 | L-12 | fga の版の記録と 64 bit | kit/README.md §6 |
+| V12-12 | C-1（CON-17 §12 V12-XG-7） | `EXTERNAL_GRANT_API_URL`、XGN の取込み、CV-061 | §11.4、§6.9 |
+| V12-13 | C-2・L-13（CON-18 §9 HO12-AG-10） | CV-062（preview）、AGN の取込み、`AGENT_APPROVAL_CONSUME_URL` | §6.9、§11.4 |
+
+- 未解決: §14.5 H12-1〜H12-8、CV-062 の状態の昇格（CON-18 と ADR-017 L17-5 の確定待ち）。
+- 対応件数: 13 件（対応済み 13。うち他文書の改訂を要する部分は §14.5 に申し送り）[D]。
 
 ### v1.1 改訂（模擬連携検証の反映。版 0.12）
 

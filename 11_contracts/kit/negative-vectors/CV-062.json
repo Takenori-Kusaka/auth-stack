@@ -1,0 +1,574 @@
+{
+  "id": "CV-062",
+  "title": "AI エージェントによる代理（act.ptype=ai_agent）の tool 側 PEP の負例",
+  "source": [
+    "13_integration-trial/room-booking/report.md C-2・L-13",
+    "CON-18（11_contracts/agent-delegation.openapi.yaml、v1.2 新設、preview）AD-01〜AD-10・AGN-12〜AGN-23・AGN-25",
+    "INT-02 P-08 NP08-4・NP08-7",
+    "ADR-017 §2.2〜§2.4・§2.6"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "manifest に agent_delegation（CON-18 AgentToolDeclaration）を宣言した entry point がある"
+    }
+  ],
+  "status": "preview",
+  "distinguish_from": [
+    {
+      "id": "CV-036",
+      "how": "CV-036〜CV-038 は第一者のエージェント製品の実行単位・SVID・鍵の束縛（D17-07 (a)(b)）。本ベクタは edge の後ろの tool 側 PEP が K3 の act・scope・承認 grant で行う判定（CON-18 AD-01〜AD-10）"
+    }
+  ],
+  "stub_requirements": [
+    "ST-1 で act={sub, ptype: ai_agent}・client_id（委任用 client）・scope を入れた K3 を鋳造できる（CON-18 §9 HO12-AG-07 (c)、CON-16 ST-1 v1.2）",
+    "承認 grant の消費（CON-18 consumeApprovalGrant）のスタブ（ST-9 案）が、成功・already_consumed・approval_mismatch・unavailable を試験から切り替えられる",
+    "entry point 台帳に agent_delegation を宣言した entry point（manifest.operation.agent_write・agent_approval）と、宣言していない entry point（manifest.operation.write）がある"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-062a",
+      "description": "AGN-14 / AD-02: sub 自体の ptype が ai_agent の K3（自律動作）で、代理を宣言した entry point を呼ぶ",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{agent.sub}}",
+            "ptype": "ai_agent",
+            "client_id": "{{agent.autonomous_client}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "PDP を呼ばずに拒否（ADR-017 K17-1 未決、INT-02 SM-3）。E2 の no_decision_cause は CON-08 の値の追加（CON-11 §14.5 H12-4）まで CON-16 §2.8 v1.2 の暫定に従う"
+      }
+    },
+    {
+      "case_id": "CV-062b",
+      "description": "AGN-12 / AD-03: act.ptype=ai_agent の K3 を、entry point 台帳に agent_delegation（AgentToolDeclaration）を宣言していない entry point に提示する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "tool_executions_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-062c",
+      "description": "AGN-13 / AD-05: act.ptype=ai_agent の K3 で scope が宣言の tool_scope を含まない",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.other_tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "403、WWW-Authenticate: Bearer error=\"insufficient_scope\"、scope に tool_scope（CON-18 AD-05）。CON-16 U-3（scope を判定に使わない）の、エージェント経由の要求に限った例外"
+      }
+    },
+    {
+      "case_id": "CV-062d",
+      "description": "AGN-16 / AD-06: act.ptype=ai_agent の K3（tid=tenant.1）と、tctx.tid=tenant.2 の Txn-Token（TTS の正規の署名）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.2}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0,
+          "tool_executions_max": 0
+        },
+        "audit": {
+          "events_min": 1
+        },
+        "notes": "deny_l0:mismatch。INT-02 NP08-7 と同じ観点（CV-036 は tool サーバー側の別の組合せ）"
+      }
+    },
+    {
+      "case_id": "CV-062e",
+      "description": "AGN-17 / AD-07: 承認要の tool（approval=required、+FIN・+XT、または privileged）を Agent-Approval ヘッダなしで呼ぶ（エージェント UI の確認だけ。TC-017-02）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_approval}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "403 Problem approval_required。ADR-017 L17-5 の決定までは、承認要の tool は承認 grant があっても常に拒否（CON-18 AD-07）"
+      }
+    },
+    {
+      "case_id": "CV-062f",
+      "description": "AGN-19（tool 側）: 消費済みの承認 grant を Agent-Approval で再提示する。承認の消費のスタブ（ST-9 案）は 409 already_consumed を返す",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "approval_grant": {
+              "consume_result": "already_consumed"
+            }
+          },
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_approval}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "tool_executions_max": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-062g",
+      "description": "AGN-18・AGN-20・AGN-22（tool 側）: 承認の消費が approval_mismatch（引数の改変・他のエージェント主体の grant）か unavailable（状態ストア不達）を返す",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "approval_grant": {
+              "consume_result": [
+                "approval_mismatch",
+                "unavailable"
+              ]
+            }
+          },
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_approval}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "消費の結果ごとに 1 回ずつ流す。unavailable でも承認を省いて進めない（grace 0。ADR-017 D17-25）"
+      }
+    },
+    {
+      "case_id": "CV-062h",
+      "description": "AGN-21 / AD-10: 要求本文に approved=true、独自ヘッダ X-Agent-Approved: true、tool annotation（readOnlyHint）を入れて、承認要の tool を Agent-Approval なしで呼ぶ",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_approval}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "side_effects": {
+          "business_execution": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "判定は CV-062e と同じ（自己申告を判定の入力にしない）。要求本文とヘッダの付与はドライバが行う"
+      }
+    },
+    {
+      "case_id": "CV-062i",
+      "description": "AGN-23 / AD-01（room-booking L-13）: エージェントが外部 AT（外部 AS の opaque token）を tool サーバー（依存サービス）に直接提示する",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "other",
+          "signer": "B.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "notes": "依存サービスが受けるのは edge が exchange した K3 と K5 だけ（CON-16 §1.1、CON-18 §2.2）"
+      }
+    },
+    {
+      "case_id": "CV-062j",
+      "description": "AGN-25: 注入された指示を模し、委任の範囲内の tool で、利用者の権限外の資源（同じテナントの他人の資源）と他テナントの資源を引数に入れる",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "write 以上は正規の Txn-Token を添える（CV-012 と同じ）"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{subject.self}}",
+            "tid": "{{tenant.1}}",
+            "scope": "{{agent.tool_scope}}",
+            "act": {
+              "sub": "{{agent.sub}}",
+              "ptype": "ai_agent"
+            },
+            "client_id": "{{agent.delegation_client}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.agent_write}}",
+          "tier": "write",
+          "resource": "{{resource.t2.existing}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "resource_denied",
+        "side_effects": {
+          "business_execution": 0,
+          "tool_executions_max": 0
+        },
+        "notes": "R 段は subject＝利用者で評価し、テナントは L0 で照合するので、拒否と不存在は同じ応答（CON-18 §6）。同じテナントの他人の資源でも 1 回流す"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit",
+    "kit_record"
+  ],
+  "strength": "D: ADR-017 D17-14〜D17-16・D17-20〜D17-25・D17-34・D17-35、CON-18 AD-01〜AD-10。CON-18 が preview で、actor の型の写像（CON-18 §5）が暫定、承認 grant は ADR-017 L17-5 の決定まで無効のため、本ベクタは preview（不合格を記録だけする）",
+  "notes": [
+    "v1.2 で新設（13_integration-trial/room-booking/report.md C-2・L-13 の PEP 側）。CON-18 §9 HO12-AG-10 に従い、AGN のうち依存サービス（tool 側 PEP）で観測できるものを写した。AS・STS・承認の消費の側で判定する AGN-01〜AGN-11・AGN-15・AGN-18〜AGN-20（消費側）・AGN-22（消費側）・AGN-24・AGN-26〜AGN-28 は基盤側の provider verification（CON-11 §6.9）",
+    "正例（委任 grant のある代理予約が PDP に subject=core/user、subject.properties.actor={type: core/workload, id: act.sub, principal_type: ai_agent} で進み 201）は CON-18 の x-pdp-request-example と examples で確かめる"
+  ],
+  "since": "0.3.0（v1.2）",
+  "deprecated": null
+}

@@ -1,8 +1,8 @@
 # 連携の要点: SDK なし実装のための token 検証・PEP・core 型の抜粋とスタブの最小構成
 
-> 文書ID: CON-16（v1.1 の同期で確定。成果物 DL-122。traceability/deliverables.md 版 0.7・CON-00 で登録） / 版: 0.2（v1.1 の同期） / 状態: draft / 最終更新: 2026-10-15（0.2: v1.1 の同期で、文書ID と DL を確定し、`subject.type` の写像の正本を CON-02 `x-subject-type-map` に改め（`service_account` は `core/workload`（暫定）から `core/client`（暫定）へ）、申し送り IE-1〜IE-8 の反映状況を記した。0.1: v1.1（I-2）で新設。模擬連携検証 13_integration-trial/report.md の P-02・P-17 を主に、P-04（core/unit の公開 permission の部分）・P-05/P-06（PEP 側の組み立て規則）・P-11（Txn-Token の検証に要る値）・P-22（自サービスの SPIFFE ID）の一部を解消するために起草した）
+> 文書ID: CON-16（v1.1 の同期で確定。成果物 DL-122。traceability/deliverables.md 版 0.7・CON-00 で登録） / 版: 0.3（v1.2） / 状態: draft / 最終更新: 2026-10-15（0.3: v1.2。AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。会議室予約サービス。実在の連携チームの検証ではない）の M-1・M-4・M-5・M-6・L-3〜L-6・L-10・L-13 と、新契約 CON-17（外部付与）・CON-18（AI エージェント代理）の受け口を反映した。§1.1 の注記、§1.8 の issuer、§1.9 の Txn-Token、§2.5 の actor の写像、§2.6 の要素単位の規則、§2.8・§2.10 の暫定、§3.2 の外部付与、ST-1・ST-2・ST-9・ST-10、§5 U-9〜U-12、申し送り IE-9〜IE-16。0.2: v1.1 の同期で、文書ID と DL を確定し、`subject.type` の写像の正本を CON-02 `x-subject-type-map` に改め（`service_account` は `core/workload`（暫定）から `core/client`（暫定）へ）、申し送り IE-1〜IE-8 の反映状況を記した。0.1: v1.1（I-2）で新設。模擬連携検証 13_integration-trial/report.md の P-02・P-17 を主に、P-04（core/unit の公開 permission の部分）・P-05/P-06（PEP 側の組み立て規則）・P-11（Txn-Token の検証に要る値）・P-22（自サービスの SPIFFE ID）の一部を解消するために起草した）
 > 対応要求: G-138, G-140, G-121, G-123（連携インタフェースの profile、SDK なし適合、モック、独立開発者による切替）。関連: R-059〜R-062, R-161, R-162, R-250, R-283
-> 依存文書（抜粋元。正本）: 05_adr/ADR-005-token-profile.md（V1〜V14）, 04_architecture/token-profile.md（ARC-02 版 0.4。§3.1・§4.1〜§4.5）, 04_architecture/pep-contract.md（ARC-06 版 0.3。§3・§4）, 04_architecture/authorization-model.md（ARC-05 版 0.4。§3.1〜§3.6・§8・§9.1）, 11_contracts/schemas/access-token-claims.schema.json（CON-06）, 11_contracts/authorization-api.openapi.yaml（CON-03）, 11_contracts/mock-contract-test-kit.md（CON-11）, 13_integration-trial/report.md（模擬連携検証）
+> 依存文書（抜粋元。正本）: 05_adr/ADR-005-token-profile.md（V1〜V14）, 04_architecture/token-profile.md（ARC-02 版 0.4。§3.1・§4.1〜§4.5）, 04_architecture/pep-contract.md（ARC-06 版 0.3。§3・§4）, 04_architecture/authorization-model.md（ARC-05 版 0.4。§3.1〜§3.6・§8・§9.1）, 11_contracts/schemas/access-token-claims.schema.json（CON-06）, 11_contracts/authorization-api.openapi.yaml（CON-03）, 11_contracts/mock-contract-test-kit.md（CON-11）, 13_integration-trial/report.md（模擬連携検証）, 13_integration-trial/room-booking/report.md（v1.2。2 回目の模擬連携検証）, 11_contracts/external-grant.openapi.yaml（CON-17。v1.2 の同期で確定。v1.2）, 11_contracts/agent-delegation.openapi.yaml（CON-18。v1.2 の同期で確定。v1.2）
 > 作成方法: AI エージェント（Claude）が上記の正本を読み、連携チームが 04_architecture と 05_adr を読まずに SDK なしの自前実装と単体・結合試験を始められるよう、必要な規則だけを写して起草した。抜粋は正本の文言を実装者向けに言い換えたもので、意味を変えないことを意図したが、作成者以外による照合は未了である（残課題 1）。判断は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）[D]。
 > 表記: 規則 ID（V1〜V14、TP-xx、OB-xx、X-xx、NV-xx、CV-xxx、NE-xx）は正本の ID をそのまま使う。本書が新たに置く ID は、スタブを ST-x、本書の注意点を EN-x、申し送りを IE-x と書く。表のセルのうちタグのないものは、正本の規則の転記（正本の規範性を引き継ぐ）か、それに基づく設計推論 [D] であり、本注記で個別のタグに代える。規範（RFC 等）の強度を写すセルには個別にタグと脚注を付けた。
 
@@ -14,7 +14,7 @@
 2. **token 検証（§1）**: 受理してよいのは内部 access token（typ=`at+jwt`、Authorization ヘッダ）と Transaction Token（typ=`txntoken+jwt`、`Txn-Token` ヘッダ）の 2 種だけである [D]。期待値（issuer・aud・alg・profile の最低版・許容時刻差）は自サービスの版付き設定から読み、token や issuer metadata から読まない（V1・V4）[D]。模擬検証の自前実装には、`exp` に時刻差の許容を足す、issuer の期待値を discovery 応答から取る、Txn-Token を署名検証せずに読む、という正本と異なる読み方があった（EN-1〜EN-3）[M][^14]。
 3. **PEP（§2）**: 1 要求の処理は `authenticate`→`bind_tenant`→`authorize`→`enforce` の順に固定し、データアクセスより前に終える [D]。判定が得られない場合はすべて拒否し、write 以上は 503（Retry-After 付き）を返す [D]。PDP 要求の `action.name` は資源型の permission 名（動詞。例 `approve`）をそのまま入れる（v1.1（I-5）の統一に合わせた）[D]。
 4. **core 型（§3）**: 連携チームが参照してよい core の relation・permission を一覧にし、`fga model test` にそのまま使える core 型の代替定義（OpenFGA DSL）を付けた [D]。代替定義は本書の作成者が `fga model test` に通し、4 試験・29 check がすべて合格した [M]。ただし ARC-05 の `core/tenant` には `manage` がなく、`ancestor->manage` でテナント管理者が配下へ継承されない（代替定義は `manage = admin` を足した。IE-5）[M][D]。
-5. **スタブの最小構成（§4）**: 基盤の部品が 1 つも動いていない段階で結合確認をするのに要るスタブは 8 種（ST-1〜ST-8）で、うち内部 issuer・PDP・TTS の 3 種は必須である [D]。汎用モック（Prism）だけでは契約に忠実な PEP の正例が通らない（P-01）ので、PDP はプログラム可能なスタブか、キットの echo proxy（v1.1（I-1）、11_contracts/kit/）を使う [D]。スタブで合格しても、キット（DL-120）による判定・DoR・DoD の証拠にはならない [D]。
+5. **スタブの最小構成（§4）**: 基盤の部品が 1 つも動いていない段階で結合確認をするのに要るスタブは 8 種（ST-1〜ST-8）で、うち内部 issuer・PDP・TTS の 3 種は必須である [D]。v1.2 で、越境ゲスト（P-16）と AI エージェント代理（P-08）を使うサービス向けに ST-9（承認 grant の消費）・ST-10（外部付与 API）を条件付きで加えた [D]。汎用モック（Prism）だけでは契約に忠実な PEP の正例が通らない（P-01）ので、PDP はプログラム可能なスタブか、キットの echo proxy（v1.1（I-1）、11_contracts/kit/）を使う [D]。スタブで合格しても、キット（DL-120）による判定・DoR・DoD の証拠にはならない [D]。
 
 ---
 
@@ -52,6 +52,7 @@
 | K3 内部 access token | `Authorization: Bearer` ヘッダ | JWT、typ=`at+jwt`（`application/at+jwt` も受理） | 内部 issuer（外部 AS と別、cell ごと） | 呼出し先 1 サービス（自サービス） | 内部 issuer の JWKS（ES256） |
 | K5 Transaction Token | `Txn-Token` ヘッダ（Authorization ヘッダでは拒否） | JWT、typ=`txntoken+jwt` | 同じ cell の TTS | trust domain の値（cell ごとの内部値） | TTS の JWKS（K3 と別の鍵族。ES256） |
 
+- v1.2（room-booking L-13）: AI エージェントが利用者の代理で自サービスを呼ぶ場合（INT-02 P-08）も、自サービスが受けるのは edge が exchange した K3（`sub`＝利用者、`act`＝エージェント主体）と K5 だけである。エージェントが edge に送る外部 access token（opaque）は自サービスに届かず、届いたら拒否する（CON-18 §2.2・AD-01、CV-062i）[D]。INT-02 P-08 の図の「外部 AT」は edge に送る token を指す [D]。
 - `at+jwt` は RFC 9068 で宣言が MUST であり、RS は `at+jwt` と `application/at+jwt` 以外を拒否しなければならない（MUST）[N][^1]。
 - `txntoken+jwt` は Transaction Tokens draft-11 の MUST だが、draft であり規範根拠ではない（Internet-Draft、IESG 未提出、確認日 2026-10-03）[N][^9]。本基盤は社内 profile `txn-v1` として固定している [D]。
 - token の中身から種別を推測しない。受け取ったヘッダから期待種別をちょうど 1 つ決め、その種別の規則だけで検証する（TP-01）[D]。RFC 8725 §3.12 は、同じ issuer が複数種類の JWT を発行する場合、種類ごとの検証規則を互いに排他にすることを求める（MUST）[N][^2]。
@@ -163,6 +164,7 @@ write 以上の操作（と FAPI 範囲）では、内部 access token と一緒
 
 - Transaction Token の発行範囲は write 以上である。全要求に発行するかは未決（ADR-005 U2、reconciliation-notes U-02）で、PEP は「Txn-Token があれば検証して伝播する」と実装すればどちらの結論でも変えずに済む [D]（ARC-06 §3.8）。Txn-Token のない write の監査欄の扱いは CON-08 の v1.1（I-3）による [D]。業務としては、write 以上で Txn-Token が無い・検証できない要求を処理せず拒否する（INT-02 §3.2。v1.1 の同期）[D]。
 - TTS の JWKS の公開場所は v1.0 の契約になかった（P-11）[M][^14]。v1.1（I-9）で CON-05 に追加される前提で、本書のスタブ（ST-2）では TTS 専用の discovery と JWKS を別の URL で持つ [D]。
+- v1.2（room-booking M-2）: TTS の JWK Set は CON-05 の `/txn-token-jwks`（v1.1、preview）で配られている。差し替え点は CON-11 §11.4 の `AUTH_TTS_ISSUER`・`AUTH_TTS_AUDIENCE`・`AUTH_TTS_JWKS_URL`。汎用モックの `/txn-token` の例は静的で期限切れなので、正例の結合確認では kit の echo proxy の R9・R10（kit/README.md §2.5）を挟むか ST-2 を使う [D]。
 
 ### 1.7 時刻
 
@@ -178,6 +180,7 @@ write 以上の操作（と FAPI 範囲）では、内部 access token と一緒
 | 値 | 例（スタブ） | 読んではならない出所 | 規則 |
 |---|---|---|---|
 | issuer の期待値 | `https://as-a.trial.invalid` | token の `iss`、discovery 応答の `issuer` を期待値として採ること（discovery の `issuer` が期待値と一致しなければ設定誤りとして起動を止める） | V4 |
+| （v1.2、L-3）issuer の期待値の出所 | 差し替え点 `AUTH_OIDC_DISCOVERY_URL` から `/.well-known/openid-configuration` を除いた URL（設定の値）。別の環境変数に重ねて持たない | discovery の応答の `issuer` | V4。OpenID Connect Discovery 1.0 は応答の `issuer` が discovery の URL を組み立てた issuer と同一であることを MUST とする [N][^16]（RS-16#17）。CON-11 §11.4・§11.6.2（v1.2）と同じ規則 |
 | `jwks_uri` | discovery から得る | token header の `jku`・`x5u` | V3、CON-11 §11.4（JWKS URL の直書き禁止、discovery 経由） |
 | alg 許可集合 | `["ES256"]` | token header、issuer metadata | V1 |
 | 自サービスの aud | 自サービスの識別子（DL-71 で払出し） | 要求 path・Host ヘッダ | V6 |
@@ -195,6 +198,7 @@ write 以上の操作（と FAPI 範囲）では、内部 access token と一緒
 | token が無い・無効・失効・種別違い | 401。原因の細目（どの検査で落ちたか）は返さない。応答の形は CON-11 の v1.1（P-25）に従う | enforcement 記録の拒否理由 `deny_token`。内部ログに検査名（例 `bad_typ`）を残してよいが token 本体は残さない |
 | 認証強度（acr・auth_time）の不足 | 401 と step-up の指示（`insufficient_user_authentication`） | 同上 |
 | 鍵の取得に失敗（JWKS 不達） | 前回の値を使い続けて警報を出す（ARC-06 §3.9 の JWKS 行）。前回の値もなければ 401 ではなく 503 | 判定に進めない |
+| （v1.2、L-6）write 以上で `Txn-Token` ヘッダが無い、Txn-Token を検証できない（署名・typ・iss・aud・exp）、または内容が K3 と食い違う（`sub`） | token 検証の失敗と同じ 401 の型（CON-11 §6.1.2 の `auth_failure`。どの token のどの検査で落ちたかを応答で区別させない）。`tctx.tid` の食い違いは §2.4 の L0 で拒否（404 の群）。TTS の鍵が前回の値を含めて得られないときは 503 | E2 は `decision_source`=`none`・`no_decision_cause`=`token_invalid`・`reason_code`=`deny_token`、`corr.txn_absence` に `not_presented`／`unverified`（CON-08）。v1.2 の暫定で、ARC-06 の改版で確定する（IE-12）。試験は CV-058 |
 
 RFC 9470 は、RS が `insufficient_user_authentication` のエラーコードで追加認証を求められると定める [N][^13]。
 
@@ -325,7 +329,7 @@ function bind_tenant(principal, signed_route_ctx, resource_ref, op):
 |---|---|---|
 | `X-Request-ID` ヘッダ | PEP が要求ごとに採番する不透明値 | 応答で同じ値が返らなければ「判定が得られない」。AuthZEN 1.0 は PEP が付けた要求 ID を PDP が応答に含めることを求める [N][^10] |
 | `subject.type` | 主体種別の写像（下表） | 写像の正本は CON-02（common.schema.json）の `x-subject-type-map`（v1.1 の同期で設置）。下表はその写しで、食い違えば CON-02 を正とする。監査（CON-08）の `subject.type` は `ptype` の値をそのまま書く別の欄 |
-| `subject.id` | token の `sub` | 委任時も `sub`（起点主体）。現在の actor は `context` 側（CON-03 の定義に従う） |
+| `subject.id` | token の `sub` | 委任時も `sub`（起点主体）。v1.2（room-booking C-2）: 現在の actor（最外 `act`）は `subject.properties.actor` に書く（CON-03 の欄。CON-02 `x-subject-type-map` の rules の「context 側」は誤記で、訂正は CON-18 HO12-AG-02）。actor の写像は下の表の注記 |
 | `subject.properties.tid` | `TenantBinding` のテナント | — |
 | `action.name` | **資源型の permission 名をそのまま**（例 `read`、`approve`）。Registry（CON-04）に登録した permission 名と完全一致 | v1.0 では `can_read`／`docs.document.read`／`read` の 3 通りの書き方が契約内にあった（P-05）。caller_scope 規則（呼出し元が宣言した資源型・permission 以外の照会を deny）により、取り違えは本番で全件 deny になるがモックでは検出できない [M][^14]。v1.1（I-5）で動詞の permission 名に統一する |
 | `resource.type`・`resource.id` | `<名前空間>/<型名>` と不透明 ID | — |
@@ -342,6 +346,7 @@ function bind_tenant(principal, signed_route_ctx, resource_ref, op):
 | `workload` | `core/workload` | ARC-05 §3.1 |
 | `service_account` | `core/client`（暫定） | ARC-05 §3.1 の主体型 `core/client`。確定は DL-75 と CAM 生成器の対応表（未作成）。§5 の U-1。版 0.1 の暫定値 `core/workload` は、CON-08 の暫定値（`core/client`）と食い違っていたため、v1.1 の同期で CON-02 の正本に合わせて改めた |
 | `ai_agent` | 未決（ADR-017。独立の型にするか属性にするか） | 利用者の代理で動くエージェントは `sub` が利用者（`human`）で、エージェントは `act` と `client_id` に入る（CON-06 の $comment）。`sub` 自体が `ai_agent` の token を受ける entry point は、対応表が決まるまで判定に進めず拒否する（deny-by-default、OB-05）|
+| （v1.2）最外 `act.ptype` が `ai_agent`（利用者の代理） | `subject` は `sub` の主体（`core/user`）のまま。`subject.properties.actor` を `{type: core/workload（暫定）, id: act.sub, principal_type: ai_agent}` で書いて PDP に進める | CON-18 §5 の暫定写像（preview。ADR-017・ARC-05 §16 の未決 7 で置き換わる）。actor の型を認可モデルの relation に使わない。entry point に `agent_delegation` の宣言がない、scope が宣言の `tool_scope` を含まない、承認要の tool に承認 grant がない場合は PDP を呼ばずに拒否する（CON-18 AD-02〜AD-07）。`sub` 自体が `ai_agent`（自律動作）なら上の行のとおり拒否 |
 
 - 複数資源の判定は evaluations を使い、「全て必要」は `deny_on_first_deny`、「いずれか」は `permit_on_first_permit` に固定する。後者は privileged 以上で使わない [D]（ARC-06 §3.6）。応答の `evaluations` の件数が要求の件数と一致しなければ「判定が得られない」として扱う [D]。
 - 一覧・検索は一覧ヘルパ（ADR-025）だけを使い、返す各資源を evaluations で後段 Check する。engine の ListObjects や AuthZEN search を直接呼ばない [D]。PP-2（自前 PEP）で候補生成に何を使ってよいかは INT-02 の v1.1（I-6）による [D]。
@@ -359,6 +364,7 @@ function bind_tenant(principal, signed_route_ctx, resource_ref, op):
 7. evaluations の応答件数が要求件数と一致しない
 8. 応答を解釈できない（未知の reason の値、必須欄の欠落、JSON として壊れている）
 
+- v1.2（room-booking M-1）**evaluations の要素単位の規則** [D]: 3 は要素ごとにも当てはめる。一覧の後段 Check で、要素の 1 つでも `deny_unavailable`・`deny_indeterminate`・`unsupported_profile` なら一覧全体を「判定が得られない」（§2.7 の「利用不可」、503）とし、空の一覧や、判定が得られた要素だけの一覧を返さない。`deny_no_relation`・`deny_guardrail:*` などの拒否の要素だけを除く。存在しない資源と権限のない資源の同一化は、PDP の reason ではなく PEP の L0（`l0_not_found` と他テナントを同じ応答にする。§2.4・§2.7）と一覧の候補生成（自 DB からテナントで絞る）で行う。CON-03 の evaluations の例 `mixed` は 2 件目を `deny_indeterminate` にし「存在しないと権限なしを同じ応答に」と説明しているが、本規則では一覧全体が利用不可になる。例の改訂は CON-03 の所有者へ申し送った（IE-13、CON-11 §14.5 H12-1）。試験は CV-059。
 - 評価不能（`deny_indeterminate`）を known-good（前回の判定）で許可に変えない [D]。read-sensitive の known-good 継続は KD13-6 の決裁後に限り、決裁までは read-sensitive も 503 とする [D]（ARC-06 §3.5・§3.10、L06-9）。
 
 ### 2.7 エラー応答の写像（OB-10）
@@ -390,6 +396,9 @@ enforcement 記録（監査の E2）は、識別（entry point ID、PEP 識別�
 
 L0 の拒否値は PDP の reason 列挙にないため、enforcement 記録側の値として DL-72 で別に定める（未決、ARC-06 の暫定案）[D]。
 
+- v1.2（room-booking L-4）: 主体の写像が未決（`sub` が `ai_agent` など）、または CON-18 AD-02〜AD-05 で PDP を呼ばずに拒否する場合に当たる `no_decision_cause` の値が CON-08 にない。値が加わるまでの暫定として、E2 は `decision_source`=`none`、`no_decision_cause` を書かず、`reason_code`=`deny_failmode`、`detail.result`=`denied` とし、PEP の内部ログに `subject_unmapped`（または該当する AD の番号）を残す [D]。CON-08 の値の追加（案 `subject_unmapped`／CON-18 HO12-AG-08 の案 `unmapped_principal`。名前は CON-08 の所有者が 1 つに決める）は IE-14。v1.2 の同期: CON-08 版 0.4.0 で `no_decision_cause`＝`subject_unmapped`、`reason_code`＝`deny_subject_unmapped`（`fail_mode` は不要）に決まった。以後はこの値を書き、上の暫定（`deny_failmode` と内部ログ）は使わない [D]。
+- v1.2（CON-18 AD-12）: エージェント経由の要求の E2 には、エージェント主体（`act.sub`）、委任／自律の区分、委任元（`sub`）、`tool_id`、承認 grant の `approval_id` を記録する。CON-08 に欄が加わるまでは拡張欄に書く [D]。
+
 ### 2.9 キャッシュ規則（OB-11）
 
 | キャッシュ | 置いてよいか |
@@ -406,7 +415,17 @@ L0 の拒否値は PDP の reason 列挙にないため、enforcement 記録側�
 - 実行時の DB 文脈は、メッセージの `tid` ではなく、TTS が受付記録から入れた Txn-Token の `tctx.tid` から設定し、資源側テナントと照合する。メッセージの `tid` と `tctx.tid` が一致しなければ拒否する [D]。
 - メッセージに入れてよい認可関連の値は不透明な参照（`job_run_id`、tid、起点主体の `sub`、起点の `txn`、資源 ID）に限り、token・権限一覧・role を入れない [D]。
 - 再 Check で拒否されたメッセージはデッドレターへ送り、監査に記録して業務側へ通知する。黙って捨てず、黙って再試行もしない [D]。
-- 受付記録の登録 API は v1.0 の契約になかった（P-11）[M][^14]。v1.1（I-9）で CON-05 に追加される前提である [D]。
+- 受付記録の登録 API は v1.0 の契約になかった（P-11）[M][^14]。v1.1（I-9）で CON-05 の `registerAcceptanceRecord`（`POST /acceptance-records`、preview）として加わった。差し替え点は CON-11 §11.4 の `AUTH_JOB_LEDGER_URL`（v1.2、room-booking L-2）[D]。
+- v1.2（room-booking M-4）**遅延実行（数日後のリマインドなど）の型の選び方の暫定** [D]:
+
+| 状況 | 型（ADR-026 D26-01） | 根拠と注意 |
+|---|---|---|
+| 利用者の 1 回の要求（例: 予約の作成）が、後で 1 回だけ実行される処理（例: 開始前のリマインド）を伴う | A1（利用者要求の非同期実行） | 受付記録は要求の処理中に、起点の Txn-Token（寿命 60 秒の初期案）を添えて登録する。受付記録の有効期限は CON-05 で TBD なので、実行時刻が期限を超えると内部開始の Txn-Token が発行されず（T07）、実行されない。その場合は黙って捨てず、デッドレターと監査に残す |
+| 利用者が設定した定期・繰返しの実行、または受付記録の期限を超えることが確実な遅延実行 | A2（委任 grant） | A2 の委任 grant を作る契約と `job_definition_id` を登録する手段は v1.2 の時点でない（IE-15）。決まるまでは A2 を実装せず、S1 に疑義票を出す |
+
+- A1 の受付を要求の処理中に行うため、利用者の要求の処理が受付台帳の可用性に結合する [D]。受付台帳が 503・不達のときは受付記録のないジョブを投入しない（CON-05）。業務の更新と受付を 1 つの単位にする（業務も確定させず 503 を返す）か、業務だけを確定させてジョブを投入しないかは自サービスの選択で、後者の場合は「リマインドが登録されていない」ことを利用者と監査に見える形で残す（黙って落とさない）。どちらを選んだかを manifest の `options.acceptance_atomic` で申告する（CV-060c）。結合の受容者は未決（IE-15）[D]。
+- v1.2（room-booking L-5）**再 Check の `subject.type`** [D]: Txn-Token は主体種別（`ptype`）を持たないので、consumer は Txn-Token だけからは `subject.type` を決められない。暫定として、受付の時点で検証済み K3 の `ptype` から §2.5 の写像で求めた値を、受付記録の `job_run_id` と対にして自サービスの正本ストアに保存し、実行時はその値を使う。メッセージに書かれた主体種別は使わない（CV-060d）。保存した値と内部開始の Txn-Token の `sub` の組が受付時と食い違えば拒否する。恒久策（受付記録や Txn-Token に主体種別を持たせる）は IE-16。
+- v1.2（room-booking M-5）: 宛先の連絡先を引く契約はない（INT-02 §3.9 BN-7）。外部ゲスト（CON-17 の付与先）への業務通知はアプリ内通知に限り、CON-17 は連絡先を返さない（CON-17 XGS-11・XG-L6）[D]。
 
 ### 2.11 自前実装の適合条件と記録
 
@@ -435,7 +454,7 @@ core 型は基盤チームだけが変更でき、連携チームは定義でき
 | `core/unit`（案） | `parent`（`core/unit`, `core/tenant`。単一値）、`admin`（`core/user`, `core/group#member`）、`member`（同左）、`admin_scope`（`core/admin_scope`） | `manage = admin \| parent->manage`、`view_directory = member \| manage`、`manage_membership = manage \| admin_scope->delegate` | 部署・子会社・支社などの単一親の再帰コンテナ。呼び名の違いは表示属性 `kind`（判定に使わない）。深さ上限は 5（初期案） |
 | `core/admin_scope`（案） | `delegate`（`core/user`, `core/group#member`）、`owner_unit` | — | 管理委任の範囲。ネストしない。管理操作の permission にだけ効き、閲覧系には効かない |
 | `core/role` | `assignee`（`core/user`, `core/group#member`） | — | custom role。テナントの `role_manager` が作る |
-| `core/external_grant` | `grantee`（`core/user`。期限条件付き） | — | 越境共有の外部付与 |
+| `core/external_grant` | `grantee`（`core/user`。期限条件付き） | — | 越境共有の外部付与。v1.2: 発行・受諾・取消し・照会は CON-17（`external-grant.openapi.yaml`）。起点の tuple と grantee の tuple は façade が書き、ドメインは CON-04 で書けない（CON-17 XGC-2） |
 | `core/share_link` | `holder` | — | 認証付きリンク |
 | `core/exception` | `holder`（`core/user`。期限条件付き） | — | 型付き例外（break-glass/B、JIT の特権付与） |
 | （予約 relation）`restricted_external` | `core/tenant#external_member` | — | 各資源型に core の生成器が付ける。子で外部主体の継承を止める唯一の手段。ドメインは独自に定義できない |
@@ -450,7 +469,7 @@ core 型は基盤チームだけが変更でき、連携チームは定義でき
 | `core/user` | 直接型 `[core/user]` | 個人への付与 | 自サービスが書く（自分の資源型の relation として） |
 | `core/group#member` | 直接型 `[core/group#member]` | グループへの付与 | 同上（group の所属自体は基盤・テナント管理者が書く） |
 | `core/role#assignee` | 直接型 `[core/role#assignee]` | custom role への付与 | 同上 |
-| `core/external_grant#grantee` | 直接型（期限条件付き） | 「外部付与可」の印を付けた permission の relation だけ | façade が外部付与と同時に書く |
+| `core/external_grant#grantee` | 直接型（期限条件付き） | 「外部付与可」の印を付けた permission の relation だけ | façade が外部付与と同時に書く。v1.2: 依存サービスは CON-17 `createExternalGrant` で発行を依頼し、自分では書かない（room-booking C-1、L-8 の書き方は `[core/external_grant#grantee]`） |
 | `core/tenant#external_member` | 予約 relation `restricted_external` の直接型 | 外部主体の継承を止める | core の生成器 |
 | `core/unit` の `manage` | `parent->manage`、`ancestor->manage` | 部署の管理者（と上位部署の管理者）に資源の管理を継承させる | `parent` は自サービスが資源の containment として書く。`ancestor` は階層サービスだけ |
 | `core/unit` の `view_directory` | `parent->view_directory` 等 | 部署の所属者（と管理者）に閲覧を許す | 同上 |
@@ -565,6 +584,7 @@ model: |
 - 例の `demo/doc` の `but not restricted_external` は、core の生成器が付ける縮小（X-5 の例外）を手書きで模したものである。自ドメインの permission に `but not` を書いてはならない（X-5）[D]。
 - 本書の作成者は、上の定義に 4 試験（部署の管理の配下への継承と上位への非推移、委任範囲が管理操作にだけ効くこと、祖先閉包と期限付き外部付与と `restricted_external`、テナントの管理機能 permission）を付けて `fga model test` を実行し、4/4 試験・29/29 check が合格した（2026-10-15、OpenFGA CLI のソースビルド版。版表記は `dev`）[M]。TC-ID はなく、本書の自己実行であり、エンジンの検証器による E4 ではない [D]。CLI の版と入手方法は CON-11 の v1.1（P-24）に従う [D]。
 - `core/tenant` の `manage` を除いた定義では、テナント管理者 `admin` が `core/unit` の `manage` を得られず、上の試験の 1 check が失敗した [M]。ARC-05 §8.4 は「`ancestor` に `core/tenant` を含めるのはテナント管理者の継承を同じ式で書くため」とするが、`core/tenant` に `manage` がないので式どおりには継承されない [D]（IE-5）。
+- v1.2（room-booking L-10）: IE-5 は v1.2 の時点でも ARC-05 に反映されていない。会議室予約の模擬検証も、テナント管理者の配下への継承を本代替定義の `core/tenant#manage` に頼った [M]。本番の core 型の生成物で同じ継承が成り立つかは、IE-5 の決着（ARC-05 の改版か、§8.4 の説明の訂正）まで未確定である。自ドメインのモデルでは、テナント管理者の継承を `parent->manage`／`ancestor->manage` の 1 か所に集め、決着の結果で書き換えられるようにする（INT-03 §3.2 の注記 v1.2）[D]。IE-5 を ADR の「v1.2 で判明した論点」として記録することを IE-9 で申し送る。
 - SpiceDB（`zed validate`）用の代替定義は置いていない（残課題 3）[D]。
 
 ---
@@ -585,6 +605,8 @@ model: |
 | ST-6 | ライフサイクル事象 publisher・状態照会 | MK-08、CON-15 の照会モック | CR-9 を申告するなら必須 | CON-12・CON-13・CON-15 | 署名付き事象の送出、照会応答 |
 | ST-7 | workload 身元（試験用 CA と証明書） | MK-02 の SVID 発行 | mTLS の試験をするなら | CON-14 §4A | 自己署名 CA、試験用 trust domain の証明書 |
 | ST-8 | 資源の fixture adapter | （自サービス側） | 必須 | CON-11 §6.4 | 所有テナント・主体を指定して資源を直接作る |
+| ST-9（v1.2） | 承認 grant の消費 | （キット本体で未定。CON-18 §9 HO12-AG-10 の案） | 承認要の tool を持つなら必須 | CON-18 `consumeApprovalGrant` | 成功・`already_consumed`・`approval_mismatch`・`unavailable` を試験から切り替える。L17-5 の決定までは承認要の tool は常に拒否なので、正例は試験しない |
+| ST-10（v1.2） | 外部付与 API | （キット本体で未定） | P-16 を使うなら必須 | CON-17 | `createExternalGrant`・`revokeExternalGrant`・`revokeExternalGrantsByAnchor`・`getExternalGrant` と状態遷移（invited→active→revoked）。汎用モックは状態を持たないので、遷移は自前で模す（CON-17 §10） |
 
 - 汎用モック（Prism 等）を CON-03 に向けて起動すると、契約に忠実な PEP は正例でも fail-closed（503）になる。応答の X-Request-ID が要求と一致しない、allow 例の consistency が write の要求より弱い、evaluations の件数が固定、などのためである（P-01）[M][^14]。ST-3 は汎用モックではなく、要求に応じて応答を作るスタブにするか、キットの echo proxy（v1.1（I-1）、11_contracts/kit/）を汎用モックの前に置く [D]。
 - 12_poc/code（PoC 基盤）を使えるチームは、ST-1〜ST-4 の代わりに PoC 基盤を使ってよい（CON-11 §11.5）。本節は 12_poc/code を使わない（使えない）チームのための構成である [D]。
@@ -601,6 +623,7 @@ model: |
 | 負例の鋳造 | 1 つの関数で header・payload の任意の欄を上書き・削除できるようにし、CV-001〜CV-014 と CON-06 NE-01〜NE-14 を作る（alg=`none`／`None`／`HS256`、未知の kid、`crit`・`jku` 付き、typ の取違え、exp 過去、iat 未来、他 aud、他 iss、tid 配列、`txn` 入り、未知 claim、古い `ver`） |
 | 鍵の制御 | 鍵を後から追加できる（CV-005 の「取り直し後に見つかる」場合）。追加前に新しい鍵で署名した token を作れる |
 | 2 つの issuer | 本番役（issuer A）と sandbox 役（issuer B）。B の正規署名 token を A の設定の検証点に出して拒否を確かめる（CV-011） |
+| AI エージェント代理の K3（v1.2、CON-18 HO12-AG-07 (c)） | `act: {sub: <エージェント主体>, ptype: "ai_agent"}`・`client_id`（委任用 client）・`scope`（宣言の `tool_scope`）を入れた正例と、`sub` が `ai_agent`、scope なし・別の tool の scope の負例を作る（CV-062） |
 
 **ST-2 TTS**
 
@@ -609,6 +632,7 @@ model: |
 | 鍵 | ST-1 と別の EC P-256 鍵と別の JWKS（K3 と K5 は鍵族が別。ARC-02 §4.3） |
 | 正例の鋳造 | header `{"typ":"txntoken+jwt","alg":"ES256","kid":<kid>}`、payload は `iss`（TTS）、`aud`（trust domain の値）、`iat`、`exp`、`txn`、`sub`（同じ要求の K3 の sub）、`scope`（entry point 台帳の操作 ID）、`req_wl`（edge の SPIFFE ID の形の値）、`tctx: {tid, root_jti, tier, ver}`。CON-06 の `decodedTxnToken` で自己検証する |
 | 負例 | `tctx.tid` が K3 の `tid` と違う、`sub` が違う、typ が `at+jwt`（NE-15）、Authorization ヘッダで提示（CV-010） |
+| 署名鍵（v1.2、room-booking M-3） | Txn-Token は ST-2 の鍵で署名する。ST-1 の鍵で署名した Txn-Token は「鍵族の取違え」の負例（CV-045c）で、正例ではない。キットの CV-045a・CV-010a は v1.2 で signer を TTS 役の鍵に改めた |
 | 注意 | 汎用モックで生成した Txn-Token には `tctx` がない（P-11）[M][^14]。ST-2 で鋳造する |
 
 **ST-3 PDP façade**
@@ -624,7 +648,7 @@ model: |
 
 **ST-4 STS**: `POST /token`（RFC 8693。`grant_type=urn:ietf:params:oauth:grant-type:token-exchange`）で、`subject_token`（K3）と `resource` を受け、ST-1 の鍵で下流 aud の K3 を返す。呼出し元×呼出し先×scope の組を試験から登録し、登録にない組は拒否する [D]。RFC 8693 は token exchange の要求・応答の形を定める [N][^5]。`subject_token_type` の値は CON-05 の v1.1（I-9）に従う [D]。
 
-**ST-5 監査 sink**: 受信した監査イベントを CON-08 の schema で検査し、不適合を試験の失敗として返す。producer_seq・prev_fp の連鎖を検査する [D]。送信 API の形は CON-08 の v1.1（I-3）に従う [D]。ただし監査送信 API・参照値 API の契約は未作成である（CON-08 x-handoff-v1.1 の 3。CON-00 の「未作成の契約」に v1.1 の同期で登録）。それまで ST-5 は CON-08 の schema による検査だけを行う [D]。
+**ST-5 監査 sink**: v1.2（room-booking M-6）: 参照値（`subj_ref`・`res_ref`・`jti_ref`）は CON-08 `x-ref-derivation` の規則どおり試験用の固定値表で埋め、自前の鍵で計算しない。`cell_id`・`jurisdiction` は CON-11 §11.4 の `AUTH_CELL_ID`・`AUTH_JURISDICTION` から読む（kit/README.md §5.5）[D]。受信した監査イベントを CON-08 の schema で検査し、不適合を試験の失敗として返す。producer_seq・prev_fp の連鎖を検査する [D]。送信 API の形は CON-08 の v1.1（I-3）に従う [D]。ただし監査送信 API・参照値 API の契約は未作成である（CON-08 x-handoff-v1.1 の 3。CON-00 の「未作成の契約」に v1.1 の同期で登録）。それまで ST-5 は CON-08 の schema による検査だけを行う [D]。
 
 **ST-6 ライフサイクル**: CON-13 の封筒で事象を送出する。`lcsig` の再署名手順は v1.1（I-11）で配布される手順に従い、v1.0 の examples のダミー署名を正例に使わない（P-15）[D]。照会は CON-15 の単独ファイル（v1.1（I-10）、11_contracts/state-query.openapi.yaml）から起動する [D]。
 
@@ -655,14 +679,18 @@ model: |
 
 | ID | 未決 | 正本・決める場所 | 本書の暫定 |
 |---|---|---|---|
-| U-1 | `ptype` と `subject.type` の対応表（特に `service_account`、`ai_agent`） | DL-75、ADR-017、CAM 生成器 | §2.5 の表。`ai_agent` が `sub` の token は拒否 |
+| U-1 | `ptype` と `subject.type` の対応表（特に `service_account`、`ai_agent`） | DL-75、ADR-017、CAM 生成器 | §2.5 の表。`ai_agent` が `sub` の token は拒否。v1.2: 委任の actor としての `ai_agent` は CON-18 §5 の暫定写像（`core/workload`＋`principal_type`）で PDP に進める |
 | U-2 | claim 名 `ptype`・`gref`・`ver` の確定（KC-1） | ARC-15 KC-1、DL-75（DEC-8 前） | CON-06 の名前で実装し、名前を 1 か所の定数にまとめる |
-| U-3 | K3 の `scope` の必須・任意 | CON-06 x-open-issues | 任意として扱い、判定に使わない |
+| U-3 | K3 の `scope` の必須・任意 | CON-06 x-open-issues | 任意として扱い、判定に使わない。v1.2: 最外 `act.ptype` が `ai_agent` の要求に限り、scope が宣言の `tool_scope` を含むかを PDP の前に検査する（CON-18 AD-05、例外） |
 | U-4 | stateful jti 照合（privileged・break-glass/B・層 F）の API | ADR-005 D1-6、ADR-006 | 該当 entry point を持つチームは疑義窓口へ。暫定実装はしない |
 | U-5 | `core/unit`・`core/admin_scope`・`ancestor` の採否（K05-6〜K05-8） | ARC-05、INT-03 INT03-K1、DEC-8 前 | §3.4 の局所化 |
 | U-6 | 時刻差 S_int・D(t)・token の最大長の確定値 | DL-19・DL-20 | 初期値（10 秒、TBD、6,144 byte）を設定に置く |
 | U-7 | L0 の拒否値（`deny_l0:*`）の正式な列挙 | DL-72、ADR-012 L-05 | §2.8 の値 |
 | U-8 | SDK なし実装と ADR-011 D5-4（SDK を通してだけ PDP を呼ぶ）の文言の関係 | ADR-011／ADR-012 L-01 | 「SDK または契約適合の自前実装を通してだけ」と読む（ARC-06 §4.1） |
+| U-9（v1.2） | 受付記録の有効期限、A2 の委任 grant の作成と `job_definition_id` の登録の契約 | CON-05 x-open-issues、ADR-026 | §2.10 v1.2 の表（遅延実行は A1。期限を超える実行は実装しない） |
+| U-10（v1.2） | write 以上で Txn-Token が無い・検証できないときの応答コード | ARC-06 §3.10 | §1.9 v1.2（401 の token 検証失敗と同じ型。鍵が得られなければ 503） |
+| U-11（v1.2） | PDP を呼ばない拒否（写像未決・AD-02〜AD-05）の `no_decision_cause` | CON-08 | §2.8 v1.2（`deny_failmode`、cause を書かない） |
+| U-12（v1.2） | 再 Check の `subject.type` の出所 | CON-05・CON-06 | §2.10 v1.2（受付時に保存した値） |
 
 ---
 
@@ -695,6 +723,36 @@ model: |
 | IE-7 | CON-11 §11.4 に TTS の issuer・aud・JWKS の差し替え点を加えた。issuer・aud・alg・最低受理版は v1.1（I-8）の `AUTH_VERIFIER_CONFIG_URL` の文書で受けている |
 | CON-08 の申し送り（写像の正本） | 本書 §2.5 を CON-02 `x-subject-type-map` の写しに改めた |
 
+## 他文書への申し送り（v1.2）
+
+v1.2 の改訂では、並行作業の約束により本書・CON-11・kit/・INT-00・INT-03・INT-06 だけを編集した [D]。
+
+| ID | 宛先 | 内容 | 由来 |
+|---|---|---|---|
+| IE-9 | 05_adr/ADR-011 または ARC-05 の所有する ADR、04_architecture/authorization-model.md（ARC-05）§3.1・§8.4 | IE-5（`core/tenant` に `manage` がなく、テナント管理者が配下へ継承されない）を「v1.2 で判明した論点」として ADR に記録し、ARC-05 を改版する。2 回の模擬検証がいずれも本書の代替定義に依存した | room-booking L-10、IE-5 |
+| IE-10 | 11_contracts/schemas/common.schema.json（CON-02）`x-subject-type-map` | rules の「現在の actor は context 側」を `subject.properties.actor` に改める（CON-18 HO12-AG-02 と同じ）。本書 §2.5 の写しを同時に直す | room-booking C-2 |
+| IE-11 | 10_integration/integration-patterns.md（INT-02）P-08 の図 | 「外部 AT（aud=M）」が edge に送る token であることを注記する（CON-18 §2.2 と本書 §1.1 v1.2） | room-booking L-13 |
+| IE-12 | 04_architecture/pep-contract.md（ARC-06）§3.10 | write 以上で Txn-Token が無い・検証できない場合の応答（本書 §1.9 v1.2 の暫定: 401 の token 検証失敗と同じ型、鍵が得られなければ 503）を正本に置く | room-booking L-6 |
+| IE-13 | 04_architecture/pep-contract.md（ARC-06）§3.5、11_contracts/authorization-api.openapi.yaml（CON-03）evaluations | evaluations の要素単位の規則（本書 §2.6 v1.2）を正本に置き、CON-03 の例 `mixed` の 2 件目を `deny_no_relation` に改めるか説明を改める（CON-11 §14.5 H12-1） | room-booking M-1 |
+| IE-14 | 11_contracts/schemas/audit-event.schema.json（CON-08） | PDP を呼ばない拒否の `no_decision_cause` の値を 1 つ加える（CON-18 HO12-AG-08 と CON-11 H12-4 の案を 1 つに）。examples の `can_update`・`can_submit` を動詞の permission 名に改める | room-booking L-4・L-7 |
+| IE-15 | 05_adr/ADR-026、11_contracts/token-exchange.openapi.yaml（CON-05） | 受付記録の有効期限、A2 の委任 grant の作成と `job_definition_id` の登録の契約、A1 の受付が利用者の要求の処理と受付台帳の可用性を結合することの受容者を、ADR-026 の「v1.2 で判明した論点」として記録し決める | room-booking M-4 |
+| IE-16 | CON-05 `registerAcceptanceRecord`、11_contracts/schemas/access-token-claims.schema.json（CON-06） | 再 Check の `subject.type` を決める手段（受付記録の応答か内部開始の Txn-Token に主体種別を持たせる）を決める（CON-18 HO12-AG-06 (c) と同じ） | room-booking L-5 |
+
+### v1.2 の同期での反映状況（2026-10-15）
+
+AI エージェントによる同期で、人による照合は未実施（CONVENTIONS §8）[D]。
+
+| ID | 反映 |
+|---|---|
+| IE-9 | 一部。ADR-011 版 0.3 §8A V12-11-1 に論点として記録した。ARC-05 の改版は同期の範囲外（04_architecture）で未反映 |
+| IE-10 | 済。CON-02 版 0.3.1 の `x-subject-type-map`（rules の訂正、ai_agent 行の注記）。本書 §2.5 は v1.2 の改訂で済 |
+| IE-11 | 済。INT-02 版 0.10 の P-08 の図の注記 |
+| IE-12 | 未反映（ARC-06 は同期の範囲外）。本書 §1.9 の暫定が有効 |
+| IE-13 | 一部。CON-03 版 0.4.0 の evaluations の説明と例 `mixed` の説明で済。ARC-06 §3.5 は範囲外で未反映（ADR-011 V12-11-2） |
+| IE-14 | 済。CON-08 版 0.4.0（`subject_unmapped`、examples の動詞化） |
+| IE-15 | 論点として記録。ADR-026 版 0.2 §8A V12-26-1〜V12-26-3、CON-05 版 0.3.0 の x-open-issues。決定は未了で、本書 §2.10 の暫定が有効 |
+| IE-16 | 論点として記録。ADR-026 §8A V12-26-4、CON-05・CON-06 の x-open-issues。決定は未了 |
+
 ## 対応表（模擬連携検証の詰まった点との対応）
 
 | P-xx | 内容（report.md §7） | 本書の対応 | 残り |
@@ -707,6 +765,13 @@ model: |
 | P-11 | 受付記録登録 API と TTS の JWKS がない、Txn-Token に tctx がない | §1.6・§2.10・ST-2 | 契約への追加は CON-05（I-9） |
 | P-22 | 自サービスの SPIFFE ID 未払出し | ST-7（試験専用 trust domain、設定に置く） | 差替え点の名前は CON-11（I-8） |
 | P-01 | 汎用モックの正例が PEP を通らない | §4.1（ST-3 か echo proxy を使う） | CON-03・CON-11 の修正は I-1 |
+| room-booking C-1（v1.2） | 外部付与を作る契約がない | §3.1・§3.2 から CON-17 へ、ST-10 | CON-17 は preview |
+| room-booking C-2（v1.2） | AI 代理の actor を書けない | §2.5 の actor の行（CON-18 §5 の暫定写像）、ST-1・ST-9 | IE-10。CON-18 は preview |
+| room-booking M-1（v1.2） | evaluations の要素の reason | §2.6 の要素単位の規則 | IE-13 |
+| room-booking M-2（v1.2） | TTS の例が静的 | §1.6 の注記（kit の R9・R10） | CON-05 の例の説明（CON-11 H12-2） |
+| room-booking M-4・L-5（v1.2） | 遅延実行の型、再 Check の主体種別 | §2.10 の暫定 | IE-15・IE-16 |
+| room-booking M-5・M-6（v1.2） | 連絡先の解決、監査の参照値・cell・法域 | §2.10、ST-5 | 参照値 API の契約（IE-14 と同じ所有者） |
+| room-booking L-3・L-4・L-6・L-10・L-13（v1.2） | issuer の出所、写像未決の cause、Txn-Token の欠落、tenant の manage、受け取る token | §1.8、§2.8、§1.9、§3.5、§1.1 | IE-9・IE-12・IE-14 |
 
 ---
 
@@ -740,6 +805,7 @@ model: |
 [^13]: IETF (V. Bertocci, B. Campbell)『RFC 9470: OAuth 2.0 Step Up Authentication Challenge Protocol』2023-09. https://www.rfc-editor.org/rfc/rfc9470 （参照箇所: §3、確認日: 2026-10-03）RS-04#72
 [^14]: 本リポジトリ『並行開発可能性の実地検証（連携チーム模擬）: 経費精算サービス』13_integration-trial/report.md（git `33e06ea`）と成果物 13_integration-trial/expense-service/（src/token.js、test/harness.js、model/expense.fga.yaml）（参照箇所: §0, §7 P-01・P-02・P-04・P-05・P-11・P-17・P-22・P-23、確認日: 2026-10-15。AI エージェントによる模擬検証であり、実在の連携チームの検証ではない）
 [^15]: OpenFGA『Testing Models』web 文書（版表記なし）. https://openfga.dev/docs/modeling/testing （参照箇所: 冒頭, Write tests、確認日: 2026-10-03）RS-17#86
+[^16]: N. Sakimura, J. Bradley, M. Jones, E. Jay / OpenID Foundation『OpenID Connect Discovery 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-discovery-1_0.html （参照箇所: §4.3（応答の issuer は discovery の URL を組み立てた issuer と同一でなければならない MUST）、確認日: 2026-10-03）RS-16#17（research/verification/RS-16-verification.md で支持と記録）
 
 ---
 
@@ -749,3 +815,4 @@ model: |
 |---|---|---|
 | 0.1 | 2026-10-15 | v1.1（I-2）で新設。V1〜V14 と K3・K5 の検証規則、PEP の 11 関数と義務、core 型の連携向け抜粋と `fga model test` 用の代替定義（作成者の自己実行で 4/4 試験・29/29 check 合格）、スタブの最小構成 ST-1〜ST-8、申し送り IE-1〜IE-8 |
 | 0.2 | 2026-10-15 | v1.1 の同期。文書ID CON-16・DL-122 の確定、`subject.type` の写像の正本を CON-02 に改め `service_account` の暫定値を `core/client` に揃えた、IE-1〜IE-8 の反映状況の追記 [D] |
+| 0.3 | 2026-10-15 | v1.2（AI エージェント）。13_integration-trial/room-booking/report.md（AI による 2 回目の模擬連携検証。実在の連携チームの検証ではない）の M-1・M-2（注記）・M-3（ST-2）・M-4・M-5・M-6・L-3〜L-6・L-10・L-13 と、CON-17・CON-18 の受け口（CON-17 §12 V12-XG-9、CON-18 §9 HO12-AG-07）を反映した。v1.2 で置いた暫定（§1.9・§2.6・§2.8・§2.10）は正本（ARC-06・CON-08・ADR-026）の改版まで有効で、申し送り IE-9〜IE-16 に挙げた。作成者以外による照合は未実施 [D] |

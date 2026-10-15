@@ -1,0 +1,100 @@
+{
+  "id": "CV-059",
+  "title": "evaluations の要素ごとの reason の扱い（一覧の後段 Check）",
+  "source": [
+    "13_integration-trial/room-booking/report.md M-1",
+    "CON-16 §2.6（v1.2）",
+    "ADR-025 D25-04・D25-16",
+    "CON-03 evaluations"
+  ],
+  "roles": [
+    {
+      "role": "CR-2",
+      "applies_when": "manifest に一覧（COLLECTION）の entry point がある"
+    }
+  ],
+  "status": "conditional",
+  "stub_requirements": [
+    "PDP スタブ（ST-3）が evaluations の応答の要素ごとに decision と reason を設定できる（MK-03 の注入「evaluations の要素単位の reason」、CON-11 §4.4 v1.2）",
+    "fixture adapter（ST-8）で同じテナントの資源を 3 件作れる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-059a",
+      "description": "3 件の候補の後段 Check で、2 件目だけ decision=false・reason=deny_no_relation を返す",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "evaluations_item_reason",
+          "params": {
+            "index": 1,
+            "decision": false,
+            "reason": "deny_no_relation"
+          }
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.list}}",
+          "tier": "read-sensitive"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "response_profile": "success",
+        "notes": "2 件目を除いた 2 件を返す。除いた件数・理由を応答に出さない（LS-6）"
+      }
+    },
+    {
+      "case_id": "CV-059b",
+      "description": "3 件の候補の後段 Check で、2 件目だけ decision=false・reason=deny_indeterminate を返す（他の 2 件は allow）",
+      "stimulus": {
+        "inject": {
+          "target": "MK-03",
+          "kind": "evaluations_item_reason",
+          "params": {
+            "index": 1,
+            "decision": false,
+            "reason": "deny_indeterminate"
+          }
+        },
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.list}}",
+          "tier": "read-sensitive"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "要素の 1 つでも「判定が得られない」（deny_indeterminate・deny_unavailable・unsupported_profile）なら一覧全体を利用不可にする。空の一覧や、判定が得られた 2 件だけの一覧を返さない（CON-16 §2.6 v1.2 の要素単位の規則）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit"
+  ],
+  "strength": "D: ARC-06 §3.5（deny_indeterminate は判定が得られない）、ADR-025 D25-04（返却直前の後段 Check）。存在しない資源の扱いは façade の reason ではなく PEP の L0（l0_not_found）で同一化する（CON-16 §2.6 v1.2）",
+  "notes": [
+    "v1.2 で新設（13_integration-trial/room-booking/report.md M-1）。CON-03 の evaluations の例 `mixed` は 2 件目を deny_indeterminate にし「存在しないと権限なしを同じ応答に」と説明しているが、PEP はこの値を「判定が得られない」として扱う。例の改訂は CON-03 の所有者へ申し送った（CON-11 §14.5 H12-1）"
+  ],
+  "since": "0.3.0（v1.2）",
+  "deprecated": null
+}

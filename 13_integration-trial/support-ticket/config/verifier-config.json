@@ -1,0 +1,10 @@
+{
+  "schema": "verifier-config/1",
+  "config_version": "0.1.0",
+  "env": "kit",
+  "crypto_profile_version": "v1",
+  "alg_allowlist": ["ES256"],
+  "min_profile_version": "1.0",
+  "clock_skew_seconds": 10,
+  "jwks": { "cache_ttl_seconds": 300, "refetch_on_unknown_kid": true, "min_refetch_interval_seconds": 30 }
+}

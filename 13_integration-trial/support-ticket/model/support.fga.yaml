@@ -1,0 +1,150 @@
+# Support ticket authorization model draft (INT-03 §3・§10.1 XS-1/2/4/10/11, CON-16 §3.2・§3.5).
+# core/* types are the CON-16 §3.5 stand-in (dev/test only, includes core/tenant#manage of IE-5). Not for production.
+# AI simulated integration trial (v1.2). Not a real team's model.
+model: |
+  model
+    schema 1.1
+  type core/user
+  type core/workload
+  type core/client
+  type core/tenant
+    relations
+      define member: [core/user]
+      define external_member: [core/user]
+      define admin: [core/user]
+      define security_admin: [core/user]
+      define role_manager: [core/user, core/role#assignee]
+      define manage_roles: role_manager or admin
+      define manage_idp: security_admin
+      define view_audit: security_admin or admin
+      define revoke_session: security_admin or admin
+      define manage: admin
+  type core/group
+    relations
+      define member: [core/user, core/group#member]
+      define owner_unit: [core/unit, core/tenant]
+  type core/unit
+    relations
+      define parent: [core/unit, core/tenant]
+      define admin: [core/user, core/group#member]
+      define member: [core/user, core/group#member]
+      define admin_scope: [core/admin_scope]
+      define manage: admin or manage from parent
+      define view_directory: member or manage
+      define manage_membership: manage or delegate from admin_scope
+  type core/admin_scope
+    relations
+      define delegate: [core/user, core/group#member]
+      define owner_unit: [core/unit, core/tenant]
+  type core/role
+    relations
+      define assignee: [core/user, core/group#member]
+  type core/external_grant
+    relations
+      define grantee: [core/user with not_expired]
+  type core/share_link
+    relations
+      define holder: [core/user with not_expired]
+  type core/exception
+    relations
+      define holder: [core/user with not_expired]
+  # ---- domain: sup ----
+  type sup/desk
+    relations
+      define parent: [core/tenant]
+      define admin: [core/user, core/group#member]
+      define agent: [core/user, core/group#member, core/role#assignee]
+      define partner: [core/external_grant#grantee]
+      define manage: admin or manage from parent
+      define handle: agent or partner or manage
+      define create_ticket: member from parent or handle
+      define invite_partner: manage
+  type sup/ticket
+    relations
+      define parent: [sup/desk]
+      define requester: [core/user]
+      define assignee: [core/user]
+      define guest: [core/external_grant#grantee]
+      define read: requester or assignee or handle from parent or guest
+      define comment: requester or assignee or handle from parent
+      define draft_reply: assignee or handle from parent
+      define send_reply: assignee or handle from parent
+      define assign: manage from parent
+      define invite_guest: requester or manage from parent
+      define close: requester or assignee or manage from parent
+  condition not_expired(current_time: timestamp, expires_at: timestamp) {
+    current_time < expires_at
+  }
+tuples:
+  - { user: core/tenant:t1, relation: parent, object: sup/desk:d1 }
+  - { user: core/user:admin, relation: admin, object: core/tenant:t1 }
+  - { user: core/user:self, relation: member, object: core/tenant:t1 }
+  - { user: core/user:other, relation: member, object: core/tenant:t1 }
+  - { user: core/user:staff, relation: agent, object: sup/desk:d1 }
+  - { user: sup/desk:d1, relation: parent, object: sup/ticket:own }
+  - { user: core/user:self, relation: requester, object: sup/ticket:own }
+  - { user: sup/desk:d1, relation: parent, object: sup/ticket:ungranted }
+  - { user: core/user:other, relation: requester, object: sup/ticket:ungranted }
+  # outsourced partner staff: desk-level external grant (CON-17 writes both tuples)
+  - { user: core/user:partner, relation: grantee, object: core/external_grant:gp, condition: { name: not_expired, context: { expires_at: "2027-01-01T00:00:00Z" } } }
+  - { user: core/external_grant:gp#grantee, relation: partner, object: sup/desk:d1 }
+  # guest on ticket own (active) and an expired guest grant
+  - { user: core/user:guest, relation: grantee, object: core/external_grant:gg, condition: { name: not_expired, context: { expires_at: "2027-01-01T00:00:00Z" } } }
+  - { user: core/external_grant:gg#grantee, relation: guest, object: sup/ticket:own }
+  - { user: core/user:oldguest, relation: grantee, object: core/external_grant:gx, condition: { name: not_expired, context: { expires_at: "2026-01-01T00:00:00Z" } } }
+  - { user: core/external_grant:gx#grantee, relation: guest, object: sup/ticket:own }
+tests:
+  - name: requester, staff, admin
+    check:
+      - user: core/user:self
+        object: sup/ticket:own
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: true, comment: true, invite_guest: true, close: true, draft_reply: false, send_reply: false, assign: false }
+      - user: core/user:self
+        object: sup/ticket:ungranted
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: false, comment: false }
+      - user: core/user:staff
+        object: sup/ticket:ungranted
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: true, draft_reply: true, send_reply: true, assign: false }
+      - user: core/user:admin
+        object: sup/ticket:own
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { assign: true, close: true, read: true }
+      - user: core/user:self
+        object: sup/desk:d1
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { create_ticket: true, invite_partner: false }
+  - name: guest is read-only on the anchored ticket (XS-2, XS-8 / CV-061c)
+    check:
+      - user: core/user:guest
+        object: sup/ticket:own
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: true, comment: false, draft_reply: false, send_reply: false, close: false, invite_guest: false, assign: false }
+      - user: core/user:guest
+        object: sup/ticket:ungranted
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: false }
+      - user: core/user:oldguest
+        object: sup/ticket:own
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: false }
+  - name: outsourced partner via desk-level external grant reaches every ticket of the desk (C-1)
+    check:
+      - user: core/user:partner
+        object: sup/ticket:own
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: true, comment: true, draft_reply: true, send_reply: true, assign: false, close: false }
+      - user: core/user:partner
+        object: sup/ticket:ungranted
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { read: true }
+      - user: core/user:partner
+        object: sup/desk:d1
+        context: { current_time: "2026-10-15T00:00:00Z" }
+        assertions: { invite_partner: false, create_ticket: true }
+      - user: core/user:partner
+        object: sup/ticket:own
+        context: { current_time: "2027-02-01T00:00:00Z" }
+        assertions: { read: false }

@@ -1,0 +1,1328 @@
+openapi: 3.1.2
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: External grant API（越境ゲスト招待・外部付与）
+  version: 0.1.1
+  summary: 資源側テナントの依存サービスが、他テナントの利用者（ゲスト）への期限付きの外部付与（core/external_grant）を発行・照会・取り消し、資源側 AS が招待の受諾を記録するための基盤所有の契約（v1.2 で新設）
+  description: |
+    文書ID: CON-17（v1.2 で新設。v1.2 の同期で CON-00 版 0.12 §2.1 に登録して確定） / 成果物: DL-123（traceability/deliverables.md 版 0.8 で確定） / 版: 0.1.1（v1.2 の同期。文書ID・DL の確定と §12 の反映状況の記録だけで、operation・スキーマ・例は変えていない） / 状態: draft / 凍結区分: preview / 最終更新: 2026-10-15
+    対応要求: R-011, R-133, R-134, R-143, R-191.1, G-114, G-115, G-138 / 依存文書: 05_adr/ADR-024-cross-tenant-sharing.md（正本）、04_architecture/authorization-model.md §3.1・§3.2・§6（正本）、02_requirements/identity-lifecycle.md §6（I-01〜I-07）・§7.1（M-01x・M-05）、11_contracts/relationship-model-registry.openapi.yaml（CON-04）、10_integration/integration-patterns.md P-16
+
+    v1.2 で新設した理由: AI による模擬連携検証（13_integration-trial/room-booking/report.md。実在の連携チームの検証ではない）の重大 C-1「外部ゲストを招待する（core/external_grant を作る）契約 API がない」である。v1.1 までの契約では、CON-04 info §3 が越境の tuple を「façade が external_grant を書く場合を除き拒否」とする一方、依存サービスが façade に外部付与を作らせる operation がなく、ゲストの sub を知る手段も、`booking#guest` のような起点の tuple を誰が書くかも決まっていなかった [D]。本契約はこの 3 点を決める。設計判断（ADR-024 D24-01〜D24-22、ARC-05 §6）は変えず、契約の形に写す [D]。設計に足りない点は §11 に「v1.2 で判明した論点」として置き、ADR-024 への追記を §12 で申し送る [D]。
+
+    ## 0. 要旨
+    - 外部付与は、依存サービス（資源側テナントの業務 API）が付与者の代わりに **招待として発行** し（createExternalGrant）、ゲストが資源側 AS で認証・同意して **受諾** した時点で有効になる（acceptExternalGrantInvitation。呼ぶのは資源側 AS だけ）[D]。依存サービスはゲストの sub を事前に知る必要がない。宛先の email は配送経路にだけ使い、付与は受諾した認証主体に結び付く（identity-lifecycle INV-2・I-03）[D]。
+    - 起点の tuple（例 `rsv/booking:<id>#guest@core/external_grant:<grant_id>#grantee`）は、発行時に façade が書く。依存サービスは `core/external_grant` を主体とする tuple を CON-04 writeRelationships で書かない（XGC-2）。これで「誰が `booking#guest` を書くか」（C-1）を一意にする [D]。
+    - 相手テナント側の同意は 2 つである。home 側テナントの管理者による outbound の許可（ADR-024 D24-17）と、ゲスト本人による受諾時の同意（識別情報が資源側テナントへ入ることの承知。D24-25）[D]。どちらかが確かめられなければ有効にしない（fail closed）[D]。
+    - 取消しは剥奪書込を先に確定させ、consistency token を返す（ARC-05 §6、CON-04 info §4）[D]。依存サービスは起点の資源の削除・予約の取消しのときに revokeExternalGrantsByAnchor を呼ぶ [D]。
+    - 凍結区分は全 operation が preview である（§9）[D]。
+
+    ## 1. 役割と呼出し元
+    | 役割 | 呼ぶ operation | 認証 | 備考 |
+    |---|---|---|---|
+    | 依存サービス（資源側テナントの業務 API。起点の資源型の名前空間の書込宣言を持つ workload） | createExternalGrant、getExternalGrant、listExternalGrants、revokeExternalGrant、revokeExternalGrantsByAnchor、listExternalGrantChanges | workload の mTLS（ADR-009）＋テナント結合の裏付け（Txn-Token。読取りは Subject-Access-Token でも可）| CON-04 info §6.1 と同じ照合 |
+    | 資源側 AS（資源の cell の AS。ADR-024 D24-14） | acceptExternalGrantInvitation | workload の mTLS。呼出し元は基盤の AS の workload ID に限る | 依存サービスは呼ばない。招待の受諾画面は AS の機能（INT-02 P-19） |
+    | 資源側テナントの管理者 | （本契約にない。基盤の管理コンソール） | — | 承認待ちの承認・却下（D24-17 の付与の承認）、棚卸し（D24-22）、ポリシー（D24-17〜D24-19） |
+    | home 側テナントの管理者 | （本契約にない。home 側 cell の管理コンソール） | — | outbound の許可・許可先の一覧（D24-17）。受諾時に資源側 AS が home 側の assertion から証跡を得る（§11 XG-L1） |
+    | ゲスト（PC-09(a)・(b)） | 依存サービスの業務 API（INT-02 P-16 の通常の経路） | 資源側 AS が発行した tid＝資源側テナントの token | 依存サービスの PEP に特別な経路は無い（XGC-10） |
+
+    ## 2. 正例の経路（招待から取消しまで）
+    | 段 | 主体 | 内容 | operation・契約 |
+    |---|---|---|---|
+    | XGF-1 | 付与者（資源側テナントの利用者）→ 依存サービス | 招待の画面で宛先の email、期限を入力する | 依存サービスの業務 API（P-01） |
+    | XGF-2 | 依存サービスの PEP | 付与者の「外部付与の作成」の permission（例 `rsv/booking#invite_guest`、ファイル例の `share_external`）を write＋XT（DL-09 J3）、`fully_consistent` で判定する。Txn-Token を必須にする | CON-03 evaluation |
+    | XGF-3 | 依存サービス | 外部付与を発行する。Txn-Token を無改変で添える | createExternalGrant |
+    | XGF-4 | façade | テナント結合、書込宣言、付与者の permission の再評価、CAM の静的検査、inbound・期限・承認の要否を確かめ、付与記録と起点の tuple を原子的に作る。承認が要れば `pending_approval`、要らなければ招待を送り `invited` | §5 XGS-1〜XGS-7 |
+    | XGF-5 | 基盤（AS） | 招待を送る（宛先の email へ。本文は最小。INT-02 P-19）。受諾 token は単回・推測不能・期限付き | identity-lifecycle I-02 |
+    | XGF-6 | ゲスト → 資源側 AS | 招待のリンクから資源側 AS へ。資源側 AS は home 側 AS（PC-09(b) は外部共同作業者 realm）へ RP 起点の federation を行い、nonce・audience を束縛した assertion を受ける。資源側テナントのポリシーが要求する acr を満たすこと | ADR-024 D24-14・D24-15 |
+    | XGF-7 | ゲスト | 受諾画面で、資源側テナント名、付与の範囲の説明、期限、資源側に置かれる自分の情報（sub、home テナント ID、表示名）を見て受諾する（本人の同意） | ADR-024 D24-23・D24-25 |
+    | XGF-8 | 資源側 AS | 受諾を記録する。home 側 outbound の証跡（§11 XG-L1）、主体種別、home 側の法域を添える | acceptExternalGrantInvitation |
+    | XGF-9 | façade | 主体種別（人間に限る）、home 側 outbound、資源側 inbound と信頼リスト、法域、宛先の不一致（I-05）を確かめ、grantee の tuple（期限条件付き）と `core/tenant#external_member` を書いて `active` にする。不一致は `held` | §5 XGS-8 |
+    | XGF-10 | 資源側 AS → ゲスト | tid＝資源側テナントの token を発行し、招待時の `landing_uri` へ戻す | ADR-024 D24-01 |
+    | XGF-11 | ゲスト → 依存サービス | 通常の要求。PEP は三者一致（すべて資源側テナント）と、ゲスト用 relation（例 `guest`）から到達する permission で判定する | INT-02 P-16、CON-16 |
+    | XGF-12 | 依存サービス | 変更の通知（listExternalGrantChanges）か getExternalGrant で `active` と grantee（sub・表示名）を知り、ゲスト一覧の表示に使う | listExternalGrantChanges、getExternalGrant |
+    | XGF-13 | 付与者・依存サービス | 取消し（個別）か、起点の資源の削除・予約の取消しに伴う一括の取消し | revokeExternalGrant、revokeExternalGrantsByAnchor |
+    | XGF-14 | façade | 剥奪書込を先に確定し、剥奪フェンスを進め、consistency token を返す。事象を変更の通知に載せ、home 側へ要約を送る | §6 |
+
+    ## 3. 状態機械
+    | 状態 | 意味 | grantee の tuple | 遷移先 |
+    |---|---|---|---|
+    | pending_approval | 資源側テナントが資源型・データ分類ごとに管理者承認を要求している（D24-17「付与の承認」）。招待は未送付 | なし | invited（承認）、rejected（却下）、revoked、invitation_expired |
+    | invited | 招待を送付済み。受諾待ち | なし | active、held、declined、invitation_expired、rejected（受諾時のポリシー不成立）、revoked |
+    | held | 受諾者の確認済み連絡先が宛先と異なる（identity-lifecycle I-05）。付与者の判断を待つ | なし | active（I-06 で付与者が受諾者を確かめた）、revoked、invitation_expired |
+    | active | 有効 | あり（`c.not_expired`、`expires_at`） | suspended、revoked、expired |
+    | suspended | 凍結。home テナントの停止・解約、home 側 IdP の侵害対応（D24-21）。剥奪書込を先に行う | なし（凍結時に削除） | active（解除時に期限内で、双方のポリシーがなお許す場合だけ。tuple を書き直す）、revoked、expired |
+    | revoked | 取り消された（付与者・管理者、起点の資源の削除、信頼リストからの除外・inbound/outbound の無効化、home 側の利用者の停止・削除） | なし | （終端） |
+    | expired | 期限切れ | なし（期限条件で無効になり、façade が削除する） | （終端） |
+    | declined | ゲストが辞退した | なし | （終端） |
+    | invitation_expired | 招待の期限内に受諾されなかった | なし | （終端） |
+    | rejected | 承認の却下、または受諾時の検査（主体種別・outbound・inbound・法域）が不成立 | なし | （終端） |
+
+    - 終端の付与は復活させない。付け直しは新しい createExternalGrant とする（付与 ID を再利用しない。ADR-021）[D]。
+    - 状態は開いた列挙として扱う。依存サービスは未知の状態を「有効でない」と扱う（XGC-9）[D]。
+
+    ## 4. 依存サービス（呼ぶ側）の規則
+    - XGC-1 発行の前の判定: createExternalGrant を呼ぶ前に、自サービスの PEP で付与者の「外部付与の作成」の permission を write＋XT（DL-09 J3）、`fully_consistent` で判定する。Txn-Token を必須にし、要求に無改変で添える。PEP で判定せずに façade の再評価（XGS-3）に頼らない（多層の一層を省くことになるため）[D]。AI エージェントが代理で招待する場合は +AGT＋XT（DL-09）になる。その書き方は C-2 の担当文書（INT-02 P-08、CON-03）に従う [D]。
+    - XGC-2 書き方の一本化: `core/external_grant` を主体とする tuple（起点の tuple）と `core/external_grant#grantee`・`core/tenant#external_member` の tuple は本契約でだけ作る。CON-04 writeRelationships・deleteRelationships で書かない（§12 V12-XG-4 で CON-04 側の拒否を申し送る）[D]。
+    - XGC-3 モデルの形: 起点の relation は `core/external_grant#grantee`（期限条件 `c.not_expired` 付き）だけを直接型に持つ専用の relation にし、そこから到達する permission は catalog で「外部付与可」の印を付けたものに限る（INT-03 XS-1・XS-2、ARC-05 §3.2）。例: `guest: [core/external_grant#grantee with c.not_expired]`、`view = ... | guest` [D]。
+    - XGC-4 宛先の扱い: 宛先の email は要求本文の `invitee.address` にだけ入れる。ログ・監査・tuple・URL に入れない。識別子・結合キー・認可の根拠に使わない（identity-lifecycle INV-2）[D]。
+    - XGC-5 発行は付与ではない: 201 の応答は招待を作ったことを示すだけである。`state=active` になるまで、依存サービスはゲストに何も見せない。ゲストへのアクセスの許可は常に PEP の判定による [D]。
+    - XGC-6 記録: 応答の `grant_id` と `consistency_token` を、業務の記録（例 予約のゲスト欄）と同じ DB トランザクションで保存する（CON-04 info §4 の CT-1 と同じ）。ゲストの表示は getExternalGrant の `grantee.display_name`（home 側が許す場合だけある）を使い、email を表示用に保存しない [D]。
+    - XGC-7 起点の資源の削除・取消し: 起点の資源（例 予約）を削除・取消しするときは、先に revokeExternalGrantsByAnchor を呼ぶ（剥奪先行。ARC-05 §11.1 K-1）。503・timeout のときは同じ `Idempotency-Key` で outbox から再試行し、成功するまで警報を続ける。資源の削除そのものは進めてよい（削除後は資源の正本から所有テナントを導けず 404 になるため）が、取消しの完了を確かめるまで処理を閉じない [D]。
+    - XGC-8 変更への追随: listExternalGrantChanges（または CON-12 の事象。§12 V12-XG-6）で `revoked`・`expired`・`suspended`・`rejected` を受けたら、ゲストについて保持する表示用のキャッシュを捨て、ゲスト宛ての予約済みの処理（リマインドなど）を止める（INT-02 §3.9 BN-4）[D]。
+    - XGC-9 未知の値: 未知の `state`・`reason_class` は「有効でない」として扱う。未知の Problem の `code` は状態コードで扱う [D]。
+    - XGC-10 ゲストの要求: ゲストの要求は通常の要求である。tid＝資源側テナントの token だけを受ける。home 側の token（tid＝home テナント）は三者一致で拒否する（NP16-1）。外部付与のための照合の緩和・迂回を作らない（ADR-024 D24-08）[D]。
+    - XGC-11 取消しの失敗: revokeExternalGrant・revokeExternalGrantsByAnchor が 200 を返すまで、付与者に「取り消した」と表示しない。409 `state_conflict`（既に終端）は成功として扱う [D]。
+    - XGC-12 監査: 自サービスの判定（XGF-2）の E2 に、本契約の応答の `grant_id`（作成できた場合）を相関として入れる。email を入れない。base 側の監査（§7）とは `X-Request-ID` と Txn-Token の `txn` で相関する [D]。
+    - XGC-13 一覧の範囲: listExternalGrants・listExternalGrantChanges の結果は、そのまま利用者に見せない。見せる場合は、見る人が起点の資源について「ゲスト一覧を見る」に当たる permission を持つかを自サービスの PEP で判定する（本 API はテナント結合と名前空間でしか絞らない）[D]。
+
+    ## 5. 基盤（façade・応答する側）の規則
+    - XGS-1 テナント結合: path の `tenant_id` は、Txn-Token の `tctx.tid`（読取りは Subject-Access-Token の `tid` でも可）と一致しなければならない。不一致は 403 `tenant_binding_violation`（CON-04 info §6.1 と同じ）[D]。createExternalGrant は Txn-Token を必須にする（write＋XT）。欠けたら 401 `txn_token_required` [D]。
+    - XGS-2 名前空間: 呼出し元 workload は、起点の資源型の名前空間の書込宣言（ARC-05 X-8）を持たなければならない。持たなければ 403 `caller_not_declared`。読取り・変更の通知も同じ範囲に絞る [D]。
+    - XGS-3 付与者の再評価: 付与者は Txn-Token の `sub`（人の主体）とする。façade は、要求の `authorizing_permission` を付与者・起点の資源について `fully_consistent` で評価し（CON-03 と同じ PDP）、さらにテナントの「招待・付与できる者」の設定（D24-17。既定は管理者だけ）を確かめる。どちらかが拒否なら 403 `granter_not_allowed`。判定が得られなければ 503（作らない）[D]。
+    - XGS-4 モデルの静的検査: 起点の relation が `core/external_grant#grantee` を直接型に持ち、そこから到達する permission がすべて「外部付与可」で、管理系・privileged 以上を含まないこと（D24-12、`external_grant_reachability`）を、テナントに pin された model revision で確かめる。満たさなければ 403 `relation_not_external_grantable` [D]。
+    - XGS-5 作成時のポリシー: 資源側テナントの inbound が有効であること（無効なら 403 `inbound_disabled`）、`expires_at` があり、テナントの上限（K24-2、TBD）以下であること（400 `expiry_required`・403 `expiry_exceeds_max`）、`invitation_expires_at` が `expires_at` 以下であること。付与者が外部主体（`core/tenant#external_member`）なら、資源型に再共有が許され（D24-12）、`reshare_of` の元の付与の期限を超えないこと（403 `reshare_not_allowed`）[D]。
+    - XGS-6 原子的な作成: 付与記録（D24-01 の 3 の欄）と起点の tuple を 1 つの書込みで作る。起点の tuple の主体は `core/external_grant:<grant_id>#grantee` で、資源側テナントに属するので、CON-04 info §3 の越境の拒否には当たらない [D]。
+    - XGS-7 招待: 受諾 token は 128 bit 以上の暗号論的乱数とし、hash だけを保存する（D24-06 のリンクと同じ）。単回・期限付き。再送は新しい token を発行し旧 token を失効させる（I-07）。招待者・テナントごとの発行数に上限を置く（identity-lifecycle I-01、DL-52 FA-13）。超えたら 429 [D]。
+    - XGS-8 受諾時の検査（この順に調べ、最初に当たったもので止める）: (1) 受諾 token が有効（未使用・期限内・付与が invited）。外れれば 404 `invitation_invalid`（理由を区別しない。推測を防ぐため。詳細は監査にだけ残す）。(2) 主体が人間（PC-09(a)・(b)）。AI エージェント・workload・client は 403 `principal_type_not_allowed`（D24-02）。(3) home 側 outbound の証跡がある・新しい・許可を示す。無ければ 403 `home_outbound_unverifiable`、拒否なら 403 `home_outbound_denied`（D24-17）。(4) 資源側 inbound が有効で、home テナントが信頼リストにある（403 `home_tenant_not_trusted`）。(5) 法域パーティションをまたぐ場合は許可がある（403 `jurisdiction_not_allowed`。D24-24）。(6) 受諾者の確認済み連絡先と宛先が異なれば `held`（I-05）。(7) 以上を満たせば grantee の tuple（`c.not_expired`、`expires_at`）と `core/tenant:<tid>#external_member` を書き、`active` にする。(2)〜(5) の不成立は付与を `rejected` にする [D]。
+    - XGS-9 取消し: 剥奪書込（grantee の tuple の削除と、その主体の最後の外部付与なら `external_member` の削除）を先に確定させ、テナント剥奪フェンスを進め、`consistency_token` を返す。その後に状態を変え、変更の通知と監査を出す。同じ取消しの再送は同じ結果を返す（冪等）[D]。
+    - XGS-10 期限切れ: tuple の期限条件が期限で無効にする。façade は期限後に tuple を削除し、`expired` に遷移させる（遷移の遅れは判定に影響しない）[D]。
+    - XGS-11 最小化: 応答・事象・監査に email を入れない。資源側に置く外部主体の情報は sub、home テナント ID、表示名（home 側のポリシーが許す場合）に限る（D24-23）[D]。
+    - XGS-12 判定と付与 ID: 外部付与による許可・拒否の decision event に付与 ID を付ける（D24-20。CON-03 の reason の値は §12 V12-XG-5）[D]。
+
+    ## 6. 取消しと剥奪の伝播
+    | 契機（ADR-024 D24-21） | 実行者 | 本契約での表れ | 依存サービスの義務 | R-191.1 の区分 |
+    |---|---|---|---|---|
+    | 個別の取消し | 付与者（依存サービス経由）、資源側の管理者（管理コンソール） | revokeExternalGrant。reason_class=granter_revoked・admin_revoked | XGC-11。変更の通知で XGC-8 | 通常 |
+    | 起点の資源の削除・取消し | 依存サービス | revokeExternalGrantsByAnchor。reason_class=anchor_deleted | XGC-7 | 通常 |
+    | 期限切れ | 期限 | state=expired、reason_class=expired | XGC-8 | 通常 |
+    | 資源側の信頼リストからの除外・inbound の無効化 | 資源側の管理者 | 該当付与の一括取消し。reason_class=policy_narrowed | XGC-8 | テナント停止 |
+    | home 側の outbound の無効化・許可先からの除外 | home 側の管理者 | 非同期で資源側 cell に届き一括取消し。reason_class=home_policy_narrowed | XGC-8 | テナント停止（伝播時間は TC-24-05） |
+    | home 側での利用者の停止・削除 | home 側 | CAEP 相当の非同期事象で資源側 cell が取消し。届かなくてもゲスト session は H_g（D24-16）で止まる。reason_class=home_principal_removed | XGC-8 | 通常（上限 H_g） |
+    | home テナントの停止・解約 | home 側・事業者 | state=suspended（凍結）。reason_class=home_tenant_suspended | XGC-8 | テナント停止 |
+    | 侵害対応（home 側 IdP の侵害） | 資源側の管理者・事業者 | state=suspended、ゲスト session の失効。reason_class=compromise_response | XGC-8 | 高権限 |
+
+    - 剥奪の反映: 取消しの 200 は「grantee の tuple を削除し、剥奪フェンスを進めた」ことを示す [D]。ゲストが持つ token はそのまま残るが、G 段規則 1 の所属確認（ADR-024 D24-08）と、read-sensitive の判定の「剥奪フェンスと整合性トークンの新しい方」（INT-02 P-16 の整合性）で、次の要求から拒否される。資源側 cell の失効状態の配布の遅れ（ADR-013 D13-35）の上限は R-191.1 の区分による [D]。
+    - 依存サービスが判定のキャッシュを持つ場合、その寿命は INT-02 §3.4 の上限に従う。取消しを理由にキャッシュの寿命を延ばす扱いは無い [D]。
+
+    ## 7. 監査
+    - 基盤は次を 100% 記録する（ADR-024 D24-20。標本化しない）: share.grant.created／changed／revoked／expired、招待の invitation.sent／accepted／declined／held／resolved／expired／revoked（identity-lifecycle I-01〜I-07）、受諾時の同意（`consent.disclosure_version`、`accepted_at`）、home 側 outbound の証跡の参照 [D]。事象名の最終決定は ADR-014・DL-77（CON-08）に申し送られている（D24-20）[D]。
+    - 記録は資源側 cell に置き、home 側には要約（資源側テナント ID、付与 ID、permission の区分、期限。資源名は含めない）を非同期の署名付き事象で送る（D24-20）[D]。
+    - 依存サービスは XGC-12 のとおり自サービスの E2 を書く [D]。
+
+    ## 8. Problem の code（閉じた列挙。追加は minor、意味の変更は major。ADR-016）
+    | code | HTTP | 意味 | 呼ぶ側の扱い |
+    |---|---|---|---|
+    | invalid_request | 400 | 形式の誤り | 直してから送る |
+    | expiry_required | 400 | `expires_at` がない、または `invitation_expires_at` が `expires_at` を超える | 直してから送る |
+    | txn_token_required | 401 | createExternalGrant に Txn-Token がない | 実装の誤り。送らない |
+    | unauthenticated | 401 | mTLS・token の検証に失敗 | 実装・設定の誤り |
+    | tenant_binding_violation | 403 | path の tenant_id と Txn-Token 等の tid が不一致 | 送らない。警報 |
+    | caller_not_declared | 403 | 呼出し元が起点の資源型の書込宣言を持たない、または資源側 AS 以外が受諾を呼んだ | 送らない。設定を直す |
+    | granter_not_allowed | 403 | 付与者が authorizing_permission を持たない、またはテナント設定で招待できない | 付与者に「権限がない」と示す |
+    | relation_not_external_grantable | 403 | 起点の relation が外部付与可でない（XGS-4） | モデルを直す（INT-03 XS-1・XS-2） |
+    | inbound_disabled | 403 | 資源側テナントの inbound が無効 | 付与者に「テナントの設定で越境共有が無効」と示す |
+    | expiry_exceeds_max | 403 | 期限がテナントの上限を超える | 短くして送る |
+    | reshare_not_allowed | 403 | 外部主体による再共有が許されない、または元の付与の期限を超える | 付与者に示す |
+    | principal_type_not_allowed | 403 | 受諾者が人間主体でない（受諾） | 資源側 AS が受諾を拒否する |
+    | home_outbound_unverifiable | 403 | home 側 outbound の証跡がない・古い（受諾） | 同上（fail closed） |
+    | home_outbound_denied | 403 | home 側 outbound が許していない（受諾） | 同上 |
+    | home_tenant_not_trusted | 403 | home テナントが信頼リストにない（受諾） | 同上 |
+    | jurisdiction_not_allowed | 403 | 法域パーティションをまたぐ共有が許されない（受諾） | 同上 |
+    | not_found | 404 | 付与・起点の資源がない、または呼出し元の範囲外（区別しない） | 存在しないものとして扱う |
+    | invitation_invalid | 404 | 受諾 token が無効（未知・使用済み・期限切れ・取消し済み。区別しない） | 資源側 AS が「招待が無効」と示す |
+    | state_conflict | 409 | 現在の状態で許されない遷移（例 終端の付与の取消し） | 取消しでは成功として扱う（XGC-11） |
+    | idempotency_conflict | 409 | 同じ Idempotency-Key で内容の違う要求 | 新しい鍵で送り直す |
+    | rate_limited | 429 | 発行数の上限（XGS-7）・レート制限 | Retry-After の後 |
+    | unavailable | 503 | 判定・書込みができない | 作成は作らずに失敗とし、取消しは再試行する（XGC-7） |
+
+    ## 9. 凍結区分と GA への条件
+    - 版 0.1.0 では全 operation が preview である（x-preview-expires: 2027-10-15）[D]。preview の間も、状態の列挙値と Problem の code の意味は変えずに追加だけを行う [D]。
+    - GA へ上げる条件: 作成者以外の独立レビュー、DEC-3 論点 5（ADR-024 D24-08 の改訂案）の決定（(A) 共有 grant ストアを採る場合、付与記録の置き場所が変わるが本契約の形は変えずに済む見込みである [D]）、§11 の論点の決着、キット（DL-120）での x-negative-examples の実行（TC-026）[D]。
+    - 数値（招待の期限、付与の期限の既定・上限 K24-2、発行数の上限、home 側 outbound の証跡の鮮度 F_ob）はすべて TBD である。値を決めることは制約を強める変更として扱う（CON-00 §6.1）[D]。
+
+    ## 10. 汎用モック（Prism など）で使う場合の注意
+    - examples は 1 つの付与 `grant_id=g7k2m4vx9qd3ta6pnr2bw7cyh5`（資源側テナント `t5wq2hzr7nmc4ka3vd6pxe2bfy`、起点 `rsv/booking:b3k7q2mx9vd4ta6pnr2hw7cyz5#guest`）の発行（invited）→ 受諾（active）→ 取消し（revoked）で揃えてある。汎用モックは状態を持たないので、遷移の確認は自前のスタブで行う [D]。
+    - 依存サービスは acceptExternalGrantInvitation を呼ばない。結合試験で active の付与を作るには、スタブで受諾を模すか、`Prefer: example=active` で getExternalGrant の active の例を取り出す [D]。
+
+    ## 11. v1.2 で判明した論点（設計判断を変えずに契約へ落とした際の不足。ADR-024 への追記を §12 V12-XG-3 で申し送る）
+    | # | 論点 | 本契約での暫定の扱い | 決める場 |
+    |---|---|---|---|
+    | XG-L1 | home 側 outbound の確認経路。D24-17 は outbound と inbound の両方を要件にするが、資源側 cell は home 側 cell を同期で呼べない（ADR-013 D13-13）。受諾時に資源側が outbound をどう確かめるかが ADR に無い | 受諾の要求に `home_outbound` の証跡（home 側 cell が署名した、許可の有無・ポリシー版・発行時刻）を必須にする。資源側 AS は federation の assertion（L-2 (a) の front channel）から得る想定とする。証跡がない・鮮度 F_ob（TBD）を超えるなら fail closed（XGS-8 (3)） | ADR-024 の所有者＋ADR-013 の所有者。L-2 と同時（G3） |
+    | XG-L2 | 起点の tuple の書き手。ARC-05 §3.1 は `core/external_grant` と `external_member` を façade が書くとするが、ドメイン型の relation（例 `booking#guest`）から外部付与への tuple の書き手が定まっていない（C-1） | façade が発行時に書く（XGS-6）。ドメインは CON-04 で書けない（XGC-2）。付与と起点を 1 対 1 にでき、D24-08 改訂案 (A) の「起点資源」の正本にもなる | ADR-024 の所有者（ARC-05 §3.1 の書込宣言の注記） |
+    | XG-L3 | 付与を作れる permission の宣言。INT-03 の書込対応表は「外部付与の作成 ← `share_external`」とするが、CAM の catalog にこれを宣言する欄がない | 要求に `authorizing_permission` を書かせ、façade が再評価する（XGS-3）。permission の階層が write 以上であることだけを façade が確かめる。catalog の印（例 `external_grant_authority`）の新設を申し送る | 認可・PDP チーム（CON-04 CamModule） |
+    | XG-L4 | 承認待ち（D24-17「付与の承認」）・held（I-05）の判断の窓口 | 管理コンソールの機能とし、本契約には operation を置かない。依存サービスは状態を見るだけ | プロダクト責任者 |
+    | XG-L5 | 認証付きリンク（D24-06）の発行 | 本版では扱わない。リンクの利用で作られる外部付与は本契約の状態機械に乗る（`invitation` の代わりにリンク）想定で、次版で operation を追加する | ADR-024 の所有者 |
+    | XG-L6 | ゲストへの業務通知（模擬連携検証 M-5）。基盤は招待の通知だけを送り、業務通知の連絡先の解決（INT-02 §3.9 BN-7）は無い | 本契約は連絡先を返さない（XGS-11）。ゲストへの業務通知はアプリ内通知に限る（INT-02 P-16 の注記） | INT-02 §3.9 の所有者 |
+
+    ## 12. 他文書への申し送り（v1.2）
+    本ファイルと INT-02 P-16 以外は本改訂の担当外のため未編集である [D]。
+
+    | # | 宛先 | 内容 | 理由 |
+    |---|---|---|---|
+    | V12-XG-1 | 11_contracts/README.md（CON-00）§2.1・ディレクトリ構成・早見表 | CON-17（仮番）`external-grant.openapi.yaml` を登録し、早見表に「他テナントのゲストを招待する → 本ファイル、Prism」を加える。CON-17 が他の v1.2 の新設契約と衝突する場合は採番を CON-00 で決め、本ファイルの `x-document-id` を直す | 新設 |
+    | V12-XG-2 | traceability/deliverables.md §4.5・§8 | DL-123（仮番）として登録する | 同上 |
+    | V12-XG-3 | 05_adr/ADR-024-cross-tenant-sharing.md | §11 の XG-L1〜XG-L3・XG-L5 を「v1.2 で判明した論点」として追記する（決定は変えない） | 設計の不足 |
+    | V12-XG-4 | 11_contracts/relationship-model-registry.openapi.yaml（CON-04）info §3・writeRelationships・deleteRelationships | 依存サービスが `core/external_grant` を主体・資源とする tuple と `core/tenant#external_member` を書く・消す要求を 403 `relation_not_writable` で拒否する負例を加え、「façade が書く場合」を本契約の operation に限ると明記する | XGC-2 |
+    | V12-XG-5 | 11_contracts/authorization-api.openapi.yaml（CON-03）・schemas/audit-event.schema.json（CON-08） | 外部付与による許可・拒否の decision の reason に付与 ID を載せる欄（D24-20）と、本契約の operation の監査イベント（share.grant.*、invitation.*）の型を加える | XGS-12、§7 |
+    | V12-XG-6 | 11_contracts/lifecycle-events.asyncapi.yaml（CON-12）・schemas/lifecycle-event.schema.json（CON-13） | membership.external.granted と、外部付与の membership.removed（D24-20）を事象一覧に加えるか、本契約の listExternalGrantChanges を正とするかを決める。決まるまで依存サービスは listExternalGrantChanges を使う | XGC-8 |
+    | V12-XG-7 | 11_contracts/mock-contract-test-kit.md（CON-11）§11.4・kit/ | 差し替え点 `EXTERNAL_GRANT_API_URL` を加える。x-negative-examples の XGN-01〜XGN-20 を kit の機械可読ベクタに写す | 試験 |
+    | V12-XG-8 | 10_integration/authz-modeling-guide.md（INT-03）書込宣言の例 | 「外部付与の作成 ← `share_external`」の行に、本契約の `authorizing_permission` で渡すことを注記する | XG-L3 |
+    | V12-XG-9 | 11_contracts/integration-essentials.md（CON-16）§3.2 | core 型の表の `core/external_grant` の行から本契約を参照する | 入口の一本化 |
+
+    **v1.2 の同期での反映状況（2026-10-15、AI エージェントによる同期。人による照合は未実施）** [D]
+
+    | # | 反映 |
+    |---|---|
+    | V12-XG-1 | 済。CON-00 版 0.12 の §2.1・ディレクトリ構成・早見表に登録し、CON-17 を確定した |
+    | V12-XG-2 | 済。traceability/deliverables.md 版 0.8 に DL-123 として登録した |
+    | V12-XG-3 | 済。ADR-024 版 0.5 §8A「v1.2 で判明した論点」V12-24-1〜V12-24-4 に XG-L1〜XG-L3・XG-L5 を追記した（決定は変えていない） |
+    | V12-XG-4 | 済。CON-04 版 0.5.0 の §3 と `writeRelationships`・`deleteRelationships` の負例 |
+    | V12-XG-5 | 済。CON-03 版 0.4.0 `ProfileDecision.external_grant_id`、CON-08 版 0.4.0 の E6 event_type（share.grant.*・invitation.*）と `DetailEnforcement.external_grant_id` |
+    | V12-XG-6 | 暫定のみ。CON-12 版 0.6.2 §2 に「決まるまで listExternalGrantChanges を正とする」を記し、決定は ADR-024 V12-24-5 に残した |
+    | V12-XG-7 | 一部済。CON-11 §11.4 の `EXTERNAL_GRANT_API_URL` と kit の CV-061（XGN-17・XGN-18・XGN-20）は v1.2 の改訂で済。XGN-01〜XGN-16・XGN-19 の機械可読ベクタへの写しは DL-120 の受入れ（deliverables.md 版 0.8 の (10)(13)）に残る |
+    | V12-XG-8 | 済（INT-03 版 0.10 §9.1 の書込対応表と XS-10。v1.2 の改訂） |
+    | V12-XG-9 | 済（CON-16 版 0.3 §3.2。v1.2 の改訂） |
+
+    ## 13. 作成方法と誠実性
+    AI エージェント（Claude）が ADR-024（D24-01〜D24-25、L-1〜L-4）、ARC-05 §3.1・§3.2・§6、identity-lifecycle §6・§7.1、CON-04 info §3・§4・§6.1、INT-02 P-16・P-19、INT-03 の書込対応表と XS-1・XS-2 を正本として起草した。新しい外部原典は用いていない。規範の強度を写した文はなく、本文はすべて上記文書からの設計推論である [D]。作成者以外による独立レビューと人による照合は未実施である。模擬連携検証の結果は AI による模擬であり、実在の連携チームの検証ではない [D]。
+  license:
+    name: 社内限定（Proprietary, internal use only）
+    identifier: LicenseRef-Proprietary-Internal
+  x-document-id: CON-17（v1.2 の同期で確定。CON-00 版 0.12・traceability/deliverables.md 版 0.8 で登録。§12 V12-XG-1）
+  x-deliverable: DL-123（v1.2 の同期で確定。§12 V12-XG-2）
+  x-status: draft
+  x-freeze-class: preview
+  x-preview-expires: '2027-10-15'
+  x-last-updated: '2026-10-15'
+  x-revision: 'v1.2: 新設（模擬連携検証 13_integration-trial/room-booking/report.md の C-1、M-5 の一部、L-8 に対応）'
+  x-requirements: [R-011, R-133, R-134, R-143, R-191.1, G-114, G-115, G-138]
+  x-depends-on:
+    - 05_adr/ADR-024-cross-tenant-sharing.md（D24-01〜D24-25）
+    - 04_architecture/authorization-model.md（ARC-05 §3.1・§3.2・§6）
+    - 02_requirements/identity-lifecycle.md（§6 I-01〜I-07、§7.1 M-01x・M-05）
+    - 02_requirements/operation-risk-tiers-assurance.md（DL-09 +XT、J3）
+    - 11_contracts/relationship-model-registry.openapi.yaml（CON-04 info §3・§4・§6.1）
+    - 11_contracts/authorization-api.openapi.yaml（CON-03）
+    - 10_integration/integration-patterns.md（INT-02 P-16・P-19・§3.9）
+    - 10_integration/authz-modeling-guide.md（INT-03 XS-1・XS-2、書込対応表）
+  x-negative-examples:
+    description: 外部付与の負例。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施。kit の機械可読ベクタへの写しは §12 V12-XG-7。INT-02 P-16 の NP16-8〜NP16-14 はこのうち依存サービスの CI に入れるものを指す
+    items:
+      - { ref: XGN-01, op: createExternalGrant, case: "Txn-Token なしで発行する", expect: "401 txn_token_required。付与記録・起点の tuple・招待はいずれも作られない" }
+      - { ref: XGN-02, op: createExternalGrant, case: "Txn-Token の tctx.tid=A のまま path の tenant_id=B で発行する", expect: "403 tenant_binding_violation。何も作られない" }
+      - { ref: XGN-03, op: createExternalGrant, case: "付与者が authorizing_permission を持たない（PEP を通さずに呼んだ想定）", expect: "403 granter_not_allowed" }
+      - { ref: XGN-04, op: createExternalGrant, case: "起点の relation が editor など外部付与可でない permission に到達する", expect: "403 relation_not_external_grantable" }
+      - { ref: XGN-05, op: createExternalGrant, case: "expires_at を省く、または invitation_expires_at が expires_at より後", expect: "400 expiry_required" }
+      - { ref: XGN-06, op: createExternalGrant, case: "資源側テナントの inbound が無効", expect: "403 inbound_disabled" }
+      - { ref: XGN-07, op: createExternalGrant, case: "起点の資源型の書込宣言を持たない workload が呼ぶ", expect: "403 caller_not_declared" }
+      - { ref: XGN-08, op: createExternalGrant, case: "外部主体（ゲスト）が付与者で、資源型に再共有が許されていない", expect: "403 reshare_not_allowed" }
+      - { ref: XGN-09, op: acceptExternalGrantInvitation, case: "使用済みの受諾 token で再度受諾する（受諾 token の再利用）", expect: "404 invitation_invalid。tuple を書かない" }
+      - { ref: XGN-10, op: acceptExternalGrantInvitation, case: "受諾者の principal_type が ai_agent または workload", expect: "403 principal_type_not_allowed。state=rejected" }
+      - { ref: XGN-11, op: acceptExternalGrantInvitation, case: "home_outbound の証跡がない、または issued_at が鮮度 F_ob を超える", expect: "403 home_outbound_unverifiable。state=rejected" }
+      - { ref: XGN-12, op: acceptExternalGrantInvitation, case: "home 側 outbound が許可していない（allowed=false）", expect: "403 home_outbound_denied" }
+      - { ref: XGN-13, op: acceptExternalGrantInvitation, case: "home テナントが資源側の信頼リストにない", expect: "403 home_tenant_not_trusted" }
+      - { ref: XGN-14, op: acceptExternalGrantInvitation, case: "所在地指定テナントで、home 側の法域パーティションが異なる", expect: "403 jurisdiction_not_allowed" }
+      - { ref: XGN-15, op: acceptExternalGrantInvitation, case: "依存サービスの workload が受諾を呼ぶ", expect: "403 caller_not_declared" }
+      - { ref: XGN-16, op: acceptExternalGrantInvitation, case: "受諾者の確認済み連絡先が宛先と異なる（転送された招待）", expect: "200 state=held。grantee の tuple は書かれない" }
+      - { ref: XGN-17, op: revokeExternalGrant, case: "取消しの 200 の後、同じゲストの token（期限内）で起点の資源を読む", expect: "依存サービスの PEP で拒否（404）。read-sensitive は応答の consistency_token か剥奪フェンスの新しい方で評価する" }
+      - { ref: XGN-18, op: revokeExternalGrantsByAnchor, case: "予約を取り消した後、そのゲストが予約を読む", expect: "拒否。revoked_count は取り消した付与の数" }
+      - { ref: XGN-19, op: getExternalGrant, case: "他の名前空間の起点に付いた付与の grant_id を指定する", expect: "404 not_found（存在の有無を区別しない）" }
+      - { ref: XGN-20, op: createExternalGrant, case: "invitee.address を含む要求の後、依存サービスと façade のログ・監査・tuple に email が残っていないか調べる", expect: "残っていない（XGC-4、XGS-11）" }
+  x-lint-notes: '版 0.1.0（v1.2）の検査: 2026-10-15 に本書の作成者が Redocly CLI 2.64.0（npx @redocly/cli@latest lint、recommended、設定ファイルなし）で検査し、エラー 0・警告 0。Python jsonschema の check_schema は components.schemas の 28 件すべて合格、operation の examples 12 件はすべて適合。生データは作成者の一時作業領域にだけ置いた。'
+servers:
+  - url: https://authz-registry.{cell}.example.invalid
+    description: 資源の cell の façade（CON-04 と同じ配備。実ホスト名は ADR-021 の `<id-domain>` 確定後に置換する仮置き）。呼ぶ側は設定 EXTERNAL_GRANT_API_URL（§12 V12-XG-7）から得る
+    variables:
+      cell:
+        default: jp-canary-1
+        description: cell の識別名（ADR-013。値は仮置き）
+security:
+  - workloadMtls: []
+tags:
+  - name: grants
+    description: 外部付与の発行・照会・取消し（依存サービスが呼ぶ）。preview
+  - name: invitations
+    description: 招待の受諾（資源側 AS だけが呼ぶ）。preview
+  - name: changes
+    description: 外部付与の状態変化の通知（依存サービスが pull する）。preview
+paths:
+  /v1/tenants/{tenant_id}/external-grants:
+    post:
+      operationId: createExternalGrant
+      tags: [grants]
+      summary: 外部付与を招待として発行する（付与者の代わりに依存サービスが呼ぶ）
+      description: |
+        付与記録と起点の tuple を原子的に作り、承認が要らなければ招待を送る（§2 XGF-3〜XGF-5、§5 XGS-1〜XGS-7）。
+        応答の 201 は招待を作ったことを示すだけで、アクセスは受諾（state=active）まで生じない（XGC-5）。
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/TxnTokenRequired'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExternalGrantRequest'
+            examples:
+              bookingGuest:
+                summary: 会議室予約に他テナントの利用者をゲストとして招く
+                value:
+                  anchor:
+                    resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                    relation: guest
+                  authorizing_permission: invite_guest
+                  invitee:
+                    channel: email
+                    address: guest@partner.example
+                  expires_at: '2026-10-31T09:00:00Z'
+                  invitation_expires_at: '2026-10-22T09:00:00Z'
+                  landing_uri: https://rooms.example.invalid/t/t5wq2hzr7nmc4ka3vd6pxe2bfy/bookings/b3k7q2mx9vd4ta6pnr2hw7cyz5
+      responses:
+        '201':
+          description: 付与記録と起点の tuple を作った。state は invited か pending_approval
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrantWriteResult'
+              examples:
+                invited:
+                  value:
+                    grant:
+                      grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                      tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                      state: invited
+                      anchor:
+                        resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                        relation: guest
+                      granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                      created_at: '2026-10-15T09:00:00Z'
+                      expires_at: '2026-10-31T09:00:00Z'
+                      invitation_expires_at: '2026-10-22T09:00:00Z'
+                      jurisdictions: { resource: jp }
+                      policy_versions: { resource_inbound: pv_inb_0007 }
+                    consistency_token: ct1.AQ.ZmFjYWRlLXdyaXRlLTAwMDE.k3J9xQ
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    get:
+      operationId: listExternalGrants
+      tags: [grants]
+      summary: 外部付与を起点の資源・状態で一覧する（棚卸し・ゲスト一覧の表示用）
+      description: |
+        呼出し元の名前空間の起点に付いた付与だけを返す（XGS-2）。利用者に見せる前に自サービスの PEP で判定する（XGC-13）。
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/TxnTokenOptional'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+        - $ref: '#/components/parameters/RequestId'
+        - name: anchor_type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TypeName'
+        - name: anchor_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ObjectId'
+        - name: state
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/GrantState'
+        - name: page_token
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 1024
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: 付与の一覧
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrantList'
+              examples:
+                oneActive:
+                  value:
+                    items:
+                      - grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                        tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                        state: active
+                        anchor:
+                          resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                          relation: guest
+                        granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                        grantee: { sub: u2c5wq8kx3hd7ta4pnr6bv9myz, home_tenant_id: h3np6kq2wz7ta4vd5mxe2bcy7r, display_name: Partner Guest }
+                        created_at: '2026-10-15T09:00:00Z'
+                        accepted_at: '2026-10-15T10:12:00Z'
+                        expires_at: '2026-10-31T09:00:00Z'
+                        invitation_expires_at: '2026-10-22T09:00:00Z'
+                        jurisdictions: { resource: jp, home: jp }
+                        policy_versions: { resource_inbound: pv_inb_0007, home_outbound: pv_outb_0003 }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/external-grants/{grant_id}:
+    get:
+      operationId: getExternalGrant
+      tags: [grants]
+      summary: 外部付与を 1 件取得する（受諾後の grantee の sub・表示名を知る）
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/GrantId'
+        - $ref: '#/components/parameters/TxnTokenOptional'
+        - $ref: '#/components/parameters/SubjectAccessToken'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: 付与
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrant'
+              examples:
+                invited:
+                  value:
+                    grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                    tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    state: invited
+                    anchor:
+                      resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                      relation: guest
+                    granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                    created_at: '2026-10-15T09:00:00Z'
+                    expires_at: '2026-10-31T09:00:00Z'
+                    invitation_expires_at: '2026-10-22T09:00:00Z'
+                    jurisdictions: { resource: jp }
+                    policy_versions: { resource_inbound: pv_inb_0007 }
+                active:
+                  value:
+                    grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                    tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                    state: active
+                    anchor:
+                      resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                      relation: guest
+                    granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                    grantee: { sub: u2c5wq8kx3hd7ta4pnr6bv9myz, home_tenant_id: h3np6kq2wz7ta4vd5mxe2bcy7r, display_name: Partner Guest }
+                    created_at: '2026-10-15T09:00:00Z'
+                    accepted_at: '2026-10-15T10:12:00Z'
+                    expires_at: '2026-10-31T09:00:00Z'
+                    invitation_expires_at: '2026-10-22T09:00:00Z'
+                    jurisdictions: { resource: jp, home: jp }
+                    policy_versions: { resource_inbound: pv_inb_0007, home_outbound: pv_outb_0003 }
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/external-grants/{grant_id}/revoke:
+    post:
+      operationId: revokeExternalGrant
+      tags: [grants]
+      summary: 外部付与を 1 件取り消す（剥奪書込を先に確定する）
+      description: |
+        剥奪書込を確定し、剥奪フェンスを進めてから 200 を返す（XGS-9、§6）。冪等。既に終端の付与は 409 state_conflict（呼ぶ側は成功として扱う。XGC-11）。
+        越境を狭める変更なので事前承認を要しない（ADR-024 D24-19）。Txn-Token（利用者の要求起点）か、内部開始の Txn-Token（ジョブ起点）でテナント結合を示す。
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/GrantId'
+        - $ref: '#/components/parameters/TxnTokenRequired'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+            examples:
+              byGranter:
+                value:
+                  reason_class: granter_revoked
+                  authorizing_permission: invite_guest
+      responses:
+        '200':
+          description: 取り消した（剥奪を確定した）
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrantWriteResult'
+              examples:
+                revoked:
+                  value:
+                    grant:
+                      grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                      tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                      state: revoked
+                      anchor:
+                        resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                        relation: guest
+                      granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                      grantee: { sub: u2c5wq8kx3hd7ta4pnr6bv9myz, home_tenant_id: h3np6kq2wz7ta4vd5mxe2bcy7r }
+                      created_at: '2026-10-15T09:00:00Z'
+                      accepted_at: '2026-10-15T10:12:00Z'
+                      expires_at: '2026-10-31T09:00:00Z'
+                      invitation_expires_at: '2026-10-22T09:00:00Z'
+                      ended: { at: '2026-10-16T08:00:00Z', reason_class: granter_revoked }
+                      jurisdictions: { resource: jp, home: jp }
+                      policy_versions: { resource_inbound: pv_inb_0007, home_outbound: pv_outb_0003 }
+                    consistency_token: ct1.AQ.ZmFjYWRlLXJldm9rZS0wMDAy.p8Lm2a
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/external-grants/revoke-by-anchor:
+    post:
+      operationId: revokeExternalGrantsByAnchor
+      tags: [grants]
+      summary: 起点の資源に付いた外部付与をすべて取り消す（資源の削除・予約の取消しの前に呼ぶ）
+      description: |
+        起点の資源に付いた終端でない付与（pending_approval・invited・held・active・suspended）をすべて取り消し、起点の tuple も削除する（XGC-7）。
+        1 要求の上限は 1,000 件（初期案。超える場合は `remaining=true` を返すので、同じ要求を繰り返す）[D]。
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/TxnTokenRequired'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeByAnchorRequest'
+            examples:
+              bookingCancelled:
+                value:
+                  anchor_resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                  reason_class: anchor_deleted
+      responses:
+        '200':
+          description: 取り消した
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeByAnchorResult'
+              examples:
+                done:
+                  value:
+                    revoked_count: 1
+                    revoked_grant_ids: [g7k2m4vx9qd3ta6pnr2bw7cyh5]
+                    remaining: false
+                    consistency_token: ct1.AQ.ZmFjYWRlLXJldm9rZS0wMDAz.q2Vn8c
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/tenants/{tenant_id}/external-grant-changes:
+    get:
+      operationId: listExternalGrantChanges
+      tags: [changes]
+      summary: 外部付与の状態変化を順序番号つきで取得する（依存サービスのキャッシュ破棄・予定処理の停止に使う）
+      description: |
+        呼出し元の名前空間の起点に付いた付与の状態変化を、テナント内で単調増加する `sequence` の順に返す。`cursor` を省くと保持期間（TBD）の最古から返す。
+        CON-12 に外部付与の事象が加わるまでの経路である（§12 V12-XG-6）。受けた変化の扱いは XGC-8・XGC-9。
+      x-freeze-class: preview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/TxnTokenOptional'
+        - $ref: '#/components/parameters/RequestId'
+        - name: anchor_type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TypeName'
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 1024
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: 状態変化の列
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrantChangeList'
+              examples:
+                acceptedThenRevoked:
+                  value:
+                    items:
+                      - sequence: '00000000000000000101'
+                        grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                        anchor_resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                        from_state: invited
+                        to_state: active
+                        occurred_at: '2026-10-15T10:12:00Z'
+                      - sequence: '00000000000000000102'
+                        grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                        anchor_resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                        from_state: active
+                        to_state: revoked
+                        reason_class: granter_revoked
+                        occurred_at: '2026-10-16T08:00:00Z'
+                    next_cursor: c_00000000000000000102
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /v1/external-grant-invitations/accept:
+    post:
+      operationId: acceptExternalGrantInvitation
+      tags: [invitations]
+      summary: 招待の受諾・辞退を記録する（資源側 AS だけが呼ぶ。依存サービスは呼ばない）
+      description: |
+        資源側 AS が、ゲストの認証（home 側との RP 起点の federation。ADR-024 D24-14・D24-15）と受諾画面での同意（XGF-7）の後に呼ぶ。
+        XGS-8 の順に検査し、満たせば grantee の tuple と external_member を書いて active にする。
+        受諾 token は要求本文で渡し、URL・アクセスログに残さない。資源側テナントは受諾 token の付与記録から定まるので path に置かない。
+      x-freeze-class: preview
+      x-callers: [resource-side AS（基盤の AS の workload ID に限る）]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptInvitationRequest'
+            examples:
+              accept:
+                value:
+                  invitation_token: Zq3Xv9-k2LmP8aT4wR7yB1cD6eF0gH5jN2s
+                  decision: accept
+                  grantee:
+                    sub: u2c5wq8kx3hd7ta4pnr6bv9myz
+                    principal_type: human
+                    home_tenant_id: h3np6kq2wz7ta4vd5mxe2bcy7r
+                    home_jurisdiction: jp
+                    auth_time: '2026-10-15T10:11:30Z'
+                    acr: urn:example:acr:aal2-phr
+                    verified_contact_matches_invitee: true
+                    display_name: Partner Guest
+                  home_outbound:
+                    allowed: true
+                    policy_version: pv_outb_0003
+                    issued_at: '2026-10-15T10:11:30Z'
+                    attestation_ref: hoa_9k2m4vx7qd3ta6pnr2bw
+                  consent:
+                    disclosure_version: dv_2026_10
+                    accepted_at: '2026-10-15T10:12:00Z'
+      responses:
+        '200':
+          description: 受諾・辞退を記録した。state は active・held・declined のいずれか
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalGrantWriteResult'
+              examples:
+                active:
+                  value:
+                    grant:
+                      grant_id: g7k2m4vx9qd3ta6pnr2bw7cyh5
+                      tenant_id: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                      state: active
+                      anchor:
+                        resource: { type: rsv/booking, id: b3k7q2mx9vd4ta6pnr2hw7cyz5 }
+                        relation: guest
+                      granter: { sub: u8m3kq7vx2hd4ta6pnr9bw5cyz }
+                      grantee: { sub: u2c5wq8kx3hd7ta4pnr6bv9myz, home_tenant_id: h3np6kq2wz7ta4vd5mxe2bcy7r, display_name: Partner Guest }
+                      created_at: '2026-10-15T09:00:00Z'
+                      accepted_at: '2026-10-15T10:12:00Z'
+                      expires_at: '2026-10-31T09:00:00Z'
+                      invitation_expires_at: '2026-10-22T09:00:00Z'
+                      jurisdictions: { resource: jp, home: jp }
+                      policy_versions: { resource_inbound: pv_inb_0007, home_outbound: pv_outb_0003 }
+                    consistency_token: ct1.AQ.ZmFjYWRlLWFjY2VwdC0wMDAx.m4Kp7d
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+components:
+  securitySchemes:
+    workloadMtls:
+      type: mutualTLS
+      description: workload ID（ADR-009）の X.509 SVID による mTLS。全 operation で必須 [D]
+  parameters:
+    TenantId:
+      name: tenant_id
+      in: path
+      required: true
+      description: 資源側テナントの不透明 ID。値は Txn-Token の `tctx.tid` と同一の文字列（変換しない）。形は CON-02 `TenantIdSegment` と同じ
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+    GrantId:
+      name: grant_id
+      in: path
+      required: true
+      description: 付与 ID（`core/external_grant` の object ID と同じ値）
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+    TxnTokenRequired:
+      name: Txn-Token
+      in: header
+      required: true
+      description: 起点要求の Txn-Token を無改変で渡す（XGS-1）。照合は CON-04 の `TxnToken` と同じ。全文をログに残さない
+      schema:
+        $ref: '#/components/schemas/Jws'
+    TxnTokenOptional:
+      name: Txn-Token
+      in: header
+      required: false
+      description: 起点要求の Txn-Token。読取りでは Txn-Token か Subject-Access-Token のどちらかが要る（XGS-1）
+      schema:
+        $ref: '#/components/schemas/Jws'
+    SubjectAccessToken:
+      name: Subject-Access-Token
+      in: header
+      required: false
+      description: 呼出し元が検証済みの、起点要求の内部 access token（CON-04 の `SubjectAccessToken` と同じ扱い）
+      schema:
+        $ref: '#/components/schemas/Jws'
+    RequestId:
+      name: X-Request-ID
+      in: header
+      required: false
+      description: 呼出し側が採番する要求 ID。応答で同じ値を返す
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 再送の識別。同じ鍵の再送には最初の応答を返す。同じ鍵で内容が違えば 409 idempotency_conflict。保持期間は TBD
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 64
+        pattern: '^[A-Za-z0-9_-]+$'
+  headers:
+    XRequestId:
+      description: 要求の X-Request-ID をそのまま返す
+      schema:
+        type: string
+    RetryAfter:
+      description: 再試行までの秒数
+      schema:
+        type: integer
+        minimum: 0
+  responses:
+    BadRequest:
+      description: 要求の形式の誤り
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            expiryRequired:
+              value:
+                type: https://problems.authz-registry.example.invalid/expiry-required
+                title: 外部付与には期限が必要
+                status: 400
+                code: expiry_required
+    Unauthenticated:
+      description: 認証の失敗、または Txn-Token の欠落
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            txnTokenRequired:
+              value:
+                type: https://problems.authz-registry.example.invalid/txn-token-required
+                title: Txn-Token が必要
+                status: 401
+                code: txn_token_required
+    Forbidden:
+      description: テナント結合・名前空間・付与者・ポリシーの検査に外れた
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            relationNotExternalGrantable:
+              value:
+                type: https://problems.authz-registry.example.invalid/relation-not-external-grantable
+                title: 起点の relation は外部付与可でない
+                status: 403
+                code: relation_not_external_grantable
+            homeOutboundUnverifiable:
+              value:
+                type: https://problems.authz-registry.example.invalid/home-outbound-unverifiable
+                title: home 側の outbound の許可を確かめられない
+                status: 403
+                code: home_outbound_unverifiable
+    NotFound:
+      description: 対象がない、または呼出し元の範囲外（区別しない）。受諾では受諾 token が無効
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invitationInvalid:
+              value:
+                type: https://problems.authz-registry.example.invalid/invitation-invalid
+                title: 招待が無効
+                status: 404
+                code: invitation_invalid
+    Conflict:
+      description: 状態の不整合、または Idempotency-Key の衝突
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            stateConflict:
+              value:
+                type: https://problems.authz-registry.example.invalid/state-conflict
+                title: 付与は既に終端の状態
+                status: 409
+                code: state_conflict
+    TooManyRequests:
+      description: 発行数の上限・レート制限
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            rateLimited:
+              value:
+                type: https://problems.authz-registry.example.invalid/rate-limited
+                title: 招待の発行数の上限に達した
+                status: 429
+                code: rate_limited
+    Unavailable:
+      description: 判定・書込みができない。作成は作られていない。取消しは再試行する
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            unavailable:
+              value:
+                type: https://problems.authz-registry.example.invalid/unavailable
+                title: 一時的に処理できない
+                status: 503
+                code: unavailable
+  schemas:
+    Jws:
+      description: JWS compact serialization。最大長は CON-04 と同じ暫定値
+      type: string
+      minLength: 1
+      maxLength: 6144
+      pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
+    ObjectId:
+      description: 不透明 ID（CON-04 `ObjectId` と同じ形）
+      type: string
+      pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$'
+    PrincipalSub:
+      description: 主体の sub（CON-02 `PrincipalId`。全類型共通の単一名前空間の不透明 ID）
+      type: string
+      minLength: 1
+      maxLength: 255
+    TypeName:
+      description: CAM の型名 `<名前空間コード>/<型名>`（CON-04 `TypeName` と同じ形）
+      type: string
+      pattern: '^[a-z][a-z0-9_]{1,61}[a-z0-9]/[a-z][a-z0-9_]{1,62}[a-z0-9]$'
+    RelationName:
+      type: string
+      pattern: '^[a-z][a-z0-9_]{1,62}[a-z0-9]$'
+    PermissionName:
+      description: CAM の permission 名（動詞）
+      type: string
+      pattern: '^[a-z][a-z0-9_]{1,62}[a-z0-9]$'
+    Timestamp:
+      type: string
+      format: date-time
+    JurisdictionPartition:
+      description: 法域パーティション（ADR-013。値は仮置きの短い符号。例 jp、eu、us）
+      type: string
+      pattern: '^[a-z]{2,8}$'
+    PolicyVersion:
+      description: 適用したポリシーの版（不透明値）
+      type: string
+      pattern: '^[A-Za-z0-9_-]{1,64}$'
+    ConsistencyToken:
+      description: façade が発行する整合性トークン（CON-04 `ConsistencyToken` と同じ）。業務の記録と同じトランザクションで保存する（XGC-6）
+      type: string
+      minLength: 1
+      maxLength: 1024
+    ResourceRef:
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeName'
+        id:
+          $ref: '#/components/schemas/ObjectId'
+    Anchor:
+      description: 起点の資源と relation。façade が `<type>:<id>#<relation>@core/external_grant:<grant_id>#grantee` の tuple を書く（XGS-6）
+      type: object
+      additionalProperties: false
+      required: [resource, relation]
+      properties:
+        resource:
+          $ref: '#/components/schemas/ResourceRef'
+        relation:
+          $ref: '#/components/schemas/RelationName'
+    GrantState:
+      description: 付与の状態（§3）。開いた列挙として扱い、未知の値は「有効でない」とする（XGC-9）
+      type: string
+      enum: [pending_approval, invited, held, active, suspended, revoked, expired, declined, invitation_expired, rejected]
+    ReasonClass:
+      description: 終端・凍結の理由の区分（§6）。開いた列挙として扱う
+      type: string
+      enum: [granter_revoked, admin_revoked, anchor_deleted, expired, policy_narrowed, home_policy_narrowed, home_principal_removed, home_tenant_suspended, compromise_response, approval_rejected, acceptance_policy_failed, declined, invitation_expired]
+    Invitee:
+      description: 招待の宛先。配送にだけ使い、識別子・認可に使わない（INV-2、XGC-4）。応答には返さない
+      type: object
+      additionalProperties: false
+      required: [channel, address]
+      properties:
+        channel:
+          type: string
+          enum: [email]
+        address:
+          type: string
+          format: email
+          maxLength: 254
+    CreateExternalGrantRequest:
+      type: object
+      additionalProperties: false
+      required: [anchor, authorizing_permission, invitee, expires_at, invitation_expires_at, landing_uri]
+      properties:
+        anchor:
+          $ref: '#/components/schemas/Anchor'
+        authorizing_permission:
+          allOf:
+            - $ref: '#/components/schemas/PermissionName'
+          description: 付与者が起点の資源について持つべき「外部付与の作成」の permission（例 invite_guest、share_external）。façade が再評価する（XGS-3、§11 XG-L3）
+        invitee:
+          $ref: '#/components/schemas/Invitee'
+        expires_at:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: 付与の期限（必須。D24-18）。上限は K24-2（TBD）
+        invitation_expires_at:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: 招待の期限。expires_at 以下
+        landing_uri:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: 受諾後に資源側 AS がゲストを戻す先。呼出し元の client に登録された origin（CON-14）に限る。秘密・email を含めない
+        reshare_of:
+          allOf:
+            - $ref: '#/components/schemas/ObjectId'
+          description: 付与者が外部主体の場合の元の付与 ID（XGS-5）
+    RevokeRequest:
+      type: object
+      additionalProperties: false
+      required: [reason_class]
+      properties:
+        reason_class:
+          type: string
+          enum: [granter_revoked, admin_revoked, anchor_deleted]
+        authorizing_permission:
+          allOf:
+            - $ref: '#/components/schemas/PermissionName'
+          description: 利用者の操作による取消しで、依存サービスの PEP が判定した permission（監査用）。ジョブ起点では省く
+    RevokeByAnchorRequest:
+      type: object
+      additionalProperties: false
+      required: [anchor_resource, reason_class]
+      properties:
+        anchor_resource:
+          $ref: '#/components/schemas/ResourceRef'
+        reason_class:
+          type: string
+          enum: [anchor_deleted, granter_revoked, admin_revoked]
+    RevokeByAnchorResult:
+      type: object
+      additionalProperties: false
+      required: [revoked_count, revoked_grant_ids, remaining, consistency_token]
+      properties:
+        revoked_count:
+          type: integer
+          minimum: 0
+        revoked_grant_ids:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/ObjectId'
+        remaining:
+          type: boolean
+          description: true なら上限で打ち切った。同じ要求を繰り返す
+        consistency_token:
+          $ref: '#/components/schemas/ConsistencyToken'
+    Grantee:
+      description: 受諾した主体。受諾前の状態では返さない。email は持たない（XGS-11）
+      type: object
+      additionalProperties: false
+      required: [sub, home_tenant_id]
+      properties:
+        sub:
+          $ref: '#/components/schemas/PrincipalSub'
+        home_tenant_id:
+          allOf:
+            - $ref: '#/components/schemas/ObjectId'
+          description: home テナント ID（PC-09(b) は外部共同作業者 realm の ID）
+        display_name:
+          type: string
+          maxLength: 256
+          description: home 側のポリシーが許す場合だけ（D24-23）
+    ExternalGrant:
+      type: object
+      additionalProperties: false
+      required: [grant_id, tenant_id, state, anchor, granter, created_at, expires_at, invitation_expires_at, jurisdictions, policy_versions]
+      properties:
+        grant_id:
+          $ref: '#/components/schemas/ObjectId'
+        tenant_id:
+          allOf:
+            - $ref: '#/components/schemas/ObjectId'
+          description: 資源側テナント
+        state:
+          $ref: '#/components/schemas/GrantState'
+        anchor:
+          $ref: '#/components/schemas/Anchor'
+        granter:
+          type: object
+          additionalProperties: false
+          required: [sub]
+          properties:
+            sub:
+              $ref: '#/components/schemas/PrincipalSub'
+        approver:
+          type: object
+          additionalProperties: false
+          required: [sub]
+          properties:
+            sub:
+              $ref: '#/components/schemas/PrincipalSub'
+        grantee:
+          $ref: '#/components/schemas/Grantee'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        accepted_at:
+          $ref: '#/components/schemas/Timestamp'
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        invitation_expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        ended:
+          type: object
+          additionalProperties: false
+          required: [at, reason_class]
+          description: 終端・凍結の時刻と理由
+          properties:
+            at:
+              $ref: '#/components/schemas/Timestamp'
+            reason_class:
+              $ref: '#/components/schemas/ReasonClass'
+        reshare_of:
+          $ref: '#/components/schemas/ObjectId'
+        jurisdictions:
+          type: object
+          additionalProperties: false
+          required: [resource]
+          description: 双方の法域パーティション（D24-23）。home は受諾後に入る
+          properties:
+            resource:
+              $ref: '#/components/schemas/JurisdictionPartition'
+            home:
+              $ref: '#/components/schemas/JurisdictionPartition'
+        policy_versions:
+          type: object
+          additionalProperties: false
+          required: [resource_inbound]
+          description: 作成・受諾時に適用した双方のポリシーの版（D24-01 の 3）
+          properties:
+            resource_inbound:
+              $ref: '#/components/schemas/PolicyVersion'
+            home_outbound:
+              $ref: '#/components/schemas/PolicyVersion'
+    ExternalGrantWriteResult:
+      type: object
+      additionalProperties: false
+      required: [grant, consistency_token]
+      properties:
+        grant:
+          $ref: '#/components/schemas/ExternalGrant'
+        consistency_token:
+          $ref: '#/components/schemas/ConsistencyToken'
+    ExternalGrantList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ExternalGrant'
+        next_page_token:
+          type: string
+          maxLength: 1024
+    ExternalGrantChange:
+      type: object
+      additionalProperties: false
+      required: [sequence, grant_id, anchor_resource, to_state, occurred_at]
+      properties:
+        sequence:
+          type: string
+          pattern: '^[0-9]{20}$'
+          description: テナント内で単調増加する順序番号
+        grant_id:
+          $ref: '#/components/schemas/ObjectId'
+        anchor_resource:
+          $ref: '#/components/schemas/ResourceRef'
+        from_state:
+          $ref: '#/components/schemas/GrantState'
+        to_state:
+          $ref: '#/components/schemas/GrantState'
+        reason_class:
+          $ref: '#/components/schemas/ReasonClass'
+        occurred_at:
+          $ref: '#/components/schemas/Timestamp'
+    ExternalGrantChangeList:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/ExternalGrantChange'
+        next_cursor:
+          type: string
+          maxLength: 1024
+    AcceptInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [invitation_token, decision]
+      description: decision=accept では grantee・home_outbound・consent が必須（XGS-8）。decision=decline では invitation_token だけでよい
+      properties:
+        invitation_token:
+          type: string
+          minLength: 22
+          maxLength: 256
+          pattern: '^[A-Za-z0-9_-]+$'
+          description: 受諾 token（128 bit 以上の乱数の base64url。XGS-7）。ログに残さない
+        decision:
+          type: string
+          enum: [accept, decline]
+        grantee:
+          type: object
+          additionalProperties: false
+          required: [sub, principal_type, home_tenant_id, home_jurisdiction, auth_time, acr, verified_contact_matches_invitee]
+          properties:
+            sub:
+              $ref: '#/components/schemas/PrincipalSub'
+            principal_type:
+              type: string
+              description: CON-02 の主体種別。human 以外は 403 principal_type_not_allowed（D24-02）
+              enum: [human, workload, service_account, ai_agent, client]
+            home_tenant_id:
+              $ref: '#/components/schemas/ObjectId'
+            home_jurisdiction:
+              $ref: '#/components/schemas/JurisdictionPartition'
+            auth_time:
+              $ref: '#/components/schemas/Timestamp'
+            acr:
+              type: string
+              maxLength: 256
+            verified_contact_matches_invitee:
+              type: boolean
+              description: 資源側 AS が、受諾者の確認済み連絡先と招待の宛先を比べた結果。false なら held（I-05）。結合の根拠には使わない
+            display_name:
+              type: string
+              maxLength: 256
+              description: home 側のポリシーが許す場合だけ
+        home_outbound:
+          type: object
+          additionalProperties: false
+          required: [allowed, policy_version, issued_at, attestation_ref]
+          description: home 側 outbound の証跡（§11 XG-L1）。資源側 AS が home 側の署名を検証済みのもの
+          properties:
+            allowed:
+              type: boolean
+            policy_version:
+              $ref: '#/components/schemas/PolicyVersion'
+            issued_at:
+              $ref: '#/components/schemas/Timestamp'
+            attestation_ref:
+              type: string
+              pattern: '^[A-Za-z0-9_-]{1,128}$'
+        consent:
+          type: object
+          additionalProperties: false
+          required: [disclosure_version, accepted_at]
+          description: ゲスト本人の同意（XGF-7）。表示した開示文の版と時刻
+          properties:
+            disclosure_version:
+              type: string
+              pattern: '^[A-Za-z0-9_-]{1,64}$'
+            accepted_at:
+              $ref: '#/components/schemas/Timestamp'
+    ProblemCode:
+      description: 本契約の閉じた列挙（§8）。追加は minor、意味の変更は major（ADR-016）
+      type: string
+      enum:
+        - invalid_request
+        - expiry_required
+        - txn_token_required
+        - unauthenticated
+        - tenant_binding_violation
+        - caller_not_declared
+        - granter_not_allowed
+        - relation_not_external_grantable
+        - inbound_disabled
+        - expiry_exceeds_max
+        - reshare_not_allowed
+        - principal_type_not_allowed
+        - home_outbound_unverifiable
+        - home_outbound_denied
+        - home_tenant_not_trusted
+        - jurisdiction_not_allowed
+        - not_found
+        - invitation_invalid
+        - state_conflict
+        - idempotency_conflict
+        - rate_limited
+        - unavailable
+    Problem:
+      description: RFC 9457 Problem Details。`code` と `request_id` は本契約の拡張メンバ（CON-04 と同じ形）
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          $ref: '#/components/schemas/ProblemCode'
+        request_id:
+          type: string
+      additionalProperties: true

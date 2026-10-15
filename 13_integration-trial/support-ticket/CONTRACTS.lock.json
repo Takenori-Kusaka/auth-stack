@@ -1,0 +1,238 @@
+{
+  "pinned_at": "2026-10-15T13:37:59.859Z",
+  "git_head": "e7a4cffee1541270dae843b651cbae58c0eb2961",
+  "note": "v1.2 working tree (uncommitted files are pinned by SHA-256 only)",
+  "files": [
+    {
+      "doc": "CON-16",
+      "path": "11_contracts/integration-essentials.md",
+      "ops": "§1〜§5",
+      "sha256": "975863e480f14fe552f314e878c08de87472e94fe364929daaf4aa00bb4a4e2b",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/README.md",
+      "ops": "echo proxy R1〜R10、§3〜§6",
+      "sha256": "6d73d46751a0b04f9054819d0d8cba9019f1e7c2ca22facd2801c1471e83d636",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/echo-proxy.js",
+      "ops": "R1〜R10",
+      "sha256": "5922bf7f2e72f3ae950066318a2196865a96f0e0830c446f92bdd5ddd1bf7f4e",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-03",
+      "path": "11_contracts/authorization-api.openapi.yaml",
+      "ops": "evaluation, evaluations, authzen-configuration",
+      "sha256": "72b12ed2cd0ae7e30bb383dcc84442fa527c7cbd02e4e392b26c0e16407170cd",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-04",
+      "path": "11_contracts/relationship-model-registry.openapi.yaml",
+      "ops": "writeRelationships",
+      "sha256": "2b7f695ff16f9c6733cbee27090c1f8e298357d672ccf9385556bd581ff0b98d",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-05",
+      "path": "11_contracts/token-exchange.openapi.yaml",
+      "ops": "requestTxnToken, getTxnTokenJwks, registerAcceptanceRecord",
+      "sha256": "3c62c6db9acb767f29cff736baa58108fc68cc40e4e747c8347b354781b2af96",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-17",
+      "path": "11_contracts/external-grant.openapi.yaml",
+      "ops": "createExternalGrant, revokeExternalGrantsByAnchor",
+      "sha256": "3bf4e74080c9153bc2aa1db6886458be3c170f061b5b0cf80882e5fc8c94242e",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-18",
+      "path": "11_contracts/agent-delegation.openapi.yaml",
+      "ops": "AD-01〜AD-12, §5, AgentToolDeclaration",
+      "sha256": "3bca82a88b1624c89563853d65f9044a9a47139b09384ca184faaf446b9d4678",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-06",
+      "path": "11_contracts/schemas/access-token-claims.schema.json",
+      "ops": "internalAccessTokenClaims, txnTokenClaims",
+      "sha256": "64b1bcd0ec721b48920672cb670e303ff469709ca2ba066f27978bfb0f2cd114",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-08",
+      "path": "11_contracts/schemas/audit-event.schema.json",
+      "ops": "E2 enforcement",
+      "sha256": "0fc7e53a845152cef452237e87fbdc4a76f4e30798cc40aaf2db1beea607600c",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-02",
+      "path": "11_contracts/schemas/common.schema.json",
+      "ops": "x-subject-type-map, OperationTierClass",
+      "sha256": "c0c1664fde6909265e77012babcaa9aadd97c94b91795018c015adff2d453120",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11",
+      "path": "11_contracts/mock-contract-test-kit.md",
+      "ops": "§11.4, §11.6",
+      "sha256": "48c470222e690493ee2581069ba0ff4498ac7e4c27d043b5e1e0f32aa6ea602e",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-001.json",
+      "ops": "vector",
+      "sha256": "b00b7b62dfe7808c57de625d0f981e748733d03a4baf5d78958a457392a9043f",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-002.json",
+      "ops": "vector",
+      "sha256": "dbf1a80eef0059be72d2991500ffb10f4284b3296ef091942864ea464acebf90",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-003.json",
+      "ops": "vector",
+      "sha256": "c31e90ef0200f265b041b7aba29b037a05a731941e6a45123274b86ff9732dba",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-004.json",
+      "ops": "vector",
+      "sha256": "3214b71caf76fdd39fd01f3b83c6002729afda7e5e279697c50b115d7e7014a1",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-005.json",
+      "ops": "vector",
+      "sha256": "4c413edb50496000a59f82c97857b8a58eaa6b6090439fa6ec97501f3e3017b9",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-006.json",
+      "ops": "vector",
+      "sha256": "6bc56675c3c9ee8879c316d24706577ba9e508e2574947abb95777e2d7d1dda8",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-007.json",
+      "ops": "vector",
+      "sha256": "b1aa2592f7d17488c3d6cda4e429ba2c830b48dafbf65138e73295e7cd710587",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-008.json",
+      "ops": "vector",
+      "sha256": "be30bed53a91ae31eb6a7a827d1ccf89058f6d648773547ce69db19b65707a9a",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-009.json",
+      "ops": "vector",
+      "sha256": "dc81dd7a3c59b2ed25170d60e426ac6282cbef27994b74585632cd7d01958e28",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-010.json",
+      "ops": "vector",
+      "sha256": "56bfbca8500d8de88a3e9b23e6cd7ae824a0a75d4ac5bbda55f508707d20a112",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-011.json",
+      "ops": "vector",
+      "sha256": "30010d2b4eb23d22b1be1325c7ca0ec3af4486eec807b0a4f50c14a762ac5e3f",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-012.json",
+      "ops": "vector",
+      "sha256": "4251b2e5c972e61f43a5c7b5c6b1a85f9b31abc1a42a49465bc7ece84c3261b6",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-013.json",
+      "ops": "vector",
+      "sha256": "e499f45c125ad0acd1114f6d494cc20d7dc04edee6325fda78c5df2fe43f67ba",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-014.json",
+      "ops": "vector",
+      "sha256": "e142d6b45a04ddab4ed2b2116062a6c886717a74d0db1d292bab8575d4ee54b1",
+      "uncommitted": false
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-045.json",
+      "ops": "vector",
+      "sha256": "c442a71b969ef61e568c9bb8e3d04c31728e068af257b020933d2a34f37d0c2c",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-058.json",
+      "ops": "vector",
+      "sha256": "3557dd14ce1d04bd5646c1b9d717390370100f4f142c25317fefe84e21af7107",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-059.json",
+      "ops": "vector",
+      "sha256": "b4b38c5cbb3ab20e92a7a8078474c7c9125f49f941ecb6cc8d46f23e35190845",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-060.json",
+      "ops": "vector",
+      "sha256": "55f418d9802b30a904e3571a03293a8b68053040f68c8ea60f01805c135683c8",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-061.json",
+      "ops": "vector",
+      "sha256": "fd22e9ba854a283ad77b10f1c7fec773fe90b7fd3adcf48a349cc74868a19071",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/CV-062.json",
+      "ops": "vector",
+      "sha256": "10842f0dc37bdd56a5e72ee6d339fe171ed412ea7ad1a94218324939eb44744d",
+      "uncommitted": true
+    },
+    {
+      "doc": "CON-11-KIT",
+      "path": "11_contracts/kit/negative-vectors/vector.schema.json",
+      "ops": "vector",
+      "sha256": "4c051859dfcc70b3fc608e5d24abe4194d0526beb7e8b26d90003598ed5ef361",
+      "uncommitted": true
+    }
+  ]
+}

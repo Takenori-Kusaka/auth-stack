@@ -1,0 +1,29 @@
+{
+  "$comment": "entry point 台帳（INT-00 入口の手順 1。INT-02 §2.1・§2.3 で主パターンと付加パターンを決めた）。AI による模擬連携検証の成果物で、実在のチームの台帳ではない。",
+  "service": "sup",
+  "resource_types": ["sup/desk", "sup/ticket"],
+  "entry_points": [
+    { "id": "EP-SUP-01", "method": "POST", "path": "/desks/:desk/tickets", "operation": "op.sup.ticket.create", "action": "create_ticket", "resource_kind": "CREATE_CHILD", "resource_type": "sup/desk", "tier": "write", "primary": "P-01", "additional": ["P-24", "P-04"], "async": "A1（SLA 期限の受付記録を要求の処理中に登録）", "options": { "acceptance_atomic": true } },
+    { "id": "EP-SUP-02", "method": "GET", "path": "/tickets/:id", "operation": "op.sup.ticket.read", "action": "read", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "read-sensitive", "primary": "P-01", "additional": ["P-16"] },
+    { "id": "EP-SUP-03", "method": "GET", "path": "/tickets", "operation": "op.sup.ticket.list", "action": "read", "resource_kind": "COLLECTION", "resource_type": "sup/ticket", "tier": "read-sensitive", "primary": "P-01", "additional": ["P-09", "P-16"], "list_method": "L2（自 DB をテナントで絞り、evaluations execute_all で後段 Check）" },
+    { "id": "EP-SUP-04", "method": "POST", "path": "/tickets/:id/assign", "operation": "op.sup.ticket.assign", "action": "assign", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "primary": "P-01", "additional": [], "$comment": "顧客管理者による担当割当て。INT-02 Q4（P-11）にも読めるが、業務操作として P-01 を採った（詰まり L-1）" },
+    { "id": "EP-SUP-05", "method": "POST", "path": "/tickets/:id/guests", "operation": "op.sup.ticket.invite_guest", "action": "invite_guest", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "modifiers": ["+XT"], "primary": "P-01", "additional": ["P-16"], "calls": ["CON-17 createExternalGrant"] },
+    { "id": "EP-SUP-06", "method": "POST", "path": "/tickets/:id/drafts", "operation": "op.sup.ticket.draft_reply", "action": "draft_reply", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "primary": "P-01", "additional": ["P-08"],
+      "agent_delegation": { "tool_id": "sup.draft_reply", "tool_scope": "sup.draft_reply", "tier": "write", "approval": "none" } },
+    { "id": "EP-SUP-07", "method": "POST", "path": "/tickets/:id/drafts/:draft/send", "operation": "op.sup.ticket.send_reply", "action": "send_reply", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "modifiers": ["+XT"], "primary": "P-01", "additional": ["P-08", "P-24"],
+      "agent_delegation": { "tool_id": "sup.send_reply", "tool_scope": "sup.send_reply", "tier": "write", "modifiers": ["+XT"], "approval": "required", "approval_bound_args": ["draft_id", "body_hash"] },
+      "$comment": "人が自分の session で承認して送る経路が正。エージェント経由は CON-18 AD-07 で承認要（+XT）になり、ADR-017 L17-5 の決定まで常に拒否される" },
+    { "id": "EP-SUP-08", "method": "POST", "path": "/tickets/:id/comments", "operation": "op.sup.ticket.comment", "action": "comment", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "primary": "P-01", "additional": ["P-04"], "async": "A1（顧客のコメントで SLA を再起動）", "options": { "acceptance_atomic": true } },
+    { "id": "EP-SUP-09", "method": "POST", "path": "/tickets/:id/close", "operation": "op.sup.ticket.close", "action": "close", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "write", "primary": "P-01", "additional": ["P-16"], "calls": ["CON-17 revokeExternalGrantsByAnchor（剥奪先行。XGC-7）"] },
+    { "id": "EP-SUP-10", "method": "CONSUME", "path": "queue:sup.sla", "operation": "op.sup.sla.check", "action": "read", "resource_kind": "EXISTING", "resource_type": "sup/ticket", "tier": "read-sensitive", "primary": "P-04", "additional": ["§3.9 業務通知"], "job_definition_id": "sup.sla-check.v1", "$comment": "SLA 超過の非同期通知。宛先は担当者（越境の委託先要員を含む）で、アプリ内通知だけ（BN-7）" }
+  ],
+  "vector_manifest": {
+    "operation.read": "EP-SUP-02",
+    "operation.write": "EP-SUP-08",
+    "operation.list": "EP-SUP-03",
+    "operation.invite": "EP-SUP-05",
+    "operation.agent_write": "EP-SUP-06",
+    "operation.agent_approval": "EP-SUP-07",
+    "options": { "sender_constrained": false, "acceptance_atomic": true }
+  }
+}

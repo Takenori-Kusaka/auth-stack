@@ -1,6 +1,6 @@
 # 連携ハンドブック総覧
 
-> 文書ID: INT-00 / 版: 0.10（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15（0.10（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した（末尾「改版履歴」0.10、「他文書への申し送り（v1.1）」の後の「v1.1 の同期の記録」）。v1.1（I-13・I-7）: 冒頭に「実装者向けの入口（1 枚）」を置き、改版履歴を末尾「改版履歴」へ移した。版ごとの変更は末尾を見る）
+> 文書ID: INT-00 / 版: 0.12（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15（0.12（v1.2 の同期）: §1.2 に CON-17・CON-18 の行を加え、v1.2 で改版した行の版を改め、申し送り（v1.2）の反映状況を記した。0.11（v1.2）: AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。実在の連携チームの検証ではない）を受け、入口に v1.2 の規則と新設ファイル（越境ゲスト招待 CON-17、AI エージェント代理 CON-18、負例 CV-058〜CV-062）を加え、手順 2 の契約の固定を具体化した。末尾「改版履歴」0.11。0.10（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した（末尾「改版履歴」0.10、「他文書への申し送り（v1.1）」の後の「v1.1 の同期の記録」）。v1.1（I-13・I-7）: 冒頭に「実装者向けの入口（1 枚）」を置き、改版履歴を末尾「改版履歴」へ移した。版ごとの変更は末尾を見る）
 > 対応要求: G-100, G-140, G-143, G-145（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-62 を含む全行。R-requirements.md には該当行がない）／R-136, R-140（deliverables.md の DL-62 行が挙げるもの）。全件と閉じ方は末尾「対応表」
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-62 行、§8、DEC-8）, 05_adr/README.md, 05_adr/ADR-002・ADR-005・ADR-009・ADR-011・ADR-012・ADR-016・ADR-017・ADR-020・ADR-022・ADR-023・ADR-026・ADR-027（設計判断の正本）, 05_adr/reconciliation-notes.md, 10_integration/dependency-tiers.md（INT-01）, integration-patterns.md（INT-02）, authz-modeling-guide.md（INT-03）, onboarding.md（INT-04）, definition-of-ready.md（INT-05）, developer-faq.md（INT-06）, 11_contracts/README.md（CON-00）, compatibility-deprecation-policy.md（CON-01）, mock-contract-test-kit.md（CON-11）, 04_architecture/pep-contract.md（ARC-06）, token-profile.md（ARC-02）, 08_operations/operating-model.md（DL-27 §8）, 08_operations/phased-rollout.md（OPS-04 §10.5）, 01_governance/assumptions-register.md（A-050〜A-055, A-110, A-113）, 01_governance/exception-risk-acceptance.md（GOV-07）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 06_controls/mappings/identity-appsec.md（ASVS 7.4.4、KM-4）, research/RS-16（verification 記録を含む）, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が 10_integration の全文書と 11_contracts/README.md・CON-11・ADR-022 を通読し、連携開発者の入口として起草した。本書は新しい設計判断をしない。食い違いがあれば ADR と各正本を正とする。ASVS 5.0 の 7.4.4 は research に収載がないため、起草者が 2026-10-15 に原典を取得して文言を確認した。判断は自己レビューであり、実在の CTO/CISO・連携開発者の確認を経ていない（CONVENTIONS §8）[D]。版ごとの起草・是正の経緯は末尾「改版履歴」にある（v1.1（I-13）で冒頭から移した）[D]。
@@ -18,7 +18,7 @@
 | 順 | すること | 読むもの（これだけでよい） | 作るもの・完了の確かめ方 |
 |---|---|---|---|
 | 1 | entry point ごとに主パターンと付加パターンを決める | INT-02 §2.1（決定表）・§2.3（組合せ規則）、自パターンの節 | entry point 台帳。全行に P-ID と操作階層がある |
-| 2 | 使う契約を決め、契約ファイルのコミットを固定する | CON-00 の「実装者向けの契約早見表」と §2.5 の役割別の表 | 依存する operation と、固定したコミット・ファイルごとの SHA-256 の記録 |
+| 2 | 使う契約を決め、契約ファイルのコミットを固定する | CON-00 の「実装者向けの契約早見表」と §2.5 の役割別の表 | 依存する operation と、固定したタグ（例 `v1.2`）かコミット・ファイルごとの SHA-256 の記録。手順と記録の欄は `11_contracts/kit/README.md` §5.4（v1.2、room-booking L-1） |
 | 3 | 認可モデルの草案と試験を書く | INT-03 §3・§9・§15、`integration-essentials.md` の core 型の節 | 自ドメインのモデル（CON-04 の形式）とモデル試験 |
 | 4 | token 検証・PEP・監査を実装する | `integration-essentials.md`、CON-06、CON-03、CON-08 | 単体試験（正例・負例）。設定は CON-11 §11.4 の差し替え点から読む |
 | 5 | モックを起動し、正例の形の結合確認をする | `11_contracts/kit/README.md`（v1.1（I-1）で新設）、CON-11 §4.10 | 汎用モック（Prism）の前に `kit/echo-proxy.js` を挟み、試験側の迂回なしで正例が通る |
@@ -36,6 +36,15 @@
 - 最初に読む FQ は INT-06 の FQ-79（PDP に渡す `subject.type`・`action.name` の値）である。取り違えは本番だけで全件 deny として表れ、汎用モックでは検出できない（v1.1 の同期。INT-06 S11-2）。続けて INT-02 §3.7（AuthZEN 要求の値）・§3.8（PP-2 の一覧の候補生成と NP09-4）・§3.9（業務通知の経路）を読む（v1.1 の同期。INT-02 §9.2 HO11-7 (a)）。
 - write 以上の要求に Txn-Token がない・検証できない場合は、業務として処理せず拒否し、監査には `txn_absence` を記録する（ADR-005 D9-3 の「txn 必須」を CON-08 v1.1 は「`txn` か `txn_absence`」と記録側で読み替えたが、業務の扱いは変えない）。Txn-Token の検証鍵は CON-05 の TTS の JWK Set から取る（v1.1（I-9））。手順は CON-16 §1.6（v1.1 の同期。CON-08 x-handoff-v1.1 の 2）。
 
+**v1.2 で加えた規則（2 回目の模擬連携検証で詰まった点から）** [D]
+
+- 他テナントの利用者（ゲスト）を招待するときは、`core/external_grant` の tuple を自分で書かず、`11_contracts/external-grant.openapi.yaml`（CON-17。v1.2 の同期で確定、preview）の `createExternalGrant` で発行を依頼する。起点の tuple（例 `booking#guest`）も façade が書く。ゲストの要求は通常の PEP の経路で、三者一致はすべて資源側テナントで成り立つ（room-booking C-1）。
+- AI エージェントによる利用者の代理は `11_contracts/agent-delegation.openapi.yaml`（CON-18。v1.2 の同期で確定、preview）に従う。自サービスが受けるのは edge が exchange した K3（`sub`＝利用者、`act`＝エージェント）と K5 だけで、PDP には `subject`＝利用者、`subject.properties.actor`＝エージェント（CON-18 §5 の暫定写像）で問う。承認要の tool は ADR-017 L17-5 の決定まで常に拒否する（room-booking C-2・L-13）。
+- 一覧の後段 Check で 1 件でも `deny_indeterminate` などの「判定が得られない」があれば一覧全体を利用不可にする。CON-03 の evaluations の既定の例 `mixed` ではこうなるので、正例の形は `Prefer: example=oneItem` などで確かめる（CON-16 §2.6 v1.2、room-booking M-1）。
+- write 以上で Txn-Token が無い・検証できないときは、token 検証の失敗と同じ 401 の型で拒否する（暫定。CON-16 §1.9 v1.2、CV-058）。Txn-Token は TTS の鍵で検証し、access token の鍵で検証できても受理しない（CV-045c）。
+- 数日後のリマインドのような遅延実行は A1 として受付記録を要求の処理中に登録する。受付記録の期限と A2 の契約は未決（CON-16 §2.10 v1.2、room-booking M-4）。汎用モックで内部開始の正例を通すには echo proxy 0.3.0 の R9・R10 を挟む（`11_contracts/kit/README.md` §2.5、M-2）。
+- issuer の期待値は `AUTH_OIDC_DISCOVERY_URL` から導き、受付台帳・外部付与 API・承認の消費・cell と法域の差し替え点は CON-11 §11.4 の v1.2 の行を使う（L-2・L-3・M-6）。
+
 **基盤とキットの配布（DL-120、G3）まで確かめられないこと** [D]: キットの試験鍵による署名付き token とライフサイクル事象（`lcsig`）の正例（それまでは自チームで作った鍵で検証論理を試験する）、mTLS の拒否、基盤側と同じ合否判定。これらは §6.3・§6.4 による。
 
 **v1.1 で新設・切出したファイル** [D]
@@ -45,6 +54,14 @@
 | `11_contracts/integration-essentials.md` | 04_architecture を読まずに SDK なしで実装するための自己完結の抜粋（V1〜V14、PEP の 11 関数、core 型、スタブの最小構成） | I-2 |
 | `11_contracts/state-query.openapi.yaml` | 照会 API CON-15 の単独ファイル（CON-12 の拡張 `x-state-query-api` から切出し） | I-10 |
 | `11_contracts/kit/`（`README.md`、`echo-proxy.js`、`negative-vectors/*.json`） | 汎用モックの制約を補う echo proxy と、機械可読な負例ベクタ | I-1・I-11 |
+
+**v1.2 で新設したファイル** [D]
+
+| ファイル | 何に使うか | 出所（room-booking） |
+|---|---|---|
+| `11_contracts/external-grant.openapi.yaml`（CON-17。v1.2 の同期で確定、preview） | 越境ゲストの招待（外部付与の発行・受諾・取消し・照会）。Prism で起動できる。状態の遷移は自前スタブ（CON-16 ST-10） | C-1・M-5・L-8 |
+| `11_contracts/agent-delegation.openapi.yaml`（CON-18。v1.2 の同期で確定、preview） | AI エージェントへの委任の付与・代理 token の取得・人の承認・取消しと、tool 側 PEP の規則 AD-01〜AD-12 | C-2・L-13 |
+| `11_contracts/kit/negative-vectors/CV-058.json`〜`CV-062.json` | Txn-Token の欠落、evaluations の要素の reason、内部開始、越境ゲスト、AI エージェント代理の PEP 側の負例 | L-6・M-1・M-4・L-5・C-1・C-2 |
 
 ---
 
@@ -81,19 +98,21 @@
 
 | 文書ID | DL | ファイル | 何に答えるか | 版・状態 |
 |---|---|---|---|---|
-| INT-00 | DL-62 | [README.md](README.md)（本書） | どこから読み、何に依存してよいか | 0.10 draft（v1.1 の同期。版 0.9 は v1.1（I-13・I-7）の改訂） |
+| INT-00 | DL-62 | [README.md](README.md)（本書） | どこから読み、何に依存してよいか | 0.12 draft（v1.2 の同期。版 0.11 は v1.2 の改訂） |
 | INT-01 | DL-63 | [dependency-tiers.md](dependency-tiers.md) | 自サービスの Tier、障害時の振舞い、必須実装 M-01〜M-10、依存してはならないもの NX-01〜NX-16 | 0.3 draft（PoC/R7反映） |
-| INT-02 | DL-64 | [integration-patterns.md](integration-patterns.md) | やりたいこと → パターン P-01〜P-27 の決定表、共通義務 IC-01〜IC-12 | 0.8 draft（v1.1 の同期。版 0.7 は v1.1（I-5・I-6・I-12）の改訂） |
-| INT-03 | DL-65 | [authz-modeling-guide.md](authz-modeling-guide.md) | 認可モデル（型・relation・permission）の書き方、変更区分 M0〜M3 | 0.9 draft（v1.1 の同期。版 0.8 は v1.1（I-4・I-5）の改訂） |
+| INT-02 | DL-64 | [integration-patterns.md](integration-patterns.md) | やりたいこと → パターン P-01〜P-27 の決定表、共通義務 IC-01〜IC-12 | 0.10 draft（v1.2 の同期。版 0.9 は v1.2 の改訂（P-08・P-16）） |
+| INT-03 | DL-65 | [authz-modeling-guide.md](authz-modeling-guide.md) | 認可モデル（型・relation・permission）の書き方、変更区分 M0〜M3 | 0.10 draft（v1.2 の改訂） |
 | INT-04 | DL-66 | [onboarding.md](onboarding.md) | 参加の 9 段階 OB-0〜OB-8、承認者・リードタイム・費用配賦 | 0.4 draft（ラウンド 10。OB-2(d) に AR-9・CR24・DL-34 の判定記録の待ち） |
-| INT-05 | DL-67 | [definition-of-ready.md](definition-of-ready.md) | 連携開始の条件 RD-01〜RD-14、本番切替の条件 DD-01〜DD-14 | 0.7 draft（v1.1 の同期。RD-09・RD-10 に v1.1（I-6・I-12）の確認を追加） |
-| INT-06 | DL-68 | [developer-faq.md](developer-faq.md) | 81 問の FAQ（v1.1 で FQ-79〜FQ-81 を追加）、してはならないこと N-1〜N-15 | 0.5 draft（v1.1 の同期。版 0.4 は v1.1（I-5・I-6・I-12）の改訂。FQ-79〜FQ-81） |
-| CON-00 | DL-69 | [../11_contracts/README.md](../11_contracts/README.md) | 契約の一覧・版・状態・準拠範囲、変更提案 E0〜E3 | 0.11 draft（v1.1 の同期。版 0.10 は v1.1（I-13・I-7・I-10）の改訂） |
+| INT-05 | DL-67 | [definition-of-ready.md](definition-of-ready.md) | 連携開始の条件 RD-01〜RD-14、本番切替の条件 DD-01〜DD-14 | 0.8 draft（v1.2 の同期。RD-04・DD-14 に CV-061・CV-062 を追加） |
+| INT-06 | DL-68 | [developer-faq.md](developer-faq.md) | 87 問の FAQ（v1.1 で FQ-79〜FQ-81、v1.2 で FQ-82〜FQ-87 を追加）、してはならないこと N-1〜N-15 | 0.6 draft（v1.2 の改訂。FQ-82〜FQ-87） |
+| CON-00 | DL-69 | [../11_contracts/README.md](../11_contracts/README.md) | 契約の一覧・版・状態・準拠範囲、変更提案 E0〜E3 | 0.12 draft（v1.2 の同期。CON-17・CON-18 の登録） |
 | CON-01 | DL-70 | [../11_contracts/compatibility-deprecation-policy.md](../11_contracts/compatibility-deprecation-policy.md) | 互換区分、非推奨期間、consumer 台帳 | 0.2 review（数値は決裁案 KC-1〜KC-5 で未承認） |
-| CON-11 | DL-80 | [../11_contracts/mock-contract-test-kit.md](../11_contracts/mock-contract-test-kit.md) | モック MK-01〜MK-08、負例ベクタ CV-xxx、CI 組込み、合格判定、共有 sandbox | 0.13 draft（v1.1 の同期。版 0.12 は v1.1（I-1・I-8・I-11・I-14）の改訂。キット本体 DL-120 は未実装、期限 G3） |
-| CON-16 | DL-122 | [../11_contracts/integration-essentials.md](../11_contracts/integration-essentials.md) | SDK なしで実装するための自己完結の抜粋（V1〜V14、PEP の 11 関数、core 型、スタブの最小構成）。v1.1（I-2） | 0.2 draft（v1.1（I-2）で新設。文書ID・DL は v1.1 の同期で確定） |
+| CON-11 | DL-80 | [../11_contracts/mock-contract-test-kit.md](../11_contracts/mock-contract-test-kit.md) | モック MK-01〜MK-08、負例ベクタ CV-xxx、CI 組込み、合格判定、共有 sandbox | 0.14 draft（v1.2 の改訂。キット本体 DL-120 は未実装、期限 G3） |
+| CON-16 | DL-122 | [../11_contracts/integration-essentials.md](../11_contracts/integration-essentials.md) | SDK なしで実装するための自己完結の抜粋（V1〜V14、PEP の 11 関数、core 型、スタブの最小構成）。v1.1（I-2） | 0.3 draft（v1.2 の改訂。IE-9〜IE-16） |
+| CON-17 | DL-123 | [../11_contracts/external-grant.openapi.yaml](../11_contracts/external-grant.openapi.yaml) | 越境ゲストの招待（外部付与の発行・受諾・取消し・照会）。v1.2 で新設（room-booking C-1） | 0.1.1 draft、全 operation が preview（v1.2 の同期で文書ID・DL を確定） |
+| CON-18 | DL-124 | [../11_contracts/agent-delegation.openapi.yaml](../11_contracts/agent-delegation.openapi.yaml) | AI エージェントの代理（委任の付与・範囲・期限・人の承認・取消しと代理 token の取得経路）。v1.2 で新設（room-booking C-2） | 0.1.1 draft、全 operation が preview。承認 grant は ADR-017 L17-5 の決定まで無効（v1.2 の同期で文書ID・DL を確定） |
 | CON-15 | DL-121 | [../11_contracts/state-query.openapi.yaml](../11_contracts/state-query.openapi.yaml) | ライフサイクル事象の照会 API（RO-9・RO-12）。v1.1（I-10）で CON-12 の拡張から単独ファイルへ切出し | 0.2.0 draft、preview（v1.1（I-10）で単独ファイル化） |
-| CON-11-KIT | DL-120 の先行配布物 | [../11_contracts/kit/README.md](../11_contracts/kit/README.md) | 汎用モック用の echo proxy、負例ベクタの JSON（CV-001〜CV-014）。v1.1（I-1・I-11） | 0.2 draft（v1.1 の同期で echo proxy 0.2.0 の R8 と CV-045 を追加） |
+| CON-11-KIT | DL-120 の先行配布物 | [../11_contracts/kit/README.md](../11_contracts/kit/README.md) | 汎用モック用の echo proxy、負例ベクタの JSON（CV-001〜CV-014）。v1.1（I-1・I-11） | 0.3 draft（v1.2 の改訂。echo proxy 0.3.0 の R9・R10、CV-058〜CV-062） |
 
 - どの文書も作成者以外の人による判定は未実施である [D]。AI エージェントによる独立レビューの有無は各文書のレビュー記録にある [D]。
 - v1.1（I-13）: 上の表の新設 3 行は、並行して作成された新規ファイルの案内である。既存の行の版は v1.0（提出版）の時点の写しで、v1.1 の改版後の値は各ファイル冒頭で確かめる（他文書への申し送り（v1.1）V-1）[D]。
@@ -319,6 +338,7 @@ PEP SDK は約 300 サービスに組み込まれる前提であり、取り違�
 - v1.1（I-1・I-10・I-13）: 「今（キット配布前）」の汎用モックは、`11_contracts/kit/README.md` の手順で `kit/echo-proxy.js` を前に挟んで使う。模擬連携検証では、迂回なしの汎用モックの正例が契約に忠実な PEP を全件 fail-closed にした（13_integration-trial/report.md P-01）。照会 API は `11_contracts/state-query.openapi.yaml` を Prism に直接渡す（同 P-12）[D]。暫定ローカル結合環境（12_poc/code）は引き続き使ってよいが、必須ではない。12_poc/code を使わない場合のスタブの最小構成は `11_contracts/integration-essentials.md` にある（同 P-02）[D]。
 - v1.1 の同期（CON-03 §12 N-1）: 汎用モックで CON-03 の正例を確かめる手順は CON-03 §11 の表に従う。(1) 既定では応答の examples の先頭（evaluation は `allowWrite`、evaluations は `mixed`、search は `truncated`）が返る。別の例は `Prefer: example=<例の名前>`（kit の R7）で選ぶ。(2) `X-Request-ID` は例の値 `r-01JB9Q2W3E4R5T6Y7U8I9O0PAS` を付けるか、kit の R1 で写す。(3) evaluations の件数は対の例（1〜3 件）を選ぶか、kit の R5 で合わせる。(4) search の結果の型は kit の R8 で要求の型に合わせる。(5) PDP metadata の `policy_decision_point` は kit の R3 で書き換えるか、PDP 識別子を例の値に設定する。**モックに合わせて PEP の検査（echo・件数・実効モード・metadata の照合・結果の型）を外さない** [D]。
 - v1.1 の同期（CON-11 §14.3 H11-2）: キット配布前でも、CV-001〜CV-014（と v1.1 の同期で加えた CV-045）の JSON（`11_contracts/kit/negative-vectors/`）は、各ベクタの `stub_requirements` を満たす自前スタブで自分の CI に先に流せる（`11_contracts/kit/README.md` §5）。合否はキット配布後の判定（§6.4）に代えない [D]。
+- v1.2: CON-05（TTS・受付台帳）の汎用モックの前にも echo proxy（0.3.0）を置く。R9 が `/txn-token` の静的な例を現在時刻・要求の主体とテナントで作り直して CON-05 の試験鍵で署名し、R10 が受付記録の `job_run_id` を新しくして起点の主体を覚える。CON-03 と CON-05 には別々の proxy を起動する（`11_contracts/kit/README.md` §2.5）。CV-058〜CV-062（v1.2）も同じく自前スタブで先に流せる。CV-062 は CON-18 が preview のため不合格を記録だけする [D]。
 
 **暫定ローカル結合環境の条件（12_poc/code。版 0.2 で追加）** [D]
 
@@ -766,12 +786,26 @@ v1.1 の改訂も並行作業の約束により本ファイルだけを編集し
 
 ---
 
+### 他文書への申し送り（v1.2）
+
+v1.2 の改訂も並行作業の約束により本ファイル（と CON-11・kit/・CON-16・INT-03・INT-06）だけを編集した [D]。
+
+| # | 対象文書・箇所 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| V12-1 | 本書 §1.2、11_contracts/README.md（CON-00）§2.1・早見表 | CON-17（external-grant.openapi.yaml）と CON-18（agent-delegation.openapi.yaml）の行と文書 ID・DL を、CON-00 の採番に合わせて §1.2 に加える。早見表に「ゲストを招待する」「AI エージェントに代理させる」の行を加える（CON-17 V12-XG-1、CON-18 HO12-AG-01） | 入口から新契約へ辿れるようにするため |
+| V12-2 | 10_integration/integration-patterns.md（INT-02）§10.1 の入口 | 本書冒頭の「v1.2 で加えた規則」を参照する。P-04・P-05 から CON-16 §2.10 v1.2（遅延実行の型の暫定）を参照する | 入口を 1 か所に寄せる（I-13 と同じ） |
+| V12-3 | 10_integration/definition-of-ready.md（INT-05）RD-04・DD-14 | P-16・P-08 を使うサービスの DoR に CV-061・CV-062 の自 CI での実行を加える（CV-062 は preview なので不合格は記録だけ） | 新しい負例を DoR の判定に繋ぐため |
+| V12-4（同期の記録） | — | v1.2 の同期（2026-10-15、AI エージェント。人による照合は未実施）での反映: V12-1 は本書 §1.2 と CON-00 版 0.12（§2.1・ディレクトリ構成・早見表）で済。V12-2 は INT-02 版 0.10 の §10.1 と P-04・P-05 の「v1.2 の参照」で済。V12-3 は INT-05 版 0.8 の RD-04・DD-14 で済。V12-4 は 3 回目の模擬連携検証で扱う（本同期では編集しない） | — |
+| V12-4 | 13_integration-trial の 3 回目の検証 | 本書冒頭の入口と v1.2 の規則だけから、越境ゲストと AI エージェント代理の正例経路を実装できるかを、前 2 回と別の題材で確かめる | 新契約の十分性は記述では示せない |
+
 ## 改版履歴
 
 v1.1（I-13）で、冒頭のメタ情報と「作成方法」に積み重なっていた版ごとの経緯をこの節に移した。文言は移しただけで変えていない [D]。各版の指摘と対応の詳細は「レビュー記録」にある [D]。
 
 | 版 | 日付 | 変更 |
 |---|---|---|
+| 0.12（v1.2 の同期） | 2026-10-15 | §1.2 に CON-17（DL-123）・CON-18（DL-124）の行を加え、v1.2 で改版した INT-02・INT-03・INT-05・INT-06・CON-00 の行の版を改めた。申し送り（v1.2）V12-1〜V12-3 の反映状況を記した。AI エージェントによる同期で、人による照合は未実施 [D] |
+| 0.11（v1.2） | 2026-10-15 | 13_integration-trial/room-booking/report.md（AI による 2 回目の模擬連携検証。実在の連携チームの検証ではない）を受け、入口に「v1.2 で加えた規則」（C-1・C-2・M-1・M-2・M-4・L-1〜L-3・L-6・L-13・M-6）と「v1.2 で新設したファイル」（CON-17・CON-18・CV-058〜CV-062）を加え、手順 2 の契約の固定を kit/README.md §5.4 に繋ぎ、§6.3 に CON-05 の汎用モックと echo proxy 0.3.0 の注記を加えた。申し送り（v1.2）V12-1〜V12-4。規則の正本は各契約と CON-16 にあり、本書は案内だけを置いた。AI エージェントによる改訂で、人による照合は未実施 [D] |
 | 0.10（v1.1 の同期） | 2026-10-15 | 他文書の v1.1 改訂の申し送りを反映した（「v1.1 の同期の記録」）。入口の規則（写像の正本 CON-02、FQ-79、INT-02 §3.7〜§3.9、Txn-Token のない write）、§1.2 の版と新設 3 行の文書ID・DL、§5.2 の CON-16 への参照、§6.1・§6.3 の再署名・照会・汎用モックの手順、§7.1 の照会 API の行。AI エージェントによる同期で、人による照合は未実施 [D] |
 | 0.9（提出版 v1.1） | 2026-10-15 | 模擬連携検証（13_integration-trial/report.md。AI による模擬であり、実在の連携チームの検証ではない）の改善提案 I-13・I-7 と新規ファイルの案内を反映した。(1) 冒頭に「実装者向けの入口（1 枚）」を新設した（P-02・P-18）。(2) 改版履歴を冒頭から本節へ移した。(3) §1.2 に integration-essentials.md・state-query.openapi.yaml・kit/ の行と注記を加えた。(4) §6.3 に echo proxy と state-query.openapi.yaml の注記を加えた（P-01・P-12）。(5) 残課題 12、他文書への申し送り（v1.1）V-1〜V-4 を加えた。規則・手順の中身は変えていない。凍結区分キーの読替え表（I-7）は CON-00 §4.6 F-4 に置き、入口から参照した |
 | 0.8 以前 | 2026-10-15 | 下記の移設記録のとおり |

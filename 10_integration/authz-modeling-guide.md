@@ -1,6 +1,6 @@
 # 認可モデリングガイド
 
-> 文書ID: INT-03 / 版: 0.9（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15（0.9（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§15.2 S-3 の `base_revision` と `tier` の表記（CON-04 HO-V11-2）、§15.2 の CLI の版の注記（CON-11 H11-4）、§16.5 の記録。0.8: 0.8: v1.1 改訂。AI による模擬連携検証 13_integration-trial/report.md の P-04・P-05・P-06・P-17 と改善提案 I-4・I-5 を反映した。§9.7 経費精算の承認経路（組織階層・部署長・閾値による上位承認）の通し例、所属部署・祖先の取得手段、決裁前に使える暫定形、§4.4 N-26（`action.name` の書き方）、§1.3 D-11・D-12、§16.4 の申し送り。末尾「レビュー記録」の「v1.1 改訂」。0.7: PoC/R7反映。[M] の付け方を CONVENTIONS §3 の条件に揃え（MP-7-15）、§10.1 に POC-02 の X-C・X-D からのモデル規則 XS-8・XS-9 を加えた。末尾「レビュー記録」の「PoC/R7反映」）
+> 文書ID: INT-03 / 版: 0.10（v1.2） / 状態: draft / 最終更新: 2026-10-15（0.10（v1.2）: AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。実在の連携チームの検証ではない）の L-8・L-9・L-10 と、新契約 CON-17（外部付与）・CON-18（AI エージェント代理）のモデル側の規則を反映した。§4.1 の注記、§9.1 の書込対応表の注記、§10.1 XS-1 の書き方と XS-10・XS-11、§10.3（新設）、§16.6・§16.7。0.9（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§15.2 S-3 の `base_revision` と `tier` の表記（CON-04 HO-V11-2）、§15.2 の CLI の版の注記（CON-11 H11-4）、§16.5 の記録。0.8: 0.8: v1.1 改訂。AI による模擬連携検証 13_integration-trial/report.md の P-04・P-05・P-06・P-17 と改善提案 I-4・I-5 を反映した。§9.7 経費精算の承認経路（組織階層・部署長・閾値による上位承認）の通し例、所属部署・祖先の取得手段、決裁前に使える暫定形、§4.4 N-26（`action.name` の書き方）、§1.3 D-11・D-12、§16.4 の申し送り。末尾「レビュー記録」の「v1.1 改訂」。0.7: PoC/R7反映。[M] の付け方を CONVENTIONS §3 の条件に揃え（MP-7-15）、§10.1 に POC-02 の X-C・X-D からのモデル規則 XS-8・XS-9 を加えた。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-252, R-256, G-107, G-108, G-115, G-116, G-147（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-65 を含む全行）。成果物計画の DL-65 行が挙げる R-098, R-147, R-148, R-205 も対応表に含める
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-65）, 04_architecture/authorization-model.md（ARC-05。本書の上位仕様）, 05_adr/ADR-010・ADR-011・ADR-016・ADR-021・ADR-024・ADR-025・ADR-029（設計判断の正本）, 05_adr/reconciliation-notes.md, 11_contracts/relationship-model-registry.openapi.yaml（CON-04、DL-73）, 11_contracts/authorization-api.openapi.yaml（CON-03、DL-72）, 11_contracts/mock-contract-test-kit.md（CON-11、DL-80）, 04_architecture/pep-contract.md（ARC-06）, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, 02_requirements/customer-admin-responsibility.md（DL-26）, 01_governance/raci-governance.md（GOV-05 §6）, 01_governance/assumptions-register.md, 01_governance/kri.md, 03_threat-model/threat-catalog.md（T-026〜T-034, T-080）, 07_slo/numeric-contracts.md（SLI-040〜SLI-043）, 12_poc/preregistered-test-plan.md, research/RS-07, RS-17（各 verification 記録を含む）, research/RS-18（独立検証記録なし）, research/standards-status.md, traceability/claims-ledger.md, traceability/dissent-log.md
 > 改版: v0.3（RS-18反映（2026-10-15））で、containment の命名（N-9 改訂、N-20・N-21 追加）、主体の `(type, id)` と `subject_id`／`subject_type`（N-19 補足）、祖先閉包と深度（§7.2）、§9.2・§9.3 の写像表と注意、INT03-K1・K2 と ARC-05 K05-6〜K05-8 の関係、残課題 17〜19 を加えた。§9 の予備実行済みのモデルは変えていない [D][^28]。v0.4（模擬パネル ラウンド1 の対応）で、CON-04 v0.2.0 の CAM 式 v0・試験ケース欄・変更区分・意味の変更の申告欄・条件カタログ・階層サービス API（preview）に合わせて §0-6、§1.2、§1.3、§8.1〜§8.3、§14 残課題 15・19、§15、§16 を改め、「他文書への申し送り」節を加えた。v0.5（模擬パネル ラウンド3 の対応）で、CAM での書き方（§4.4、N-22〜N-25。直接付与は `CamRelation`、計算は `CamPermission`、PEP が問い合わせるのは動詞の permission だけ）を加え、§6.1・§9.1・§9.3・§9.5・§11 のモデルをその形に書き直し、§9 の全モデルを CON-04 の `CamModule` の JSON（付録 A）にして JSON Schema で検証した（§9.0）。v0.6（模擬パネル ラウンド5 の対応）で、契約の参照版を CON-04 v0.3.0 に改め、PoC の CAM 生成器（12_poc/code/model/generate.js）の利用可否と条件、PoC の cam.json と CON-04 `CamModule` の差 3 点を §0-6・§15.1・§15.2 S-8・§15.3 G-7 に書き、§14 残課題 21 と §16.3 の申し送りを加えた。v0.8（v1.1 改訂。13_integration-trial の I-4・I-5）で、§9.7（経費精算の承認経路）と付録 A.7 を加え、§4.4 に N-26、§1.3 に D-11・D-12、§7.2・§7.3・§10.2（AC-33）・§13（INT03-K5）・§14（残課題 22〜24）・§15.2・§15.3（G-8）・§16.4 を改め、付録 A の `tier` を CON-04 v0.4.0（v1.1 改訂）の表記（CON-02 `OperationTier`）に揃えた。模擬パネルと模擬連携検証は AI による自己レビュー・模擬で、実在の CTO/CISO の決裁でも実在の連携チームの検証でもない（CONVENTIONS §8）[D]。
@@ -175,6 +175,7 @@ flowchart TD
 | N-6 | 名前空間の所有移転と廃止は `kind=transfer_ownership` / `deprecate` で申請する | CON-04 `NamespaceRequestInput` | 審査 |
 
 - 名前空間台帳の所有者は、プラットフォームのプロダクト責任者を推奨とした未決事項である（ADR-021 K21-5、決める人 CTO）[D]。
+- v1.2（room-booking L-9）: §9.2 の `org` は例のための名前空間コードで、払い出された実在のコードではない。拠点・フロアなどを `org` に置くか自ドメインの名前空間に置くか、`core/unit` で表すかの判断の目安は §10.3 に置いた。`org` を含む共通の名前空間の所有者は、上の台帳の所有者（ADR-021 K21-5）が決まるまで未定である [D]。
 
 ### 4.2 型・relation・permission
 
@@ -565,7 +566,7 @@ type files/file
 | `max_direct` | relation `viewer`・`editor` 1,000（初期案。超える付与はグループで書くよう lint が警告） | ARC-05 §3.4。値は TC-ARC05-08 で確定（所有者 認可・PDP チーム、G4） |
 | 一覧方式 | `files/file` L3、`files/folder` L1 | §7.3 |
 | 書込宣言 | ファイルサービスの workload が `parent`・`owner`・`editor`・`viewer` を書く。`core/external_grant` と `core/tenant#external_member` は façade が外部付与の作成・失効と同時に書く（ARC-05 §3.1）。`restricted_external` の書き手は未決（§2、残課題 14） | ARC-05 X-8、§3.1 |
-| 書込対応表 | `viewer`・`editor`（内部主体・グループ・role）← `share`、外部付与の作成 ← `share_external`、`restricted_external` の設定 ← `share_external`（案）、`parent` の変更 ← 対象の `write` かつ移動先フォルダの `write`（外部付与のある部分木へは write＋XT とデータ分類の検査）、`owner` の変更 ← `delete`（本人の owner と上位フォルダの owner） | §3.1 段 7、ADR-024 D24-13 [D] |
+| 書込対応表 | `viewer`・`editor`（内部主体・グループ・role）← `share`、外部付与の作成 ← `share_external`、`restricted_external` の設定 ← `share_external`（案）、`parent` の変更 ← 対象の `write` かつ移動先フォルダの `write`（外部付与のある部分木へは write＋XT とデータ分類の検査）、`owner` の変更 ← `delete`（本人の owner と上位フォルダの owner） | §3.1 段 7、ADR-024 D24-13 [D]。v1.2（CON-17 V12-XG-8）: 外部付与の作成は自サービスが tuple を書くのではなく、CON-17 `createExternalGrant` の `authorizing_permission` に `share_external` を渡して発行を依頼し、façade が付与者の permission を再評価する（CON-17 XGS-3）。起点の tuple（`files/folder#external_viewer@core/external_grant:<id>#grantee` など）も façade が書く |
 | 公開 relation | なし | — |
 
 **試験**（予備実行で、最終行を除き全件期待どおり。最終行は L0・G 段の試験で engine の予備実行の対象外）
@@ -1227,7 +1228,7 @@ type expense/report
 
 | # | 規則 | 根拠 |
 |---|---|---|
-| XS-1 | 外部主体への許可は `core/external_grant#grantee` を直接型に許した relation だけで表す。ドメイン独自の「ゲスト」型を作らない | ADR-024 D24-01・D24-11、T-080（越境の tuple を名前空間で区別して棚卸し） |
+| XS-1 | 外部主体への許可は `core/external_grant#grantee` を直接型に許した relation だけで表す。ドメイン独自の「ゲスト」型を作らない | ADR-024 D24-01・D24-11、T-080（越境の tuple を名前空間で区別して棚卸し）。v1.2（room-booking L-8）: 直接型は `#grantee` 付きの `[core/external_grant#grantee]` と書く（期限条件 `c.not_expired` は core 側の grantee の tuple に付く。CON-17 XGC-3）。INT-02 P-16 の v1.1 までの例 `[core/external_grant]` は userset の relation が欠けた書き方で、CON-16・CON-17 と食い違っていた |
 | XS-2 | 外部付与を許す relation は、外部付与可の印を付けた permission にだけ到達させる（読取系が既定） | ADR-024 D24-12、`external_grant_reachability` |
 | XS-3 | 外部付与は共有の起点となる資源に付け、`parent` で子へ継承させる。子での縮小は `restricted_external` だけ | ADR-024 D24-11 |
 | XS-4 | 外部付与の付与先は個人の人間主体だけ。グループ型に外部主体を入れるのは「外部可」と宣言したグループ型に限る | ADR-024 D24-02 |
@@ -1236,6 +1237,8 @@ type expense/report
 | XS-7 | 外部主体による再共有は既定で不可。資源型ごとに資源側テナントが許可した場合だけ可能で、再共有で作る外部付与の期限は元の付与を超えない | ADR-024 D24-12 |
 | XS-8 | （v0.7、PoC/R7反映）外部ゲストの閉じ込めを自モデルの R 段で閉じる前提で書き、外部付与のない資源へのゲストの allow が 0 件であることをモデル試験（§8.2 の負例）に入れる | POC-02 §6.2 X-C（TC-002 で、全域 permit にした誤りモデルの構成で外部ゲストが付与されていない資源に allow を得た。ADR-024 D24-08 は G 段で付与範囲を見ないため、閉じ込めは R 段だけに依存する）。立会人なしの自己実行で Gate 4 の証拠ではない。ADR-024 §8 の再検討トリガー、DEC-3 論点 5 |
 | XS-9 | （v0.7、PoC/R7反映）role・group の userset を主体とする relation（`[core/role#assignee]` など）には、他テナントの role・group を書かない。façade が拒否する規則（CON-04 §3、v0.3.1）に頼るだけでなく、アプリ側でも書込み前に role・group の所属テナントを確かめる | POC-02 §6.2 X-D（TC-021 で、PoC の façade が他テナントの role の userset を自テナントの folder の viewer として受理した。原因区分は未確定）。CON-04 §3・`writeRelationships` の負例（v0.3.1） |
+| XS-10 | （v1.2、room-booking C-1）起点の relation（例 `rsv/booking#guest`）の tuple は、CON-17 の発行時に façade が書く。自サービスの書込宣言（CON-04）に起点の relation を入れず、`core/external_grant` を主体とする tuple を自分で書かない。ゲストの到達先は「外部付与可」の印を付けた permission（閲覧系が既定）に限る（XS-2） | CON-17 XGC-2・XGS-6、ADR-024 D24-01・D24-12 |
+| XS-11 | （v1.2、room-booking C-2）AI エージェントの代理のために、エージェント用の relation・型をドメインのモデルに作らない。代理の判定は `subject`＝利用者の関係で行い、エージェントの上限（tool allowlist・操作階層・自律度）と承認は AS・tool 側 PEP が受け持つ。`subject.properties.actor`（暫定 `core/workload`）を permission の式で参照しない | CON-18 §4.2・§5、ADR-017 D17-16 |
 | LS-1 | 一覧は SDK の一覧ヘルパだけを使う。ListObjects・LookupResources・AuthZEN search を直接呼ばない | ADR-025 D25-03 |
 | LS-2 | 返すページの各資源を返却直前に evaluations（`execute_all`）で評価し、候補段の結果を認可の根拠にしない | ADR-025 D25-04。AuthZEN 1.0 は、search の結果を evaluation にかけると decision が true に「なるべき」（SHOULD）とする一方で、それを保証しないとしている [N][^23]（RS-07#65）。evaluations の意味論 `execute_all` は同仕様の既定である [N][^23]（RS-07#64） |
 | LS-3 | L1 を選ぶ型では、主体側の所属 userset の列挙が上限に収まるよう、グループの入れ子と fanout を宣言内に保つ | ARC-05 §7 |
@@ -1288,6 +1291,30 @@ type expense/report
 - SLI-040（表現力）は「カタログのうちモデル・policy の変更だけで表せる割合」と定義されている（SLO-01）[D]。本書の机上判定では 24/33（v1.0 は 24/32）だが、正式な値は TC-ARC05-11 の判定で求める [D]。目標値は TBD（所有者 CTO、期限 G4、決め方 カタログの判定とパイロット。SLO-01 SLI-040）[D]。
 
 ---
+
+### 10.3 v1.2 で加えた注記（2 回目の模擬連携検証から）
+
+会議室予約サービスの模擬連携検証（13_integration-trial/room-booking/report.md。AI による模擬であり、実在の連携チームの検証ではない）でモデルを書く段に詰まった点への答えである [D]。
+
+**拠点・フロアを `core/unit` で表すか、ドメインの型で表すか（L-9）** [D]
+
+| 目安 | `core/unit`（案。K05-6 の決裁前）で表す | ドメインの型（例 `rsv/site`）で表す |
+|---|---|---|
+| 何の木か | 組織の管理の木（部署・子会社・支社）。管理者が配下を管理する（`manage` の継承）、所属者が名簿を見る（`view_directory`） | 業務の資源の木（拠点 → フロア → 会議室）。業務の動詞（`book`・`configure`）を持つ |
+| 書くのは誰か | 階層サービスと基盤・テナント管理者（ドメインは書けない） | 自サービス |
+| 両方が要る場合 | — | ドメインの型を自分で持ち、組織の管理者に管理させる場合だけ、`owning_unit: [core/unit]` のような containment でない参照（X-12）から `owning_unit->manage` を引く。拠点を `core/unit` の子にする（`parent: [core/unit]`）のは、拠点が組織の木の一部である場合に限る |
+
+- 会議室予約の模擬検証はドメインの型（`rsv/site`・`rsv/floor`・`rsv/room`）を選んだ [M]。業務の動詞を持ち、自サービスが書く木なので、上の目安とも合う [D]。
+- 拠点を他ドメインと共有する場合（複数サービスが同じ拠点の木を参照する）は、1 つのドメインが型を所有して `public` を宣言し（N-14）、他はそれを参照する。共有のための共通の名前空間（例の `org`）を作るかは、名前空間台帳の所有者の決定を待つ（§4.1）[D]。
+
+**テナント管理者の配下への継承（L-10）** [D]
+
+- ARC-05 の `core/tenant` には `manage` がなく、`parent->manage`・`ancestor->manage` でテナント管理者が配下へ継承されない。CON-16 §3.5 の代替定義は `manage = admin` を足しており、2 回の模擬検証のモデルはいずれもこれに依存した（CON-16 IE-5・IE-9）。決着までは、テナント管理者の継承を資源の木の根（例 `rsv/site`）の `parent->manage` の 1 か所に集め、ARC-05 の改版の結果で 1 か所だけ書き換えられるようにする [D]。
+
+**越境ゲストと AI エージェント代理のモデル（C-1・C-2）** [D]
+
+- ゲスト: XS-1・XS-2・XS-10。例 `rsv/booking` に `define guest: [core/external_grant#grantee]` を置き（期限条件 `not_expired` は core 側の `core/external_grant#grantee` の tuple に付く。CON-16 §3.5 の代替定義と room-booking のモデルの書き方）、`view` だけに到達させる（`define view: ... or guest`）。`invite_guest` はゲストに到達させない。起点の tuple は CON-17 が書く。外部付与のない資源へのゲストの allow が 0 件であることをモデル試験に入れる（XS-8、CV-061c）。
+- AI エージェント: XS-11。代理予約のモデルは利用者本人の予約と同じで、エージェント用の relation を足さない。
 
 ## 11. 誤りと修正例
 
@@ -1535,6 +1562,40 @@ v1.1 改訂（13_integration-trial の I-4・I-5）では本書だけを編集�
 | §16.4 HO-V11-6 | 写像の正本の所在 | CON-02 `x-subject-type-map` に一本化した。INT-00・CON-08・CON-16・INT-02・INT-06 の記述を揃えた |
 | §16.4 HO-V11-7 | CON-11 MK-04 | CON-11 §4.5・§6.8 CV-054 で反映された（CV-054 は preview） |
 | §16.4 HO-V11-8 | CON-03 §12 N-3 の本書の分 | CON-03 §13 で閉じた |
+
+### 16.6 他文書への申し送り（v1.2）
+
+v1.2 の改訂では、並行作業の約束により本書（と CON-11・kit/・CON-16・INT-00・INT-06）だけを編集した [D]。
+
+| # | 対象 | 申し送る内容 | 理由 |
+|---|---|---|---|
+| HO-V12-1 | 10_integration/integration-patterns.md（INT-02）P-16 の認可モデル例 | `[core/external_grant]` を `[core/external_grant#grantee]`（期限条件付き）に改める（XS-1 v1.2） | room-booking L-8 |
+| HO-V12-2 | 11_contracts/relationship-model-registry.openapi.yaml（CON-04）CamModule | 「外部付与の作成を許す permission」を catalog で宣言する欄（CON-17 XG-L3 の案 `external_grant_authority`）を設け、書込対応表の「外部付与の作成 ← `share_external`」を機械検査できるようにする | CON-17 XG-L3、V12-XG-8 |
+| HO-V12-3 | 05_adr/ADR-021（K21-5）、名前空間台帳 | 拠点・組織の共通の名前空間（例の `org`）の所有者を決める。決まるまで本書 §9.2 の `org` は例のコードとして読む | room-booking L-9 |
+| HO-V12-4 | 04_architecture/authorization-model.md（ARC-05）§3.1・§8.4 | IE-5（`core/tenant` の `manage`）を CON-16 IE-9 と同じく改版する | room-booking L-10 |
+
+**v1.2 の同期での反映状況（2026-10-15）**: AI エージェントによる同期で、人による照合は未実施（CONVENTIONS §8）[D]。
+
+| # | 反映 |
+|---|---|
+| HO-V12-1 | 済。INT-02 版 0.9 の P-16 の認可モデル例（`[core/external_grant#grantee with c.not_expired]`）で反映済みを確かめた |
+| HO-V12-2 | 済。CON-04 版 0.5.0 の `CamPermission.marks` に `external_grant_authority` |
+| HO-V12-3 | 論点として記録。ADR-021 版 0.2 §8A V12-21-1。決定は未了で、`org` は例のコードとして読む |
+| HO-V12-4 | 一部。ADR-011 版 0.3 §8A V12-11-1 に記録。ARC-05 の改版は同期の範囲外で未反映 |
+
+### 16.7 v1.2 改訂の記録（2026-10-15、版 0.9 → 版 0.10）
+
+> AI エージェント（Claude）による改訂。独立レビュー・人による照合は未実施（CONVENTIONS §8）[D]。
+
+| # | 出典 | 反映 | 箇所 |
+|---|---|---|---|
+| V12-1 | room-booking L-8 | 外部付与の直接型の書き方 | §10.1 XS-1 |
+| V12-2 | room-booking L-9 | 拠点の表し方の目安、`org` の位置付け | §4.1、§10.3 |
+| V12-3 | room-booking L-10 | テナント管理者の継承の局所化 | §10.3 |
+| V12-4 | room-booking C-1、CON-17 V12-XG-8 | 起点の tuple の書き手、`authorizing_permission` | §9.1 書込対応表、§10.1 XS-10、§10.3 |
+| V12-5 | room-booking C-2、CON-18 §5 | エージェント用の relation を作らない | §10.1 XS-11、§10.3 |
+
+- 確認: 本改訂では `fga model test` を実行していない。§10.3 のゲストの例は CON-17 の examples（`rsv/booking:...#guest`）と room-booking のモデル（`guest: [core/external_grant#grantee]`、30 check 合格と同報告に記録）に合わせた書き方の説明で、本書の作成者による新しい実測はない [D]。
 
 ## 対応表
 

@@ -1,6 +1,6 @@
 # 開発者 FAQ
 
-> 文書ID: INT-06 / 版: 0.5 / 状態: draft / 最終更新: 2026-10-15（0.5（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§1.3 の入口、FQ-04・FQ-43・FQ-44・FQ-79、§6 の写像の行。新しい義務は作っていない（FR-2）。末尾「v1.1 の同期」。0.4: v1.1 改訂。模擬連携検証 13_integration-trial/report.md の改善提案 I-5・I-6・I-12 を反映し、FQ-79（`action.name` と `subject.type` の書き方）、FQ-80（SDK なしの一覧の候補生成と NP09-4）、FQ-81（業務通知の送信経路）を追加し、FQ-57 を INT-02 §3.8 に合わせ、§6 に未決 3 行を加えた。他文書への申し送りは末尾「レビュー記録」の「v1.1 改訂」。0.3 追補（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。本文の回答は変えていない）: 申し送り S10-1・S10-2 に宛先での反映状況を記した（TRC-11 申し送り 72、INT-02 §9.1）。0.3: 模擬パネル ラウンド 10 の devlead 指摘により、FQ-02 と §6 のライフサイクル事象の行を CON-13 版 0.2.0 以降に合わせた。始められないものを 3 つから 4 つにし、撤回事象の扱い・failure_reason・lcsig の正例の試験の時期を書いた。末尾「レビュー記録」ラウンド 10。同じ版 0.3 で、ラウンド 10 の別の devlead 指摘により、FQ-60 に ADR-017 D17-07 (a)〜(c)（実行単位のテナント主体ごとの分離、tool 側 PEP の `tid` 一致検査、共有実行単位の本番配備の禁止）を 1 行加えた（末尾「レビュー記録」ラウンド 10 R10-2）。0.2: PoC/R7反映。FQ-76〜FQ-78 を追加し、FQ-55 に PoC の観察を加えた。末尾「レビュー記録」の「PoC/R7反映」）
+> 文書ID: INT-06 / 版: 0.6（v1.2） / 状態: draft / 最終更新: 2026-10-15（0.6（v1.2）: AI による 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。実在の連携チームの検証ではない）を受け、FQ-82〜FQ-87 を加え、FQ-54・FQ-60・FQ-62・FQ-81 に新契約 CON-17・CON-18 を案内し、§6 に未決 5 行を加えた。新しい義務は作っていない（答えは CON-16・CON-11・CON-17・CON-18 の写し）。末尾「v1.2 改訂」。0.5（v1.1 の同期）: 他文書の v1.1 改訂が本書に宛てた申し送りを反映した。§1.3 の入口、FQ-04・FQ-43・FQ-44・FQ-79、§6 の写像の行。新しい義務は作っていない（FR-2）。末尾「v1.1 の同期」。0.4: v1.1 改訂。模擬連携検証 13_integration-trial/report.md の改善提案 I-5・I-6・I-12 を反映し、FQ-79（`action.name` と `subject.type` の書き方）、FQ-80（SDK なしの一覧の候補生成と NP09-4）、FQ-81（業務通知の送信経路）を追加し、FQ-57 を INT-02 §3.8 に合わせ、§6 に未決 3 行を加えた。他文書への申し送りは末尾「レビュー記録」の「v1.1 改訂」。0.3 追補（凍結前の同期。2026-10-15T10:35Z（UTC）、git HEAD 3228df6 の作業ツリー。本文の回答は変えていない）: 申し送り S10-1・S10-2 に宛先での反映状況を記した（TRC-11 申し送り 72、INT-02 §9.1）。0.3: 模擬パネル ラウンド 10 の devlead 指摘により、FQ-02 と §6 のライフサイクル事象の行を CON-13 版 0.2.0 以降に合わせた。始められないものを 3 つから 4 つにし、撤回事象の扱い・failure_reason・lcsig の正例の試験の時期を書いた。末尾「レビュー記録」ラウンド 10。同じ版 0.3 で、ラウンド 10 の別の devlead 指摘により、FQ-60 に ADR-017 D17-07 (a)〜(c)（実行単位のテナント主体ごとの分離、tool 側 PEP の `tid` 一致検査、共有実行単位の本番配備の禁止）を 1 行加えた（末尾「レビュー記録」ラウンド 10 R10-2）。0.2: PoC/R7反映。FQ-76〜FQ-78 を追加し、FQ-55 に PoC の観察を加えた。末尾「レビュー記録」の「PoC/R7反映」）
 > 対応要求: R-138, G-128, G-145（R-requirements.md・G-goal-criteria.md で対応成果物欄に本書のパスまたは DL-68 を含む全行。閉じ方と状態は末尾の対応表）。関連: ADR-022 D-7-3（疑義窓口と FAQ）、ADR-016 D16-21（告知の主手段としての FAQ）、ADR-026 §6.4（非同期の FAQ 項目）、INT-01 §7.1（閲覧専用モードの推奨を本書へ委任）
 > 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-68 行）, 05_adr/README.md, 05_adr/ADR-005・ADR-006・ADR-009・ADR-011・ADR-012・ADR-013・ADR-014・ADR-016・ADR-017・ADR-021・ADR-022・ADR-023・ADR-024・ADR-025・ADR-026・ADR-027・ADR-029, 05_adr/reconciliation-notes.md, 10_integration/integration-patterns.md（INT-02）, 10_integration/dependency-tiers.md（INT-01）, 10_integration/authz-modeling-guide.md（INT-03）, 11_contracts/README.md（CON-00）, 11_contracts/compatibility-deprecation-policy.md（CON-01）, 11_contracts/mock-contract-test-kit.md（CON-11）, 11_contracts/*.openapi.yaml・schemas/*.json, 04_architecture/token-profile.md（ARC-02）, workload-identity-delegation.md（ARC-04）, authorization-model.md（ARC-05）, pep-contract.md（ARC-06）, fail-mode-matrix.md（ARC-08）, revocation-continuous-evaluation.md（ARC-09）, audit-privacy.md（ARC-10）, data-outside-pep.md（ARC-11）, capacity-model.md（ARC-13）, claims-catalog.md（ARC-15）, 07_slo/numeric-contracts.md（DL-20）, 08_operations/operating-model.md（DL-27 §8）, 01_governance/assumptions-register.md, 01_governance/exception-risk-acceptance.md（GOV-07）, 01_governance/raci-governance.md（GOV-05）, 01_governance/kri.md, 02_requirements/operation-risk-tiers-assurance.md（REQ-03。操作 5 分類の正本）, research/RS-04, RS-06, RS-09, RS-10, RS-13, RS-16, RS-17（各 verification 記録を含む）, research/standards-status.md
 > 作成方法: AI エージェント（Claude）が上記の文書を通読し、連携開発者から出ると想定される問いと、その答えを正本文書から写して起草した。本書は新しい設計判断をしない。問いの選定と答えの照合は自己レビューであり、実在の CTO/CISO・連携開発者の確認を経ていない（CONVENTIONS §8）[D]。
@@ -9,7 +9,7 @@
 
 ## 0. 結論（CTO/CISO・連携開発者向け）
 
-1. **本書は 16 分野・81 問（FQ-01〜FQ-81。FQ-76〜FQ-78 は版 0.2 の PoC/R7反映、FQ-79〜FQ-81 は版 0.4 の v1.1 改訂（I-5・I-6・I-12）で追加）の問いと答えを置き、全回答に根拠文書へのリンクを付けた** [D]。G-128 が名指しする 6 分野（token、テナント context、キャッシュ、非同期、エラー時の挙動、ローカル開発とモック）に加え、権限追加、越境共有、検索、AI エージェント、レガシー、性能、障害時、例外申請、trace id と `txn` の違い、Tier を扱う（§3）[D]。G-128 の合格判定（作成者以外のレビュアーによる確認）は未実施である [D]。
+1. **本書は 16 分野・87 問（FQ-01〜FQ-87。FQ-76〜FQ-78 は版 0.2 の PoC/R7反映、FQ-79〜FQ-81 は版 0.4 の v1.1 改訂（I-5・I-6・I-12）、FQ-82〜FQ-87 は版 0.6 の v1.2 改訂で追加）の問いと答えを置き、全回答に根拠文書へのリンクを付けた** [D]。G-128 が名指しする 6 分野（token、テナント context、キャッシュ、非同期、エラー時の挙動、ローカル開発とモック）に加え、権限追加、越境共有、検索、AI エージェント、レガシー、性能、障害時、例外申請、trace id と `txn` の違い、Tier を扱う（§3）[D]。G-128 の合格判定（作成者以外のレビュアーによる確認）は未実施である [D]。
 2. **答えの大半は「してはならないこと」に集約できる。§2 の 15 項目を守れば、主要な事故類型（テナント越境、剥奪の未反映、token の流出、障害時の迂回）に対する連携側の義務の大半を満たす** [D]。15 項目は INT-02 の共通義務 IC-01〜IC-12、INT-01 の M-01〜M-10、ARC-15 の DEV-1〜DEV-9、ARC-06 §4.3 の 12 項目から重複を除いて抜き出した [D]。義務の正本はそれらの文書であり、本書の要約が食い違えば正本を優先する（§1.1）[D]。
 3. **75 問のうち 28 問の答えは「値は未決」「契約は未作成」に依存する（§6）** [D]。token 寿命・PDP deadline・cache 最大齢などの数値は DL-20 で未決裁（TBD）、issuer の粒度は未決（ADR-007／ADR-021、U-01）、PoC 基盤（DL-82）は納品済みだが、契約試験キット本体（DL-120）は未実装（期限 G3）である。ライフサイクル事象の契約（G-137）は CON-12・CON-13 が draft で配置済みだが、キット本体（DL-120）が未実装で[^29]モック MK-08 を動かせず、LC-OI-1〜3、期限 T_* の値、独立レビューが残る [D]。本書はこれらについて「値をコードに直書きせず設定から読む」「安全側の暫定動作で実装する」という答えを返す（§6）[D]。決まった時点で該当回答を改訂する（§4 の改訂規則）[D]。
 4. **FAQ は非規範文書とし、拘束力のある解釈は正誤表（CON-00 §5.2 の E0 経路）でだけ出す案を推奨する（決裁案 KD-FAQ-1）** [D]。約 20〜30 の組織 [A-052] が FAQ の文言を契約とみなして実装すると、FAQ の改訂が事実上の契約変更になり、契約変更審査会（RACI-20）を迂回するからである [D]。
@@ -272,7 +272,16 @@ flowchart TB
 - consumer は送信の直前に、起点主体の権限で起点の操作を再 Check し（P-04）、業務状態・テナント・宛先の状態を確かめる [D]。拒否・判定不能・テナント停止・宛先の削除なら送らない [D]。
 - 本文は最小にし（種別・参照番号・通常の画面 URL）、業務の中身は宛先が login してから PEP の判定を経て見せる [D]。URL に token を入れず、URL だけで session を作らない（禁止 D-3）[D]。
 - `sub` から連絡先を引く契約はまだない（未決。§6）[D]。決まるまでは、アプリ内通知を既定にし、自サービスが本人から正当に得た連絡先がある場合に限ってメール・SMS を使う [D]。
+- v1.2（room-booking M-5）: 外部ゲストへの業務通知はアプリ内通知に限る。CON-17 は招待の通知だけを基盤が送り、ゲストの連絡先を返さない（CON-17 XGS-11・XG-L6）[D]。
 - 根拠: [INT-02 §3.9（BN-1〜BN-9、NP24-4〜NP24-7）・P-19・P-24・P-04](integration-patterns.md)、05_adr/ADR-026 D26-02・D26-11
+
+#### FQ-82 数日後のリマインドのような遅延実行は、A1〜A4 のどれで作るか（版 0.6、v1.2）
+- 利用者の 1 回の要求（例: 予約の作成）に伴って後で 1 回だけ実行する処理は A1 として作り、受付記録を要求の処理中に、起点の Txn-Token を添えて CON-05 の `registerAcceptanceRecord` で登録する [D]（CON-16 §2.10 v1.2）。
+- 受付記録の有効期限は CON-05 で TBD である。実行時刻が期限を超えると内部開始の Txn-Token が発行されず実行されないので、デッドレターと監査に残す（黙って捨てない）[D]。定期の実行や、期限を超えることが確実な遅延実行は A2（委任 grant）だが、A2 の grant を作る契約がまだないので実装せず S1 に出す [D]。
+- 受付台帳が 503 のときは受付記録のないジョブを投入しない。業務も確定させず 503 にするか、業務だけを確定させてリマインドが未登録であることを見える形で残すかを選び、manifest の `options.acceptance_atomic` で申告する（CV-060c）[D]。
+- 実行時の再 Check の `subject.type` は、受付時に検証済み token の `ptype` から求めて保存した値を使い、メッセージの値を使わない（CV-060d）[D]。
+- 汎用モックで内部開始の正例を通すには echo proxy 0.3.0 の R9・R10 を挟む（`11_contracts/kit/README.md` §2.5）[D]。
+- 根拠: [CON-16 §2.10](../11_contracts/integration-essentials.md)、05_adr/ADR-026 D26-01・D26-02、[CON-05](../11_contracts/token-exchange.openapi.yaml)
 
 ### 3.6 エラー時の挙動
 
@@ -384,6 +393,32 @@ flowchart TB
 - 業務 API に試験用のヘッダ・パラメータを加えない [D]。加えると PoC 基盤への切替でコード差分が出て、G-123（コード差分 0）を満たせない [D]。
 - 根拠: [CON-11 §4.1 MK-P4・§11.4・§11.6](../11_contracts/mock-contract-test-kit.md)
 
+#### FQ-83 write の要求に Txn-Token が無い・検証できないとき、何を返すか（版 0.6、v1.2）
+- 業務として処理せず拒否する（INT-02 §3.2）。v1.2 の暫定では、応答は token 検証の失敗と同じ 401 の型（CON-11 §6.1.2 の `auth_failure`）にし、どの token のどの検査で落ちたかを区別させない。`tctx.tid` が access token の `tid` と違う場合は L0 の拒否（404 の群）。TTS の鍵が前回の値を含めて得られない場合は 503 [D]（CON-16 §1.9 v1.2、CV-058）。
+- Txn-Token は TTS の鍵（CON-05 `/txn-token-jwks`、差し替え点 `AUTH_TTS_JWKS_URL`）で検証する。access token の issuer の鍵で検証できても受理しない（CV-045c）[D]。
+- 監査（E2）は `txn` を書かず `txn_absence` を記録する（CON-08）[D]。
+- 根拠: [CON-16 §1.6・§1.9](../11_contracts/integration-essentials.md)、[INT-02 §3.2](integration-patterns.md)
+
+#### FQ-84 一覧の後段 Check で、一部の要素だけ `deny_indeterminate` が返ったらどうするか（版 0.6、v1.2）
+- 一覧全体を利用不可（503）にする。空の一覧や、判定が得られた要素だけの一覧を返さない。`deny_no_relation` などの拒否の要素だけを除く [D]（CON-16 §2.6 v1.2、CV-059）。
+- CON-03 の evaluations の既定の例 `mixed` は 2 件目が `deny_indeterminate` なので、汎用モックの既定のままでは一覧の正例は 503 になる。PEP を緩めずに `Prefer: example=oneItem` などで正例の形を確かめる（`11_contracts/kit/README.md` §2.6）[D]。
+- 「存在しない」と「権限がない」の同一化は、PDP の reason ではなく PEP の L0 と、自 DB からテナントで絞る候補生成で行う [D]。
+- 根拠: [CON-16 §2.6](../11_contracts/integration-essentials.md)、ADR-025 D25-04・D25-16
+
+#### FQ-85 契約のどの版を使ったかをどう固定するか（版 0.6、v1.2）
+- 契約は git のタグ（例 `v1.2`）かコミットで固定し、使うファイルごとの SHA-256 を自リポジトリの記録（例 `CONTRACTS.lock.json`）に残す。タグとファイルのハッシュが食い違えば試験を止める [D]（`11_contracts/kit/README.md` §5.4）。
+- 未コミットの作業ツリーの契約を使うと、コミットで再現できない。その場合は SHA-256 だけが固定の手段になる [D]（room-booking L-1）。
+- 根拠: [kit/README.md §5.4](../11_contracts/kit/README.md)、[INT-00 入口の手順 2](README.md)
+
+#### FQ-86 監査イベントの `subj_ref`・`res_ref`・`cell_id`・`jurisdiction` は何を入れるか（版 0.6、v1.2）
+- 参照値は cell 内の参照値 API から受け取る設計だが、その契約はまだない（CON-08 x-handoff-v1.1 の 3）。それまでは試験用の固定値表（本番と同じ接頭辞・長さの値）で埋め、自前の鍵で鍵付きハッシュを計算しない [D]（CON-08 `x-ref-derivation`）。
+- `cell_id`・`jurisdiction` は token や要求から導かず、CON-11 §11.4（v1.2）の差し替え点 `AUTH_CELL_ID`・`AUTH_JURISDICTION` から読む。キットの値は `kit0`・`jp` [D]（room-booking M-6）。
+- 根拠: [CON-11 §11.4](../11_contracts/mock-contract-test-kit.md)、[kit/README.md §5.5](../11_contracts/kit/README.md)
+
+#### FQ-87 `fga version` が `dev` と表示される。版はどう記録するか（版 0.6、v1.2）
+- `go install` で入れた `fga` は版を `dev` と表示する。判定記録に版を残すため、releases ページの実行ファイルか Homebrew・Scoop・Docker の版付きの入手を使う。`go install` を使う場合は、渡した版（`@v0.8.1`）と実行ファイルの SHA-256 を記録する。64 bit の実行ファイルを使う [D]（`11_contracts/kit/README.md` §6、room-booking L-12）。
+- 根拠: [CON-11 §6.7](../11_contracts/mock-contract-test-kit.md)、[kit/README.md §6](../11_contracts/kit/README.md)
+
 #### FQ-45 共有 sandbox で得た token は本番で使えるか
 - 使えない [D]。sandbox は本番と別の issuer・鍵・trust domain で運用し、sandbox の issuer を本番の allowlist に載せない（ADR-022 D-6-4）[D]。sandbox の発行物を本番相当環境に提示する負例（CV-011）は全件拒否が合格条件である [D]。
 - 共有 sandbox の提供時期・可用性・リセット周期は TBD（決裁案 K11-3）である [D]。
@@ -449,7 +484,9 @@ flowchart TB
 #### FQ-54 他テナントの利用者に資源を共有するには
 - P-16 を使う [D]。ゲストは資源側テナントの文脈で認証し、`tid`＝資源側テナントの token を受け取り、資源側には期限付きの外部付与（`core/external_grant`）を置く（ADR-024 D24-01）[D]。home 側 token を資源側でそのまま受ける相互信頼型は禁止である（禁止 D-5）[D]。
 - 越境共有は既定で無効であり、outbound と inbound の両方の許可、付与の期限、棚卸し機能が要る [D]。付与先は v1 では個人の人間主体だけである（ADR-024 D24-02。K24-4 は決裁待ち）[D]。
-- 根拠: [INT-02 P-16](integration-patterns.md)、[ARC-05 §6](../04_architecture/authorization-model.md)
+- v1.2（room-booking C-1）: 招待は `11_contracts/external-grant.openapi.yaml`（CON-17。v1.2 の同期で確定、preview）の `createExternalGrant` で発行を依頼する。宛先の email を渡せばよく、ゲストの `sub` を事前に知る必要はない。ゲストが資源側 AS で受諾すると有効になり、起点の tuple（例 `booking#guest`）と grantee の tuple は façade が書く。自サービスは `core/external_grant` を主体とする tuple を CON-04 で書かない（CON-17 XGC-2）。起点の資源を取り消す・削除するときは `revokeExternalGrantsByAnchor` を呼ぶ [D]。
+- 宛先の email は CON-17 にだけ渡し、自サービスのログ・監査・DB に残さない（CON-17 XGS-11、CV-061g）[D]。ゲストの状態と表示名は `listExternalGrantChanges`・`getExternalGrant` から得る [D]。
+- 根拠: [INT-02 P-16](integration-patterns.md)、[ARC-05 §6](../04_architecture/authorization-model.md)、[CON-17](../11_contracts/external-grant.openapi.yaml)
 
 #### FQ-55 越境共有のために三者一致の照合を緩めてよいか
 - 緩めてはならない [D]。ゲストに資源側テナントの token を発行する形で表すので、照合式は変わらない（ADR-024 D24-08）[D]。外部主体への管理者ロール・privileged 以上の付与、期限のない外部付与は基盤が拒否する（D24-18）[D]。
@@ -497,7 +534,8 @@ flowchart TB
 - エージェントを独立した主体（PC-16。1 主体 1 SPIFFE ID 1 テナント、人の所有者 2 名、有効期限）として登録し、利用者のための動作は委任（`sub`＝利用者、`act`＝エージェント）で表す（ADR-017）[D]。tool サーバーごとに `resource` を指定した token を得て、tool 側の PEP が呼出しごとに判定する [D]。
 - MCP 2026-07-28 版は client に RFC 8707 の `resource` を MUST、server に自分宛て token の検証を MUST とし、他の token の受入れ・中継を MUST NOT とする [N][^7]（RS-17#67・#68）。RFC 8707 は、AS が `resource` の示す資源に audience を絞るべき（SHOULD）とする [N][^21]（RS-17#67）。MCP は SDO 外の仕様であり、基盤契約は MCP の版や OAuth 2.1 草案に依存させない（ADR-017 D17-26）[D]。
 - 自社のエージェント製品が複数テナントにサービスする場合、実行単位（プロセス・sandbox・コンテナ）はテナント主体ごとに分け、タスクのテナントで割り当て、他テナントの主体の SVID・鍵・委任 token・承認 grant を載せない。tool サーバーは、token の `tid`・タスクの `tctx` のテナント・提示された SVID の主体の登録テナントの一致を検査し、不一致を拒否して監査に記録する。テナントをまたいで共有する実行単位（(a)(b) を満たせない形態）は本番に配備できず、例外の受容票もない。これは PoC の観察ではなく ADR-017 D17-07 (a)〜(c) の決定で、DoD では INT-05 DD-14（NP08-7〜NP08-9、CON-11 CV-036〜CV-038）として受容不可で判定する [D][^32]。
-- 根拠: [INT-02 P-08](integration-patterns.md)、[ARC-04 §8](../04_architecture/workload-identity-delegation.md)、[ADR-017 D17-07](../05_adr/ADR-017-non-human-ai-agent-identity.md)、[INT-05 DD-14](definition-of-ready.md)
+- v1.2（room-booking C-2・L-13）: 委任の付与・代理 token の取得・人の承認・取消しの契約は `11_contracts/agent-delegation.openapi.yaml`（CON-18。v1.2 の同期で確定、preview）である。依存サービス（tool サーバー）が受けるのは edge が exchange した K3（`sub`＝利用者、`act`＝エージェント主体）と K5 だけで、エージェントが edge に送る外部 AT は受けない（CON-18 §2.2・AD-01）[D]。entry point 台帳に `agent_delegation` を宣言した entry point だけがエージェント経由の要求を受け、PDP には `subject`＝利用者（`core/user`）、`subject.properties.actor`＝`{type: core/workload（暫定）, id: act.sub, principal_type: ai_agent}` で問う（CON-18 §5・AD-03・AD-08）[D]。`sub` 自体が `ai_agent` の token（自律動作）は拒否する（AD-02）[D]。PEP 側の負例は CV-062（preview）[D]。
+- 根拠: [INT-02 P-08](integration-patterns.md)、[ARC-04 §8](../04_architecture/workload-identity-delegation.md)、[ADR-017 D17-07](../05_adr/ADR-017-non-human-ai-agent-identity.md)、[INT-05 DD-14](definition-of-ready.md)、[CON-18](../11_contracts/agent-delegation.openapi.yaml)
 
 #### FQ-61 自サービスを MCP server（tool サーバー）にするには
 - OAuth のリソースサーバーとして登録し、RFC 9728 の metadata を実装し、tool 目録に tool ごとの「操作種別×資源型×作用範囲」・操作階層・修飾子（+FIN・+XT・+SEC）を登録する（D17-14）[D]。下流は exchange で取り直し、受け取った token を中継しない [D]。MCP の Security Best Practices は token passthrough を anti-pattern としている [N][^8]（RS-17#69）。
@@ -506,7 +544,8 @@ flowchart TB
 #### FQ-62 送金などの操作を、エージェント内の確認ダイアログで許可してよいか
 - してはならない [D]。+FIN・+XT・privileged の tool 呼出しは、AS の画面で利用者の step-up を経て発行する一回限り・短命の承認 grant を要し、tool 側 PEP が実際の呼出し引数との一致を検証する（ADR-017）[D]。token・承認 grant をエージェントのコンテキスト（プロンプト）に入れない [D]。
 - 起点エージェント主体を記録する欄名は未決（ADR-017 L17-2）で、`tctx` に入れる前提で空けておく [D]。
-- 根拠: [INT-02 P-08](integration-patterns.md)、05_adr/ADR-017 要旨
+- v1.2: 承認 grant は `Agent-Approval` ヘッダで受け、CON-18 の `consumeApprovalGrant` で消費できた場合だけ進める（CON-18 AD-07）。ただし承認の受付は ADR-017 L17-5 の決定まで無効で、それまで承認要の tool は常に拒否する [D]。要求本文や独自ヘッダの「承認済み」の申告、tool annotation を判定に使わない（AD-10）[D]。
+- 根拠: [INT-02 P-08](integration-patterns.md)、05_adr/ADR-017 要旨、[CON-18 §2.3・§4.2](../11_contracts/agent-delegation.openapi.yaml)
 
 ### 3.13 レガシー
 
@@ -698,6 +737,11 @@ flowchart LR
 | SDK を通してだけ PDP を呼ぶ規定の読み方 | 未決（ADR-011 D5-4／ADR-012 L-01） | FQ-04 | SDK または契約適合の自前実装 |
 | 起点エージェント主体の欄名 | 未決（ADR-017 L17-2） | FQ-62 | `tctx` に入れる前提で空ける |
 | 内部開始の `tctx`・`txn` の意味 | 未決（ADR-026 L26-1・L26-2） | FQ-23 | grant 参照を必須にする例外で実装 |
+| 受付記録の有効期限、A2 の委任 grant の契約（v1.2） | 未決（CON-05 x-open-issues、ADR-026。CON-16 IE-15） | FQ-82 | 遅延実行は A1。期限を超えるものは実装しない |
+| write で Txn-Token が無いときの応答コード（v1.2） | 未決（ARC-06 §3.10。CON-16 IE-12） | FQ-83 | 401 の token 検証失敗と同じ型 |
+| AI エージェントの actor の型（v1.2） | 未決（ADR-017・ARC-05 §16 の未決 7。CON-18 §5 の暫定） | FQ-60 | `core/workload`＋`principal_type`=`ai_agent` |
+| 承認 grant の受付（v1.2） | 未決（ADR-017 L17-5） | FQ-62 | 承認要の tool は常に拒否 |
+| 監査の参照値 API（v1.2） | 未作成（CON-08 x-handoff-v1.1 の 3） | FQ-86 | 試験用の固定値表 |
 | ジョブ所有者の退職時の既定、+FIN・+XT の委任ジョブ | 未決（ADR-026 K26-1・K26-4） | FQ-27 | 推奨案を前提。+FIN・+XT は実行しない |
 | Tier 1 の閾値と上限数 | 未決（ADR-023 KD23-1） | FQ-75 | 迷えば高い方 |
 | criticality の伝播欄 | 未決（ADR-023 L23-2） | FQ-75 | 台帳への宣言だけ |
@@ -881,3 +925,24 @@ flowchart LR
 | 本書 S11-3 | TRC-11 の照合対象に FQ-79〜FQ-81 | traceability/open-items.md の範囲で、本同期では未反映 |
 
 - FQ の数と番号は変えていない [D]。
+
+### v1.2 改訂（2026-10-15、版 0.5 → 版 0.6）
+
+> 13_integration-trial/room-booking/report.md（AI エージェントが会議室予約サービスの開発チームを演じた 2 回目の模擬連携検証。実在の連携チームの検証ではない）を反映した。AI エージェントによる改訂で、模擬パネルの判定でも実在の CTO/CISO の決裁でもない（CONVENTIONS §8）[D]。
+
+| 出所 | 内容 | 反映 |
+|---|---|---|
+| room-booking C-1、CON-17 | 越境ゲストの招待の経路、宛先の email、取消し | FQ-54 |
+| room-booking C-2・L-13、CON-18 | AI エージェント代理の契約、受け取る token、actor の写像、承認 grant | FQ-60、FQ-62 |
+| room-booking M-4・L-5 | 遅延実行の型、受付台帳の停止、再 Check の主体種別 | FQ-82（新設） |
+| room-booking M-5 | ゲストへの業務通知 | FQ-81 |
+| room-booking L-6 | Txn-Token の欠落の応答 | FQ-83（新設） |
+| room-booking M-1 | evaluations の要素の reason | FQ-84（新設） |
+| room-booking L-1 | 契約の版の固定 | FQ-85（新設） |
+| room-booking M-6 | 監査の参照値・cell・法域 | FQ-86（新設） |
+| room-booking L-12 | fga の版の記録 | FQ-87（新設） |
+| 未決の追加 | 5 行 | §6 |
+
+- FQ を 6 件（FQ-82〜FQ-87）加えた。既存の FQ の番号は変えていない [D]。
+- 他文書への申し送り（v1.2）: (S12-1) traceability/open-items.md の TRC-11 の照合対象に FQ-82〜FQ-87 を加える。(S12-2) 10_integration/integration-patterns.md（INT-02）P-04・P-05 から FQ-82 を、P-16 から FQ-54 の v1.2 の段を、P-08 から FQ-60 の v1.2 の段を参照する。
+- v1.2 の同期での反映状況（2026-10-15。AI エージェントによる同期で、人による照合は未実施（CONVENTIONS §8）[D]。）: S12-2 は INT-02 版 0.10 の P-04・P-05・P-08・P-16 の「v1.2 の参照」の行で済。S12-1 は traceability/open-items.md が同期の範囲外のため未反映（v1.2 の締めで扱う）。

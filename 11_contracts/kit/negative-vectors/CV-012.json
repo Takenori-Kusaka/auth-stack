@@ -45,7 +45,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -59,7 +76,7 @@
     },
     {
       "case_id": "CV-012b",
-      "description": "MK-03 の注入「接続確立を D(t) を超えて遅らせ、確立後に decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）",
+      "description": "MK-03 の注入「接続確立を D(t) を超えて遅らせ、確立後に decision=true」。write と read-sensitive の操作の両方で流す（ケース内の request は write。read-sensitive は同じ注入で request.tier を read-sensitive に替えて流す）。v1.2（L-11）: 接続の確立そのものを遅らせること。到達不能なアドレスへの接続は OS によって直ちに失敗する（Windows では unreachable が即時に返る）ので遅延の代用にならない。SUT 側の計時で接続確立に D(t) 以上かかったことを確かめられない実行は合否に数えず、対象外として記録する（kit/README.md §5.3）",
       "stimulus": {
         "inject": {
           "target": "MK-03",
@@ -77,7 +94,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -109,7 +143,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -141,7 +192,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -173,7 +241,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -205,7 +290,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -237,7 +339,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -269,7 +388,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -301,7 +437,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -333,7 +486,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -365,7 +535,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -397,7 +584,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -429,7 +633,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "no_decision",
@@ -461,7 +682,24 @@
           "operation": "{{manifest.operation.write}}",
           "tier": "write",
           "resource": "{{resource.t1.own}}"
-        }
+        },
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ]
       },
       "expect": {
         "outcome": "reject",
@@ -521,7 +759,8 @@
   "strength": "自社規範（CON-03 §7、ARC-06 §3.6・§3.10、ADR-013 D13-25）。fail-open 0 件",
   "notes": [
     "read-sensitive も KD13-6 の決裁までは known-good を使わず no_decision（CON-11 L11-5）",
-    "mTLS の段（tls_stall）を再現できない構成では、そのケースを未試験として判定記録に明示する（合格に数えない）"
+    "mTLS の段（tls_stall）を再現できない構成では、そのケースを未試験として判定記録に明示する（合格に数えない）",
+    "v1.2（13_integration-trial/room-booking/report.md L-6・L-11）: write 以上の 14 ケースの setup に正規の Txn-Token（TTS.current で署名、tctx.tid=tenant.1）の提示を加えた。期待結果は変えていない。read-sensitive で流す場合は Txn-Token を添えなくてよい（CON-16 §1.6）。CV-012b の遅延の再現の条件を description に加えた"
   ],
   "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
   "deprecated": null

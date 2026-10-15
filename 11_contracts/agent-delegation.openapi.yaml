@@ -1,0 +1,1385 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: AI エージェント代理の契約（委任の付与・範囲・期限・人の承認・取消と代理 token の取得経路）
+  version: 0.1.1
+  summary: v1.2 で新設。利用者が AI エージェントに委任を与え、エージェントが tool サーバー宛ての代理 token を得て呼び出し、tool 側 PEP が呼出し単位で判定し、高リスクの呼出しに人の承認を挟み、委任を取り消すまでの契約（preview）
+  x-document-id: CON-18（v1.2 の同期で確定。CON-00 版 0.12 の契約一覧に登録。CON-17 は external-grant.openapi.yaml。§9 HO12-AG-01）
+  x-deliverable: DL-124（v1.2 の同期で確定。traceability/deliverables.md 版 0.8 に登録。DL-123 は external-grant.openapi.yaml。§9 HO12-AG-01）
+  x-status: draft
+  x-last-updated: "2026-10-15"
+  x-depends-on:
+    - CONVENTIONS.md
+    - 05_adr/ADR-017-non-human-ai-agent-identity.md（D17-06〜D17-25, D17-33〜D17-38, D17-43, D17-47, D17-50, L17-1〜L17-5, K17-1〜K17-3, TC-017-01〜TC-017-15）
+    - 05_adr/ADR-005-token-profile.md（D1-2, D1-4, D9-3, D9-4）
+    - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-14〜D09-17, D09-29）
+    - 05_adr/ADR-013-cell-partitioning-fail-mode.md（D13-23）
+    - 05_adr/ADR-022-integration-contract-standards.md（D-1, D-2, D-9-2）
+    - 05_adr/ADR-023-dependency-tiers.md（D23-10）
+    - 04_architecture/workload-identity-delegation.md（ARC-04 §5.3〜§5.5, §6, §8.1〜§8.3。AG-1〜AG-9）
+    - 04_architecture/authorization-model.md（ARC-05 §3.1、§16 の未決 7）
+    - 11_contracts/token-exchange.openapi.yaml（CON-05。/token の edge 初回 exchange、理由コード R01〜R10）
+    - 11_contracts/authorization-api.openapi.yaml（CON-03。Subject、SubjectProperties.actor）
+    - 11_contracts/schemas/common.schema.json（CON-02。x-subject-type-map、OpaqueId、TenantId、OperationTier、Problem）
+    - 11_contracts/schemas/access-token-claims.schema.json（CON-06。internalAccessTokenClaims の examples[2]、actor）
+    - 11_contracts/client-registration.openapi.yaml（CON-14。§3 の種別 C8）
+    - 11_contracts/integration-essentials.md（CON-16。§1.1, §2.1〜§2.7, U-1, U-3）
+    - 10_integration/integration-patterns.md（INT-02 P-08、§3.7.2 SM-1〜SM-5）
+    - 13_integration-trial/room-booking/report.md（C-2、L-4、L-5、L-13。v1.2 の改訂根拠。AI による模擬連携検証であり、実在の連携チームの検証ではない）
+  x-requirements:
+    - id: R-029
+      coverage: AI エージェントの委任（sub＝利用者、act＝エージェント）を、取得経路・token の形・tool 側 PEP の判定の組み立てまで契約にした。閉じ方 A（契約として）。決裁は未了
+    - id: R-209
+      coverage: tool 呼出し単位の認可と人の承認（承認 grant）の要求・応答・理由コード・負例を定めた。実測（TC-017-02〜TC-017-04）は未実施（閉じ方 C）
+    - id: G-102
+      coverage: AI エージェントの委任の負例を x-negative-examples（AGN-01〜AGN-28）に列挙。PoC での拒否確認は未実施（閉じ方 C）
+    - id: G-138
+      coverage: P-08 が使う「委任の付与・代理 token の取得・承認・取消」のインタフェースを定義（preview）
+  x-standards:
+    - id: SS-A09
+      name: RFC 8693 OAuth 2.0 Token Exchange
+      status: final（Proposed Standard、2020-01。CON-05 の記載による）
+      conformance: edge 初回 exchange の出力に act を付ける規則（§4 ED-1）。項目名と意味は変えない。actor_token は使わない（ADR-009 D09-14）
+    - id: SS-A10
+      name: RFC 8707 Resource Indicators for OAuth 2.0
+      status: final（Proposed Standard、2020-02。CON-05 の記載による）
+      conformance: 委任の要求で resource を 1 つ以上必須、token 要求で resource をちょうど 1 つ必須（ADR-017 D17-15）
+    - id: （standards-status の登録は §9 HO12-AG-11）
+      name: RFC 9126 OAuth 2.0 Pushed Authorization Requests
+      status: final（Proposed Standard。ADR-017 D17-21・ADR-020 D20-09-2 の記載による。本契約の改訂者は原典を再取得していない）
+      conformance: 委任の要求と承認の要求は PAR だけで受け付ける（require_pushed_authorization_requests）
+    - id: （standards-status の登録は §9 HO12-AG-11）
+      name: RFC 9396 OAuth 2.0 Rich Authorization Requests
+      status: final（Proposed Standard。ADR-017 D17-21 の記載による。本契約の改訂者は原典を再取得していない）
+      conformance: 承認の要求の操作内容を authorization_details で表す。受付の開始は ADR-017 L17-5 の決定まで無効（§3）
+    - id: （standards-status の登録は §9 HO12-AG-11）
+      name: RFC 7636 Proof Key for Code Exchange（PKCE）
+      status: final（Proposed Standard。ADR-017 D17-08・D17-27 の記載による。本契約の改訂者は原典を再取得していない）
+      conformance: S256 だけを受け付ける
+    - id: （standards-status の登録は §9 HO12-AG-11）
+      name: RFC 7009 OAuth 2.0 Token Revocation
+      status: final（Proposed Standard。本契約の改訂者は原典を再取得していない）
+      conformance: エージェント側の委任の終了（refresh token の取消で委任 grant を失効）に使う
+    - id: SS-I16
+      name: OpenAPI Specification 3.1 系
+      status: final（CON-05 の記載による）
+      conformance: 記述言語。openapi 欄は 3.1.0（CON-05 §4 と同じ扱い）
+  x-profile:
+    name: AI エージェント代理 profile v0（preview）
+    delegation-grant:
+      unit: タスク（会話・作業単位）ごとに 1 つ。resource（tool サーバー）・scope（tool）・絶対期限を絞る（ADR-017 D17-17）
+      all-powers-scope: 定義しない（D17-17。全権委任の scope、`*`、scope の省略を受け付けない）
+      absolute-lifetime-max: TBD（初期案 8 時間。所有者 CTO＋CISO、期限 G4、DL-20。ADR-017 D17-43・K17-4）
+      requested-lifetime-over-max: 拒否する（丸めない。AG05）
+      revoke-on-user-suspension: true（ADR-017 D17-43、DL-08 §17.3）
+    access-token:
+      form: 外部 opaque token（edge だけが検証。ADR-005 D1-2・D1-4、ADR-023 D23-10 の 1）
+      audience: resource の 1 値（tool サーバー）
+      sender-constraint: エージェント主体の X.509-SVID（第一者 PC-16）または登録した mTLS 証明書（第三者 PC-15）に cnf で束縛
+      lifetime: TBD（ADR-005 D3 の寿命 profile に丸める。DL-20）
+      refresh-token: confidential client に限り発行。client 認証に束縛。委任 grant の絶対期限を超えて更新しない（D17-43）
+    approval-grant:
+      form: AS が保持する一回限りの承認記録への不透明な参照（承認 grant 参照）。token に操作内容の claim を載せない（§2.3、§10 の論点 V12-AG-3）
+      lifetime: TBD（初期案 5 分以下。ADR-017 D17-21 の「分単位以下」。DL-20）
+      binding: 発行先のエージェント主体・委任元利用者・テナント・tool・資源・引数ハッシュ
+      state: preview かつ ADR-017 L17-5 の決定まで無効（無効の間、承認を要する tool 呼出しはすべて拒否。D17-25）
+    actor-redelegation-max: CON-05 info.x-profile.act-chain.agent-redelegation-max に従う（初期案 1）
+  x-test-identifiers:
+    description: 本契約の examples で使う識別子。CON-06 internalAccessTokenClaims の examples[2]（AI 委任の token）と同じ値にそろえた。すべて試験用の値で、実在の主体ではない
+    user_sub: mfrggzdfmztwq2lknnwg23tpob
+    tid: ozxw4zltnfzgk3dfnzqxi2lpny
+    agent_principal_sub: gxy2qrzzqwzzbjn74jrotdu6vv
+    agent_delegated_client_id: mfzgk3dbnrxw2zlsmvzxi2lonr
+    delegation_grant_ref: onsxe5tjmnswg33oonsw45dhoj
+    tool_server_resource: https://svc.id-domain.example/s/r7sv2kq4
+    room_id: k4mz7qx2wd3ra5np6tc2hvy7be
+    approval_grant_ref: d5ugjg4oivltah6rqjoxxdnoex
+  description: |
+    > 文書ID: CON-18（v1.2 の同期で確定。DL-124）/ 版: 0.1.1（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: R-029, R-209, G-102, G-138（全件は info.x-requirements）
+    > 改訂: v1.2 で新設（模擬連携検証 13_integration-trial/room-booking/report.md の C-2、L-13 ほか）。変更点は §8、他文書への申し送り（v1.2）は §9、ADR への論点は §10
+    > 依存文書: info.x-depends-on
+
+    ## 0. 要旨
+
+    - v1.2: 模擬連携検証（会議室予約サービス。AI による模擬で、実在の連携チームの検証ではない）は、AI アシスタントによる代理予約（`sub`＝利用者、`act.ptype`＝`ai_agent`）を正規の書き方で判定に進められず、全件 403（PDP 呼出し 0 回）で止めた（report C-2）[D]。原因は 3 つあった [D]。(1) CON-03 の `subject.properties.actor` は `type`・`id` が必須だが、CON-02 の写像表は `ai_agent` を null（未決）とし、actor の `type` を書けなかった。(2) ADR-017 D17-16 の許可条件（scope ∧ 利用者の権限 ∧ エージェントの上限 ∧ 承認 grant）のうち、どれを誰がどの欄で評価するかが契約になかった。(3) tool サーバーが受け取る token が外部 AT か内部 access token（K3）かが読めなかった（report L-13）。
+    - 本契約は ADR-017・ARC-04 §8 の決定を変えずに、次の 5 点を契約にする [D]。
+      1. **委任の付与**: エージェントの委任用 client が PAR で委任を要求し、利用者が AS の画面で同意と step-up をし、エージェントが tool サーバーごとの代理 token を得る（§2.1、ADR-017 D17-08・D17-15・D17-17・D17-22）。
+      2. **代理 token の取得経路と受け取る token の種別**: tool サーバー（依存サービス）が受け取るのは edge の exchange 後の K3 と K5 だけであり、外部 AT は受け取らない（§2.2、report L-13 の解消）。edge 初回 exchange は、外部 AT がエージェントの委任用 client に発行されたものなら、出力の `act` にエージェント主体を入れる（§4 ED-1。CON-05 への申し送り HO12-AG-04）。
+      3. **tool 側 PEP の判定の組み立て**: ADR-017 D17-16 の 4 条件の評価位置と PDP 要求の書き方を規則 AD-01〜AD-12 として固定し、actor の `type` の暫定値を置く（§4、§5）。
+      4. **人の承認**: 承認を要する tool 呼出し（D17-20）の承認要求・承認 grant の取得・tool 側 PEP での消費を定める（§2.3）。ADR-017 L17-5 の決定まで無効で、無効の間は承認を要する呼出しを拒否する（D17-25）。
+      5. **取消**: 利用者・エージェント・委任元の停止による委任の終了と、反映の経路を定める（§2.4）。
+    - 会議室の予約（write、修飾子なし、承認不要）は 1〜3 だけで正例の経路が通る [D]。承認を要する tool は L17-5 の決定まで拒否のままである [D]。
+    - 自律動作（`sub` 自体が `ai_agent` の token）は ADR-017 K17-1 が未決のため本契約の範囲外とし、tool 側 PEP は引き続き PDP を呼ばずに拒否する（INT-02 SM-3、AGN-14）[D]。
+
+    ## 1. 範囲
+
+    | 範囲内 | 範囲外（正本） |
+    |---|---|
+    | 委任の要求（PAR）、利用者の同意と step-up（`/authorize`）、代理 token の取得と更新（`/token`）、エージェント側の委任の終了（`/revoke`） | 利用者の通常のログイン・OIDC profile（ADR-005、DL-69 収載） |
+    | 利用者による委任の一覧と取消（`/delegation-grants`） | エージェント主体の登録・審査・棚卸し（ADR-017 D17-39〜D17-45、DL-48。登録手段の契約は §9 HO12-AG-05） |
+    | 承認の要求と承認 grant の取得（PAR の `authorization_details`）、tool 側 PEP による承認 grant の消費（`/approval-grants/consume`） | 帯域外承認（CIBA 型）。RFC 10027 のリスク評価を経るまで無効（ADR-017 D17-22） |
+    | edge 初回 exchange の代理拡張（ED-1〜ED-4）、tool 側 PEP の判定規則（AD-01〜AD-12）、actor の型の暫定写像 | 自律動作（ADR-017 K17-1 未決）、エージェント間の再委任の交換そのもの（CON-05 /token、R08） |
+    | 理由コード AG01〜AG14・AP01〜AP07、負例 AGN-01〜AGN-28 | MCP 固有の要件（ADR-017 D17-26 の adapter。連携契約 v1 に含めない） |
+
+    ## 2. 正例の経路
+
+    ### 2.1 委任の付与と代理 token の取得
+
+    ```mermaid
+    sequenceDiagram
+      autonumber
+      participant U as 利用者（ブラウザ）
+      participant G as エージェント（委任用 client、PC-16 は SVID）
+      participant A as AS
+      participant E as edge と STS・TTS
+      participant T as tool サーバー（依存サービス、PEP）
+      participant P as PDP façade
+      G->>A: POST /par（scope=tool、resource=T、PKCE、delegation_lifetime）
+      A-->>G: 201 request_uri
+      G->>U: AS の /authorize へ誘導（エージェントの UI では同意させない）
+      U->>A: ログイン、同意画面で agent・tool・資源・期限を確認、操作階層が求める step-up
+      A-->>G: 302 code（redirect_uri へ）
+      G->>A: POST /token（code、code_verifier、resource=T、mTLS）
+      A-->>G: 外部 AT（opaque、aud=T、cnf=G の証明書、scope ⊆ 委任 ∩ エージェント上限）
+      G->>E: tool 呼出し（外部 AT、mTLS）
+      E->>E: AT を検証、cnf と提示証明書の一致、SVID の登録テナント＝AT の tid（ED-2）
+      E->>E: exchange: K3（sub=U、act={sub=G, ptype=ai_agent}、scope、gref、tid）、K5（write 以上）
+      E->>T: K3（Authorization）＋K5（Txn-Token）
+      T->>T: AD-01〜AD-06（種別、entry point の宣言、scope ⊇ tool、tid の照合）
+      T->>P: evaluation（subject=core/user U、actor={core/workload, G, ai_agent}、action、resource）
+      P-->>T: allow / deny
+      T-->>E: 業務応答（deny は CON-16 §2.7 の写像）
+    ```
+
+    - 利用者の同意と step-up は AS の画面でだけ行う（ADR-017 D17-22・D17-23）[D]。エージェントの UI・会話での同意を委任の根拠にしない [D]。
+    - AS は委任の要求を受けると、(i) 要求した client が委任用 client（§9 HO12-AG-05 の種別 C8d）であること、(ii) 利用者のテナントにその client のエージェント主体が登録され有効であること（ADR-017 D17-07）、(iii) 要求 scope がエージェント主体の tool allowlist と操作階層の上限と自律度区分の範囲内であること（D17-16 の 3、D17-40）、(iv) 期限が上限以下であることを確かめ、満たさなければ拒否する（AG02〜AG07）[D]。
+    - 委任 grant は AS の委任 grant 台帳（ARC-04 §5.4、ADR-005 D7-3）に記録し、`gref`（grant 参照）として K3 に引き継ぐ（ARC-04 §5.5）[D]。
+
+    ### 2.2 tool サーバーが受け取る token（report L-13 の解消）
+
+    | 経路 | エージェントが送る token | tool サーバーが受け取る token | 根拠 |
+    |---|---|---|---|
+    | 既定（依存サービスが tool サーバー） | 外部 AT（opaque、aud＝tool サーバーの resource、エージェントの証明書に束縛） | edge が exchange した K3（`sub`＝利用者、`act`＝エージェント主体）と K5 | ADR-005 D1-2・D1-4、ADR-023 D23-10 の 1（外部 opaque token は edge だけが検証）、CON-16 §1.1 |
+    | tool サーバーから下流 API | （エージェントは関与しない） | 下流は tool サーバーが CON-05 /token で取り直した K3（`act`＝tool の workload、入れ子にエージェント） | ADR-017 D17-15、ARC-04 §8.2 |
+
+    - INT-02 P-08 の図の「外部 AT（aud=M）」は、エージェントが edge に送る token を指す [D]。依存サービスである tool サーバーは外部 AT を受け取らず、届いたら拒否する（CON-16 §1.1、AGN-23）[D]。
+    - edge の外で外部 AT を直接受ける tool サーバー（MCP server を単独の RS として公開する形）は本契約の範囲外で、ADR-017 D17-26 の adapter とともに定める（§10 の論点 V12-AG-1）[D]。
+
+    ### 2.3 人の承認（承認 grant。preview、ADR-017 L17-5 の決定まで無効）
+
+    ```mermaid
+    sequenceDiagram
+      autonumber
+      participant U as 利用者
+      participant G as エージェント
+      participant A as AS（承認記録の状態ストア）
+      participant E as edge
+      participant T as tool サーバー（PEP）
+      G->>E: 承認要の tool 呼出し（承認 grant なし）
+      E->>T: K3＋K5
+      T-->>G: 403 Problem approval_required（tool_id、authorization_details の type）
+      G->>A: POST /par（authorization_details=[agent_tool_call: tool、資源、action、args_hash]）
+      G->>U: AS の /authorize へ誘導
+      U->>A: 操作内容（AS が表示する送信先・金額・対象）を確認し step-up
+      A-->>G: code
+      G->>A: POST /token（code、code_verifier）
+      A-->>G: 承認 grant 参照（token_type=N_A、一回限り、短命）
+      G->>E: 同じ tool 呼出し＋Agent-Approval ヘッダ
+      E->>T: K3＋K5＋Agent-Approval（無改変）
+      T->>T: 実際の引数から args_hash を計算
+      T->>A: POST /approval-grants/consume（参照、tool、資源、action、args_hash、sub、actor、tid、txn）
+      A-->>T: 200 consumed（一致し未使用のときだけ）
+      T->>T: PDP の判定（§2.1 と同じ）と業務処理
+    ```
+
+    - 操作内容は AS が保持する承認記録にだけ置き、token の claim には載せない [D]。tool 側 PEP は実際の引数から計算した `args_hash` を AS に渡し、AS が承認記録と照合して一回限りで消費する（ADR-017 D17-21 の「jti を AS の状態ストアで消費」「tool 側 PEP が引数との一致を検証」）[D]。
+    - 承認 grant の鍵束縛（D17-21 の `cnf`）は、承認記録に発行先のエージェント主体を記録し、消費時に K3 の `act.sub` と照合することで代える [D]。K3 の `act.sub` は、edge がエージェントの証明書に束縛された外部 AT を検証したうえで STS が付けた値なので（ED-1・ED-2）、他のエージェント主体は他人の承認 grant を消費できない（AGN-20）[D]。この読替えは §10 の論点 V12-AG-3 として ADR-017 に申し送る。
+    - `args_hash` は、tool 目録で承認に束縛すると宣言した引数（`approval_bound_args`）と資源・action を 1 つの JSON オブジェクトにし、正規化して SHA-256 を取り、base64url（padding なし）で表す [D]。正規化の方式は RFC 8785（JSON Canonicalization Scheme）を案とするが、本契約の改訂者は原典を照合しておらず（未確認）、GA 前に確定する（x-open-issues）[D]。
+    - 消費の呼出しは要求経路で AS を呼ぶので、ADR-023 D23-10 の 1（要求経路で AS を呼ばない）と食い違う [D]。ADR-017 D17-21・D17-25 は承認 grant の検証を「tool 側 PEP の状態照会」とし、承認要の呼出しに限った経路であるため、本契約は ADR-017 に従い、承認記録の状態ストアを cell 内に置く案で定めた [D]。食い違いは §10 の論点 V12-AG-2 とする。
+    - 承認 grant の発行・消費に届かなければ、承認を要する tool 呼出しを拒否する（grace なし。ADR-017 D17-25、AP07）[D]。
+
+    ### 2.4 取消（委任の終了）と反映
+
+    | 起点 | 操作 | 反映 |
+    |---|---|---|
+    | 利用者 | AS の画面、または第一者 BFF から `DELETE /delegation-grants/{grant_id}` | 委任 grant を失効。refresh token を無効化。ADR-006 の失効状態に `gref` を載せ、STS の exchange を R10 で拒否 |
+    | エージェント（タスク完了） | `POST /revoke`（RFC 7009。refresh token を送ると委任 grant ごと失効） | 同上 |
+    | 委任元の利用者の停止・削除 | DL-08 のライフサイクル | 当該利用者の全委任を失効（ADR-017 D17-43） |
+    | 停止（kill switch）: エージェント主体・定義・所有者・tool サーバー・委任元 | control plane（本契約の範囲外） | 資格情報の新規発行停止、委任 grant の失効、ADR-006 の失効伝播（ADR-017 D17-37） |
+
+    - 依存サービス（tool サーバー）は取消の反映のために要求経路で AS を呼ばない（ADR-023 D23-10）[D]。反映は edge・STS の拒否（R10）と K3 の短い寿命、PDP façade の G 段（主体停止）で行う [D]。取消から拒否までの時間は ADR-006 の剥奪反映 SLO で縛り、TC-017-07 で測る（値は TBD、DL-20）[D]。
+
+    ## 3. 凍結区分（ADR-022 D-1・D-2）
+
+    | 要素 | 区分 |
+    |---|---|
+    | 本契約の全 operation と規則 ED-1〜ED-4・AD-01〜AD-12 | preview（ADR-017 が proposed、K17-1・L17-2・L17-3・L17-5 が未決のため） |
+    | 承認の要求（PAR の `authorization_details`）、承認 grant の取得、`consumeApprovalGrant` | preview かつ無効（ADR-017 L17-5 の契約変更審査会の決定まで。AS は `authorization_details` を含む PAR を AG10 で拒否する） |
+    | actor の型の暫定写像（§5） | preview（ADR-017・ARC-05 §16 の未決 7 の決定で置き換える。置換えは本契約の破壊的変更として扱う） |
+    | 理由コード AG01〜AG14・AP01〜AP07 の意味 | preview |
+    | 寿命・上限の値、URL | 凍結しない |
+
+    preview の要素の GA 昇格・改版・廃止を判断する期限は TBD（所有者 CTO、期限 DEC-8 前、決め方 ADR-022 D-1-2）[D]。
+
+    ## 4. 規則
+
+    ### 4.1 edge 初回 exchange の代理拡張（ED。CON-05 /token の (a) への追加）
+
+    | # | 規則 | 根拠 |
+    |---|---|---|
+    | ED-1 | subject_token がエージェントの委任用 client に発行された外部 AT なら、STS は出力 K3 の `act` を `{sub: エージェント主体の sub, ptype: ai_agent}` とする。値は AS の委任 grant 台帳から取り、要求元（edge）の申告や要求パラメータから取らない。委任用 client 以外に発行された外部 AT の出力には、CON-05 のとおり `act` を付けない | ADR-017 D17-08（下流では `act`＝現在の行為者）、ADR-009 D09-14（actor の身元を申告から取らない）、CON-06 internalAccessTokenClaims の examples[2] |
+    | ED-2 | edge は、外部 AT の `cnf` と提示された証明書の一致を検証し、第一者のエージェント（PC-16）なら提示 SVID の主体が登録されたテナントと AT の `tid` の一致を確かめる。不一致は拒否し、監査に記録する | ADR-017 D17-07 (b)。依存サービスは提示 SVID を見られないので、この照合は edge が行う（§10 の論点 V12-AG-4） |
+    | ED-3 | ED-1 の K3 には `scope` を必ず入れる（委任 grant の scope ∩ 交換登録簿の上限）。edge は ED-1 の要求について、操作階層が write 以上なら Txn-Token を発行する。read-sensitive の発行は ADR-017 L17-2・U-02 の決定に従う | ADR-017 D17-16 の 1、ADR-005 D9-3 |
+    | ED-4 | 委任 grant の失効・期限切れ、委任元の利用者の停止、エージェント主体の停止は R10 で拒否する | ADR-017 D17-37・D17-43、CON-05 R10 |
+
+    ### 4.2 tool 側 PEP の規則（AD）
+
+    CON-16 §2.1 の処理順（`authenticate`→`bind_tenant`→`authorize`→`enforce`）は変えず、K3 の最外 `act.ptype` が `ai_agent` の要求に次を重ねる [D]。
+
+    | # | 段 | 規則 | 根拠 |
+    |---|---|---|---|
+    | AD-01 | authenticate | 受け取るのは K3 と K5 だけ。外部 AT が届いたら拒否する | CON-16 §1.1、§2.2 |
+    | AD-02 | authenticate | `sub` の `ptype` が `ai_agent` の K3（自律動作）は、PDP を呼ばずに拒否する | ADR-017 K17-1 未決、INT-02 SM-3 |
+    | AD-03 | authenticate | 最外 `act.ptype` が `ai_agent` の K3 は、entry point 台帳でその entry point に `agent_delegation`（`AgentToolDeclaration`）を宣言している場合に限り先へ進める。宣言がなければ PDP を呼ばずに拒否する | ADR-017 D17-14（tool 目録に載った tool だけを呼べる） |
+    | AD-04 | authenticate | 判定に使う actor は最外の `act` だけ。入れ子の `act` は監査にだけ使う | RFC 8693 §4.1（CON-05 info.x-profile.act-chain） |
+    | AD-05 | authorize の前 | K3 の `scope` が無い、または宣言の `tool_scope` を含まなければ、PDP を呼ばずに 403 を返す（`WWW-Authenticate: Bearer error="insufficient_scope"` と `scope` に `tool_scope`）。scope を補う・別 token に切り替えることはしない | ADR-017 D17-16 の 1・D17-15、ARC-04 §8.2 の注記。CON-16 U-3（K3 の scope を判定に使わない）の例外として、エージェント経由の要求に限る（§9 HO12-AG-07） |
+    | AD-06 | bind_tenant | K5 があれば `tctx.tid`＝K3 の `tid`＝資源のテナントを照合する（CON-16 §2.4）。write 以上は K5 が必須 | ADR-017 D17-07 (b)、CON-16 §2.4 |
+    | AD-07 | authorize | 宣言の `approval` が `required`、または修飾子に `+FIN`・`+XT` があるか操作階層が privileged なら、`Agent-Approval` ヘッダの承認 grant を `consumeApprovalGrant` で消費できた場合だけ先へ進める。ヘッダがなければ 403 Problem `approval_required` を返す。L17-5 の決定まではこの tool を常に拒否する | ADR-017 D17-20・D17-21・D17-25 |
+    | AD-08 | authorize | PDP 要求の `subject` は `sub` の主体（`type` は CON-02 の写像で `core/user`、`properties.principal_type` は `human`）、`subject.properties.actor` は §5 の暫定写像で書く | CON-03 Subject・SubjectProperties、CON-02 x-subject-type-map の「委任の場合は最上位の ptype を使う」 |
+    | AD-09 | authorize | `+XT` の tool は、宛先がテナント管理者の登録した送信先 allowlist の範囲外なら、承認 grant があっても拒否する | ADR-017 D17-33 |
+    | AD-10 | 全段 | エージェントが要求に入れた自己申告（「承認済み」「安全」などの欄、MCP の tool annotation、独自ヘッダ）を判定の入力にしない | ADR-017 D17-14・D17-35 |
+    | AD-11 | enforce | 受け取った K3・K5・承認 grant 参照を下流へ転送しない。下流は CON-05 /token で取り直す | ADR-017 D17-15・D17-34 |
+    | AD-12 | 監査 | E2 に、エージェント主体（`act.sub`）、委任／自律の区分、委任元（`sub`）、tool（`tool_id`）、承認 grant の ID（消費応答の `approval_id`）を記録し、承認 grant 参照・token の全文は残さない。欄は CON-08 への申し送り（HO12-AG-08）で確定するまで拡張欄に書く。v1.2 の同期: CON-08 版 0.4.0 の `DetailEnforcement` の `agent_principal`・`delegation_mode`・`tool_id`・`approval_id` で確定した。AD-02〜AD-07 で PDP を呼ばずに拒否した記録は `decision_source`=`none`、`no_decision_cause`=`subject_unmapped`、`reason_code`=`deny_subject_unmapped` とする | ADR-017 D17-47・D17-48 |
+
+    - ADR-017 D17-16 の 4 条件の評価位置（v1.2 の暫定）[D]:
+
+    | 条件 | 評価位置（暫定） | 恒久の案 |
+    |---|---|---|
+    | 1 token の scope が tool を含む | tool 側 PEP（AD-05） | 同じ |
+    | 2 利用者の権限（R 段） | PDP façade（AD-08 の subject で通常どおり） | 同じ |
+    | 3 エージェント主体ごとの上限（tool allowlist・操作階層の上限・自律度区分） | 発行時: AS が委任の付与と token 発行で scope を上限内に絞る（§2.1 (iii)）。実行時: tool 側 PEP の AD-05 | ADR-017 L17-3（G 段の第 7 規則）が決まれば façade でも評価する |
+    | 4 承認 grant | tool 側 PEP が AS で消費（AD-07） | ADR-017 L17-5 の決定に従う |
+
+    - 条件 3 を実行時に PDP で評価しない暫定は、上限を下げたときの反映が既発行の token の寿命と委任の失効に依存するという弱点を持つ [D]。上限を下げる操作では、該当するエージェント主体の委任 grant を失効させる（ADR-017 D17-37 の停止の一種として扱う）[D]。この扱いは §10 の論点 V12-AG-5 として申し送る。
+
+    ## 5. actor の型の暫定写像（report C-2 の (1) の解消）
+
+    | 最外 `act.ptype` | `subject.properties.actor.type` | `subject.properties.actor.id` | `subject.properties.actor.principal_type` | 状態 |
+    |---|---|---|---|---|
+    | `ai_agent` | `core/workload`（暫定） | `act.sub` | `ai_agent` | v1.2 の暫定（preview）。ADR-017・ARC-05 §16 の未決 7 で置き換える |
+    | `workload` | `core/workload` | `act.sub` | `workload` | CON-02 の subject の写像と同じ（ARC-05 §3.1） |
+    | `service_account` | `core/client`（暫定） | `act.sub` | `service_account` | CON-02 の subject の写像と同じ |
+    | `human` またはその他 | —（拒否） | — | — | 人が actor になる委任は定義しない。PDP を呼ばずに拒否する（SM-3 と同じ扱い） |
+
+    - 理由 [D]: (i) エージェント主体は 1 主体 1 SPIFFE ID の X.509-SVID で認証する（ADR-017 D17-07・D17-44、資格情報クラス NC-1）ので、認証の形は workload と同じである。(ii) ADR-017 D17-06 は WIMSE arch 草案が AI 仲介者を委任された workload の特殊例とすることを引いている。(iii) 委任の判定（R 段）は `subject`（利用者）の関係だけを使い、actor の型をモデルの relation に使わないので、暫定値が R 段の結果を変えない。(iv) 類型は `principal_type` で区別でき、`sub` の文字列から推測しない（ADR-021 D21-10）。
+    - 制約 [D]: 認可モデル（CAM）は、`core/workload` の relation を委任の actor の判定に使ってはならない（R 段で actor を参照する permission を書かない）。`principal_type` の値は CON-06 `principalType` の値をそのまま写す。CON-03 の `actor` は `type`・`id` だけを定義し追加の項目を禁じていないので、`principal_type` を追加の項目として置く（CON-03 への申し送り HO12-AG-03）。
+    - `subject` 自体が `ai_agent` の場合（自律動作）の写像は CON-02 のとおり null（未決）のままで、AD-02 で拒否する [D]。
+    - CON-02 `x-subject-type-map` の rules は「現在の actor は context 側（CON-03）」と書くが、CON-03 の欄は `subject.properties.actor` である（report C-2）[D]。本契約は CON-03 の欄に従う。CON-02 の文言の訂正は HO12-AG-02。
+
+    PDP 要求の例（会議室の代理予約。`x-pdp-request-example`）は info.x-pdp-request-example に置いた。
+
+    ## 6. prompt injection の封じ込め（契約上の担保）
+
+    ADR-017 §2.6 の 7 統制のうち、本契約が要求・応答の形で担保するものを示す [D]。モデルの頑健性には依存しない（ATK-16、attacker-model §3.16）[D]。
+
+    | 統制 | 本契約での担保 | 負例 |
+    |---|---|---|
+    | D17-31 タスク単位の委任縮小 | 全権の scope と scope の省略を拒否、resource 必須、絶対期限の上限（AG03〜AG05） | AGN-01〜AGN-03 |
+    | D17-32 承認 grant | 操作内容は AS の画面で利用者が確認し、引数ハッシュで束縛、一回限り（§2.3、AD-07） | AGN-17〜AGN-20、AGN-22 |
+    | D17-33 外部送信先の allowlist | AD-09。AS は allowlist 外の宛先への承認要求も拒否する（AG12） | AGN-27 |
+    | D17-34 token の素通し禁止 | AD-01・AD-11、tool サーバーは外部 AT を受けない | AGN-23、AGN-24 |
+    | D17-35 tool 側 PEP の独立判定 | AD-10（自己申告・annotation を使わない）、tid の照合（ED-2・AD-06） | AGN-16、AGN-21 |
+    | D17-36 量の上限 | 本契約の範囲外（値 TBD、集計の位置は §9 HO12-AG-09） | — |
+    | D17-37 停止 | §2.4。ED-4 の R10 | AGN-26 |
+
+    - 注入された指示で、エージェントが利用者の権限外の資源（他人の予約、他テナントの会議室）を tool の引数に入れても、PDP の R 段は `subject`＝利用者で評価し、テナント照合は L0 で行うので、拒否と不存在は同じ応答になる（AGN-25）[D]。委任権限の内側での不正操作は予防できない残余で、ADR-017 RR17-01 のとおり事業責任者の受容に回す [D]。
+
+    ## 7. 誠実性
+
+    本契約は AI エージェント（Claude）が v1.2 の改訂として、ADR-017・ARC-04 §8・ARC-05・CON-02〜CON-06・CON-14・CON-16・INT-02 と、13_integration-trial/room-booking/report.md（AI による模擬連携検証の記録で、実在の開発チームの検証ではない）を読んで起草した [D]。新たな外部原典は取得していない。規範の記述（RFC 8693・8707・9126・9396・7636・7009 の強度）は ADR-017・CON-05 の脚注と調査ノートの照合結果に依る [D]。作成者以外による独立レビュー・人による照合は未実施で、負例は 1 件も実行していない（CONVENTIONS §8）[D]。機械検証は、改訂者が 2026-10-15 に `npx --yes @redocly/cli@latest lint`（2.64.0、recommended 規則、設定ファイルなし）でエラー 0・警告 2（info.x-lint-notes の 2 件）を確かめ、info.x-pdp-request-example の subject・action・resource が CON-03 の Subject・Action・Resource に、AgentToolDeclaration の例が同スキーマに適合することを jsonschema 4.26.0（Draft 2020-12）で確かめた [M]。生データは改訂者の一時作業領域にだけ置いた。CTO/CISO の決裁を経ていない [D]。
+
+    ## 8. v1.2 の変更（新設）と解消する詰まり
+
+    | 区分 | 変更 | 解消する詰まり（report） |
+    |---|---|---|
+    | 追加 | v1.2: 本契約を新設（PAR・authorize・token・revoke・委任の一覧と取消・承認 grant の消費） | C-2 の (2)（委任の付与・範囲・期限・承認・取消の契約がない） |
+    | 追加 | v1.2: §5 の actor の型の暫定写像と AD-08 | C-2 の (1)（actor.type を書けない）。CON-02 の「context 側」との食い違い |
+    | 追加 | v1.2: §2.2 の受け取る token の表と AD-01 | L-13（外部 AT か K3 か） |
+    | 追加 | v1.2: ED-1〜ED-4（edge 初回 exchange の代理拡張） | C-2 の前提（CON-06 examples[2] の `act` を誰がどう付けるか） |
+    | 追加 | v1.2: AD-02・AD-03 の拒否の監査理由を `deny_unmapped_principal`（仮）として CON-08 に申し送り（v1.2 の同期で CON-08 版 0.4.0 が `no_decision_cause`=`subject_unmapped`、`reason_code`=`deny_subject_unmapped` に 1 つに決めた。以後この名前を使う） | L-4（写像が未決のため PDP を呼ばない場合の `no_decision_cause` がない） |
+
+    ## 9. 他文書への申し送り（v1.2）
+
+    並行作業の約束により、本契約以外のファイルは編集していない [D]。info.x-handoff-v1.2 に一覧化した。v1.2 の同期（2026-10-15）での宛先の反映状況は info.x-handoff-v1.2-sync に記した [D]。
+
+    ## 10. ADR への論点（v1.2 で判明した論点）
+
+    info.x-v1.2-design-issues に一覧化した。宛先は ADR-017（一部 ADR-023・ADR-011）で、本契約からは ADR を編集していない [D]。v1.2 の同期で ADR-017 版 0.2 §8A（V12-17-1〜V12-17-7）、ADR-023 版 0.3 §8A（V12-23-1）、ADR-021 版 0.2 §8A（V12-21-2）に追記した（決定は変えていない）[D]。
+
+    ## 参考文献
+
+    本契約は新たな外部原典を引かない。規範の根拠は 05_adr/ADR-017-non-human-ai-agent-identity.md の参考文献（RFC 8693、RFC 8707、RFC 9396、RFC 9470、RFC 9728、RFC 9700、OpenID CIBA、RFC 10027）と 11_contracts/token-exchange.openapi.yaml の参考文献（RFC 8693、RFC 8707、RFC 6749）に依る。RFC 9126・RFC 7636・RFC 7009・RFC 8785 は本契約の改訂者が原典を照合しておらず、未確認として扱い、結論の根拠にしていない（存在と用途の参照にとどめる）。
+
+    ## 改版履歴
+
+    | 版 | 日付 | 内容 |
+    |---|---|---|
+    | 0.1.0 | 2026-10-15 | v1.2 で新設（report C-2・L-4・L-13）。全 operation preview。承認 grant は ADR-017 L17-5 の決定まで無効 |
+    | 0.1.1 | 2026-10-15 | v1.2 の同期。文書ID CON-18・DL-124 を確定し、AD-12 と §8 の監査の値を CON-08 版 0.4.0 の名前に合わせ、`x-handoff-v1.2-sync` を加えた。operation・スキーマ・例は変えていない |
+  x-pdp-request-example:
+    description: v1.2。AD-08 による PDP 要求（CON-03 evaluation）の例。会議室の代理予約（EP-RSV-01、write、承認不要）。JSON の形は CON-03 Subject・Action・Resource に従う
+    request:
+      subject:
+        type: core/user
+        id: mfrggzdfmztwq2lknnwg23tpob
+        properties:
+          tid: ozxw4zltnfzgk3dfnzqxi2lpny
+          principal_type: human
+          actor:
+            type: core/workload
+            id: gxy2qrzzqwzzbjn74jrotdu6vv
+            principal_type: ai_agent
+      action:
+        name: book
+      resource:
+        type: rsv/room
+        id: k4mz7qx2wd3ra5np6tc2hvy7be
+        properties:
+          tid: ozxw4zltnfzgk3dfnzqxi2lpny
+      context:
+        x-authz-profile:
+          profile_version: "1.0"
+          consistency:
+            mode: fully_consistent
+  x-lint-notes:
+    - rule: info-license
+      result: warning（1 件）
+      reason: CON-05 と同じ。社内の連携契約であり、license は DL-69 で契約群一括で決める
+    - rule: no-unused-components
+      result: warning（1 件）
+      reason: AgentToolDeclaration は entry point 台帳（依存サービス側の宣言）の形で、本契約の operation からは参照しない。台帳の正本の置き場所（CON-04 の permission catalog）が決まるまで本契約に置く（§9 HO12-AG-05）
+  x-open-issues:
+    - id: ADR-017 K17-1
+      text: 自律動作を許す範囲。本契約は自律動作を扱わず、AD-02 で拒否する。決まれば自律用 client の取得経路（client_credentials、CON-14 C8）と subject の写像を加える
+    - id: ADR-017 L17-2
+      text: +AGT の read-sensitive 要求への Txn-Token の発行と tctx の起点エージェントの欄。本契約は ED-3 で write 以上だけを必須にした
+    - id: ADR-017 L17-3
+      text: エージェント主体ごとの上限の G 段第 7 規則。本契約は §4.2 の表の暫定（発行時と AD-05）で代えた
+    - id: ADR-017 L17-5
+      text: authorization_details の受付開始。決まるまで承認の要求を AG10 で拒否し、承認を要する tool 呼出しは AD-07 で拒否する
+    - id: actor の型（ARC-05 §16 の未決 7、ADR-017）
+      text: §5 の暫定（core/workload＋principal_type）を、独立の core 型にするか属性で確定するか。所有者 CTO（ADR-017・DL-75 の所有者）、期限 DEC-8 前
+    - id: args_hash の正規化
+      text: RFC 8785（JCS）を案とする。原典の照合と、tool 目録の approval_bound_args の型の制約（浮動小数・Unicode 正規化）を GA 前に決める。所有者 契約チーム、期限 G3
+    - id: 委任の管理 API の呼出し元認証
+      text: /delegation-grants を呼ぶ第一者 BFF の token の発行経路と scope 名（本契約は asManagementToken とだけ書いた）。CON-14 の C1 の metadata と合わせて決める。所有者 CTO、期限 G3
+    - id: 寿命と上限の値
+      text: 委任 grant の絶対寿命、代理 AT の寿命、承認 grant の寿命、承認要求の回数上限（D17-24）。所有者 CTO＋CISO（DL-20）、期限 G3〜G4
+    - id: 帯域外承認
+      text: CIBA 型は RFC 10027 のリスク評価（DL-52）と TC-017-10 まで無効。本契約は在席時だけを定めた
+  x-reason-codes:
+    as:
+      description: 委任・承認の要求（/par・/authorize・/token）の理由コード。応答は RFC 6749 §5.2（/authorize は redirect の error）の error だけを返し、理由コードは AS の台帳にだけ記録する（CON-05 の R・T と同じ）[D]
+      AG01: { error: invalid_client, http: 401, meaning: client 認証の失敗、または提示証明書が登録と不一致 }
+      AG02: { error: unauthorized_client, http: 400, meaning: 要求 client が委任用 client（C8d）でない、または委任用 client が client_credentials など許されない grant を要求（ADR-017 D17-09） }
+      AG03: { error: invalid_scope, http: 400, meaning: scope の省略・空・全権を表す値（`*` など）・tool 目録にない値 }
+      AG04: { error: invalid_target, http: 400, meaning: PAR で resource がない、token 要求で resource が 1 つでない、または委任 grant に含まれない resource }
+      AG05: { error: invalid_request, http: 400, meaning: delegation_lifetime が上限を超える、または形式違反（丸めずに拒否） }
+      AG06: { error: invalid_scope, http: 400, meaning: 要求 scope がエージェント主体の tool allowlist・操作階層の上限・自律度区分を超える（D17-16 の 3） }
+      AG07: { error: access_denied, http: 302, meaning: 利用者のテナントに当該 client のエージェント主体が登録されていない・停止中、または利用者が同意しなかった（D17-07） }
+      AG08: { error: invalid_grant, http: 400, meaning: code の再使用・期限切れ、PKCE の検証失敗、code を得た client と token 要求の client（証明書）が異なる }
+      AG09: { error: invalid_grant, http: 400, meaning: refresh token による更新が委任 grant の絶対期限を超える、または委任 grant が失効済み }
+      AG10: { error: invalid_request, http: 400, meaning: authorization_details を含む要求（ADR-017 L17-5 の決定まで無効） }
+      AG11: { error: invalid_authorization_details, http: 400, meaning: （L17-5 の決定後）未知の type、型定義に合わない要素、委任 grant が覆わない tool の承認要求 }
+      AG12: { error: invalid_authorization_details, http: 400, meaning: （L17-5 の決定後）+XT の宛先がテナントの送信先 allowlist の外（D17-33） }
+      AG13: { error: access_denied, http: 302, meaning: 操作階層・修飾子が求める step-up を利用者が完了しなかった }
+      AG14: { error: invalid_request, http: 400, meaning: PKCE の code_challenge_method が S256 でない、または code_challenge がない }
+    approval:
+      description: 承認 grant の消費（consumeApprovalGrant）の理由コード。応答は RFC 9457 の Problem で code だけを返す [D]
+      AP01: { code: unauthenticated, http: 401, meaning: mTLS の SVID が無効、または承認 grant の消費を許された tool サーバーとして登録されていない }
+      AP02: { code: not_found, http: 404, meaning: 承認 grant 参照が存在しない・期限切れ }
+      AP03: { code: approval_mismatch, http: 403, meaning: tool・資源・action・args_hash のいずれかが承認記録と一致しない（TC-017-03） }
+      AP04: { code: approval_mismatch, http: 403, meaning: sub・actor（エージェント主体）・tid が承認記録と一致しない（TC-017-04） }
+      AP05: { code: already_consumed, http: 409, meaning: 消費済みの承認 grant（TC-017-04 の replay） }
+      AP06: { code: approval_mismatch, http: 403, meaning: 承認を発行した tool サーバー（resource）と消費を要求した tool サーバーが異なる }
+      AP07: { code: unavailable, http: 503, meaning: 承認記録の状態ストアに届かない。呼出し側は承認要の呼出しを拒否する（D17-25） }
+  x-negative-examples:
+    description: v1.2。本契約の負例。期待結果はすべて拒否（または記載の結果）と理由コード付きの記録。INT-02 P-08 の NP08-10〜NP08-21 と対応し、TC-ID は 12_poc（DL-22）、ベクタ化は CON-11（§9 HO12-AG-10）で行う。2026-10-15 時点で未実施
+    items:
+      - { ref: AGN-01, op: pushAuthorizationRequest, case: "scope の省略、または全権を表す値（*）", expect: "400 invalid_scope / AG03" }
+      - { ref: AGN-02, op: pushAuthorizationRequest, case: resource の欠落, expect: "400 invalid_target / AG04" }
+      - { ref: AGN-03, op: pushAuthorizationRequest, case: delegation_lifetime が上限超, expect: "400 invalid_request / AG05（丸めて発行した件数 0）" }
+      - { ref: AGN-04, op: pushAuthorizationRequest, case: "自律用 client（C8、client_credentials のみ）が委任を要求", expect: "400 unauthorized_client / AG02" }
+      - { ref: AGN-05, op: pushAuthorizationRequest, case: "エージェント主体の tool allowlist にない tool、または操作階層の上限を超える tool を scope に含める", expect: "400 invalid_scope / AG06" }
+      - { ref: AGN-06, op: authorizeAgentDelegation, case: "利用者のテナントに当該 client のエージェント主体が登録されていない（他テナントの主体の流用）", expect: "302 error=access_denied / AG07" }
+      - { ref: AGN-07, op: requestAgentToken, case: "resource を 2 つ指定、または委任 grant にない resource を指定", expect: "400 invalid_target / AG04" }
+      - { ref: AGN-08, op: requestAgentToken, case: "別の client（証明書）で code を交換、または code_verifier の不一致", expect: "400 invalid_grant / AG08" }
+      - { ref: AGN-09, op: requestAgentToken, case: refresh token で委任 grant の絶対期限を超えて更新, expect: "400 invalid_grant / AG09" }
+      - { ref: AGN-10, op: requestAgentToken, case: "委任用 client が client_credentials grant を要求（sub＝エージェントの token の取得。TC-017-05）", expect: "400 unauthorized_client / AG02（発行 0 件）" }
+      - { ref: AGN-11, op: pushAuthorizationRequest, case: "L17-5 の決定前に authorization_details を含む PAR", expect: "400 invalid_request / AG10" }
+      - { ref: AGN-12, op: tool 側 PEP, case: "act.ptype=ai_agent の K3 を、agent_delegation を宣言していない entry point に提示", expect: "拒否（PDP 呼出し 0、CON-16 §2.7 の写像）/ AD-03" }
+      - { ref: AGN-13, op: tool 側 PEP, case: "act.ptype=ai_agent の K3 で scope がない、または tool_scope を含まない", expect: "403 insufficient_scope（PDP 呼出し 0）/ AD-05" }
+      - { ref: AGN-14, op: tool 側 PEP, case: "sub の ptype が ai_agent の K3（自律動作）", expect: "拒否（PDP 呼出し 0）/ AD-02" }
+      - { ref: AGN-15, op: exchangeToken（CON-05）, case: "エージェントがさらに別のエージェントへ再委任し、再委任の上限を超える交換", expect: "400 invalid_request / CON-05 R08（TC-017-06）" }
+      - { ref: AGN-16, op: tool 側 PEP, case: "act.ptype=ai_agent の K3 の tid と K5 の tctx.tid が異なる", expect: "拒否（PDP 呼出し 0、l0_mismatch）/ AD-06（INT-02 NP08-7 と同じ）" }
+      - { ref: AGN-17, op: tool 側 PEP, case: "承認要の tool を Agent-Approval なしで呼ぶ（エージェント UI での確認だけ。TC-017-02）", expect: "403 Problem approval_required（業務処理 0）/ AD-07" }
+      - { ref: AGN-18, op: consumeApprovalGrant, case: "承認後に引数（対象・金額・宛先）を改変（TC-017-03）", expect: "403 approval_mismatch / AP03。tool は拒否" }
+      - { ref: AGN-19, op: consumeApprovalGrant, case: "消費済みの承認 grant の再提示（TC-017-04）", expect: "409 already_consumed / AP05。tool は拒否" }
+      - { ref: AGN-20, op: consumeApprovalGrant, case: "他のエージェント主体に発行された承認 grant を提示（TC-017-04）", expect: "403 approval_mismatch / AP04。tool は拒否" }
+      - { ref: AGN-21, op: tool 側 PEP, case: "要求本文に approved=true、独自ヘッダ X-Agent-Approved、tool annotation（readOnlyHint）を入れて承認・判定を省かせる", expect: "判定は変わらない（承認要なら 403 approval_required、それ以外は PDP の結果どおり）/ AD-10" }
+      - { ref: AGN-22, op: consumeApprovalGrant, case: 承認記録の状態ストアに届かない, expect: "503 unavailable / AP07。tool は承認要の呼出しを拒否（grace 0 件。D17-25）" }
+      - { ref: AGN-23, op: tool 側 PEP, case: "エージェントが外部 AT を tool サーバーに直接提示（edge を通らない）", expect: "401（CON-16 §1.1）/ AD-01" }
+      - { ref: AGN-24, op: 下流 API, case: "tool サーバーが受け取った K3 を下流へ素通し", expect: "下流が aud 不一致で拒否（INT-02 NP08-1・NP08-2）/ AD-11" }
+      - { ref: AGN-25, op: tool 側 PEP, case: "注入された指示で、利用者の権限外の資源（他人の予約・他テナントの会議室）を引数に入れる", expect: "拒否。拒否と不存在で応答が同一（R 段は subject＝利用者、テナントは L0）" }
+      - { ref: AGN-26, op: exchangeToken（CON-05）, case: "利用者が委任を取り消した後、またはエージェント主体の停止後の交換", expect: "400 invalid_request / CON-05 R10。取消から拒否までの時間を記録（TC-017-07・TC-017-13）" }
+      - { ref: AGN-27, op: pushAuthorizationRequest / tool 側 PEP, case: "+XT の tool で送信先 allowlist の外を宛先にする", expect: "（L17-5 の決定後）PAR は 400 invalid_authorization_details / AG12。承認 grant があっても tool は拒否 / AD-09" }
+      - { ref: AGN-28, op: revokeDelegationGrant, case: "他の利用者の委任 grant の取消・閲覧", expect: "404（存在を示さない）" }
+  x-handoff-v1.2:
+    description: 他文書への申し送り（v1.2）。本契約以外は編集していない
+    items:
+      - id: HO12-AG-01
+        to: 11_contracts/README.md（CON-00）、traceability/deliverables.md
+        content: 本契約を契約一覧・早見表（「AI エージェントに代理させる → 本ファイル、Prism（承認の消費は自前スタブ）」）・ファイル構成に登録し、文書ID（仮番 CON-18）と DL（仮番 DL-124）を確定する。CON-17・DL-123 は同じ v1.2 で新設の external-grant.openapi.yaml が仮番として使っている。SHA-256 を §2.1 に載せ、§2.3 の検査結果に本契約の lint を加える
+      - id: HO12-AG-02
+        to: 11_contracts/schemas/common.schema.json（CON-02）x-subject-type-map
+        content: (a) rules の「現在の actor は context 側（CON-03）」を「現在の actor は subject.properties.actor（CON-03）」に改める。(b) actor の写像（本契約 §5）を表として加えるか、本契約 §5 を正本として参照する。subject としての ai_agent は null のまま
+      - id: HO12-AG-03
+        to: 11_contracts/authorization-api.openapi.yaml（CON-03）SubjectProperties.actor
+        content: actor に principal_type（CON-06 principalType の値）を任意の項目として明示し、description に「委任時の actor の type は CON-18 §5（暫定）で写す。actor の型は R 段の relation に使わない」を加える。evaluations の例に代理予約の例（本契約 x-pdp-request-example）を加える
+      - id: HO12-AG-04
+        to: 11_contracts/token-exchange.openapi.yaml（CON-05）/token の (a) edge の最初の exchange
+        content: 「出力は act なし」に、本契約 ED-1（委任用 client に発行された外部 AT なら act＝エージェント主体を AS の委任 grant 台帳から付ける）と ED-3（scope 必須）・ED-4（R10 の対象に委任 grant とエージェント主体の停止を含める）を例外として加え、正例 edgeFirstAgent と負例 AGN-15・AGN-26 を載せる
+      - id: HO12-AG-05
+        to: 11_contracts/client-registration.openapi.yaml（CON-14）§1・§3
+        content: >-
+          (a) 範囲外の「AI エージェントの委任 grant」を本契約への参照に改める。(b) 種別にエージェントの委任用 client（仮称 C8d: authorization_code＋PKCE S256、PAR 必須、private_key_jwt か tls_client_auth、tls_client_certificate_bound_access_tokens: true、redirect_uris は https のみ、ClientMetadata にエージェント定義の参照）を加え、既存の C8（自身の資格情報）を自律用と明記する。(c) エージェント主体（テナントごと）の登録手段（ADR-017 D17-39 の必須項目: 主・副所有者、用途、自律度区分、tool サーバー、テナント、有効期限）を §4A に倣って preview で置くか、DL-48 の別契約にする
+      - id: HO12-AG-06
+        to: 11_contracts/schemas/access-token-claims.schema.json（CON-06）
+        content: (a) internalAccessTokenClaims の examples[2] の $comment に「edge 初回 exchange が CON-18 ED-1 で act を付ける」を加える。(b) act.ptype=ai_agent の K3 では scope を必須にする条件（CON-18 ED-3）を if/then で表すか、x-open-issues に置く。(c) report L-5（Txn-Token が主体種別を持たない）に対し、consumer の再 Check で subject.type を決める手段（受付記録に subject_type を残す等）を CON-05 と合わせて決める
+      - id: HO12-AG-07
+        to: 11_contracts/integration-essentials.md（CON-16）§1.5・§2.5・§5 U-1・U-3
+        content: >-
+          (a) §2.5 の写像表の ai_agent 行に「委任の actor は CON-18 §5 の暫定写像で書き、PDP に進める。sub 自体が ai_agent の場合だけ拒否」を加える。(b) U-3（K3 の scope を判定に使わない）に、act.ptype=ai_agent の要求は AD-05 で scope を検査する例外を加える。(c) ST-1 の鋳造に act={sub, ptype: ai_agent} と scope の正例・負例を加える
+      - id: HO12-AG-08
+        to: 11_contracts/schemas/audit-event.schema.json（CON-08）
+        content: (a) E2 にエージェント関連の欄（agent_principal、delegation_mode（delegated／autonomous）、tool_id、approval_id）を加える（ADR-017 D17-47）。(b) no_decision_cause に、写像が未決または宣言のない主体のため PDP を呼ばない場合の値（仮 unmapped_principal。report L-4）を加える。(c) examples の can_update・can_submit を動詞の permission に改める（report L-7。本契約の担当外だが同時に直すと費用が小さい）
+      - id: HO12-AG-09
+        to: 04_architecture/workload-identity-delegation.md（ARC-04 §8.2 AG-7）、DL-20
+        content: エージェント主体ごとの量の上限（D17-36）の集計位置（tool 側 PEP の単独集計では主体横断の上限にならない）と値を決める。本契約では担保していない
+      - id: HO12-AG-10
+        to: 11_contracts/mock-contract-test-kit.md（CON-11）と kit/negative-vectors
+        content: AGN-01〜AGN-28 を CV（CV-058 以降の空き番号）として払い出し、ST-1（内部 issuer）・ST-4（STS）のスタブに act.ptype=ai_agent の K3 の鋳造、承認 grant の消費のスタブ（ST-9 案）を加える。汎用モック（Prism）は本契約の承認の消費の結果を要求に合わせないので、echo proxy の書換え規則か自前スタブで試験する
+      - id: HO12-AG-11
+        to: research/standards-status.md
+        content: RFC 9126・RFC 9396・RFC 7636・RFC 7009・RFC 8785 を SS 番号付きで登録し、原典照合の記録を残す（本契約では未照合と明記した）
+      - id: HO12-AG-12
+        to: 10_integration/integration-patterns.md（INT-02）§3.7.2・§9
+        content: §3.7.2 の ai_agent 行に委任の actor の暫定写像（本契約 §5）を注記する（P-08 は v1.2 で本契約に合わせた）
+      - id: HO12-AG-13
+        to: 13_integration-trial/room-booking（再試験時）
+        content: v1.1 の記録は改めない。再試験では F4 を本契約 §2.1・AD-01〜AD-12 で実装し、AGN-12〜AGN-17・AGN-21・AGN-23・AGN-25 をドメイン試験に加える
+  x-handoff-v1.2-sync:
+    description: v1.2 の同期（2026-10-15、AI エージェント。人による照合は未実施）での x-handoff-v1.2 の宛先の反映状況
+    items:
+      - { id: HO12-AG-01, status: 済, where: "CON-00 版 0.12（§2.1・構成・早見表）、traceability/deliverables.md 版 0.8（DL-124）" }
+      - { id: HO12-AG-02, status: 済, where: "CON-02 版 0.3.1 x-subject-type-map（rules の訂正、ai_agent 行の注記、copies）" }
+      - { id: HO12-AG-03, status: 済, where: "CON-03 版 0.4.0（SubjectProperties.actor.principal_type、説明、要求例 agentDelegatedWrite）" }
+      - { id: HO12-AG-04, status: 済, where: "CON-05 版 0.3.0（/token の説明 (a) の例外、例 edgeFirstAgent、負例 AGN-15・AGN-26・X74-N15）" }
+      - { id: HO12-AG-05, status: 一部済, where: "CON-14 版 0.6.0（(a) 範囲外の参照、(b) C8d と RulesC8d）。(c) エージェント主体の登録手段は CON-14 x-open-issues の未決" }
+      - { id: HO12-AG-06, status: 一部済, where: "CON-06 版 0.3.0（(a) examples[2] の説明、(b) act.ptype=ai_agent で scope 必須）。(c) は CON-05・CON-06 の x-open-issues と ADR-026 V12-26-4 の未決" }
+      - { id: HO12-AG-07, status: 済, where: "CON-16 版 0.3（§2.5 の actor 行、U-1・U-3、ST-1 の鋳造。v1.2 の改訂）" }
+      - { id: HO12-AG-08, status: 済, where: "CON-08 版 0.4.0（agent_principal・delegation_mode・tool_id・approval_id、subject_unmapped、examples の動詞化）" }
+      - { id: HO12-AG-09, status: 未反映（範囲外）, where: "04_architecture・DL-20 は同期の範囲外。ADR-017 V12-17-7 に論点として記録" }
+      - { id: HO12-AG-10, status: 一部済, where: "CV-062（AGN-12〜AGN-14・AGN-16〜AGN-23・AGN-25）と CON-16 ST-9 は v1.2 の改訂で済。残りの AGN と承認の消費のスタブは DL-120 の受入れ (10)(13)" }
+      - { id: HO12-AG-11, status: 未反映（範囲外）, where: "research/standards-status.md は同期の範囲外" }
+      - { id: HO12-AG-12, status: 済, where: "INT-02 版 0.10 §3.7.2 の ai_agent 行" }
+      - { id: HO12-AG-13, status: 対象外, where: "13_integration-trial の記録は改めない（再試験で扱う）" }
+  x-v1.2-design-issues:
+    description: v1.2 で判明した論点（設計の穴）。本契約は ADR の決定を変えずに暫定を置いた。ADR-017 の「v1.2 で判明した論点」として追記することを申し送る（宛先の ADR は編集していない）
+    items:
+      - id: V12-AG-1
+        to: ADR-017 D17-13・D17-15、ARC-04 §8.2
+        issue: ADR-017・ARC-04 §8.2 はエージェントが tool サーバーへ直接 token を提示する図だが、ADR-005 D1-4・ADR-023 D23-10 では外部 opaque token は edge だけが検証する。依存サービスが tool サーバーの場合、tool サーバーが受け取るのは K3 である（本契約 §2.2）。edge を通らない tool サーバー（単独の RS として公開する MCP server）の位置付けを決める必要がある
+      - id: V12-AG-2
+        to: ADR-017 D17-21・D17-25、ADR-023 D23-10
+        issue: 承認 grant の一回限りの消費を AS の状態ストアで行う（D17-21）と、tool 側 PEP が要求経路で AS を呼ぶことになり、D23-10 の 1 と食い違う。選択肢は (a) 承認要の呼出しに限り D23-10 の例外とする（本契約の暫定）、(b) 承認記録を tool サーバー宛ての署名付き形式で渡し、消費（jti の記録）を tool サーバー自身の状態ストアで行う、(c) edge が消費する
+      - id: V12-AG-3
+        to: ADR-017 D17-21、L17-5
+        issue: D17-21 は承認 grant を cnf でエージェントの鍵に束縛するとするが、tool サーバーは edge の後ろにありエージェントの鍵を見られない。本契約は承認記録に発行先のエージェント主体を記録し、K3 の act.sub と照合して代えた。あわせて、操作内容を token の claim に載せず AS の記録に置く形は、L17-5 の (a)(b) と別の選択肢 (c) として検討に値する
+      - id: V12-AG-4
+        to: ADR-017 D17-07 (b)
+        issue: tid 一致検査の 3 者のうち「提示された SVID の主体が登録されたテナント」は、edge の後ろの tool サーバーでは検査できない。本契約は edge で検査する（ED-2）とした。D17-07 (b) の検査位置の記述を改める必要がある
+      - id: V12-AG-5
+        to: ADR-017 D17-16、L17-3
+        issue: 条件 3（エージェント主体ごとの上限）は L17-3 が決まるまで実行時に評価する位置がない。本契約は発行時の絞込みと AD-05 で代え、上限を下げる操作で委任 grant を失効させるとした。上限の変更から反映までの時間が委任 grant の失効の反映時間に依存する
+      - id: V12-AG-6
+        to: ADR-017 D17-50、ARC-05 §16 の未決 7、ADR-021
+        issue: 委任の actor としての ai_agent に AuthZEN の型が要る。本契約は core/workload＋principal_type＝ai_agent を暫定にした（§5）。独立の core 型にするなら、本契約の破壊的変更になる
+paths:
+  /par:
+    post:
+      operationId: pushAuthorizationRequest
+      tags: [agent-delegation]
+      summary: 委任または承認の要求を AS に送る（RFC 9126 PAR）
+      x-freeze-class: preview
+      x-requirements: [R-029, R-209, G-102]
+      description: |
+        v1.2。エージェントの委任用 client が、委任の要求（tool・resource・期限）または承認の要求（`authorization_details`）を PAR で AS に送る [D]（ADR-017 D17-21 は承認の要求を PAR で送るとする）。委任用 client には `require_pushed_authorization_requests` を課し、PAR を経ない `/authorize` を受け付けない [D]。
+
+        - 委任の要求: `scope` に tool 目録の tool ID を空白区切りで入れる。全権を表す値・省略は AG03 で拒否する（ADR-017 D17-17）[D]。`resource` に tool サーバーの resource 識別子を 1 つ以上入れる（RFC 8707）[D]。
+        - 承認の要求: 対象の委任 grant の scope に含まれる tool について、`authorization_details` に type `agent_tool_call` の要素をちょうど 1 つ入れる [D]。ADR-017 L17-5 の決定まで AG10 で拒否する [D]。
+        - client 認証は mTLS（第一者 PC-16 はエージェント主体の X.509-SVID、第三者 PC-15 は登録した証明書）か private_key_jwt とし、共有秘密は使わない（ADR-017 D17-44、ADR-009 D09-18）[D]。
+      security:
+        - agentClientMtls: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/DelegationAuthorizationRequest'
+                - $ref: '#/components/schemas/ApprovalAuthorizationRequest'
+            examples:
+              delegateRoomBooking:
+                summary: 正例。会議室の代理予約のための委任（tool 2 つ、期限 2 時間）
+                value:
+                  response_type: code
+                  client_id: mfzgk3dbnrxw2zlsmvzxi2lonr
+                  redirect_uri: https://agent.example.com/oauth/callback
+                  scope: rsv.book rsv.view
+                  resource: https://svc.id-domain.example/s/r7sv2kq4
+                  code_challenge: 7yS2mXk4zHqRbWnC0aV1pLdT9uFeJ3gQ6oIw8rNs5Yc
+                  code_challenge_method: S256
+                  state: k2n7q4w9x3m8
+                  delegation_lifetime: 7200
+                  agent_task_ref: znpazxoyw7qcxcvtjppgoem4nq
+      responses:
+        '201':
+          description: 受付（RFC 9126 の応答）。`request_uri` は一回限りで短命
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushedAuthorizationResponse'
+              examples:
+                accepted:
+                  value:
+                    request_uri: urn:ietf:params:oauth:request_uri:cjtw2w6gs4n7lks6wjkmrxe7b3
+                    expires_in: 60
+        '400':
+          $ref: '#/components/responses/OAuthError400'
+        '401':
+          $ref: '#/components/responses/OAuthError401'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
+  /authorize:
+    get:
+      operationId: authorizeAgentDelegation
+      tags: [agent-delegation]
+      summary: 利用者が AS の画面で委任または承認に同意する（step-up を含む）
+      x-freeze-class: preview
+      description: |
+        v1.2。利用者のブラウザが PAR の `request_uri` で AS の認可画面を開く [D]。AS は利用者を認証し、要求した tool のうち最も高い操作階層・修飾子が求める保証（DL-09 の AAL・フィッシング耐性。+FIN は PR step-up）を満たすまで step-up を求める（ADR-017 D17-22）[D]。
+
+        - 同意画面に、エージェント（定義名・所有者）、tool、resource、期限、承認の要求なら操作内容（対象・宛先・金額）を AS が表示する（ADR-017 D17-38 の既定案）[D]。エージェントの UI での確認は同意に数えない（D17-23）[D]。
+        - 利用者のテナントに要求 client のエージェント主体が登録されていなければ、同意画面を出さずに `access_denied` で返す（AG07。D17-07）[D]。
+        - 応答は redirect_uri への 302 で、`code`・`state`・`iss` を付ける。`iss` は MCP 接続条件（ADR-017 D17-27 の RFC 9207）と同じ扱いにする [D]。
+      security: []
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/OpaqueId'
+        - name: request_uri
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^urn:ietf:params:oauth:request_uri:[A-Za-z0-9_-]{1,64}$'
+      responses:
+        '200':
+          description: 認可画面（ログイン、step-up、同意画面）。同意・拒否の操作の後に 302 で redirect_uri へ戻す
+          content:
+            text/html:
+              schema:
+                type: string
+        '302':
+          description: redirect_uri へ戻す。成功時は `code`・`state`・`iss`、拒否時は `error`（access_denied など）・`state`・`iss`
+          headers:
+            Location:
+              description: redirect_uri に応答パラメータを付けた URL
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: client_id・request_uri が無効（期限切れ・再使用・他 client のもの）。redirect_uri へは戻さず、利用者に AS の画面でエラーを示す（RFC 6749 §4.1.2.1 の扱い。CON-14 §5A と同じ）
+          content:
+            text/html:
+              schema:
+                type: string
+  /token:
+    post:
+      operationId: requestAgentToken
+      tags: [agent-delegation]
+      summary: 代理 token（tool サーバー宛ての外部 AT）または承認 grant を得る
+      x-freeze-class: preview
+      description: |
+        v1.2。エージェントの委任用 client が code（または refresh token）を代理 token に交換する [D]。
+
+        - `resource` はちょうど 1 つで、委任 grant に含まれる tool サーバーであること（AG04。ADR-017 D17-15）[D]。
+        - 発行する外部 AT は opaque で、`aud`＝`resource`、エージェントの証明書に束縛（cnf）、scope ⊆ 委任 grant の scope ∩ エージェント主体の上限（AG06）である [D]。
+        - refresh token は confidential client に限り発行し、委任 grant の絶対期限を超えて更新しない（AG09。ADR-017 D17-43）[D]。refresh token と `resource` で、同じ委任 grant に含まれる別の tool サーバー宛ての AT を得てよい [D]。
+        - 承認の要求で得た code を交換した場合、`access_token` に承認 grant 参照を入れ、`token_type` を `N_A`（access token として使えない）とし、承認した `authorization_details` を返す（L17-5 の決定まで、承認の code は発行されない）[D]。
+        - 委任用 client の client_credentials grant は AG02 で拒否する（ADR-017 D17-09、AGN-10）[D]。
+        - 成功応答には `Cache-Control: no-store` を付ける [D]（CON-05 と同じ）。
+      security:
+        - agentClientMtls: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/AuthorizationCodeTokenRequest'
+                - $ref: '#/components/schemas/RefreshTokenRequest'
+            examples:
+              codeForRoomBooking:
+                summary: 正例。code を会議室予約サービス宛ての代理 token に交換
+                value:
+                  grant_type: authorization_code
+                  code: jlvcpktsyfcbmv35zs7c2qoyo6
+                  code_verifier: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXkdBjftJeZ4CVP
+                  redirect_uri: https://agent.example.com/oauth/callback
+                  resource: https://svc.id-domain.example/s/r7sv2kq4
+      responses:
+        '200':
+          description: 発行成功
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AgentAccessTokenResponse'
+                  - $ref: '#/components/schemas/ApprovalGrantResponse'
+              examples:
+                delegatedToken:
+                  summary: 正例。会議室予約サービス宛ての代理 token（opaque）
+                  value:
+                    access_token: opq_7q3dspmctugmv3qn6t7l5hsusx
+                    token_type: Bearer
+                    expires_in: 300
+                    scope: rsv.book rsv.view
+                    refresh_token: rt_lnbxquat7sdwkxlbmhroa25v66
+                    delegation_expires_at: 1792062000
+        '400':
+          $ref: '#/components/responses/OAuthError400'
+        '401':
+          $ref: '#/components/responses/OAuthError401'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
+  /revoke:
+    post:
+      operationId: revokeAgentToken
+      tags: [agent-delegation]
+      summary: エージェントが委任を終える（RFC 7009）
+      x-freeze-class: preview
+      description: |
+        v1.2。タスクを終えたエージェントは refresh token を送って委任 grant ごと失効させる [D]。access token を送った場合はその token だけを失効させる [D]。失効は ADR-006 の失効状態に `gref` として載り、STS の exchange は R10 で拒否する（ED-4）[D]。
+      security:
+        - agentClientMtls: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevocationRequest'
+            examples:
+              endTask:
+                value:
+                  token: rt_lnbxquat7sdwkxlbmhroa25v66
+                  token_type_hint: refresh_token
+      responses:
+        '200':
+          description: 受付（未知の token でも 200 を返す）
+        '400':
+          $ref: '#/components/responses/OAuthError400'
+        '401':
+          $ref: '#/components/responses/OAuthError401'
+  /delegation-grants:
+    get:
+      operationId: listDelegationGrants
+      tags: [delegation-management]
+      summary: 利用者が自分の委任を一覧する
+      x-freeze-class: preview
+      description: |
+        v1.2。第一者 BFF が、利用者の session に基づく AS 管理用 token で呼ぶ（呼出し元認証の詳細は x-open-issues）[D]。返すのは token の主体（利用者）が与えた委任だけで、他の利用者の委任は返さない [D]。
+      security:
+        - asManagementToken: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, expired, revoked]
+      responses:
+        '200':
+          description: 委任の一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DelegationGrantList'
+              examples:
+                oneActive:
+                  value:
+                    items:
+                      - grant_id: onsxe5tjmnswg33oonsw45dhoj
+                        agent_principal: gxy2qrzzqwzzbjn74jrotdu6vv
+                        agent_definition_name: 社内アシスタント
+                        client_id: mfzgk3dbnrxw2zlsmvzxi2lonr
+                        tid: ozxw4zltnfzgk3dfnzqxi2lpny
+                        scope: rsv.book rsv.view
+                        resources: [https://svc.id-domain.example/s/r7sv2kq4]
+                        status: active
+                        created_at: 1792054800
+                        expires_at: 1792062000
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable503'
+  /delegation-grants/{grant_id}:
+    parameters:
+      - name: grant_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/OpaqueId'
+    delete:
+      operationId: revokeDelegationGrant
+      tags: [delegation-management]
+      summary: 利用者が委任を取り消す
+      x-freeze-class: preview
+      description: |
+        v1.2。利用者（または第一者 BFF が利用者の操作として）委任 grant を取り消す [D]。取り消した委任から発行された refresh token は無効になり、`gref` は ADR-006 の失効状態に載る [D]。他の利用者の grant_id には 404 を返し、存在を示さない（AGN-28）[D]。
+      security:
+        - asManagementToken: []
+      responses:
+        '204':
+          description: 取消済み（既に失効していても 204）
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable503'
+  /approval-grants/consume:
+    post:
+      operationId: consumeApprovalGrant
+      tags: [approval]
+      summary: tool 側 PEP が承認 grant を照合して一回限りで消費する
+      x-freeze-class: preview（ADR-017 L17-5 の決定まで無効）
+      servers:
+        - url: https://as-approval.{cell}.id-domain.example
+          description: cell 内の承認記録の状態ストア（仮置き。URL は配置スナップショットで配布し凍結しない）。ADR-023 D23-10 との食い違いは x-v1.2-design-issues V12-AG-2
+          variables:
+            cell:
+              default: cell-opaque-code
+      description: |
+        v1.2。tool 側 PEP が `Agent-Approval` ヘッダで受け取った承認 grant 参照と、実際の呼出しから得た値（tool、資源、action、`args_hash`、K3 の `sub`・`act.sub`・`tid`、K5 の `txn`）を送る [D]。AS は承認記録と照合し、すべて一致して未使用なら原子的に消費して 200 を返す（ADR-017 D17-21）[D]。
+
+        - 不一致・消費済み・期限切れは拒否し、理由コードは台帳にだけ記録する（AP02〜AP06）[D]。
+        - 届かない・503 のとき、tool 側 PEP は承認要の呼出しを拒否する（grace なし。AP07、D17-25）[D]。
+        - L17-5 の決定までは承認 grant が発行されないので、本操作は呼ばれない [D]。
+      security:
+        - svidMtls: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalConsumeRequest'
+            examples:
+              consumeForBooking:
+                summary: 例示。目録で承認要と宣言した tool（予約）の承認 grant を消費
+                value:
+                  approval_grant_ref: d5ugjg4oivltah6rqjoxxdnoex
+                  tool_id: rsv.book
+                  resource:
+                    type: rsv/room
+                    id: k4mz7qx2wd3ra5np6tc2hvy7be
+                  action: book
+                  args_hash: zrDRmlTufTK_fEwF96uvV7963seILnFP6lLo4xbSomc
+                  sub: mfrggzdfmztwq2lknnwg23tpob
+                  actor_sub: gxy2qrzzqwzzbjn74jrotdu6vv
+                  tid: ozxw4zltnfzgk3dfnzqxi2lpny
+                  txn: 7q3dspmctugmv3qn6t7l5hsusx
+      responses:
+        '200':
+          description: 照合が一致し消費した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalConsumeResult'
+              examples:
+                consumed:
+                  value:
+                    result: consumed
+                    approval_id: lnbxquat7sdwkxlbmhroa25v66
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '403':
+          $ref: '#/components/responses/Problem403'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '409':
+          $ref: '#/components/responses/Problem409'
+        '503':
+          $ref: '#/components/responses/ProblemUnavailable503'
+servers:
+  - url: https://as.id-domain.example
+    description: AS（外部向け）。ホスト名は仮置き（`<id-domain>` は ADR-021 の名前空間で未確定）。実際の URL は discovery と配置スナップショットで配布し、凍結しない（ADR-022 D-2）
+tags:
+  - name: agent-delegation
+    description: v1.2。委任の要求・同意・代理 token の取得・終了（preview）
+  - name: delegation-management
+    description: v1.2。利用者による委任の一覧と取消（preview）
+  - name: approval
+    description: v1.2。承認 grant の消費（preview。ADR-017 L17-5 の決定まで無効）
+components:
+  securitySchemes:
+    agentClientMtls:
+      type: mutualTLS
+      description: |
+        エージェントの委任用 client の認証。第一者のエージェント（PC-16）はエージェント主体の X.509-SVID による mTLS（tls_client_auth、SAN URI 照合）、第三者（PC-15）は登録した証明書による mTLS か private_key_jwt（ES256 か PS256）[D]（ADR-017 D17-44、CON-14 §3）。発行する token は提示証明書に束縛する。共有秘密は使わない（ADR-009 D09-18）[D]。
+    svidMtls:
+      type: mutualTLS
+      description: tool サーバー（依存サービス）の X.509-SVID による mTLS（CON-05 と同じ）。承認 grant の消費を許すのは、承認を要する tool を tool 目録に登録した tool サーバーだけ（AP01）[D]
+    asManagementToken:
+      type: http
+      scheme: bearer
+      description: 第一者 BFF（CON-14 C1）が利用者の session に基づいて得た AS 管理用の token。発行経路と scope 名は x-open-issues（委任の管理 API の呼出し元認証）[D]
+  headers:
+    CacheControlNoStore:
+      description: no-store（token・request_uri を含む応答）
+      schema:
+        type: string
+        const: no-store
+  responses:
+    OAuthError400:
+      description: 要求の拒否（RFC 6749 §5.2 の形式）。理由コード（info.x-reason-codes.as）は応答に入れず台帳にだけ記録する [D]
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OAuthErrorResponse'
+          examples:
+            invalidScope:
+              summary: AG03・AG06
+              value:
+                error: invalid_scope
+            invalidTarget:
+              summary: AG04
+              value:
+                error: invalid_target
+            invalidRequest:
+              summary: AG05・AG10・AG14
+              value:
+                error: invalid_request
+            unauthorizedClient:
+              summary: AG02
+              value:
+                error: unauthorized_client
+            invalidGrant:
+              summary: AG08・AG09
+              value:
+                error: invalid_grant
+    OAuthError401:
+      description: client 認証の失敗（AG01）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OAuthErrorResponse'
+          examples:
+            invalidClient:
+              value:
+                error: invalid_client
+    Unavailable503:
+      description: AS に届かない・過負荷。エージェントは Retry-After を守って再試行し、未署名の代替経路を作らない（ADR-013 D13-15・D13-23）[D]
+      headers:
+        Retry-After:
+          description: 再試行までの秒数
+          schema:
+            type: integer
+            minimum: 0
+    Problem401:
+      description: 呼出し元の認証の失敗（RFC 9457 Problem）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            unauthenticated:
+              value:
+                type: about:blank
+                status: 401
+                code: unauthenticated
+    Problem403:
+      description: 承認記録との不一致（AP03・AP04・AP06）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            mismatch:
+              value:
+                type: about:blank
+                status: 403
+                code: approval_mismatch
+    Problem404:
+      description: 存在しない・期限切れ・他の利用者のもの（存在を示さない）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            notFound:
+              value:
+                type: about:blank
+                status: 404
+                code: not_found
+    Problem409:
+      description: 消費済みの承認 grant（AP05）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            consumed:
+              value:
+                type: about:blank
+                status: 409
+                code: already_consumed
+    ProblemUnavailable503:
+      description: 届かない・過負荷（AP07 など）。承認の消費なら、呼出し側は承認要の呼出しを拒否する（D17-25）
+      headers:
+        Retry-After:
+          description: 再試行までの秒数
+          schema:
+            type: integer
+            minimum: 0
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            unavailable:
+              value:
+                type: about:blank
+                status: 503
+                code: unavailable
+  schemas:
+    OpaqueId:
+      description: 基盤が払い出す不透明識別子（受信側の形は CON-02 OpaqueId。印字可能 ASCII 1〜64 文字。解析しない）
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[\x21-\x7E]{1,64}$'
+    TenantId:
+      description: テナント識別子（CON-02 TenantId と同じ受信側の形）
+      $ref: '#/components/schemas/OpaqueId'
+    ToolId:
+      description: tool 目録の tool ID（scope の値として使う）。命名規則は tool 目録の契約（§9 HO12-AG-05、CON-04）で確定する。本契約は RFC 6749 の scope-token の文字集合だけを課す
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[\x21\x23-\x5B\x5D-\x7E]+$'
+      not:
+        const: '*'
+    ScopeList:
+      description: 空白区切りの ToolId の列。空・`*`・全権を表す値を含まない（AG03）
+      type: string
+      minLength: 1
+      maxLength: 2048
+      pattern: '^[\x21\x23-\x29\x2B-\x5B\x5D-\x7E]+( [\x21\x23-\x29\x2B-\x5B\x5D-\x7E]+)*$'
+    ResourceIndicator:
+      description: tool サーバーの resource 識別子（RFC 8707。絶対 URI、fragment なし）
+      type: string
+      format: uri
+      pattern: '^https://[^#]+$'
+      maxLength: 512
+    Base64urlSha256:
+      description: SHA-256 の base64url（padding なし、43 文字）
+      type: string
+      pattern: '^[A-Za-z0-9_-]{43}$'
+    NumericDate:
+      type: integer
+      minimum: 0
+    DelegationAuthorizationRequest:
+      type: object
+      description: v1.2。委任の要求（PAR の本文）。authorization_details を含めない
+      required: [response_type, client_id, redirect_uri, scope, resource, code_challenge, code_challenge_method]
+      properties:
+        response_type:
+          type: string
+          const: code
+        client_id:
+          $ref: '#/components/schemas/OpaqueId'
+        redirect_uri:
+          type: string
+          format: uri
+          pattern: '^https://'
+        scope:
+          $ref: '#/components/schemas/ScopeList'
+        resource:
+          description: tool サーバーの resource 識別子。複数の場合は form の同名パラメータを繰り返す
+          oneOf:
+            - $ref: '#/components/schemas/ResourceIndicator'
+            - type: array
+              minItems: 1
+              maxItems: 8
+              items:
+                $ref: '#/components/schemas/ResourceIndicator'
+        code_challenge:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        code_challenge_method:
+          type: string
+          const: S256
+        state:
+          type: string
+          maxLength: 256
+        delegation_lifetime:
+          description: 委任 grant の絶対寿命の希望（秒）。上限（info.x-profile）を超えれば拒否（AG05）。省略時は上限
+          type: integer
+          minimum: 60
+        agent_task_ref:
+          description: エージェント側のタスクの参照（監査の相関用。判定に使わない）
+          $ref: '#/components/schemas/OpaqueId'
+        authorization_details:
+          description: 委任の要求では送らない
+          not: {}
+    AgentToolCallDetail:
+      type: object
+      description: v1.2。承認の要求の操作内容（RFC 9396 の authorization_details の要素。type は agent_tool_call）。L17-5 の決定まで受け付けない
+      required: [type, tool_id, resource, action, args_hash]
+      properties:
+        type:
+          type: string
+          const: agent_tool_call
+        tool_id:
+          $ref: '#/components/schemas/ToolId'
+        resource:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+              minLength: 1
+              maxLength: 128
+            id:
+              type: string
+              minLength: 1
+              maxLength: 256
+        action:
+          type: string
+          minLength: 1
+          maxLength: 128
+        args_hash:
+          $ref: '#/components/schemas/Base64urlSha256'
+        display:
+          description: AS が同意画面に表示する操作内容（宛先・金額・対象）。AS は表示した値から args_hash を再計算して一致を確かめる。エージェントが与えた説明文は表示しない
+          type: object
+          additionalProperties:
+            type: [string, number, integer, boolean]
+    ApprovalAuthorizationRequest:
+      type: object
+      description: v1.2。承認の要求（PAR の本文）。ADR-017 L17-5 の決定まで AG10 で拒否する
+      required: [response_type, client_id, redirect_uri, code_challenge, code_challenge_method, authorization_details, delegation_grant_ref]
+      properties:
+        response_type:
+          type: string
+          const: code
+        client_id:
+          $ref: '#/components/schemas/OpaqueId'
+        redirect_uri:
+          type: string
+          format: uri
+          pattern: '^https://'
+        code_challenge:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+        code_challenge_method:
+          type: string
+          const: S256
+        state:
+          type: string
+          maxLength: 256
+        delegation_grant_ref:
+          description: 承認の対象となる tool を含む委任 grant の参照（委任の token 応答で得た値ではなく、AS が refresh token から引く。エージェントは自分の委任 grant だけを指定できる）
+          $ref: '#/components/schemas/OpaqueId'
+        authorization_details:
+          description: JSON 配列を文字列化した値（RFC 9396）。要素は AgentToolCallDetail をちょうど 1 つ
+          type: string
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            minItems: 1
+            maxItems: 1
+            items:
+              $ref: '#/components/schemas/AgentToolCallDetail'
+    PushedAuthorizationResponse:
+      type: object
+      required: [request_uri, expires_in]
+      properties:
+        request_uri:
+          type: string
+          pattern: '^urn:ietf:params:oauth:request_uri:[A-Za-z0-9_-]{1,64}$'
+        expires_in:
+          type: integer
+          minimum: 1
+    AuthorizationCodeTokenRequest:
+      type: object
+      required: [grant_type, code, code_verifier, redirect_uri, resource]
+      properties:
+        grant_type:
+          type: string
+          const: authorization_code
+        code:
+          type: string
+          minLength: 1
+          maxLength: 256
+        code_verifier:
+          type: string
+          pattern: '^[A-Za-z0-9._~-]{43,128}$'
+        redirect_uri:
+          type: string
+          format: uri
+        resource:
+          description: ちょうど 1 つ（AG04）。承認の code の交換では委任 grant の tool サーバー
+          $ref: '#/components/schemas/ResourceIndicator'
+        scope:
+          description: 省略時は委任 grant の scope のうち resource が提供する tool
+          $ref: '#/components/schemas/ScopeList'
+    RefreshTokenRequest:
+      type: object
+      required: [grant_type, refresh_token, resource]
+      properties:
+        grant_type:
+          type: string
+          const: refresh_token
+        refresh_token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        resource:
+          $ref: '#/components/schemas/ResourceIndicator'
+        scope:
+          $ref: '#/components/schemas/ScopeList'
+    AgentAccessTokenResponse:
+      type: object
+      description: v1.2。代理 token の応答。access_token は opaque（edge だけが検証する）
+      required: [access_token, token_type, expires_in, scope, delegation_expires_at]
+      properties:
+        access_token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        token_type:
+          type: string
+          const: Bearer
+        expires_in:
+          type: integer
+          minimum: 1
+        scope:
+          $ref: '#/components/schemas/ScopeList'
+        refresh_token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        delegation_expires_at:
+          description: 委任 grant の絶対期限（NumericDate）。エージェントはこの時刻以後に更新を試みない
+          $ref: '#/components/schemas/NumericDate'
+    ApprovalGrantResponse:
+      type: object
+      description: v1.2。承認の code の交換結果。access_token は承認 grant 参照で、access token として使えない（token_type=N_A）。L17-5 の決定まで発行しない
+      required: [access_token, token_type, expires_in, authorization_details]
+      properties:
+        access_token:
+          $ref: '#/components/schemas/OpaqueId'
+        token_type:
+          type: string
+          const: N_A
+        expires_in:
+          type: integer
+          minimum: 1
+          maximum: 300
+        authorization_details:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/AgentToolCallDetail'
+    RevocationRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        token_type_hint:
+          type: string
+          enum: [refresh_token, access_token]
+    OAuthErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope, invalid_target, invalid_authorization_details, access_denied]
+        error_description:
+          description: 理由コード・登録内容を推測させる文を入れない（CON-05 §2 の 5 と同じ）
+          type: string
+          maxLength: 256
+    DelegationGrant:
+      type: object
+      required: [grant_id, agent_principal, client_id, tid, scope, resources, status, created_at, expires_at]
+      properties:
+        grant_id:
+          $ref: '#/components/schemas/OpaqueId'
+        agent_principal:
+          $ref: '#/components/schemas/OpaqueId'
+        agent_definition_name:
+          type: string
+          maxLength: 128
+        client_id:
+          $ref: '#/components/schemas/OpaqueId'
+        tid:
+          $ref: '#/components/schemas/TenantId'
+        scope:
+          $ref: '#/components/schemas/ScopeList'
+        resources:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ResourceIndicator'
+        status:
+          type: string
+          enum: [active, expired, revoked]
+        created_at:
+          $ref: '#/components/schemas/NumericDate'
+        expires_at:
+          $ref: '#/components/schemas/NumericDate'
+    DelegationGrantList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegationGrant'
+    ApprovalConsumeRequest:
+      type: object
+      additionalProperties: false
+      required: [approval_grant_ref, tool_id, resource, action, args_hash, sub, actor_sub, tid]
+      properties:
+        approval_grant_ref:
+          $ref: '#/components/schemas/OpaqueId'
+        tool_id:
+          $ref: '#/components/schemas/ToolId'
+        resource:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+              minLength: 1
+              maxLength: 128
+            id:
+              type: string
+              minLength: 1
+              maxLength: 256
+        action:
+          type: string
+          minLength: 1
+          maxLength: 128
+        args_hash:
+          description: tool 側 PEP が実際の呼出しの引数から計算した値（エージェントの申告値を使わない。AD-10）
+          $ref: '#/components/schemas/Base64urlSha256'
+        sub:
+          description: K3 の sub（委任元の利用者）
+          $ref: '#/components/schemas/OpaqueId'
+        actor_sub:
+          description: K3 の最外 act.sub（エージェント主体）
+          $ref: '#/components/schemas/OpaqueId'
+        tid:
+          $ref: '#/components/schemas/TenantId'
+        txn:
+          description: K5 の txn（相関用。判定に使わない）
+          $ref: '#/components/schemas/OpaqueId'
+    ApprovalConsumeResult:
+      type: object
+      required: [result, approval_id]
+      properties:
+        result:
+          type: string
+          const: consumed
+        approval_id:
+          description: 監査に記録する承認 grant の ID（参照そのものではない。AD-12）
+          $ref: '#/components/schemas/OpaqueId'
+    Problem:
+      type: object
+      description: RFC 9457 の Problem（CON-02 Problem の採用範囲。§9 への申し送りは CON-05 HO-02 と同じ扱い）。code だけを返し、理由コード・識別子を含めない
+      required: [type, status, code]
+      properties:
+        type:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+          enum: [unauthenticated, not_found, approval_mismatch, already_consumed, unavailable, approval_required]
+    AgentToolDeclaration:
+      type: object
+      description: |
+        v1.2。entry point 台帳で entry point ごとに宣言する、エージェント経由の呼出しの許可（AD-03）。tool 目録（ADR-017 D17-14）の写しであり、正本は CAM の permission catalog（CON-04 への申し送り。§9 HO12-AG-05 の (c) と合わせて決める）。宣言のない entry point は act.ptype=ai_agent の要求を拒否する
+      additionalProperties: false
+      required: [tool_id, tool_scope, tier, approval]
+      properties:
+        tool_id:
+          $ref: '#/components/schemas/ToolId'
+        tool_scope:
+          description: AD-05 で K3 の scope に含まれることを確かめる値（v0 では tool_id と同じ値）
+          $ref: '#/components/schemas/ToolId'
+        tier:
+          description: 操作階層（CON-02 OperationTier の表記）
+          type: string
+          enum: [read-sensitive, write, privileged/T, privileged/P]
+        modifiers:
+          type: array
+          items:
+            type: string
+            enum: [+FIN, +XT, +SEC, +REG]
+        approval:
+          description: required なら AD-07。+FIN・+XT・privileged は宣言にかかわらず required として扱う
+          type: string
+          enum: [none, required]
+        approval_bound_args:
+          description: 承認に束縛する引数名（args_hash の対象）
+          type: array
+          items:
+            type: string
+      examples:
+        - tool_id: rsv.book
+          tool_scope: rsv.book
+          tier: write
+          approval: none
+          approval_bound_args: [start, end, attendee_count]

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.id-domain.example/kit/negative-vectors/vector.schema.json",
   "title": "CON-11 試験ベクタ（CV-xxx）の統一形式",
-  "$comment": "文書: CON-11（11_contracts/mock-contract-test-kit.md）§6.1 の機械可読版。v1.1（I-11、P-14）で新設した。CV-001〜CV-014 の先行配布（本ディレクトリ）と、各契約の x-negative-examples・x-conformance-vectors の取込み先の形式を 1 つにする。正本は CON-11 §6.1。キット本体（DL-120）の凍結前の先行配布で、DEC-8 までは minor の範囲で項目を追加し得る（既存項目の意味は変えない）。置換子 {{...}} の語彙は kit/README.md §4。作成: AI エージェント（Claude）。人による照合は未実施。",
+  "$comment": "文書: CON-11（11_contracts/mock-contract-test-kit.md）§6.1 の機械可読版。v1.1（I-11、P-14）で新設した。CV-001〜CV-014 の先行配布（本ディレクトリ）と、各契約の x-negative-examples・x-conformance-vectors の取込み先の形式を 1 つにする。正本は CON-11 §6.1。キット本体（DL-120）の凍結前の先行配布で、DEC-8 までは minor の範囲で項目を追加し得る（既存項目の意味は変えない）。置換子 {{...}} の語彙は kit/README.md §4。作成: AI エージェント（Claude）。人による照合は未実施。 v1.2（13_integration-trial/room-booking/report.md M-3・M-4・L-6、C-1・C-2 の案内）: minor の追加だけを行った。mint.signer に TTS 役の鍵（TTS.current・TTS.other_cell）を、stimulus に非同期の配信 deliver を、side_effects に dead_letter_min・notifications_max・tool_executions_max を、inject.target に STUB-LEDGER を加えた。既存項目の意味は変えていない。",
   "type": "object",
   "required": ["id", "title", "source", "roles", "status", "cases", "strength", "since", "deprecated"],
   "additionalProperties": false,
@@ -60,12 +60,22 @@
         "present": { "$ref": "#/$defs/present" },
         "request": { "$ref": "#/$defs/request" },
         "inject": { "$ref": "#/$defs/inject" },
-        "after": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "刺激の後に行う操作（JWKS への鍵の追加など）。" }
+        "after": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "刺激の後に行う操作（JWKS への鍵の追加など）。" },
+        "deliver": { "$ref": "#/$defs/deliver" }
       }
     },
     "action": {
       "type": "object", "required": ["op"], "additionalProperties": true,
       "properties": { "op": { "enum": ["keys.add", "keys.remove", "keys.publish_after", "inject", "revoke", "fixtures", "wait"] } }
+    },
+    "deliver": {
+      "type": "object", "required": ["message"], "additionalProperties": false,
+      "description": "v1.2（M-4、CON-16 §2.10）: 非同期の consumer（queue・job・配信の実行単位）への 1 件の配信。メッセージは参照だけを持つ。内部開始の Txn-Token は TTS 役（ST-2）か MK-02 が受付記録から発行する。",
+      "properties": {
+        "message": { "type": "object", "description": "メッセージの欄（tid・job_run_id・資源 ID・起点の txn など）。値に置換子を使える。" },
+        "acceptance_record": { "type": "object", "description": "受付記録の準備（起点主体・テナント・grant 参照など）。省略時は fixture の既定。" },
+        "internal_txn_token": { "type": "object", "description": "TTS 役が実行時に発行する Txn-Token の claim の差分。" }
+      }
     },
     "mint": {
       "type": "object", "additionalProperties": false,
@@ -73,7 +83,7 @@
       "properties": {
         "base": { "enum": ["access_token", "txn_token", "id_token", "logout_token", "set", "none"] },
         "claimed_issuer": { "enum": ["A", "B", "other", "absent"], "description": "iss に入れる issuer の役。A=本番役、B=sandbox 役、other=どの discovery にもない issuer。" },
-        "signer": { "enum": ["A.current", "A.next_unpublished", "A.unknown_never_published", "B.current", "unsigned", "hmac_with_A_public_key", "fixed_test_key"], "description": "署名に使う鍵。kid は署名鍵の kid（header で上書きできる）。" },
+        "signer": { "enum": ["A.current", "A.next_unpublished", "A.unknown_never_published", "B.current", "unsigned", "hmac_with_A_public_key", "fixed_test_key", "TTS.current", "TTS.other_cell"], "description": "署名に使う鍵。kid は署名鍵の kid（header で上書きできる）。v1.2（M-3）: TTS.current は TTS 役（CON-05 の TTS の検証鍵の組。K3 の issuer と別の鍵族）の現行鍵、TTS.other_cell は別 cell の TTS の鍵。Txn-Token（base=txn_token）の正例は TTS.current で署名する。A.current で署名した Txn-Token は鍵族の取違えの負例である（CV-045c）。" },
         "header": { "type": "object", "description": "JOSE header の上書き（null で削除）。" },
         "claims": { "type": "object", "description": "claim の上書き（null で削除）。値に置換子を使える。" }
       }
@@ -99,7 +109,7 @@
     "inject": {
       "type": "object", "required": ["target", "kind"], "additionalProperties": false,
       "properties": {
-        "target": { "enum": ["MK-01", "MK-02", "MK-03", "MK-04", "MK-05", "MK-06", "MK-07", "MK-08"] },
+        "target": { "enum": ["MK-01", "MK-02", "MK-03", "MK-04", "MK-05", "MK-06", "MK-07", "MK-08", "STUB-LEDGER"], "description": "v1.2: STUB-LEDGER は受付台帳（CON-05 registerAcceptanceRecord）と TTS の鍵配布の自前スタブ。MK-02 の配布後は MK-02 に読み替える。" },
         "kind": { "type": "string", "description": "注入の種類。MK-03 は CON-11 §4.4 の表の行の名前。" },
         "params": { "type": "object" }
       }
@@ -117,6 +127,9 @@
             "pdp_calls_max": { "type": "integer", "minimum": 0 },
             "fetches": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 }, "description": "取得の回数の上限（例: issuer_B.discovery: 0）。" },
             "allow_used_after_deadline": { "type": "integer", "const": 0 },
+            "dead_letter_min": { "type": "integer", "minimum": 0, "description": "v1.2（CON-16 §2.10）: デッドレターへ送った件数の下限。再 Check の拒否・判定不能は黙って捨てない。" },
+            "notifications_max": { "type": "integer", "minimum": 0, "description": "v1.2（INT-02 §3.9）: 送った業務通知の件数の上限。" },
+            "tool_executions_max": { "type": "integer", "minimum": 0, "description": "v1.2（P-08）: エージェントの代理として業務操作・tool を実行した件数の上限。" },
             "write_allow_during_injection": { "type": "integer", "const": 0 }
           }
         },

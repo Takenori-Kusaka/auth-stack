@@ -1,0 +1,179 @@
+{
+  "id": "CV-058",
+  "title": "write 以上の要求で Txn-Token が無い・検証できない",
+  "source": [
+    "13_integration-trial/room-booking/report.md L-6",
+    "CON-16 §1.6・§1.9（v1.2）",
+    "INT-02 §3.2（v1.1 の同期）",
+    "ADR-005 D9-3",
+    "CON-08 corr.txn_absence"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "manifest に tier が write 以上の entry point がある"
+    }
+  ],
+  "status": "conditional",
+  "distinguish_from": [
+    {
+      "id": "CV-045",
+      "how": "CV-045 は Txn-Token が正規に署名されているが内容が access token と食い違う（a）か署名が壊れている（b）か鍵族が違う（c）。本ベクタは Txn-Token そのものが無い（a）、TTS の鍵がどこにもない（c）、種別が違う（b）"
+    },
+    {
+      "id": "CV-010",
+      "how": "CV-010 は Txn-Token を Authorization ヘッダで提示する（受理位置の取違え）。本ベクタは Txn-Token ヘッダが無いか、Txn-Token ヘッダに別種の token がある"
+    }
+  ],
+  "stub_requirements": [
+    "issuer A（本番役）の discovery と JWKS を配る",
+    "TTS 役の JWK Set を issuer A と別の URL で配り、試験から一時的に応答を止められる（CV-058c）",
+    "access token と Txn-Token を自前の鍵で鋳造できる"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-058a",
+      "description": "正規の access token だけを write の entry point に提示し、Txn-Token ヘッダを付けない",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "audit": {
+          "events_min": 1,
+          "fields": [
+            "corr.txn_absence"
+          ],
+          "must_not_contain": [
+            "corr.txn"
+          ]
+        },
+        "notes": "v1.2 の暫定（CON-16 §1.9）: 応答は token 検証失敗と同じ型（401、token_reject 群）にし、どの token のどの検査で落ちたかを区別させない。E2 は decision_source=none・no_decision_cause=token_invalid・reason_code=deny_token、txn_absence=not_presented"
+      }
+    },
+    {
+      "case_id": "CV-058b",
+      "description": "Txn-Token ヘッダに access token（typ=at+jwt）を入れて write の entry point に提示する（種別の取違え。CON-06 NE-15 の PEP 側）",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "access_token": {
+              "claimed_issuer": "A",
+              "signer": "A.current"
+            },
+            "present_access_token_as": "authorization_bearer"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "txn_token_header"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "auth_failure",
+        "same_as_group": "token_reject",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "audit": {
+          "events_min": 1,
+          "fields": [
+            "corr.txn_absence"
+          ]
+        },
+        "notes": "txn_absence=unverified"
+      }
+    },
+    {
+      "case_id": "CV-058c",
+      "description": "SUT が TTS の JWK Set をまだ一度も取得していない状態で、TTS 役の JWK Set の応答を止め、正規の access token と正規の Txn-Token を write の entry point に提示する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "inject",
+            "target": "STUB-LEDGER",
+            "kind": "tts_jwks_unavailable",
+            "note": "TTS 役の JWK Set の取得を 503 にする（スタブの実装上の置き場所は問わない）"
+          },
+          {
+            "op": "fixtures",
+            "access_token": {
+              "claimed_issuer": "A",
+              "signer": "A.current"
+            },
+            "present_access_token_as": "authorization_bearer"
+          }
+        ],
+        "mint": {
+          "base": "txn_token",
+          "claimed_issuer": "A",
+          "signer": "TTS.current"
+        },
+        "present": {
+          "as": "txn_token_header"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "no_decision",
+        "response_profile": "no_decision",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "audit": {
+          "events_min": 1,
+          "fields": [
+            "corr.txn_absence"
+          ]
+        },
+        "notes": "鍵の取得に失敗し前回の値もない場合は 401 ではなく 503（CON-16 §1.9 の JWKS 行を TTS の鍵にも適用）。txn_absence=unverified"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit",
+    "stub_access_log"
+  ],
+  "strength": "D: ADR-005 D9-3（write 以上の txn 必須）、INT-02 §3.2（業務として拒否）。応答の型（401 と token_reject 群）は v1.2 の暫定で、ARC-06 の改版で確定する（CON-16 §他文書への申し送り（v1.2）IE-12）",
+  "notes": [
+    "v1.2 で新設（13_integration-trial/room-booking/report.md L-6）。CON-11 §6.9 に登録"
+  ],
+  "since": "0.3.0（v1.2）",
+  "deprecated": null
+}

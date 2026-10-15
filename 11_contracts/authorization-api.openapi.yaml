@@ -2,7 +2,7 @@ openapi: 3.1.2
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: Authorization API（AuthZEN 1.0 準拠 PEP–PDP 契約）
-  version: 0.3.1
+  version: 0.4.0
   summary: OpenID AuthZEN Authorization API 1.0（Final）の evaluation・evaluations・resource search と、版付き自社 profile（decision_id、model/policy revision、consistency、reason、obligation、txn）を定める PEP–PDP 契約。
   license:
     name: 社内限定（Proprietary, internal use only）
@@ -46,7 +46,7 @@ info:
     binding: HTTPS JSON binding（AuthZEN 1.0 §10.1）
     extensions-carrier: 要求・応答の context に置く名前空間付きキー `x-authz-profile`（キー名は暫定。未決（ADR-021））
   description: |
-    > 文書ID: CON-03 / 版: 0.3.1（提出版 v1.1 と同期） / 状態: draft / 最終更新: 2026-10-15
+    > 文書ID: CON-03 / 版: 0.4.0（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15
     > 対応要求: R-098, R-144, R-205（DL-72 行）、R-142, R-109, R-152, R-204, R-262／G-066, G-072, G-109, G-118, G-120, G-121
     > 依存文書: info.x-depends-on を参照
     > 作成方法: AI エージェント（Claude）が ADR-011 ほかの決定を契約に落として起草した。CTO/CISO の決裁を経ていない（CONVENTIONS §8）[D]。
@@ -54,6 +54,7 @@ info:
     > 模擬パネル: 版 0.2 は、AI エージェントによる模擬パネル（redteam 役）のラウンド1 指摘を反映した。模擬パネルは自己レビューであり、実在の CTO/CISO の決裁ではない（末尾「レビュー記録」）[D]。
     > v1.1 改訂（版 0.3）: AI エージェントによる模擬連携検証（13_integration-trial/report.md。実在の連携チームによる検証ではない）の P-01・P-05・P-20 と改善提案 I-1・I-5 を反映した。変更点は §11、他文書への申し送りは §12 [D]。
     > v1.1 の同期（版 0.3.1）: 他文書の v1.1 改訂が本書に宛てた申し送り（CON-02 HO-I7-1、CON-04 HO-V11-4、CON-11 §14.3 H11-1、INT-02 §9.2 HO11-1・HO11-3・HO11-5、INT-03 §16.4 HO-V11-3・HO-V11-8、CON-08 x-handoff-v1.1 の 4）を反映した。記録は §13 [D]。
+    > v1.2 の同期（版 0.4.0）: 2 回目の模擬連携検証（13_integration-trial/room-booking/report.md。AI による模擬であり、実在の連携チームの検証ではない）を受けた他文書の v1.2 改訂が本書に宛てた申し送り（CON-11 §14.5 H12-1、CON-16 IE-13、CON-18 HO12-AG-03、CON-17 §12 V12-XG-5）を反映した。任意の欄の追加（`SubjectProperties.actor.principal_type`、`ProfileDecision.external_grant_id`）と例・説明の追加だけで、既存の値の意味は変えていないので minor とした（ADR-016 N-8）。記録は §14 [D]。
 
     ## 1. 位置付け
     - 本契約は PEP（依存サービスの SDK または契約適合の自前実装）が cell 内の PDP façade を呼ぶ唯一の認可判定契約である（ADR-011 D5-1・D5-3・D5-4）[D]。engine（OpenFGA・SpiceDB 等）のネイティブ API・ヘッダを依存サービスが呼ぶことは CI で拒否する（ADR-022 D-3-2、G-072）[D]。
@@ -234,6 +235,17 @@ info:
 
     - 互換性: `TenantId` の参照化は値の集合を変えない。例の値の変更は契約の振舞いを変えないが、汎用モックの応答の値が変わるので、例の値を試験の期待値に固定していた連携チームは期待値を替える必要がある [D]。
 
+    ## 14. v1.2 の同期（他文書からの申し送りの反映）
+    v1.2 の各改訂（2 回目の模擬連携検証 13_integration-trial/room-booking/report.md による。AI による模擬であり実在の連携チームの検証ではない）が本書に宛てた申し送りを、v1.2 の同期作業（AI エージェント）で反映した。人による照合・独立レビューは未実施である [D]。
+
+    | 申し送り | 内容 | 反映 |
+    |---|---|---|
+    | CON-11 §14.5 H12-1、CON-16 IE-13（room-booking M-1） | evaluations の例 `mixed` の 2 件目と要素単位の規則 | evaluations の説明に「要素単位の扱い」を加え、`mixed` の説明を改めた（2 件目の `deny_indeterminate` は一覧全体を 503 にする。拒否として除く例は `threeItems`）。例の値と名前は据え置いた（汎用モックの既定応答と `Prefer` の名前を変えないため。§13 H11-1 (4)）。規則の正本（ARC-06 §3.5）の改版は本書の範囲外で残る [D] |
+    | CON-18 HO12-AG-03（room-booking C-2） | `SubjectProperties.actor` に `principal_type`、委任時の actor の写し方、代理の例 | `actor.principal_type`（任意）を加え、`actor` の説明に CON-18 §5 の暫定写像と「actor の型を relation に使わない」を記した。evaluation の要求例 `agentDelegatedWrite` を加えた（先頭の例は `allowWrite` のまま）[D] |
+    | CON-17 §12 V12-XG-5（room-booking C-1） | 外部付与による判定の付与 ID | `ProfileDecision.external_grant_id`（任意、preview）を加えた。reason の閉じた列挙は変えていない。監査イベントの型は CON-08 側で反映した [D] |
+
+    - 互換性: 追加はすべて任意の欄と例で、既存の要求・応答の検証結果を変えない。`additionalProperties` を閉じた実装（自前の厳格な検証器）は `actor.principal_type`・`external_grant_id` を受理するよう更新が要る [D]。
+
     ## 参考文献
     - [^1]: O. Gazitt, D. Brossard, A. Tulshibagwale (Eds.), OpenID AuthZEN WG『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §1, §2, §4, §5（5.1〜5.5）, §11.1〜11.2、確認日: 2026-10-03。RS-07#60〜#63）
     - [^2]: 同上『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §6, §7（7.1.1, 7.1.2.1, 7.2, 7.2.1）, §8（8.1, 8.2, 8.2.1, 8.2.2, 8.3〜8.6）、確認日: 2026-10-03、本書作成時 2026-10-15 に §7.2.1・§8.2.2 を再確認、独立レビュー時 2026-10-15 に §7.1・§7.2・§8.2 を再確認。RS-07#64, #65）
@@ -391,6 +403,33 @@ paths:
                     id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
                     properties:
                       tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  action:
+                    name: update
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: fully_consistent
+                      txn: x1t2r3a4n5s6a7c8t9i0o1n2id
+              agentDelegatedWrite:
+                summary: 正例（AI エージェントによる利用者の代理。v1.2（CON-18 HO12-AG-03）。応答例 allowWrite と対）
+                description: K3 の最外 `act.ptype` が `ai_agent` の要求。subject は `sub` の利用者（`core/user`）のままで、actor を `subject.properties.actor` に CON-18 §5 の暫定写像で書く。PEP は PDP を呼ぶ前に CON-18 AD-02〜AD-07（entry point の `agent_delegation` 宣言、scope と `tool_scope`、承認要の tool）を確かめる。CON-18 `info.x-pdp-request-example`（会議室の代理予約）と同じ形で、資源は本書の docs の例に替えた。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: t5wq2hzr7nmc4ka3vd6pxe2bfy
+                      principal_type: human
+                      actor:
+                        type: core/workload
+                        id: gxy2qrzzqwzzbjn74jrotdu6vv
+                        principal_type: ai_agent
                   action:
                     name: update
                   resource:
@@ -707,6 +746,8 @@ paths:
         v1.1 の同期（CON-11 §14.3 H11-1 (2)）: 対の例がない件数（4 件以上、または例と異なる組合せ）を汎用モックで確かめるときは、`11_contracts/kit/echo-proxy.js` の規則 R5（応答の件数を要求の件数に合わせる）をモックの前に置く。件数の連動は AuthZEN §7.2 による契約の振舞いであり、モックの例の件数ではない [D]。
 
         一覧の後段 Check は `execute_all` の fully_consistent で呼ぶので、許可要素の実効モードは例でも fully_consistent にした（v1.0 は minimize_latency で、格下げとして fail-closed になった）[D]。
+
+        v1.2（CON-11 §14.5 H12-1、CON-16 IE-13。room-booking M-1）**要素単位の扱い**: 「判定が得られない」の条件（`deny_unavailable`・`deny_indeterminate`・`unsupported_profile`）は要素ごとにも当てはめる。一覧の後段 Check で要素の 1 つでもこれに当たれば、PEP は一覧全体を「判定が得られない」（503）とし、その要素を除いた一覧や空の一覧を返さない。除いてよいのは `deny_no_relation`・`deny_guardrail:*` などの拒否の要素だけである（CON-16 §2.6 v1.2）[D]。存在しない資源と権限のない資源を利用者に同じ応答で返すのは、PDP の reason ではなく PEP の L0（`l0_not_found` と他テナントを同じ応答にする）と一覧の候補生成で行う（ADR-025 D25-16）[D]。この規則の正本の置き場所（ARC-06 §3.5）は改版待ちである（CON-16 IE-13）[D]。
       x-maturity: GA
       x-authzen-section: "§7"
       parameters:
@@ -846,7 +887,7 @@ paths:
               examples:
                 mixed:
                   summary: 正例と負例の混在（要求件数 2。要求例 postCheck への応答。2 件目は資源が存在しない）
-                  description: 2 件目は AuthZEN §7.2.1 の形で context.error を返し decision=false。本 profile は reason=deny_indeterminate を併記する。PEP は「存在しない」と「権限がない」を利用者に同じ応答で返す（ADR-025 D25-16）。v1.1（I-1）で実効モードを fully_consistent に改めた（要求は fully_consistent。minimize_latency は格下げにあたる）。
+                  description: 2 件目は AuthZEN §7.2.1 の形で context.error を返し decision=false。本 profile は reason=deny_indeterminate を併記する。v1.1（I-1）で実効モードを fully_consistent に改めた（要求は fully_consistent。minimize_latency は格下げにあたる）。v1.2（H12-1・IE-13。room-booking M-1）で説明を改めた。2 件目の deny_indeterminate は「判定が得られない」に当たるので、一覧の後段 Check の PEP は本応答を受けたら一覧全体を 503 とし、1 件目だけの一覧を返さない（上の「要素単位の扱い」）。本例は要素の誤りの形を示す例であり、存在しない資源を拒否として除く例ではない。存在しない資源と権限のない資源の同一化は PEP の L0（l0_not_found）と候補生成で行う（ADR-025 D25-16）。拒否の要素を除く例は threeItems（2 件目が deny_no_relation）を使う。例の値は Prefer で選ぶ名前と汎用モックの既定応答を変えないため据え置いた（§13 の CON-11 H11-1 (4)）。
                   value:
                     context:
                       x-authz-profile:
@@ -1250,12 +1291,17 @@ components:
           description: 主体類型（人間／workload／AI エージェント／service account。ADR-005 D9-4、ADR-017）。値の名前は DL-75 で確定（未決（ADR-021 D21-38））。sub の文字列から類型を推論させない（ADR-021）。
         actor:
           type: object
-          description: 委任時の現在の actor（RFC 8693 の `act` の top-level の主体。アクセス制御に使えるのは top-level claim と現在の actor だけ（RFC 8693 の MUST））[N]（RS-04#66）。
+          description: |
+            委任時の現在の actor（RFC 8693 の `act` の top-level の主体。アクセス制御に使えるのは top-level claim と現在の actor だけ（RFC 8693 の MUST））[N]（RS-04#66）。
+            v1.2（CON-18 HO12-AG-03、CON-02 x-subject-type-map の rules の訂正）: 委任時の actor の type は CON-18（agent-delegation.openapi.yaml）§5 の暫定写像で書く。AI エージェント（最外 `act.ptype`=`ai_agent`）は `type`=`core/workload`（暫定）、`id`=`act.sub`、`principal_type`=`ai_agent` とする。actor の型は R 段の relation に使わない（エージェント用の relation を作らない。INT-03 XS-11）[D]。`principal_type` は任意の欄で、値は CON-06 `principalType` の値をそのまま入れる [D]。
           properties:
             type:
               $ref: "#/components/schemas/EntityType"
             id:
               type: string
+            principal_type:
+              type: string
+              description: v1.2（任意）。actor の主体類型（CON-06 `principalType` の値。例 `ai_agent`）。CON-18 §5 の暫定写像で type が `core/workload` に寄るため、workload と AI エージェントを区別する目的で置く [D]。
           required: [type, id]
     ResourceProperties:
       type: object
@@ -1468,6 +1514,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Obligation"
+        external_grant_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: v1.2（任意。CON-17 §12 V12-XG-5、ADR-024 D24-20）。判定の根拠に外部付与（`core/external_grant`）が使われた場合の付与 ID（CON-17 `grant_id`）。façade が付け、PEP は E2 の相関に写す（CON-17 XGC-12）。外部付与によらない判定では付けない。reason の値（閉じた列挙）は変えない。façade の実装時期は CON-17 と同じく preview [D]。
+          x-maturity: preview
     DecisionContext:
       type: object
       description: AuthZEN 1.0 §5.5 の Decision の `context`（OPTIONAL）[N]。

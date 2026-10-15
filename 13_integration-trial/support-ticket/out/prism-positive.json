@@ -1,0 +1,66 @@
+{
+  "run_at": "2026-10-15T13:36:36.517Z",
+  "prism": "5.12.0",
+  "steps": [
+    {
+      "name": "prism con03 up",
+      "ok": true,
+      "detail": "authorization-api.openapi.yaml"
+    },
+    {
+      "name": "prism con05 up",
+      "ok": true,
+      "detail": "token-exchange.openapi.yaml"
+    },
+    {
+      "name": "prism con17 up",
+      "ok": true,
+      "detail": "external-grant.openapi.yaml"
+    },
+    {
+      "name": "prism con04 up",
+      "ok": true,
+      "detail": "relationship-model-registry.openapi.yaml"
+    },
+    {
+      "name": "EP-SUP-02 read (CON-03 allowWrite via R1・R4・R6)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "EP-SUP-03 list (evaluations oneItem via R5)",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "EP-SUP-01 create (CON-05 acceptance via R10, CON-04 write)",
+      "ok": true,
+      "detail": "201 {\"id\":\"xydfwazs5cd2ixfeicm4a6w2le\",\"status\":\"open\"}"
+    },
+    {
+      "name": "EP-SUP-10 consume (CON-05 internal start via R9, TTS JWKS from mock)",
+      "ok": true,
+      "detail": "{\"ok\":true,\"notified\":1}"
+    },
+    {
+      "name": "EP-SUP-05 invite (CON-17 createExternalGrant)",
+      "ok": true,
+      "detail": "201 {\"grant_id\":\"g7k2m4vx9qd3ta6pnr2bw7cyh5\",\"state\":\"invited\"}"
+    },
+    {
+      "name": "EP-SUP-06 agent draft (CON-03 agent actor)",
+      "ok": true,
+      "detail": 201
+    },
+    {
+      "name": "EP-SUP-07 human send",
+      "ok": true,
+      "detail": 200
+    },
+    {
+      "name": "EP-SUP-09 close (CON-17 revokeExternalGrantsByAnchor)",
+      "ok": true,
+      "detail": "200 {\"id\":\"ifbblg7u6byhar4dg3bdw5xapu\",\"status\":\"closed\",\"guest_access_revoked\":true}"
+    }
+  ]
+}

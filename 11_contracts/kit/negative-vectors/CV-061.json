@@ -1,0 +1,346 @@
+{
+  "id": "CV-061",
+  "title": "越境ゲスト（外部付与）の PEP 側の負例",
+  "source": [
+    "13_integration-trial/room-booking/report.md C-1",
+    "INT-02 P-16 NP16-1・NP16-2・NP16-6",
+    "ADR-024 D24-01・D24-03・D24-08・D24-12・D24-21",
+    "INT-03 XS-1・XS-2・XS-8",
+    "CON-17（11_contracts/external-grant.openapi.yaml、v1.2 新設、preview）XGN-17・XGN-18・XGN-20"
+  ],
+  "roles": [
+    {
+      "role": "CR-1",
+      "applies_when": "manifest に P-16 の entry point がある"
+    }
+  ],
+  "status": "conditional",
+  "stub_requirements": [
+    "資源側テナント tenant.1 の資源 resource.t1.own と、外部付与のない資源 resource.t1.ungranted を fixture で作る",
+    "外部付与の作成・期限切れ・取消しを試験から設定できる PDP スタブ（ST-3 の許可表）か MK-03＋MK-04。外部付与の発行・取消しは CON-17（external-grant.openapi.yaml）の createExternalGrant・revokeExternalGrant・revokeExternalGrantsByAnchor のスタブ（汎用モックは状態を持たないので自前のスタブで遷移を模す。CON-17 §10）",
+    "ゲストの token は tid＝資源側テナント（tenant.1）、sub＝ゲストの sub で鋳造する。home 側の token は tid＝tenant.2"
+  ],
+  "cases": [
+    {
+      "case_id": "CV-061a",
+      "description": "NP16-1: ゲストの home 側 token（tid=tenant.2）を資源側の資源の閲覧に提示する",
+      "stimulus": {
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.2}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "resource_denied",
+        "side_effects": {
+          "business_execution": 0,
+          "pdp_calls_max": 0
+        },
+        "notes": "L0 不一致（deny_l0:mismatch）。相互信頼型は提供しない（D24-03）"
+      }
+    },
+    {
+      "case_id": "CV-061b",
+      "description": "NP16-2: 資源側 token のゲストが、期限切れの外部付与だけを根拠に閲覧する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "external_grant": {
+              "grantee": "{{guest.sub}}",
+              "resource": "{{resource.t1.own}}",
+              "expires_at": "{{now-60}}"
+            }
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "resource_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-061c",
+      "description": "NP16-6: 有効な外部付与を持つゲストが、付与のない同じテナントの資源を閲覧する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "external_grant": {
+              "grantee": "{{guest.sub}}",
+              "resource": "{{resource.t1.own}}",
+              "expires_at": "{{now+3600}}"
+            }
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.ungranted}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "resource_denied",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "allow 0 件。閉じ込めは R 段のモデルに依存する（XS-8）ので、モデル試験（fga model test）にも同じ負例を入れる"
+      }
+    },
+    {
+      "case_id": "CV-061d",
+      "description": "XS-2: 有効な外部付与を持つゲストが、外部付与可でない permission（例: 取消し・設定変更の write）を付与された資源に対して実行する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "external_grant": {
+              "grantee": "{{guest.sub}}",
+              "resource": "{{resource.t1.own}}",
+              "expires_at": "{{now+3600}}"
+            }
+          },
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header",
+            "note": "v1.2（L-6）: write 以上の要求には正規の Txn-Token を添える。添えないと Txn-Token の欠落（CV-058）で先に拒否され、PDP の注入の試験にならない"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.write}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "side_effects": {
+          "business_execution": 0
+        }
+      }
+    },
+    {
+      "case_id": "CV-061e",
+      "description": "D24-21: 外部付与を取り消した直後に、取消し前に閲覧できていたゲストが同じ資源を閲覧する",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "external_grant": {
+              "grantee": "{{guest.sub}}",
+              "resource": "{{resource.t1.own}}",
+              "expires_at": "{{now+3600}}"
+            }
+          }
+        ],
+        "after": [
+          {
+            "op": "revoke",
+            "what": "external_grant"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "取消し後の最初の要求から拒否。allow を PEP の外で cache しない（OB-11）。取消しの整合性トークン（剥奪フェンス）より古い判定を使わない"
+      }
+    },
+    {
+      "case_id": "CV-061f",
+      "description": "XGN-18: 起点の資源（例: 予約）を付与者が取り消した後、その資源に外部付与を持っていたゲストが資源を閲覧する。SUT が起点の資源の取消し・削除の処理で revokeExternalGrantsByAnchor を呼ぶことを確かめる",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "external_grant": {
+              "grantee": "{{guest.sub}}",
+              "resource": "{{resource.t1.own}}",
+              "expires_at": "{{now+3600}}"
+            }
+          },
+          {
+            "op": "fixtures",
+            "business_action": "cancel_anchor_resource",
+            "resource": "{{resource.t1.own}}"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current",
+          "claims": {
+            "sub": "{{guest.sub}}",
+            "tid": "{{tenant.1}}"
+          }
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.read}}",
+          "tier": "read-sensitive",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "reject",
+        "response_profile": "resource_denied",
+        "same_as_group": "resource_denied",
+        "side_effects": {
+          "business_execution": 0
+        },
+        "notes": "スタブの記録に revokeExternalGrantsByAnchor の呼出しが 1 件あること（CON-17 XGF-13）"
+      }
+    },
+    {
+      "case_id": "CV-061g",
+      "description": "XGN-20: 招待の宛先（email）を入力した招待の要求の後、SUT のログ・監査イベント・自 DB の tuple 相当の記録に email が残っていないかを調べる",
+      "stimulus": {
+        "setup": [
+          {
+            "op": "fixtures",
+            "txn_token": {
+              "signer": "TTS.current",
+              "claims": {
+                "sub": "{{subject.self}}",
+                "tctx": {
+                  "tid": "{{tenant.1}}",
+                  "tier": "write"
+                }
+              }
+            },
+            "present_txn_token_as": "txn_token_header"
+          }
+        ],
+        "mint": {
+          "base": "access_token",
+          "claimed_issuer": "A",
+          "signer": "A.current"
+        },
+        "present": {
+          "as": "authorization_bearer"
+        },
+        "request": {
+          "operation": "{{manifest.operation.invite}}",
+          "tier": "write",
+          "resource": "{{resource.t1.own}}"
+        }
+      },
+      "expect": {
+        "outcome": "accept",
+        "audit": {
+          "must_not_contain": [
+            "{{guest.email}}"
+          ]
+        },
+        "notes": "宛先の email は CON-17 createExternalGrant の invitee.address にだけ渡し、SUT 側に保存・記録しない（CON-17 XGC-4・XGS-11）。Txn-Token は正規のものを添える（write）"
+      }
+    }
+  ],
+  "observe": [
+    "sut_response",
+    "mk07_audit"
+  ],
+  "strength": "D: ADR-024 D24-01・D24-03・D24-08・D24-12・D24-21",
+  "notes": [
+    "v1.2 で新設（13_integration-trial/room-booking/report.md C-1 の PEP 側）。招待の発行・承諾・取消しの契約は CON-17（11_contracts/external-grant.openapi.yaml）で、その負例 XGN-01〜XGN-20 のうち依存サービスの側で観測できるもの（XGN-17・XGN-18・XGN-20）を CV-061e〜g に写した。façade 側で判定するもの（XGN-01〜XGN-16・XGN-19）は基盤側の provider verification（CON-11 §6.9）",
+    "正例（付与のあるゲストの閲覧が 200）は本ベクタに含めない。正例は越境ゲスト招待の契約の examples で確かめる",
+    "NP16-3（外部主体への管理者ロール付与）・NP16-7（他テナントの role・group の userset）は Registry 族（CV-025〜CV-035）と契約側の負例で扱う"
+  ],
+  "since": "0.3.0（v1.2）",
+  "deprecated": null
+}

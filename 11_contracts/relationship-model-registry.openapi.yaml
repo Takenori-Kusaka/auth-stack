@@ -2,7 +2,7 @@ openapi: 3.1.0
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Relationship/Model Registry API
-  version: 0.4.1
+  version: 0.5.0
   summary: relation tuple の書込み・削除・読取りと、正規認可モデル（CAM）の版管理・名前空間審査を扱う基盤所有の契約
   license:
     name: 社内限定（未公開。公開範囲は DL-69 で決める）
@@ -106,7 +106,8 @@ info:
       citation: "J. Salowey, Y. Rosomakho / IETF『Workload Authentication Using Mutual TLS』draft-ietf-wimse-mutual-tls-02（Internet-Draft）, 2026-07-06. https://datatracker.ietf.org/doc/html/draft-ietf-wimse-mutual-tls-02 （参照箇所: §5（認可ポリシーが trust domain と trust anchor を考慮せずに識別子の path 部分だけを評価する MUST NOT）、確認日: 2026-10-03）"
       research: RS-06#25（ラウンド2 是正で追加。CON-03 [^12] と同じ原典）
   description: |
-    文書ID: CON-04 / 版: 0.4.1 / 状態: draft / 最終更新: 2026-10-15
+    文書ID: CON-04 / 版: 0.5.0（v1.2 の同期） / 状態: draft / 最終更新: 2026-10-15
+    改版: v0.5.0（v1.2 の同期。2 回目の模擬連携検証 13_integration-trial/room-booking/report.md（AI による模擬であり実在の連携チームの検証ではない）の C-1・L-8 を受けた申し送り INT-03 §16.6 HO-V12-2、CON-17 §12 V12-XG-4 の反映。AI エージェントによる同期で、独立レビューは未実施）で、(1) `CamPermission.marks` に `external_grant_authority`（外部付与の作成を許す permission の印。CON-17 XG-L3）を加え、(2) §3 に「façade が書く場合」を CON-17 の operation に限ることを明記し、(3) `writeRelationships`・`deleteRelationships` に依存サービスが `core/external_grant` と `core/tenant#external_member` の tuple を書く・消す要求の負例を加えた。enum の値と負例の追加だけで、既存の要求・応答の形は変えていない（minor）[D]。
     改版: v0.4.1（v1.1 の同期。AI エージェントによる同期で、独立レビューは未実施）で、他文書の v1.1 改訂が本書に宛てた申し送りのうち決裁を要する 2 件（INT-03 §16.4 HO-V11-1 の所属の読取り、CON-16 IE-4 の core 型の公開宣言）を §8 に未決として加えた。operation・スキーマ・例は変えていない [D]。
     改版: v0.4.0（v1.1 改訂。13_integration-trial/report.md の P-09・P-21 への対応。I-7 と I-14 の base_revision 部分）で、(1) tid と操作階層の表記を CON-02 に一本化して参照に替え（`TenantId` を CON-02 `TenantIdSegment` へ、`CamPermission.tier` を CON-02 `OperationTier` へ、shadow の `sampling` のキーと `ShadowStratum.tier` を CON-02 `OperationTierClass` へ。値の表記は `read_sensitive`→`read-sensitive`、`privileged`→`privileged/T`・`privileged/P`、`break_glass`→`break-glass/B`・`break-glass/P`）、(2) `base_revision` の初回値と取得方法（`registerModel`・`listModels`・`ModelChangeRequest`・`ModelRevision`）、409 `base_revision_conflict` の応答例と `latest_revision` 拡張メンバを定めた。変更はモデル管理（preview）の要素と、GA の path 変数 `tenant_id` の参照先の付け替え（受理する値の集合は v0.3.1 と同じ）に限る [D]。改訂は AI エージェント（Claude）が行い、独立レビュー・人による照合は未実施（CONVENTIONS §8）。他文書への申し送りは §11 の「他文書への申し送り（v1.1）」。
     改版: v0.3.1（PoC/R7反映）で、§3 のテナント境界の判定を userset の主体（role・group の object 側）にも明示し、`writeRelationships` に負例 1 件を加えた（POC-02 §6.2 X-D。§11 の HO-P-1〜HO-P-3）。POC-02 の値は立会人なしの自己実行で、Gate 4 の証拠ではない。
@@ -142,6 +143,7 @@ info:
     - tuple 操作は path の `tenant_id` でテナントを必須指定する（ADR-022 D-2 の GA 範囲）[D]。資源 ID にテナント ID を埋め込まない（ADR-010 D-12、ADR-021 D21-14、X-9）[D]。
       tuple がどのテナントに属するかは façade が付ける区画キーで表し、区画キーは契約に出さない（ADR-010 D-12）[D]。
     - 主体と資源が異なるテナントに属する tuple は、`core/external_grant`（越境共有、ADR-024）を façade が書く場合を除き拒否する（ADR-010 D-28、X-8）[D]。
+    - v1.2（CON-17 §12 V12-XG-4）: 「façade が書く場合」は外部付与 API（CON-17、`external-grant.openapi.yaml`）の operation（`createExternalGrant`・受諾・取消し）の処理に限る。依存サービスが本契約の `writeRelationships`・`deleteRelationships` で `core/external_grant` を主体・資源とする tuple（起点の tuple を含む）と `core/tenant#external_member` を書く・消す要求は、書込宣言の有無にかかわらず 403 `relation_not_writable` で拒否する（CON-17 XGC-2）[D]。外部付与の作成を許す permission は catalog の印 `external_grant_authority`（`CamPermission.marks`）で宣言し、façade は CON-17 の要求の `authorizing_permission` がこの印を持つことを確かめる（CON-17 XG-L3、INT-03 書込対応表）[D]。
     - 主体が userset（例 `core/role:<id>#assignee`、`core/group:<id>#member`）の場合は、userset の object（role・group）の所属テナントで上の判定を行う。object 側（資源）の所属だけを見て subject 側を見ない実装は、この規則に反する（PoC/R7反映）[D]。POC-02 §6.2 X-D では、PoC の façade の関係書込 API が他テナントの role の userset を自テナントの folder の viewer として受理した（TC-021。立会人なしの自己実行で Gate 4 の証拠ではなく、原因区分は PoC 実装か設計かが未確定）[D]。見直しトリガー: 立会い下の再実行で X-D が再現し、原因が本契約の規則の欠落と分類された場合は、本節を GA 候補の照合規則（§6.4）に移す [D]。
     - tuple と条件 context に個人データ・業務上の識別名を置かない（ADR-028 D28-55、X-9。前提 NA-028-3）[D]。
 
@@ -328,6 +330,14 @@ info:
 
     - v0.4.0 は v1.1 改訂で、13_integration-trial/report.md（AI による模擬連携検証。実在の依存サービスの開発ではない）の P-09（tid 形式と tier 表記の不一致）と P-21（base_revision 初回値不明）への対応である。改善提案 I-7（tid・tier 表記を CON-02 に一本化）と I-14 の base_revision 初回値の部分を反映した。
 
+    #### v1.2 の同期（他文書からの申し送りの反映）
+    v1.2 の各改訂が本書に宛てた申し送りを、v1.2 の同期作業（AI エージェント）で反映した。人による照合・独立レビューは未実施で、負例は実行していない [D]。
+
+    | 申し送り | 内容 | 反映 |
+    |---|---|---|
+    | INT-03 §16.6 HO-V12-2、CON-17 §12 V12-XG-8 の前提（room-booking C-1） | 外部付与の作成を許す permission を catalog で宣言する欄 | `CamPermission.marks` に `external_grant_authority` を加えた [D] |
+    | CON-17 §12 V12-XG-4（room-booking C-1） | 依存サービスによる `core/external_grant`・`core/tenant#external_member` の tuple の書込み・削除の負例と、「façade が書く場合」の範囲 | §3 に 1 項を加え、`writeRelationships`・`deleteRelationships` に負例を 1 件ずつ加えた [D] |
+
     #### 他文書への申し送り（v1.1）
     本書と CON-02 以外は並行作業のため編集していない [D]。
 
@@ -402,6 +412,9 @@ paths:
         - name: テナント越えの tuple
           request: 主体が別テナントの `core/user` で、`core/external_grant` を介さない直接付与
           expected: 403 `tenant_boundary_violation`
+        - name: 外部付与の tuple の直接書込み（v1.2。CON-17 V12-XG-4・XGC-2）
+          request: 依存サービスが `rsv/booking:<id>#guest@core/external_grant:<grant_id>#grantee`（起点の tuple）、`core/external_grant:<grant_id>#grantee@core/user:<id>`、または `core/tenant:<tid>#external_member@core/user:<id>` を書く
+          expected: 403 `relation_not_writable`（書込宣言にあっても拒否。外部付与は CON-17 `createExternalGrant` で依頼する。§3）
         - name: テナント越えの userset 主体（PoC/R7反映。POC-02 X-D）
           request: テナント A の folder の viewer に、テナント B で作られた role の userset（`core/role:<B の role>#assignee`）を主体として書く。呼出し元は A の書込宣言の範囲内で、`Txn-Token` の `tctx.tid` も A に一致する
           expected: 403 `tenant_boundary_violation`（engine に渡さず何も書かない。userset の object の所属で判定する。§3）
@@ -500,6 +513,9 @@ paths:
         filter による一括削除は v1 では提供しない。テナント単位の削除は ADR-028 の手順で行う [D]。
         削除にも `writeRelationships` と同じテナント結合（info §6.1・§6.2）を課す。剥奪は freeze 中も止めないが、他テナントの tuple を消す経路にはしない [D]。
       x-negative-examples:
+        - name: 外部付与の tuple の直接削除（v1.2。CON-17 V12-XG-4・XGC-2）
+          request: 依存サービスが `core/external_grant` を主体・資源とする tuple、または `core/tenant#external_member` を削除する
+          expected: 403 `relation_not_writable`（取消しは CON-17 `revokeExternalGrant`・`revokeExternalGrantsByAnchor` で行う。§3）
         - name: 存在しない tuple の削除（既定）
           request: on_missing を省略して、存在しない tuple を指定
           expected: 409 `missing_tuple`（何も削除されない）
@@ -3123,11 +3139,13 @@ components:
             v1.1（I-7、P-09）: v0.3.1 の `[public, read_sensitive, write, privileged, break_glass]` をやめ、表記の正本 CON-02 `OperationTier`（`read-sensitive`、`privileged/T`・`privileged/P`、`break-glass/B`・`break-glass/P`）を参照する（preview の範囲の変更）[D]
           $ref: './schemas/common.schema.json#/$defs/OperationTier'
         marks:
-          description: permission catalog の印（authorization-model.md §3.2）
+          description: |
+            permission catalog の印（authorization-model.md §3.2）。
+            v1.2（INT-03 §16.6 HO-V12-2、CON-17 XG-L3）: `external_grant_authority` は「この permission を持つ主体は、この型の資源を起点に外部付与を作れる」印である（INT-03 書込対応表の「外部付与の作成 ← `share_external`」を機械検査できるようにする）。`external_grantable`（外部付与で到達してよい permission）とは別の印で、両方を付けることもある。CON-17 `createExternalGrant` の `authorizing_permission` はこの印を持つ permission でなければならず、tier が `write` 以上でなければならない（CON-17 XGS-3）。registry の check に印の検査を加えるのは preview（CON-17 と同じ）[D]。
           type: array
           items:
             type: string
-            enum: [tenant_delegable, external_grantable]
+            enum: [tenant_delegable, external_grantable, external_grant_authority]
     CamType:
       type: object
       additionalProperties: false

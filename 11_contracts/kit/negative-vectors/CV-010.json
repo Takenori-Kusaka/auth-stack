@@ -25,7 +25,7 @@
         "mint": {
           "base": "txn_token",
           "claimed_issuer": "A",
-          "signer": "A.current"
+          "signer": "TTS.current"
         },
         "present": {
           "as": "authorization_bearer"
@@ -44,13 +44,17 @@
           "business_execution": 0,
           "pdp_calls_max": 0
         }
-      }
+      },
+      "description": "TTS 役の鍵で正しく署名した Txn-Token（typ=txntoken+jwt）を Authorization ヘッダで提示する。v1.2（M-3）: signer を A.current から TTS.current に改めた。A.current では stub_requirements（TTS 役の鍵）と食い違い、鍵族を分けて検証する SUT では署名の段で落ちて「受理位置の取違え」を検出できない"
     }
   ],
   "observe": [
     "sut_response"
   ],
   "strength": "DEV-5（Transaction Tokens draft-11 の MUST NOT。draft、SS-B04）",
-  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）",
-  "deprecated": null
+  "since": "0.1.0（先行配布。CON-11 版 0.12 / v1.1、I-11）。v1.2 で signer を改訂（0.3.0）",
+  "deprecated": null,
+  "notes": [
+    "v1.2（13_integration-trial/room-booking/report.md M-3）: CV-010a の signer を TTS.current に改めた。期待結果は変えていない"
+  ]
 }
