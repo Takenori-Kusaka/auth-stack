@@ -1,0 +1,1276 @@
+openapi: 3.1.2
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Authorization API（AuthZEN 1.0 準拠 PEP–PDP 契約）
+  version: 0.1.0
+  summary: OpenID AuthZEN Authorization API 1.0（Final）の evaluation・evaluations・resource search と、版付き自社 profile（decision_id、model/policy revision、consistency、reason、obligation、txn）を定める PEP–PDP 契約。
+  license:
+    name: 社内限定（Proprietary, internal use only）
+    identifier: LicenseRef-Proprietary-Internal
+  x-document-id: CON-03
+  x-deliverable: DL-72
+  x-status: draft
+  x-last-updated: "2026-10-15"
+  x-profile-version: "1.0"
+  x-depends-on:
+    - CONVENTIONS.md
+    - traceability/deliverables.md（DL-72、§2.3）
+    - 05_adr/ADR-011-policy-language-pep-pdp-api.md（D3、D5、D6、D8 が本契約の正本）
+    - 05_adr/ADR-010-authz-engine-store-consistency.md（D-13〜D-15、D-28、D-29、D-53）
+    - 05_adr/ADR-025-list-search-authorization.md（D25-03、D25-04、D25-07、D25-13、D25-15、D25-17、D25-21）
+    - 05_adr/ADR-022-integration-contract-standards.md（D-1-1、D-2 の DL-72 行、D-2-2、D-3-2）
+    - 05_adr/ADR-021-irreversible-identifiers.md（D21-25〜D21-28、D21-36、D21-37）
+    - 05_adr/ADR-013-cell-partitioning-fail-mode.md（D13-17、D13-23、D13-25）
+    - 05_adr/ADR-016-versioning-deprecation.md
+    - 05_adr/reconciliation-notes.md（U-02、U-03、U-04）
+    - 04_architecture/authorization-model.md（ARC-05 §4、§9）
+    - 04_architecture/pep-contract.md（ARC-06 §3.6、§3.7、§3.10、§11）
+    - 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）
+    - 01_governance/assumptions-register.md（A-025、A-036、A-046）
+    - research/RS-07-authz-engines-consistency.md（RS-07#60〜#68、#78）
+    - research/RS-16-parallel-development-governance.md（RS-16#34、#35）
+    - research/standards-status.md（SS-C13、SS-C14、SS-C18、SS-K06）
+    - 11_contracts/schemas/common.schema.json（CON-02。本書は $ref せず、ModelRevision の項目名、TenantId・ConsistencyToken の形式、Reason の規則 ID 形式を独立レビュー時に揃えた。残る差分は 11_contracts/review-notes/CON-03.md に記録。共通型は凍結前に同ファイルへ移す）
+  x-requirements:
+    R: [R-098, R-144, R-205, R-142, R-109, R-152, R-204, R-262]
+    G: [G-066, G-072, G-109, G-118, G-120, G-121]
+  x-conformance:
+    standard: OpenID AuthZEN Authorization API 1.0
+    standard-status: final（OpenID Final Specification。発行 2026-01-11、承認告知 2026-01-12。確認日 2026-10-03。standards-status SS-C13）
+    standard-url: https://openid.net/specs/authorization-api-1_0.html
+    binding: HTTPS JSON binding（AuthZEN 1.0 §10.1）
+    extensions-carrier: 要求・応答の context に置く名前空間付きキー `x-authz-profile`（キー名は暫定。未決（ADR-021））
+  description: |
+    > 文書ID: CON-03 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: R-098, R-144, R-205（DL-72 行）、R-142, R-109, R-152, R-204, R-262／G-066, G-072, G-109, G-118, G-120, G-121
+    > 依存文書: info.x-depends-on を参照
+    > 作成方法: AI エージェント（Claude）が ADR-011 ほかの決定を契約に落として起草した。CTO/CISO の決裁を経ていない（CONVENTIONS §8）[D]。
+    > 独立レビュー: 作成者とは別のエージェント（Claude）が 2026-10-15 に原典（AuthZEN 1.0 Final）を再取得して照合し、修正した。記録は 11_contracts/review-notes/CON-03.md。人による照合は未実施 [D]。
+
+    ## 1. 位置付け
+    - 本契約は PEP（依存サービスの SDK または契約適合の自前実装）が cell 内の PDP façade を呼ぶ唯一の認可判定契約である（ADR-011 D5-1・D5-3・D5-4）[D]。engine（OpenFGA・SpiceDB 等）のネイティブ API・ヘッダを依存サービスが呼ぶことは CI で拒否する（ADR-022 D-3-2、G-072）[D]。
+    - 準拠先は OpenID AuthZEN Authorization API 1.0 で、状態は final（OpenID Final Specification）である（確認日 2026-10-03、standards-status SS-C13）[N][^1]（RS-07#60）。Implementer's Draft（SS-C14）は置換済みで使わない [D]。
+    - AuthZEN 1.0 は search API（subject・resource・action の 3 種、§8）を**含む** [N][^2]（RS-07#65）。本契約は resource search だけを preview として定め、subject search と action search は v1 では公開しない（下記 §3）[D]。
+    - AuthZEN は PDP の状態管理と policy 言語を範囲外とし、整合性トークンや鮮度の指定を定義していない [N][^1]（RS-07#61）。そのため decision_id・model/policy revision・consistency・reason・obligation・txn は、AuthZEN 1.0 外の版付き自社 profile として `context` で運ぶ（ADR-011 D6-1）[D]。
+
+    ## 2. 準拠範囲と自社 profile の区分（AuthZEN の項目名・意味は変えない）
+    | 区分 | 項目 | 成熟度（ADR-022 D-2） |
+    |---|---|---|
+    | AuthZEN 1.0 | evaluation（§6）、evaluations と `options.evaluations_semantic`（§7）、Subject/Resource/Action/Context/Decision の情報モデル（§5）、PDP metadata（§9）、X-Request-ID の往復（§10.1.3） | GA |
+    | AuthZEN 1.0 | resource search（§8.5）とページング（§8.2） | preview（ADR-022 D-2。SDK の一覧ヘルパの内部専用。ADR-011 D5-2） |
+    | AuthZEN 1.0 | subject search（§8.4）、action search（§8.6） | 公開しない（v1）。subject search は ADR-011 D5-2・ADR-025 D25-03 の決定。action search は ADR に明記がなく未決（ADR-011／ADR-025）。本契約は安全側として公開しない |
+    | 自社 profile（AuthZEN 1.0 外） | `decision_id`、不透明な consistency token | GA（ADR-022 D-2 の DL-72 行） |
+    | 自社 profile（AuthZEN 1.0 外） | `model_revision` の表現、`obligations`、search の `completeness` | preview（ADR-022 D-2、ADR-025 D25-21） |
+    | 自社 profile（AuthZEN 1.0 外） | `reason`、`consistency.mode`、`model.pin`、`profile_version` | GA 候補。ADR-022 D-2 の DL-72 行は GA 範囲にこれらを挙げていない。存在と意味は ADR-011 D6-1 で決定済みだが、GA 区分は未決（ADR-022）。`reason` の値追加の互換区分も未決（ADR-016 P16-2） |
+    | 自社 profile（AuthZEN 1.0 外） | `txn` | preview。Transaction Tokens が Internet-Draft（-11、IESG 未提出、確認日 2026-10-03、SS-B04）であり、Internet-Draft に依存する要素は preview 以下に置く（ADR-022 D-1-1）。値の意味だけを固定し、発行範囲は未決（ADR-005 H-20・ADR-009、U-02） |
+    | 注記 | GA の Decision 応答が preview の `model_revision`（表現）を必須で含む | ADR-022 D-1-1 の「GA から preview への必須依存を作らない」との関係は未決（ADR-022）。本契約は ADR-011 D6-1 の「存在は必須」に従い、表現の変更は profile_version の major で扱う [D] |
+
+    - 互換規則: minor では後方互換な追加だけを行う（AuthZEN §4 の "MAY augment" / "MUST NOT modify" に揃える）[N][^1]（RS-07#62）[D]。制約を強める変更は `profile_version` の major を上げ、未対応の façade は `unsupported_profile` で拒否する（ADR-011 D6-2）[D]。endpoint の識別子は v1 を含む（AuthZEN の SHOULD）[N][^1]（RS-07#62）。
+    - 非推奨の告知は Deprecation header（RFC 9745、Proposed Standard）と Sunset header（RFC 8594、Informational）で行う [N][^6][^7]（RS-16#34, #35）。期間の値は DL-70・ADR-016 で決める [D]。
+
+    ## 3. search 系の扱い
+    - resource search は PEP が直接呼ぶ契約にしない。SDK の一覧ヘルパの内部だけで使い、返却前に evaluations（`execute_all`）で後段 Check することを必須とする（ADR-011 D5-2、ADR-025 D25-04、ADR-022 D-2-2）[D]。AuthZEN 自身が「search の結果を evaluation にかけると true に SHOULD なるが保証されない」と述べる [N][^2]（RS-07#65）。
+    - ページングは原子的スナップショットを保証せず、結果の重複・欠落があり得る [N][^2]（RS-07#65）。続きのページの要求は最初の要求と同一の entity とパラメータを MUST で求められる [N][^2]。façade は `page.token` を主体・テナント・検索条件・model revision に束縛した MAC 付きの短命値として発行し、他の主体・テナントで提示された token を拒否する（ADR-025 D25-15）[D]。状態コードは、他の主体・テナントの token が 403、同じ主体での条件・`limit` の変更と期限切れが 400 である（AuthZEN §8.2 は変更時にエラーを返すことを SHOULD とする）[N][^2][D]。
+    - `page.total` は返さない。候補段の件数を依存サービスに返さないためである（ADR-025 D25-13、RS-07#78）[D]。AuthZEN でも `total` は OPTIONAL である [N][^2]。
+    - `page.limit` の上限は 100 とし、超えた要求は 400 にする（ADR-025 D25-17）[D][NA-025-1（前提台帳へ追加要）]。
+    - subject search は OpenFGA の AuthZEN 実装にページングがなく、SpiceDB の LookupSubjects がカーソル非対応のため v1 で公開しない（ADR-011 D5-2）[V][^5][D]（RS-07#23, #68）。権限棚卸しは privileged の管理 API（DL-26）で扱う（ADR-025 D25-03）[D]。
+
+    ## 4. 認証（PEP の認証）
+    - PEP–PDP 間の通信の保護は AuthZEN で MUST、PDP による PEP の認証は SHOULD である [N][^3]（RS-07#66）。本契約は workload ID の mTLS（ADR-009）を必須とする（ADR-011 D5-7）[D]。認証できない場合は 401 を返す（AuthZEN §10.1.2）[N][^3]。
+    - 応答署名（AuthZEN では PDP の MAY）は v1 では採らない（ADR-011 D5-7）[D]。**未決（ADR-013 KD13-6、reconciliation-notes U-04）**: read-sensitive の fail-static を許すと決まった場合は、read-sensitive の判定記録への署名を本 profile の要件に加える [D]。
+    - PEP SDK は `/.well-known/authzen-configuration` の `policy_decision_point` が取得に使った識別子と一致しないメタデータを使わない（AuthZEN §9.2.3 の MUST NOT）[N][^3]（RS-07#66）。
+
+    ## 5. テナント境界
+    - テナント（`tid`）を `subject.properties` と `resource.properties` の両方に入れる（ADR-011 D6-1）[D]。`resource.properties.tid` は PEP が L0 で照合済みの resource-derived tenant であり、要求パラメータ・path・header の生値ではない（ARC-06 §3.3）[D]。
+    - façade は engine に渡す前に、G 段規則 1 として両者の不一致を決定論的に deny する（ADR-010 D-28、ARC-05 §4.1）[D]。応答は decision=false、reason=`deny_guardrail:<規則ID>` である [D]。越境共有はゲストに資源側テナントの token を発行する形で表すので、照合式に例外はない（ADR-024 D24-01・D24-07）[D]。
+    - `tid` の欠落は AuthZEN 上の必須項目の欠落ではないので 400 にせず、評価不能（decision=false、`deny_indeterminate`）とする（ADR-011 D3-3）[D]。
+    - façade はテナントから store・cell を引いて routing する（ADR-011 D5-3）[D]。自 cell に収容されていないテナントの要求の応答は未決（ADR-013）であり、本契約の暫定動作は decision=false、`deny_indeterminate` とする [D]。
+    - PEP の L0 拒否（PDP を呼ばない拒否）の理由値は façade の `reason` に含めない。値は未決（ADR-011／ADR-012 L-05、ARC-06 L06-2）で、ARC-06 §3.7 の暫定名（`l0_missing` 等）を監査（DL-77）側で使う [D]。
+
+    ## 6. レート制限・過負荷
+    - DoS 対策（rate limiting など）は AuthZEN で SHOULD である [N][^3]（RS-07#66）。façade はテナント単位・クライアント（workload）単位の同時実行数上限とクォータを置き、一覧（search）は Check と別レーン・別クォータにする（ADR-010 D-29、ADR-013 D13-17、ADR-025 D25-17）[D]。値は TBD（所有者: 認可・PDP チーム、期限: DL-72 凍結前、決め方: DL-20・DL-58 の容量と TC 実測）[D][A-025, A-046]。
+    - クォータ超過は 429 と Retry-After で返す [N][^8]。429 は HTTP 標準のステータスであり、AuthZEN §10.1.2 の表（400・401・403・500）にはない。本契約での使用は profile の追加である [D]。
+    - 過負荷時の shed（低い操作階層から）と engine 不達は区別する。façade 自体が受け付けられない場合は 503（Retry-After 付き）[N][^9]、façade が受け付けたが engine に届かない場合は 200・decision=false・`deny_unavailable` を返す（ADR-011 D3-6）[D]。PEP SDK はいずれも「判定が得られない」として操作階層ごとの fail-mode（DL-19、ADR-013 D13-25）を適用し、fail-open しない（ADR-013 D13-23）[D]。
+    - クォータ判定系が止まった場合は各ノードが最後の閾値で動く fail-static とする（ADR-013 D13-17）[D]。
+
+    ## 7. エラー
+    - 認可の拒否は HTTP エラーではなく 200 と `{"decision": false}` で返す（AuthZEN §10.1.2）[N][^3]。
+    - 要求全体の誤りは HTTP ステータスで返し、本文は AuthZEN の表どおり「エラーメッセージ文字列」とする [N][^3]。依存サービスは本文の文字列一致に依存しない（ADR-022 D-3-2）[D]。
+    - evaluations の個別要素の誤りは要素の `context.error`（`status`・`message`）で返し、decision は false とする（AuthZEN §7.2.1）[N][^2]。本 profile では同時に `reason`=`deny_indeterminate` を付ける [D]。
+    - PEP SDK は、façade 不達・timeout、`deny_unavailable`、`deny_indeterminate`、`unsupported_profile`、`decision_id` の欠落、X-Request-ID の echo 不一致を「判定が得られない」として扱う（ARC-06 §3.5）[D]。
+    - `reason` はエンドユーザーに返さない（ADR-011 D6-1）[D]。
+
+    ## 8. 正例・負例
+    各 operation の `examples` に正例とスキーマ上は妥当な負例を置き、スキーマに違反する負例（400 になるもの）は `x-negative-examples` に分けた。負例の説明は各 example の `description` に書く。主な負例: テナント不一致（`deny_guardrail`）、必須属性の欠落（400）、未対応の profile major（`unsupported_profile`）、整合性の格下げ要求（格上げして評価）、解釈できない consistency token（`fully_consistent` に格上げ）、engine 不達（`deny_unavailable`）、privileged 操作での `permit_on_first_permit`（400）、evaluations が空で上位の既定値もない要求（400）、search の `limit` 超過（400）、他主体の page token（403）。応答側は評価不能（`deny_indeterminate`）と未対応 profile（`unsupported_profile`）の例を置く。
+
+    ## 9. 未決（ADR で決まっていない点。本契約の暫定値は安全側）
+    | 論点 | 決める場 | 暫定 |
+    |---|---|---|
+    | profile キー名 `x-authz-profile` と `tid` のキー名 | ADR-021（D21-25〜D21-28 の名前空間台帳。DL-71） | 本書の名前 |
+    | consistency token の最大長 | ADR-011 D6-4（DL-72 凍結前、候補 engine の実測） | 1,024 バイト（ADR-010 D-14、NA-010-2（前提台帳へ追加要）） |
+    | OpenFGA の窓方式 W | ADR-010 §2.12 決裁案 2（U-03） | 常時格上げ（ADR-011 D6-3） |
+    | 応答署名と read-sensitive の fail-static | ADR-013 KD13-6（U-04） | 署名なし、PEP は known-good を使わない |
+    | `txn` の発行範囲と façade での Txn-Token 検証 | ADR-005 H-20・ADR-009（U-02） | `txn` は任意。値は検証済み Txn-Token の `txn` の写し |
+    | obligation の語彙 | ADR-011 §8・ADR-022（AuthZEN Profile for Obligations は WG Draft、SS-C18） | preview。未知の obligation は PEP が deny |
+    | 越境共有・型付き例外による許可を区別する reason | ADR-024 D24-20 からの申し送り | 未追加（`allow` のみ） |
+    | action search | ADR-011／ADR-025 | 公開しない |
+    | evaluations の要素数上限・要求本文の上限 | 認可・PDP チーム（DL-20） | TBD |
+    | G 段規則 ID の形式 | ADR-011（CAM、DL-17） | `[a-z0-9_.-]{1,64}` |
+
+    ## 参考文献
+    - [^1]: O. Gazitt, D. Brossard, A. Tulshibagwale (Eds.), OpenID AuthZEN WG『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §1, §2, §4, §5（5.1〜5.5）, §11.1〜11.2、確認日: 2026-10-03。RS-07#60〜#63）
+    - [^2]: 同上『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §6, §7（7.1.1, 7.1.2.1, 7.2, 7.2.1）, §8（8.1, 8.2, 8.2.1, 8.2.2, 8.3〜8.6）、確認日: 2026-10-03、本書作成時 2026-10-15 に §7.2.1・§8.2.2 を再確認、独立レビュー時 2026-10-15 に §7.1・§7.2・§8.2 を再確認。RS-07#64, #65）
+    - [^3]: 同上『Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （参照箇所: §9（9.1, 9.2.3）, §10.1（10.1.1〜10.1.3）, §11.6, §11.7、確認日: 2026-10-03、本書作成時 2026-10-15 に §10.1.2 を再確認。RS-07#66）
+    - [^4]: OpenID Foundation『AuthZEN – Specifications』WG ページ. https://openid.net/wg/authzen/specifications （参照箇所: Working Group Drafts、確認日: 2026-10-03。RS-07#67）
+    - [^5]: OpenFGA『AuthZEN API (Experimental)』web 文書（ページ表示の最終更新 2026-09-28）. https://openfga.dev/docs/interacting/authzen （参照箇所: Implementation Notes（Pagination, Authorization model selection extension, X-Request-ID header）、確認日: 2026-10-03。RS-07#23, #68）
+    - [^6]: S. Dalal, E. Wilde『The Deprecation HTTP Response Header Field』RFC 9745, 2025-03. https://www.rfc-editor.org/rfc/rfc9745 （参照箇所: §2.1, §4, §5、確認日: 2026-10-03。RS-16#34）
+    - [^7]: E. Wilde『The Sunset HTTP Header Field』RFC 8594, Informational, 2019-05. https://www.rfc-editor.org/rfc/rfc8594 （参照箇所: §3、確認日: 2026-10-03。RS-16#35）
+    - [^8]: M. Nottingham, R. Fielding『Additional HTTP Status Codes』RFC 6585, 2012-04. https://www.rfc-editor.org/rfc/rfc6585 （参照箇所: §4（429 は MAY で Retry-After を含め得る。429 の応答はキャッシュに保存してはならない MUST NOT）、確認日: 2026-10-15。research に未収録のため本書作成時に原典を取得）
+    - [^9]: R. Fielding, M. Nottingham, J. Reschke『HTTP Semantics』RFC 9110（STD 97）, 2022-06. https://www.rfc-editor.org/rfc/rfc9110 （参照箇所: §10.2.3 Retry-After, §15.6.4 503（server は Retry-After を送ってよい MAY）、確認日: 2026-10-15。research に未収録のため本書作成時に原典を取得）
+servers:
+  - url: https://{cell}.pdp.{idDomain}
+    description: cell ごとの PDP façade（ADR-011 D5-3、ADR-013）。ホスト名の規則は未決（ADR-021 D21-28 の自社所有ドメイン修飾に従う）。
+    variables:
+      cell:
+        default: cell-placeholder
+        description: cell の識別子（cell 名をテナント識別子に埋め込まない。ADR-021 D21-36）。
+      idDomain:
+        default: id-domain.invalid
+        description: 自社所有ドメイン（ADR-021 D21-28）。値は仮置き。
+security:
+  - workloadMtls: []
+tags:
+  - name: metadata
+    description: PDP metadata（AuthZEN 1.0 §9）。GA。
+  - name: evaluation
+    description: Access Evaluation / Access Evaluations（AuthZEN 1.0 §6・§7）。GA。
+  - name: search
+    description: Resource Search（AuthZEN 1.0 §8.5）。preview。SDK の一覧ヘルパ内部専用（ADR-011 D5-2、ADR-025 D25-03）。
+paths:
+  /.well-known/authzen-configuration:
+    get:
+      tags: [metadata]
+      operationId: getPdpMetadata
+      summary: PDP metadata の取得（AuthZEN 1.0 §9）
+      description: |
+        AuthZEN 1.0 §9 の PDP metadata を返す [N]。提供は RECOMMENDED で、本 façade は必ず提供する（ADR-011 D5-6）[D]。
+        公開しない search endpoint（subject・action）のパラメータは載せない [D]。
+        負例: 返された `policy_decision_point` が取得に使った識別子と一致しない場合、PEP SDK はそのメタデータを使ってはならない（AuthZEN §9.2.3 の MUST NOT。PDP mix-up 対策）[N]。
+      x-maturity: GA
+      x-authzen-section: "§9"
+      parameters:
+        - $ref: "#/components/parameters/XRequestId"
+      responses:
+        "200":
+          description: PDP metadata。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestIdEcho"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdpMetadata"
+              examples:
+                ok:
+                  summary: 正例
+                  value:
+                    policy_decision_point: https://cell-placeholder.pdp.id-domain.invalid
+                    access_evaluation_endpoint: https://cell-placeholder.pdp.id-domain.invalid/access/v1/evaluation
+                    access_evaluations_endpoint: https://cell-placeholder.pdp.id-domain.invalid/access/v1/evaluations
+                    search_resource_endpoint: https://cell-placeholder.pdp.id-domain.invalid/access/v1/search/resource
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /access/v1/evaluation:
+    post:
+      tags: [evaluation]
+      operationId: evaluateAccess
+      summary: 単一の認可判定（AuthZEN 1.0 §6）
+      description: |
+        AuthZEN 1.0 §6 の Access Evaluation [N]。評価順序は L0（PEP 内）→ G 段（façade）→ R 段（engine）で、既定拒否・deny 優先・評価不能は deny とする（ADR-011 D3-1〜D3-3、ARC-05 §4.1）[D]。
+        拒否は 200 と `decision: false` で返す（AuthZEN §10.1.2）[N]。
+        自社 profile の項目は `context.x-authz-profile` に置く（AuthZEN 1.0 外）[D]。
+      x-maturity: GA
+      x-authzen-section: "§6"
+      parameters:
+        - $ref: "#/components/parameters/XRequestId"
+        - $ref: "#/components/parameters/Traceparent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationRequest"
+            x-negative-examples:
+              description: スキーマに違反する負例。正例の examples とは分けて置く（スキーマ検査器が負例を不適合として報告するため）。契約試験キット（DL-80）はこれらが 400 になることを確かめる。
+              missingSubjectId:
+                summary: 負例（AuthZEN 必須項目の欠落）
+                description: subject.id が欠けている。AuthZEN §10.1.1 により 400 Bad Request を返す。
+                value:
+                  subject:
+                    type: core/user
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+            examples:
+              allowRead:
+                summary: 正例（read-sensitive の閲覧。内容に保存した consistency token を渡す）
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: at_least_as_fresh
+                        token: v1.e1.01J9Z8K3VQ7M2XH5D4TA6PZR2N.Zx3kQ9
+              tenantMismatch:
+                summary: 負例（テナント不一致）
+                description: subject と resource の `tid` が異なる。façade は engine に渡さず G 段規則 1 で決定論的に deny する（ADR-010 D-28）。応答は 200・decision=false・reason=deny_guardrail:<規則ID>。PEP の L0 で先に拒否されるのが正常系で、本例は L0 の実装漏れに対する二重化の確認に使う（ARC-06 §3.3）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: 2bq8w1e7r4t9y3u6i0o5p2a8sd
+              unsupportedProfile:
+                summary: 負例（未対応の profile major）
+                description: profile_version の major を façade が理解できない。200・decision=false・reason=unsupported_profile（ADR-011 D6-1）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_edit
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  context:
+                    x-authz-profile:
+                      profile_version: "9.0"
+              downgradeAttempt:
+                summary: 負例（write 操作で弱い整合性を要求）
+                description: write 階層の操作に minimize_latency を指定している。façade は階層の既定（fully_consistent）へ格上げして評価し、応答の consistency.mode に実効モードを返す。黙って弱いモードで評価しない（ADR-011 D6-3、ARC-05 §9.1）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_edit
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                      consistency:
+                        mode: minimize_latency
+              missingTenant:
+                summary: 負例（profile 必須の tid の欠落）
+                description: AuthZEN 上は妥当なので 400 にはしない。評価不能として 200・decision=false・reason=deny_indeterminate（ADR-011 D3-3）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+      responses:
+        "200":
+          description: 判定（許可・拒否とも 200）。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestIdEcho"
+            Deprecation:
+              $ref: "#/components/headers/Deprecation"
+            Sunset:
+              $ref: "#/components/headers/Sunset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Decision"
+              examples:
+                allow:
+                  summary: 正例（許可）
+                  value:
+                    decision: true
+                    context:
+                      x-authz-profile:
+                        decision_id: d8k2m5q9w3e7r1t4y6u0i2o8pz
+                        reason: allow
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: at_least_as_fresh
+                          token: v1.e1.01J9Z8K4M2T6WQ8R1C5N7B3X9D.Kp7wQ2
+                guardrailDeny:
+                  summary: 負例（テナント不一致による G 段 deny）
+                  description: R 段の結果に関わらず拒否（deny 優先。ADR-011 D3-2）。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: h3j6k9l2z5x8c1v4b7n0m3q6wy
+                        reason: deny_guardrail:g1
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+                unavailable:
+                  summary: 負例（engine 不達）
+                  description: façade は受け付けたが engine に届かない。PEP SDK は DL-19 の fail-mode を適用し、評価不能と同様に known-good で許可に変えない（ADR-011 D3-6）。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: p2o5i8u1y4t7r0e3w6q9a2s5df
+                        reason: deny_unavailable
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+                withObligation:
+                  summary: 正例（obligation 付きの許可。preview）
+                  description: 要配慮個人情報を返す資源型で、返却した資源の全件記録を PEP に課す例（ADR-025 D25-18）。obligation の語彙は未決で、type 名は例示。PEP が理解できない obligation が付いた許可は拒否として扱う。
+                  value:
+                    decision: true
+                    context:
+                      x-authz-profile:
+                        decision_id: q7w4e1r8t5y2u9i6o3p0a7s4dg
+                        reason: allow
+                        model_revision:
+                          model_revision: health@01JB8C2M9P
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+                        obligations:
+                          - type: core/record_returned_items
+                indeterminate:
+                  summary: 負例（評価不能。要求例 missingTenant への応答）
+                  description: 必要な属性（tid）の欠落は 400 ではなく評価不能として decision=false・deny_indeterminate（ADR-011 D3-3）。PEP SDK は known-good で許可に変えない（ADR-011 D3-6）。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: k8j5h2g9f6d3s0a7p4o1i8u5yt
+                        reason: deny_indeterminate
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: minimize_latency
+                unsupportedProfile:
+                  summary: 負例（未対応の profile major。要求例 unsupportedProfile への応答）
+                  description: façade が理解できない profile_version の major。decision=false・unsupported_profile（ADR-011 D6-1）。PEP SDK は「判定が得られない」として扱う（ARC-06 §3.5）。
+                  value:
+                    decision: false
+                    context:
+                      x-authz-profile:
+                        decision_id: m1n4b7v0c3x6z9l2k5j8h1g4fq
+                        reason: unsupported_profile
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: fully_consistent
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /access/v1/evaluations:
+    post:
+      tags: [evaluation]
+      operationId: evaluateAccessBatch
+      summary: 複数の認可判定（AuthZEN 1.0 §7）
+      description: |
+        AuthZEN 1.0 §7 の Access Evaluations [N]。上位の subject・action・resource・context は各要素の既定値になる（§7.1.1）[N]。
+        `options.evaluations_semantic` は `execute_all`（既定）・`deny_on_first_deny`・`permit_on_first_permit` [N]。
+        PEP SDK の「全て必要」は `deny_on_first_deny`、「いずれか」は `permit_on_first_permit` に固定し、一覧の後段 Check は `execute_all` を使う（ADR-011 D3-7）[D]。
+        `permit_on_first_permit` を privileged 以上の操作（permission catalog の操作階層）に使った要求は、要求全体を 400 で拒否する（ADR-011 D3-7 の実施方法として本契約が定める）[D]。
+        応答の上位 `decision` は返さない（AuthZEN の RECOMMENDED）[N]。上位の `context.x-authz-profile.batch_decision_id` は一覧 1 回の判定記録の主キーに使う（ADR-025 D25-18）[D]。
+      x-maturity: GA
+      x-authzen-section: "§7"
+      parameters:
+        - $ref: "#/components/parameters/XRequestId"
+        - $ref: "#/components/parameters/Traceparent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationsRequest"
+            x-negative-examples:
+              description: スキーマに違反する負例（DL-80 の契約試験で 400 を確かめる）。
+              emptyWithoutDefaults:
+                summary: 負例（evaluations が空で上位の action・resource もない）
+                description: evaluations が空の要求は単一の Access Evaluation と同じに振る舞う（AuthZEN §7.1）ので、上位の subject・action・resource が必須。欠けているため 400（§10.1.1）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                  evaluations: []
+            examples:
+              postCheck:
+                summary: 正例（一覧の後段 Check。上位に共通の subject と context を置く）
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                  options:
+                    evaluations_semantic: execute_all
+                  evaluations:
+                    - resource:
+                        type: docs/document
+                        id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                        properties:
+                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                    - resource:
+                        type: docs/document
+                        id: 1a3s5d7f9g2h4j6k8l0z2x4c6v
+                        properties:
+                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+              permitAnyOnPrivileged:
+                summary: 負例（privileged 操作での permit_on_first_permit）
+                description: tenant の設定変更（privileged）に「いずれか」の意味論を使っている。要求全体を 400 で拒否する（ADR-011 D3-7）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  options:
+                    evaluations_semantic: permit_on_first_permit
+                  evaluations:
+                    - action:
+                        name: can_change_security_settings
+                      resource:
+                        type: core/tenant
+                        id: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                        properties:
+                          tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+      responses:
+        "200":
+          description: 要素ごとの判定（要求の順序どおり）。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestIdEcho"
+            Deprecation:
+              $ref: "#/components/headers/Deprecation"
+            Sunset:
+              $ref: "#/components/headers/Sunset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationsResponse"
+              examples:
+                mixed:
+                  summary: 正例と負例の混在（2 件目は資源が存在しない）
+                  description: 2 件目は AuthZEN §7.2.1 の形で context.error を返し decision=false。本 profile は reason=deny_indeterminate を併記する。PEP は「存在しない」と「権限がない」を利用者に同じ応答で返す（ADR-025 D25-16）。
+                  value:
+                    context:
+                      x-authz-profile:
+                        batch_decision_id: b5n8m1q4w7e0r3t6y9u2i5o8pk
+                    evaluations:
+                      - decision: true
+                        context:
+                          x-authz-profile:
+                            decision_id: c6v9b2n5m8q1w4e7r0t3y6u9ix
+                            reason: allow
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: minimize_latency
+                      - decision: false
+                        context:
+                          error:
+                            status: 404
+                            message: Resource not found
+                          x-authz-profile:
+                            decision_id: z1x4c7v0b3n6m9q2w5e8r1t4yl
+                            reason: deny_indeterminate
+                            model_revision:
+                              model_revision: docs@01JB7X4K2Q
+                              guardrail_catalog_version: g@2026.10.1
+                            consistency:
+                              mode: minimize_latency
+                singleCompat:
+                  summary: 正例（evaluations が無いか空の要求への応答。AuthZEN §7.1 の後方互換）
+                  description: §6.2 と同じ Decision の形で返す。PEP SDK はこの形を受けない（SDK は evaluations 1 件以上でだけ呼ぶ）。
+                  value:
+                    decision: true
+                    context:
+                      x-authz-profile:
+                        decision_id: w9e2r5t8y1u4i7o0p3a6s9d2fh
+                        reason: allow
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        consistency:
+                          mode: minimize_latency
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /access/v1/search/resource:
+    post:
+      tags: [search]
+      operationId: searchResources
+      summary: Resource Search（AuthZEN 1.0 §8.5。preview・SDK 一覧ヘルパ内部専用）
+      description: |
+        AuthZEN 1.0 §8.5 の Resource Search [N]。`resource` は `type` だけを持ち、`id` は SHOULD で省略され、含まれていても MUST で無視される [N]。
+        **呼出し制限**: SDK の一覧ヘルパ以外の呼出しは CI 検査と façade の受付制御で拒否する（ADR-025 D25-03）[D]。受付制御の方式（workload ID の許可リスト等）は未決（ADR-025）で、許可されない呼出し元には 403 を返す [D]。
+        **結果は認可の根拠にならない**: 返す前に各資源を evaluations（`execute_all`）で後段 Check する（ADR-025 D25-04、ADR-022 D-2-2）[D]。
+        **件数**: `page.total` は返さない。`page.count` はこの応答の件数だけを表す（ADR-025 D25-13）[D]。
+        **打切り**: engine の列挙が上限・制限時間に達した場合は `context.x-authz-profile.completeness` に `incomplete` と理由を返し、「完全」と返さない（ADR-025 D25-07）[D]。
+        **ページング**: 原子的スナップショットを保証しない（重複・欠落があり得る）[N]。続きのページは最初の要求と同一のパラメータで要求する（MUST）[N]。`page.token` は主体・テナント・条件・model revision に束縛される（ADR-025 D25-15）[D]。
+      x-maturity: preview
+      x-authzen-section: "§8.5"
+      x-callers: PEP SDK の一覧ヘルパ（ADR-011 D5-2）だけ
+      parameters:
+        - $ref: "#/components/parameters/XRequestId"
+        - $ref: "#/components/parameters/Traceparent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceSearchRequest"
+            x-negative-examples:
+              description: スキーマに違反する負例（DL-80 の契約試験で 400 を確かめる）。
+              limitTooLarge:
+                summary: 負例（limit 超過）
+                description: page.limit が上限 100 を超える。400 を返す（ADR-025 D25-17）。
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  page:
+                    limit: 5000
+            examples:
+              firstPage:
+                summary: 正例（最初のページ）
+                value:
+                  subject:
+                    type: core/user
+                    id: 4f3kq9w2x7m1p8s6t0v5b3n2zc
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  context:
+                    x-authz-profile:
+                      profile_version: "1.0"
+                  page:
+                    limit: 50
+              foreignToken:
+                summary: 負例（他の主体に発行された page token）
+                description: 別の主体・テナントに束縛された page.token を提示している。403 を返す（ADR-025 D25-15。cursor の使い回し、ATK-03・ATK-05）。同じ主体・テナントで検索条件や limit だけを変えた要求、期限切れの token は 400 とする（AuthZEN §8.2 は続きのページで entity とパラメータの変更を MUST で禁じ、PDP がエラーを返すことを SHOULD とする。状態コードは本契約の選択）[N][D]。
+                value:
+                  subject:
+                    type: core/user
+                    id: 8z6x4c2v0b9n7m5q3w1e8r6t4y
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  action:
+                    name: can_read
+                  resource:
+                    type: docs/document
+                    properties:
+                      tid: 7hd2k9q1w8e3r6t0y5u4i2o1pa
+                  page:
+                    token: v1.c.Zm9yZWlnbi1jdXJzb3ItYm91bmQtdG8tYW5vdGhlcg
+      responses:
+        "200":
+          description: 候補の資源（後段 Check 前。認可の根拠にしない）。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestIdEcho"
+            Deprecation:
+              $ref: "#/components/headers/Deprecation"
+            Sunset:
+              $ref: "#/components/headers/Sunset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceSearchResponse"
+              examples:
+                truncated:
+                  summary: 正例（打切りあり）
+                  description: engine の列挙が上限に達したため incomplete を返す。total は返さない。
+                  value:
+                    results:
+                      - type: docs/document
+                        id: 9m2n4b6v8c1x3z5l7k9j2h4g6f
+                      - type: docs/document
+                        id: 1a3s5d7f9g2h4j6k8l0z2x4c6v
+                    page:
+                      next_token: v1.c.b3BhcXVlLW1hYy1ib3VuZC1jdXJzb3I
+                      count: 2
+                    context:
+                      x-authz-profile:
+                        decision_id: s3d6f9g2h5j8k1l4z7x0c3v6bm
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        completeness:
+                          status: incomplete
+                          reason: enumeration_truncated
+                lastPage:
+                  summary: 正例（最後のページ）
+                  description: 続きがない場合 next_token は空文字列（AuthZEN §8.2.2 の MUST）。
+                  value:
+                    results: []
+                    page:
+                      next_token: ""
+                      count: 0
+                    context:
+                      x-authz-profile:
+                        decision_id: n4m7q0w3e6r9t2y5u8i1o4p7as
+                        model_revision:
+                          model_revision: docs@01JB7X4K2Q
+                          guardrail_catalog_version: g@2026.10.1
+                        completeness:
+                          status: complete
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+components:
+  securitySchemes:
+    workloadMtls:
+      type: mutualTLS
+      description: |
+        PEP（依存サービスの workload）の認証。workload ID の mTLS（ADR-009）を必須とする（ADR-011 D5-7）[D]。AuthZEN では PDP による PEP の認証は SHOULD、通信の保護は MUST [N]。
+  parameters:
+    XRequestId:
+      name: X-Request-ID
+      in: header
+      required: false
+      description: |
+        PEP が要求ごとに採番する不透明値（AuthZEN §10.1.3。要求 ID の付与は MAY、ヘッダ名は RECOMMENDED）[N]。
+        自社 profile では PEP SDK・契約適合実装は必ず付ける（ADR-011 D5-5、ARC-06 §3.6）[D]。AuthZEN 準拠の受理範囲を保つため、façade は欠けた要求を 400 にはしない [D]。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+        examples: [r-01JB9Q2W3E4R5T6Y7U8I9O0PAS]
+    Traceparent:
+      name: traceparent
+      in: header
+      required: false
+      description: W3C Trace Context の traceparent。相関だけに使い、証拠や認可の入力にしない。主体・テナントを tracestate・baggage に載せない（ADR-011 D8-1・D8-4）[D]。
+      schema:
+        type: string
+        pattern: "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+  headers:
+    XRequestIdEcho:
+      description: 要求に X-Request-ID があれば、PDP は同じ値を応答に含める（AuthZEN §10.1.3 の MUST）[N]。engine が返さない場合も façade が補う（ADR-011 D5-5、OpenFGA は返さない RS-07#68）[D]。PEP SDK は不一致を「判定が得られない」として扱う [D]。
+      schema:
+        type: string
+    Deprecation:
+      description: 非推奨の告知（RFC 9745、Proposed Standard）。値は RFC 9651 §3.3.7 の Date（`@` に続く Unix 時刻）[N]（RS-16#34）。
+      schema:
+        type: string
+        pattern: "^@-?[0-9]{1,15}$"
+    Sunset:
+      description: 提供終了の予定日時（RFC 8594、Informational）。値は HTTP-date [N]（RS-16#35）。Deprecation の日時より前にしない（RFC 9745）[N]。
+      schema:
+        type: string
+    RetryAfter:
+      description: 再試行までの待ち時間（RFC 9110 §10.2.3）。429・503 で返す [N]。
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: |
+        要求の誤り（AuthZEN §10.1.2、本文はエラーメッセージ文字列）[N]。AuthZEN の必須項目（subject.type/id、resource.type/id、action.name）の欠落、JSON の誤り、search の `page.limit` 超過、search の続きのページで最初の要求と entity・パラメータが異なる要求と期限切れの `page.token`（AuthZEN §8.2 の SHOULD でエラー）、privileged 操作での `permit_on_first_permit`、要求本文の上限超過（上限値 TBD）を含む [N][D]。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+          examples:
+            missing:
+              summary: 負例の応答
+              value: "subject.id is required"
+    Unauthorized:
+      description: PEP の認証失敗（mTLS の workload ID を検証できない）。AuthZEN §10.1.2 [N]。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+    Forbidden:
+      description: 認証済みの PEP がこの操作を許されていない（search の受付制御で許可されない呼出し元、他主体・他テナントに束縛された page token）。AuthZEN §10.1.2 [N][D]。認可判定の拒否ではない（拒否は 200・decision=false）。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+    TooManyRequests:
+      description: テナント単位・クライアント単位のクォータ超過（ADR-010 D-29、ADR-013 D13-17）[D]。RFC 6585 §4 の 429 で、Retry-After を付ける（RFC では MAY）。429 の応答はキャッシュに保存してはならない（MUST NOT）[N]。AuthZEN §10.1.2 の表にない profile の追加 [D]。PEP SDK は「判定が得られない」として fail-mode を適用する [D]。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+    InternalError:
+      description: façade 内部の誤り（AuthZEN §10.1.2 の 500）[N]。PEP SDK は「判定が得られない」として扱う [D]。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+    ServiceUnavailable:
+      description: façade の過負荷による shed（低い操作階層から。ADR-010 D-29）または保守（RFC 9110 §15.6.4、Retry-After は MAY）[N][D]。engine 不達は 503 ではなく 200・`deny_unavailable` で返す（ADR-011 D3-6）[D]。AuthZEN §10.1.2 の表にない profile の追加 [D]。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestIdEcho"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+  schemas:
+    ErrorMessage:
+      type: string
+      description: AuthZEN §10.1.2 の「エラーメッセージ文字列」[N]。利用側は文字列一致に依存しない（ADR-022 D-3-2）。主体・テナント・資源の識別子を含めない [D]。
+      maxLength: 512
+    TenantId:
+      type: string
+      description: テナント識別子（`tid`。ADR-021 D21-12 で払い出す不透明値）。受信側の形式は CON-02 `TenantId`（`OpaqueId`、印字可能 ASCII 1〜64 文字）に揃える。払い出しの符号化は DL-71 で確定（未決（ADR-021 D21-09））。
+      minLength: 1
+      maxLength: 64
+      pattern: "^[\\x21-\\x7E]{1,64}$"
+      examples: [7hd2k9q1w8e3r6t0y5u4i2o1pa]
+    EntityType:
+      type: string
+      description: |
+        Subject.type・Resource.type（AuthZEN §5.1・§5.2 の `type`）。値は ADR-021 D21-26 の `<名前空間コード>/<型名>`。横断型は予約名前空間 `core`（例 `core/user`、`core/workload`、`core/tenant`）[D]。文字集合の規則は名前空間台帳（DL-71）で確定するため、本契約は pattern を課さない（未決（ADR-021））。
+      minLength: 1
+      maxLength: 128
+      examples: [core/user, docs/document]
+    SubjectProperties:
+      type: object
+      description: AuthZEN の `subject.properties`（OPTIONAL、自由形式）[N]。本 profile の項目を置く [D]。
+      properties:
+        tid:
+          $ref: "#/components/schemas/TenantId"
+          x-profile-required: true
+          x-on-missing: deny_indeterminate
+        principal_type:
+          type: string
+          description: 主体類型（人間／workload／AI エージェント／service account。ADR-005 D9-4、ADR-017）。値の名前は DL-75 で確定（未決（ADR-021 D21-38））。sub の文字列から類型を推論させない（ADR-021）。
+        actor:
+          type: object
+          description: 委任時の現在の actor（RFC 8693 の `act` の top-level の主体。アクセス制御に使えるのは top-level claim と現在の actor だけ（RFC 8693 の MUST））[N]（RS-04#66）。
+          properties:
+            type:
+              $ref: "#/components/schemas/EntityType"
+            id:
+              type: string
+          required: [type, id]
+    ResourceProperties:
+      type: object
+      description: AuthZEN の `resource.properties`（OPTIONAL、自由形式）[N]。
+      properties:
+        tid:
+          allOf:
+            - $ref: "#/components/schemas/TenantId"
+          description: PEP が L0 で照合済みの resource-derived tenant（ARC-06 §3.3）。
+          x-profile-required: true
+          x-on-missing: deny_indeterminate
+    Subject:
+      type: object
+      description: AuthZEN 1.0 §5.1 の Subject。`type`・`id` は REQUIRED、`properties` は OPTIONAL [N]。
+      required: [type, id]
+      properties:
+        type:
+          $ref: "#/components/schemas/EntityType"
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: 主体の不透明識別子（`sub` 等。ADR-021 D21-09）。
+        properties:
+          $ref: "#/components/schemas/SubjectProperties"
+    Resource:
+      type: object
+      description: AuthZEN 1.0 §5.2 の Resource。`type`・`id` は REQUIRED、`properties` は OPTIONAL [N]。
+      required: [type, id]
+      properties:
+        type:
+          $ref: "#/components/schemas/EntityType"
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        properties:
+          $ref: "#/components/schemas/ResourceProperties"
+    SearchResourceSelector:
+      type: object
+      description: Resource Search の `resource`（AuthZEN §8.5.1）。`type` は必須、`id` は SHOULD で省略し、含まれていても MUST で無視される [N]。
+      required: [type]
+      properties:
+        type:
+          $ref: "#/components/schemas/EntityType"
+        id:
+          type: string
+          description: 無視される（AuthZEN §8.5.1）。
+        properties:
+          $ref: "#/components/schemas/ResourceProperties"
+    Action:
+      type: object
+      description: AuthZEN 1.0 §5.3 の Action。`name` は REQUIRED、`properties` は OPTIONAL [N]。`name` は型の内側で一意な permission 名（ADR-021 D21-26、permission catalog は DL-26）[D]。
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        properties:
+          type: object
+    RequestContext:
+      type: object
+      description: |
+        AuthZEN 1.0 §5.4 の Context（自由形式）[N]。自社 profile の項目は `x-authz-profile` に置く（AuthZEN 1.0 外）[D]。
+        その他のキーは条件評価の入力候補で、属性辞書（ADR-011 D9-4）に登録されたキーだけを評価に使う。PEP 供給の context の受入範囲は未決（ADR-011）[D]。
+      properties:
+        x-authz-profile:
+          $ref: "#/components/schemas/ProfileRequest"
+    ConsistencyMode:
+      type: string
+      description: 整合性モード（ADR-011 D6-1）。弱い順に minimize_latency < at_least_as_fresh < fully_consistent。façade は格上げはしても格下げはしない（ADR-011 D6-3）[D]。
+      enum: [minimize_latency, at_least_as_fresh, fully_consistent]
+    ConsistencyToken:
+      type: string
+      description: |
+        façade が発行する版付きの不透明値（`版‖engine 識別‖engine 固有値または書込時刻‖MAC`、ADR-010 D-14）。利用側は解釈せず保存・返送するだけ（ADR-011 D10-1 C-3）[D]。
+        最大長は 1,024 バイトの初期案で、DL-72 凍結前に確定（ADR-011 D6-4、NA-010-2（前提台帳へ追加要））。JSON Schema の maxLength は文字数を数えるので、印字可能 ASCII に限って文字数＝バイト数とする（CON-02 `ConsistencyToken` と同じ）[D]。解釈できない token（版不明・engine 識別の不一致・MAC 不一致）はエラーにせず fully_consistent に格上げ（ADR-010 D-15、ADR-011 D6-1）[D]。
+      minLength: 1
+      maxLength: 1024
+      pattern: "^[\\x21-\\x7E]{1,1024}$"
+    ProfileRequest:
+      type: object
+      description: 要求側の自社 profile（AuthZEN 1.0 外）。キー名 `x-authz-profile` は暫定（未決（ADR-021））。
+      x-authzen-extension: true
+      properties:
+        profile_version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+$"
+          description: profile の版（major.minor）。欠ければ 1.0 として扱う。未対応の major なら decision=false・`unsupported_profile`（ADR-011 D6-1）[D]。
+        consistency:
+          type: object
+          properties:
+            mode:
+              allOf:
+                - $ref: "#/components/schemas/ConsistencyMode"
+              description: 欠ければ操作階層ごとの既定（ARC-05 §9.1。write 以上は fully_consistent）。既定より弱い指定は既定に格上げ（ADR-011 D6-3）。read-sensitive の OpenFGA での扱いは未決（ADR-010 §2.12、U-03）で、暫定は常時格上げ。
+            token:
+              $ref: "#/components/schemas/ConsistencyToken"
+        model:
+          type: object
+          properties:
+            pin:
+              type: string
+              maxLength: 128
+              description: registry の model revision（DL-73）。欠ければテナントの現行固定版。最新版にはしない（ADR-011 D6-1、ADR-016 D16-30）[D]。
+        txn:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[\\x21-\\x7E]{1,64}$"
+          x-maturity: preview
+          description: |
+            PEP が検証した Txn-Token の `txn`（一意の取引識別子。名前と意味は RFC 8417 の IANA 登録で固定、ADR-021 D21-36）の写し。decision event の相関に使い、認可の入力にしない [D]。Transaction Tokens は Internet-Draft（-11、確認日 2026-10-03、SS-B04）。発行範囲と façade での Txn-Token 検証の要否は未決（ADR-005 H-20・ADR-009、U-02）。Txn-Token の全文は送らない（ログに残さない義務。ADR-021 D21-37）[D]。
+    Reason:
+      type: string
+      description: |
+        判定理由の閉じた列挙（ADR-011 D6-1）: `allow`, `deny_guardrail:<規則ID>`, `deny_no_relation`, `deny_indeterminate`, `deny_unavailable`, `unsupported_profile`。エンドユーザーに返さない [D]。
+        規則 ID の形式は未決（ADR-011、CAM）で、本契約の暫定は CON-02 `DecisionReason` と同じ `[a-z0-9][a-z0-9._-]{0,63}`（先頭は英小文字・数字）[D]。
+        値の追加を minor（後方互換）とするか major とするかは未決（ADR-016 P16-2。ADR-016 の現行定義では閉じた enum への追加は破壊的）。どちらの結論でも、PEP は未知の値を拒否として扱う [D]。
+      pattern: "^(allow|deny_no_relation|deny_indeterminate|deny_unavailable|unsupported_profile|deny_guardrail:[a-z0-9][a-z0-9._-]{0,63})$"
+      examples: [allow, deny_guardrail:g1, deny_indeterminate]
+    ModelRevision:
+      type: object
+      description: 評価に使った model revision と G 段カタログの版（ADR-011 D6-1）。存在は必須、表現は preview（ADR-022 D-2）。監査記録に残る形式は不可逆側（ADR-011 可逆性 (4)）[D]。
+      x-maturity: preview
+      required: [model_revision, guardrail_catalog_version]
+      properties:
+        model_revision:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[\\x21-\\x7E]{1,64}$"
+          description: registry（DL-73）が採番した不変の model revision。項目名と形式は CON-02 `ModelRevision`・CON-08 と揃える [D]。
+        guardrail_catalog_version:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[\\x21-\\x7E]{1,64}$"
+          description: G 段カタログの版 [D]。
+    Obligation:
+      type: object
+      description: |
+        許可に付く PEP の義務（preview。AuthZEN 1.0 外）。AuthZEN Profile for Obligations は WG Draft（SS-C18、本文未読）で、本契約はそれに依存しない [N][D]（RS-07#67）。
+        AuthZEN は decision=true でも PEP が context を理解できなければ拒否してよい（MAY）とする [N]。本 profile は、理解できない obligation が付いた許可を PEP が拒否として扱うことを必須とする [D]。語彙は未決（ADR-011 §8・ADR-022）。
+      x-maturity: preview
+      required: [type]
+      properties:
+        type:
+          type: string
+          maxLength: 128
+          description: 名前空間付きの obligation 名（例示 `core/record_returned_items`）。
+        parameters:
+          type: object
+    ProfileDecision:
+      type: object
+      description: 応答側の自社 profile（AuthZEN 1.0 外）。キー名 `x-authz-profile` は暫定（未決（ADR-021））。
+      x-authzen-extension: true
+      required: [decision_id, reason, model_revision, consistency]
+      properties:
+        decision_id:
+          type: string
+          minLength: 16
+          maxLength: 64
+          description: façade が採番する推測困難で一意な ID（監査の主キー）。PEP は採番しない（ADR-011 D5-3・D6-1、ARC-06 §3.7）。時刻・ホスト名・cell 名を埋め込まない（ADR-021 D21-36）[D]。
+        reason:
+          $ref: "#/components/schemas/Reason"
+        model_revision:
+          $ref: "#/components/schemas/ModelRevision"
+        consistency:
+          type: object
+          required: [mode]
+          properties:
+            mode:
+              allOf:
+                - $ref: "#/components/schemas/ConsistencyMode"
+              description: 実効モード（必須）。
+            token:
+              $ref: "#/components/schemas/ConsistencyToken"
+        obligations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Obligation"
+    DecisionContext:
+      type: object
+      description: AuthZEN 1.0 §5.5 の Decision の `context`（OPTIONAL）[N]。
+      properties:
+        error:
+          type: object
+          description: evaluations の個別要素の誤り（AuthZEN §7.2.1 の例の形）[N]。
+          properties:
+            status:
+              type: integer
+            message:
+              type: string
+        x-authz-profile:
+          $ref: "#/components/schemas/ProfileDecision"
+    Decision:
+      type: object
+      description: |
+        AuthZEN 1.0 §5.5 の Decision。`decision` は REQUIRED [N]。false なら要求を先に進めてはならない（MUST NOT）[N]。
+        本 profile では `context.x-authz-profile` を必須とし、欠ければ PEP は判定なしとして扱う（ARC-06 §3.5）[D]。
+      required: [decision]
+      properties:
+        decision:
+          type: boolean
+        context:
+          $ref: "#/components/schemas/DecisionContext"
+    EvaluationRequest:
+      type: object
+      description: AuthZEN 1.0 §6.1 の Access Evaluation 要求 [N]。
+      required: [subject, action, resource]
+      properties:
+        subject:
+          $ref: "#/components/schemas/Subject"
+        action:
+          $ref: "#/components/schemas/Action"
+        resource:
+          $ref: "#/components/schemas/Resource"
+        context:
+          $ref: "#/components/schemas/RequestContext"
+    EvaluationItem:
+      type: object
+      description: evaluations の要素。省略した項目は上位の値を既定値とする（AuthZEN §7.1.1）[N]。上位と合わせて subject・action・resource が揃わない要素は 400 [N]。
+      properties:
+        subject:
+          $ref: "#/components/schemas/Subject"
+        action:
+          $ref: "#/components/schemas/Action"
+        resource:
+          $ref: "#/components/schemas/Resource"
+        context:
+          $ref: "#/components/schemas/RequestContext"
+    EvaluationsRequest:
+      type: object
+      description: |
+        AuthZEN 1.0 §7.1 の Access Evaluations 要求 [N]。`evaluations` が無いか空の要求は、単一の Access Evaluation 要求（§6.1）と同じに振る舞う（後方互換）[N]。そのため、その場合は上位の subject・action・resource が必須になる（下の anyOf）[D]。
+        `evaluations` に 1 件以上ある場合、上位の subject・action・resource は、全要素がそれを持つときに限り省略できる（§7.1、§7.1.1 の MUST）[N]。要素ごとの補完後の充足はスキーマで表せないので façade が検査し、欠ければ 400 とする（§10.1.1）[N][D]。
+        要素数の上限は TBD（所有者: 認可・PDP チーム、期限: DL-72 凍結前、決め方: DL-20 の遅延予算と ADR-025 D25-17 の評価件数予算）。
+      anyOf:
+        - required: [evaluations]
+          properties:
+            evaluations:
+              minItems: 1
+        - required: [subject, action, resource]
+      properties:
+        subject:
+          $ref: "#/components/schemas/Subject"
+        action:
+          $ref: "#/components/schemas/Action"
+        resource:
+          $ref: "#/components/schemas/Resource"
+        context:
+          $ref: "#/components/schemas/RequestContext"
+        evaluations:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluationItem"
+        options:
+          type: object
+          properties:
+            evaluations_semantic:
+              type: string
+              enum: [execute_all, deny_on_first_deny, permit_on_first_permit]
+              default: execute_all
+    EvaluationsResponse:
+      type: object
+      description: |
+        AuthZEN 1.0 §7.2 の応答。`evaluations` は要求の順序どおり。`evaluations` がある場合、上位の `decision` は省略（RECOMMENDED）し、あっても PEP は無視してよい [N]。上位の `context.x-authz-profile.batch_decision_id` は AuthZEN 1.0 外 [D]。
+        要求の `evaluations` が無いか空の場合（§7.1 の後方互換）は、§6.2 と同じ Decision（上位の `decision` と、`context.x-authz-profile` に ProfileDecision）を返す [N][D]。
+        どちらの形かは要求で決まる。PEP SDK は本 endpoint を `evaluations` 1 件以上でだけ呼ぶ（単一判定は §6 の endpoint を使う。本契約の SDK 規則）ので、SDK が受けるのは前者だけである [D]。
+      anyOf:
+        - required: [evaluations]
+        - required: [decision]
+      properties:
+        decision:
+          type: boolean
+          description: 要求の `evaluations` が無いか空の場合だけ使う（§7.1・§6.2）[N]。
+        evaluations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Decision"
+        context:
+          type: object
+          properties:
+            x-authz-profile:
+              anyOf:
+                - $ref: "#/components/schemas/ProfileBatch"
+                - $ref: "#/components/schemas/ProfileDecision"
+    ProfileBatch:
+      type: object
+      description: evaluations 応答の上位に置く自社 profile（AuthZEN 1.0 外）。`batch_decision_id` は一覧 1 回の判定記録の主キー（ADR-025 D25-18）[D]。
+      x-authzen-extension: true
+      required: [batch_decision_id]
+      properties:
+        batch_decision_id:
+          type: string
+          minLength: 16
+          maxLength: 64
+    PageRequest:
+      type: object
+      description: AuthZEN §8.2.1 の page（`token`・`limit`・`properties`）[N]。`limit` の上限 100 は本 profile（ADR-025 D25-17）[D]。
+      properties:
+        token:
+          type: string
+          maxLength: 1024
+          description: 前回応答の `next_token`。façade が主体・テナント・条件・model revision に束縛し MAC を付けた短命値（ADR-025 D25-15）[D]。
+        limit:
+          type: integer
+          minimum: 0
+          maximum: 100
+        properties:
+          type: object
+    PageResponse:
+      type: object
+      description: AuthZEN §8.2.2 の page。`next_token` は REQUIRED で、続きがなければ空文字列（MUST）[N]。`total` は OPTIONAL だが本 profile では返さない（ADR-025 D25-13）[D]。
+      required: [next_token]
+      properties:
+        next_token:
+          type: string
+          maxLength: 1024
+        count:
+          type: integer
+          minimum: 0
+        total:
+          description: AuthZEN §8.2.2 では OPTIONAL だが、本 profile では返さない（ADR-025 D25-13）。存在すれば契約違反。
+          not: {}
+        properties:
+          type: object
+    ResourceSearchRequest:
+      type: object
+      description: AuthZEN 1.0 §8.5.1 の Resource Search 要求 [N]。
+      required: [subject, action, resource]
+      properties:
+        subject:
+          $ref: "#/components/schemas/Subject"
+        action:
+          $ref: "#/components/schemas/Action"
+        resource:
+          $ref: "#/components/schemas/SearchResourceSelector"
+        context:
+          $ref: "#/components/schemas/RequestContext"
+        page:
+          $ref: "#/components/schemas/PageRequest"
+    Completeness:
+      type: object
+      description: |
+        結果の完全性（ADR-025 D25-07・D25-21。AuthZEN 1.0 外、preview）。façade の search が返し得る理由は `enumeration_truncated`・`deadline_exceeded`。`index_lagging`・`budget_exhausted` は一覧ヘルパが付ける。`known_good_only` は KD13-6 で既知良好判定が許された場合にだけ加える（未決（ADR-013 KD13-6））[D]。
+      x-maturity: preview
+      required: [status]
+      x-constraint: "`status`=`incomplete` なら `reason` は必須、`complete` なら `reason` を付けない [D]。コード生成器との相性のため if/then ではなく契約試験キット（DL-80）で検査する。"
+      properties:
+        status:
+          type: string
+          enum: [complete, incomplete]
+        reason:
+          type: string
+          enum: [enumeration_truncated, index_lagging, budget_exhausted, deadline_exceeded]
+    ResourceSearchResponse:
+      type: object
+      description: AuthZEN 1.0 §8.3 の Search 応答（`results` は REQUIRED、`page`・`context` は OPTIONAL）[N]。
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resource"
+        page:
+          $ref: "#/components/schemas/PageResponse"
+        context:
+          type: object
+          properties:
+            x-authz-profile:
+              type: object
+              x-authzen-extension: true
+              required: [decision_id, model_revision, completeness]
+              properties:
+                decision_id:
+                  type: string
+                  minLength: 16
+                  maxLength: 64
+                model_revision:
+                  $ref: "#/components/schemas/ModelRevision"
+                completeness:
+                  $ref: "#/components/schemas/Completeness"
+    PdpMetadata:
+      type: object
+      description: |
+        AuthZEN 1.0 §9.1 の PDP metadata。`policy_decision_point` と `access_evaluation_endpoint` は REQUIRED [N]。
+        `search_subject_endpoint`・`search_action_endpoint` は v1 で公開しないので載せない（ADR-011 D5-2）[D]。`signed_metadata` は v1 では使わない（応答署名を採らない ADR-011 D5-7 に揃える）[D]。
+      required: [policy_decision_point, access_evaluation_endpoint]
+      properties:
+        policy_decision_point:
+          type: string
+          format: uri
+          pattern: "^https://[^?#]+$"
+          description: PDP 識別子。https scheme で query・fragment を持たない URL（AuthZEN §9.1.1）[N]。
+        access_evaluation_endpoint:
+          type: string
+          format: uri
+        access_evaluations_endpoint:
+          type: string
+          format: uri
+        search_resource_endpoint:
+          type: string
+          format: uri
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: AuthZEN §9.1.2 の capability URN の配列（項目名は `capabilities`）[N]。§8.2.1 の本文は同じものを `supported_capabilities` と呼んでいるが、§9.1.2 の定義と §12.1.3 の登録に従い `capabilities` を使う [N][D]。本 profile の URN は未決（ADR-021 の名前空間）[D]。

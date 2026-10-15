@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.id-domain.invalid/schemas/v1/common.schema.json",
+  "$comment": "文書ID: CON-02 / DL-71 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15 | 名称: 共通スキーマ（全契約が $ref で共有する識別子・tenant context・相関 ID・判定 profile・エラー形式・版情報の定義） | 対応要求: R-109, R-161（deliverables.md の DL-71 行）。関連: R-037, R-047, R-105, R-118, R-128, R-209, R-250 / G-067, G-069, G-086, G-120, G-121 | 依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-71, §2.3）, 05_adr/ADR-021（D21-03, D21-09〜14c, D21-22〜28, D21-34〜39）, 05_adr/ADR-022（D-1, D-2, D-5, D-8, D-9）, 05_adr/ADR-011（D3-3, D5-5, D6-1〜D6-4, D8-2）, 05_adr/ADR-009（D09-28, D09-29）, 05_adr/ADR-016（D16-02, §2.1 表）, 04_architecture/reference-architecture-v2.md（X08）, 04_architecture/authorization-model.md（X-1, X-2, §9.1, §9.2）, 04_architecture/claims-catalog.md（§2.1, §3.6, §3.7, §4.2）, 02_requirements/operation-risk-tiers-assurance.md（5 階層）, research/standards-status.md（SS-A47, SS-C13, SS-D02, SS-I17） | 使い方: 本文書のルートは検証制約を持たず、各契約（CON-03〜CON-09）が $defs を $ref で参照する。$id の host は識別子専用ドメイン <id-domain> が未決（ADR-021 K21-6）のため RFC 2606 の予約 TLD .invalid で仮置きし、K21-6 の決裁後に置き換える。互換規則: 本スキーマは SemVer（ADR-016 N-8）。非互換変更では $id の major（/v1/）を上げる（ADR-016 §2.1 表の DL-71 行）。拡張: x-negative-examples は本書固有の注釈キーワード（JSON Schema 2020-12 では未知キーワードは注釈として扱われ検証に影響しない）。各 $defs の examples は正例、x-negative-examples は負例とその拒否理由。負例のうち理由に「スキーマ上は受理」「CI で拒否」と書いたものは、受信側スキーマでは検出できず、払い出し側 CI（ADR-021 D21-42）または契約試験（DL-80）で拒否するものである（受信側を緩く保つため。OpaqueId 参照）。それ以外の負例は本スキーマの検証で拒否される（起草時に jsonschema 4.26.0 の Draft202012Validator で正例 0 件不合格・負例の判定を確認）。作成方法: AI エージェント（Claude）が起草。作成者以外のエージェントによる独立レビューを 2026-10-15 に実施し、指摘を本書に反映した（記録: 11_contracts/review-notes/CON-02.md）。人による照合は未実施（CONVENTIONS §8）。根拠の書式: [N] 規範原典、[D] 設計推論、RS-xx#n は research の検証済み項目。research 未収録で本書起草時（2026-10-15）に原典を取得したもの: RFC 9457 §3.1、AuthZEN 1.0 §5.1〜§5.5 と §10.1.3、W3C Trace Context Level 1 §3.2.2。 レビュー時（2026-10-15）に同じ 3 原典を再取得し、§3.1〜§3.2、§5.1〜§5.5・§10.1.3、§3.2.2 の文言と本書の写しを照合した。",
+  "title": "共通スキーマ（CON-02）",
+  "description": "全連携契約が共有する定義。主体・テナント・リソース識別子（ADR-021）、tenant context、decision_id、txn、trace 参照、model/policy revision、consistency token、エラー形式（RFC 9457 を採用）、版情報。",
+  "$defs": {
+    "OpaqueId": {
+      "$comment": "受信側の契約（ADR-021 D21-09）: 64 文字以下の ASCII の不透明文字列として扱い、大文字・小文字を区別して比較し、解析しない [D]。受信側の検証はこの緩い形だけにする。払い出し側の形式（IssuedOpaqueId）を受信側で検証すると、新規払出しの符号化を変えたとき（D21-09 で可逆とされた点）に受信側が壊れるためである [D]。空白・制御文字は含めない（本書の提案）[D]。UUID の推測困難性をアクセス制御の根拠にしてはならない（RFC 9562 §8、ADR-021 N-12 / D21-14）[N]。",
+      "description": "基盤が払い出す不透明識別子の受信側契約。解析・正規化・大小同一視をしない。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[\\x21-\\x7E]{1,64}$",
+      "examples": ["k3vq7m2xh5d4ta6pzr2nbw7ycu", "3f2b8c1e-9a4d-4c7e-b1f0-6d2a9e4c5b13"],
+      "x-negative-examples": [
+        {"value": "", "reason": "空文字列（minLength 1）"},
+        {"value": "user 001", "reason": "空白を含む"},
+        {"value": "a0000000000000000000000000000000000000000000000000000000000000000", "reason": "65 文字（64 文字超）"},
+        {"value": "山田", "reason": "ASCII 以外"}
+      ]
+    },
+    "IssuedOpaqueId": {
+      "$comment": "払い出し側（AS・IdP・PDP facade・TTS）の CI 検査用の形式。CSPRNG による 122 bit 以上の乱数（ADR-021 D21-09）[D]。符号化の候補は 2 つで、どちらを新規払出しに使うかは未決（ADR-021 D21-09。所有者: 認証チーム、期限: G3、決め方: TC-021-08 の相互運用試験）。本スキーマは両候補を anyOf で許し、TC-021-08 の後の minor 改版で一方を払い出し規則として固定する（払い出し済みの値は変えない）。候補 1: RFC 4648 base32 alphabet の小文字化、padding なし 26 文字（130 bit）。候補 2: UUIDv4 の正準表記（小文字 36 文字、乱数 122 bit。RFC 9562 §5.4）[N]。時刻を含む形式（UUIDv7、ULID）は作成時期を漏らすため外部に出す ID に使わない（RFC 9562 §5.7, §8、ADR-021 D21-09）[N][D]。含めないもの: 時刻、テナント、リージョン、cell、主体類型、連番、email の hash、製品内部 ID（D21-09, D21-36）[D]。ADR への指摘: D21-09 は「払い出す値は小文字の英数字だけ」とする一方で、候補 2 はハイフンを含む。候補 2 を採る場合は D21-09 の文言を「小文字の英数字とハイフン」に改める必要がある [D]。",
+      "description": "基盤が新規に払い出す不透明 ID の形式（払い出し側の検査用）。符号化方式は未決（ADR-021 D21-09、TC-021-08）。",
+      "type": "string",
+      "anyOf": [
+        {"title": "候補1: 小文字 base32（26 文字）", "pattern": "^[a-z2-7]{26}$"},
+        {"title": "候補2: UUIDv4 正準表記（小文字）", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}
+      ],
+      "examples": ["k3vq7m2xh5d4ta6pzr2nbw7ycu", "3f2b8c1e-9a4d-4c7e-b1f0-6d2a9e4c5b13"],
+      "x-negative-examples": [
+        {"value": "K3VQ7M2XH5D4TA6PZR2NBW7YCU", "reason": "大文字（大小を同一視するストアでの衝突回避のため小文字のみ払い出す。D21-09）"},
+        {"value": "0190f3a2-7b4c-7d1e-8f00-1a2b3c4d5e6f", "reason": "UUIDv7（先頭 48 bit が時刻で作成時期を漏らす）"},
+        {"value": "01J9Z8K3VQ7M2XH5D4TA6PZR2N", "reason": "ULID（時刻順 ID。外部に出す ID には使わない）"},
+        {"value": "tenant-acme-000123", "reason": "顧客名と連番を含む（D21-12）"}
+      ]
+    },
+    "Issuer": {
+      "$comment": "信頼区画（または専用 issuer）の issuer URL（ADR-021 D21-03, D21-05）。形は https://<p>.<id-domain>（path・query・fragment・port・末尾スラッシュなし）[D]。cell・リージョン・テナント ID・ブランド・製品名・alg 名・版番号を含めない（D21-06）[D]。これらの語の不在は語彙依存のため本スキーマでは検査せず、CI の許可リスト照合（D21-42 (a)(b)）で検査する。issuer の粒度（区画 issuer かテナント別か）は未決（ADR-021 K21-1 と ADR-007 KD7-1、DEC-3。U-01）。cell 別の内部 issuer（ADR-005 V4）は可逆で、依存サービスが保存してよい値ではない（D21-08）。比較は完全一致（ADR-021 N-3）[N]。",
+      "description": "issuer URL（区画 issuer）。完全一致で比較する。",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 261,
+      "pattern": "^https://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$",
+      "examples": ["https://p7k.id-domain.invalid"],
+      "x-negative-examples": [
+        {"value": "https://p7k.id-domain.invalid/", "reason": "末尾スラッシュ（完全一致比較で別値になる）"},
+        {"value": "https://id-domain.invalid/tenants/acme", "reason": "path を含む（D21-03）"},
+        {"value": "http://p7k.id-domain.invalid", "reason": "https 以外"},
+        {"value": "https://p7k.id-domain.invalid:8443", "reason": "port を含む"}
+      ]
+    },
+    "PrincipalId": {
+      "$comment": "sub。全主体類型（利用者、service account、workload、AI エージェント、client の service principal）に共通の単一名前空間から払い出す（ADR-021 D21-10）[D]。テナントに属さず、所属変更・統合・分割・cell 移動で変わらない（D21-10, D21-29, D21-30, INV-2）[D][A-015]。主体類型の接頭辞を付けない（D21-10、principal-catalog §3.2、ADR-021/RH-11）[D]。主体を一意に指すのは (iss, sub) の組である（D21-08）。email・電話番号・preferred_username・UPN・SCIM userName/externalId を識別子・結合キーに使わない（D21-14c）[D]。削除後も墓石として保持し再発番しない（D21-13）[D]。",
+      "description": "主体 ID（sub）。受信側は OpaqueId として扱う。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["k3vq7m2xh5d4ta6pzr2nbw7ycu"],
+      "x-negative-examples": [
+        {"value": "alice@example.com", "reason": "OpaqueId としては受理されるが、払い出し規則（IssuedOpaqueId）違反。email を sub にしない（D21-14c、nOAuth 対策）。払い出し側 CI で拒否する"},
+        {"value": "svc_k3vq7m2xh5d4ta6pzr2nbw7ycu", "reason": "主体類型の接頭辞（D21-10）。払い出し側 CI で拒否する"}
+      ]
+    },
+    "TenantId": {
+      "$comment": "tid。D21-09 と同じ規則で払い出す（ADR-021 D21-12）[D]。顧客名・ドメイン名・契約番号から導かない。人が読む slug は可変の表示属性で、識別・認可に使わない [D]。1 token に 1 tid（ADR-005 V9）[D]。統合元の tid は墓石にして再利用しない（D21-29, INV-1）[D]。",
+      "description": "テナント ID（tid）。受信側は OpaqueId として扱う。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["t5wq2hzr7nmc4ka3vd6pxe2bfy"],
+      "x-negative-examples": [
+        {"value": "acme-corp", "reason": "slug（可変の表示属性）を識別子に使っている（D21-12）。払い出し側 CI で拒否する"}
+      ]
+    },
+    "ClientId": {
+      "$comment": "OAuth client_id。D21-09 と同じ規則で基盤が払い出す（ADR-021 D21-22）[D]。登録者が値を選ぶこと、再利用、テナント名・製品名・ベンダー名・環境名の埋め込みは禁止 [D]。sub との値域の分離方式（client 専用の発番空間か、構造上の区別子か）は未決（ADR-021 D21-23。決め方: TC-021-05、期限: G3）。決まるまで受信側は OpaqueId として扱い、client が主体である token は sub の値ではなく主体類型 claim（名前は DL-75）で区別する（RFC 9068 §5、ADR-021 D21-23）[N][D]。",
+      "description": "OAuth client_id。値域の分離方式は未決（ADR-021 D21-23）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["c2mz7vq4hk3xa5rd6tn2pwe7bu"],
+      "x-negative-examples": [
+        {"value": "acme-billing-prod", "reason": "テナント名・製品名・環境名の埋め込み（D21-22）。払い出し側 CI で拒否する"}
+      ]
+    },
+    "SessionId": {
+      "$comment": "sid。issuer の中で一意であればよく、RP にとって不透明（OIDC Front-Channel Logout 1.0 §3、Back-Channel Logout 1.0 §2.1）[N]（ADR-021 D21-35）。値は D21-09 と同じ不透明な乱数形式で、時刻・ホスト名・cell 名を含めない（D21-36）[D]。",
+      "description": "ログイン session の識別子（sid）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["s6hn3qk7zm2va4xr5dt2pwc7ye"]
+    },
+    "TokenId": {
+      "$comment": "jti。issuer 間を含めて偶然一致の確率を無視できるよう割り当てる（RFC 7519 §4.1.7 の MUST、ADR-021 D21-35）[N]。RFC 9068 の JWT access token では REQUIRED（RS-04#60）[N]。値は D21-09 と同じ不透明な乱数形式（D21-36）[D]。token を一意に指すのは (iss, jti) の組。監査には jti を生で残さず jti_ref（HMAC。形式は DL-77）で記録する（ADR-014 D14-21、claims-catalog §2.1）[D]。",
+      "description": "token ID（jti）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["j4kz7qm2vx5hd3ta6pnr2bw7cy"]
+    },
+    "TransactionId": {
+      "$comment": "txn。外部要求 1 件ごとに cell の edge 併設 TTS が CSPRNG で 1 回だけ払い出す（ADR-009 D09-28、ADR-021 D21-35, D21-36）[D]。名前と「一意の取引識別子」という意味は RFC 8417 §2.2 が定め、IANA の JWT Claims registry への登録で固定されている（ADR-021 D21-35, D21-36）[N]。Transaction Tokens 草案では txn は必須 claim である（RS-06#31）[N]。Transaction Tokens は Internet-Draft（draft-ietf-oauth-transaction-tokens-11、IESG 未提出、standards-status SS-B04、確認日 2026-10-03）で、txn 以外の構成は preview の社内 profile txn-v1 とする（ADR-022 D-2）。置換 token でも txn を変えない（草案の MUST NOT、RS-06#40）[N]。RFC にならない場合は edge 発行の自社形式取引 ID を同じ欄に入れ、欄の意味（取引の一意な識別子、不透明、PII なし）は変えない（ADR-022 D-8-5）[D]。Txn-Token の発行範囲を public・read-sensitive に広げるかは未決（U-02、ADR-005 §2.15）。",
+      "description": "内部取引の識別子（txn）。欄の意味と形式は GA、Txn-Token の claim 構成は preview（ADR-022 D-2）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["x7pq3mz2kv5ha4td6rn2cwe7by"],
+      "x-negative-examples": [
+        {"value": "edge-jp1-cell03-20261015T101500Z-0001", "reason": "ホスト名・cell 名・時刻・連番を含む（D21-36、D09-28）。払い出し側 CI で拒否する"}
+      ]
+    },
+    "DecisionId": {
+      "$comment": "decision_id。PDP facade が判定 1 件ごとに採番する推測困難で一意な ID で、監査の主キー（ADR-011 D6-1）[D]。AuthZEN 1.0 外の自社拡張で GA（ADR-022 D-2, D-8-2）[D]。値は D21-09 と同じ不透明な乱数形式（ADR-021 D21-36）[D]。token には載せない。AuthZEN 応答の context と decision event に載せ、trace sampling と独立した経路で全件記録する（ADR-011 D8-4、R-128）[D]。判定記録への PDP 署名は未決（U-04、ADR-011 D5-7、ADR-013 D13-26）。",
+      "description": "PDP 判定 1 件の識別子（decision_id）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["d3vk7zq2mx5ha4tn6pr2bwe7cy"]
+    },
+    "GrantRef": {
+      "$comment": "grant 参照。どの同意（grant）から発行されたかを示し、grant・client・publisher 単位の一括失効の結合キーになる（ADR-005 D7-6, D9-4）[D]。claim 名は未決（DL-75。claims-catalog §3.6 の名前案は gref、決裁 KC-1）。本書は値の形式だけを定義する。",
+      "description": "grant 参照の値。claim 名は DL-75 で確定（未決）。",
+      "$ref": "#/$defs/OpaqueId",
+      "examples": ["g5rz2kq7vm3xa4hd6tn2pwc7be"]
+    },
+    "RequestId": {
+      "$comment": "AuthZEN 要求 ID。要求 ID を付けることは MAY、付ける場合は HTTPS ヘッダ X-Request-ID を使うことが RECOMMENDED、ヘッダの値は任意の文字列（an arbitrary string）、要求に要求 ID が付いていれば PDP は応答に要求 ID を含める（MUST）。PEP が指定した値と同じ値を含める（MUST）（AuthZEN 1.0 §10.1.3、RS-07#66）[N]。facade は engine が返さない場合も補う（ADR-011 D5-5）[D]。自社 profile では PEP が IssuedOpaqueId 形式で採番することを推奨し、長さ 128 以下の印字可能 ASCII に制約する（本書の提案。DL-72 凍結時に確定）[D]。この制約は AuthZEN の「任意の文字列」より狭い自社 profile の制約である。profile 外の値を受けた PDP が要求を拒否するか、値を改変せずに echo して監査では別欄に退避するかは未決（DL-72 凍結前に決める。所有者: 認可・PDP チーム）。値を切り詰めて echo することは同値返却の MUST に反するため採らない [N][D]。値は相関用で、認可や証跡の真正性に使わない [D]。",
+      "description": "AuthZEN 要求 ID（X-Request-ID の値）。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\x21-\\x7E]{1,128}$",
+      "examples": ["r2kq7zm3vx5hd4ta6pn2bwe7cy"],
+      "x-negative-examples": [
+        {"value": "req\nX-Injected: 1", "reason": "制御文字（ヘッダ注入）"}
+      ]
+    },
+    "TraceId": {
+      "$comment": "W3C Trace Context Level 1（W3C Recommendation 2021-11-23、standards-status SS-D02）の trace-id: 32HEXDIGLC、全ゼロは無効（§3.2.2.2, §3.2.2.3）[N]。目的は相関だけで、個人識別情報・機微情報を入れてはならない（§6 の MUST NOT、RS-10#16）[N]。攻撃者が値を制御できる（§7.2、RS-10#17）ため、権威を持たせず、認可にも証跡の真正性にも使わない（ADR-021 D21-34、ADR-022 D-8-1）[D]。access token・ID Token・Txn-Token の claim に入れない（D21-34）[D]。edge で再採番し、外部から来た値は ext_trace_id に退避する（claims-catalog §2.1）[D]。",
+      "description": "分散トレースの trace-id（相関の補助のみ）。",
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "not": {"const": "00000000000000000000000000000000"},
+      "examples": ["4bf92f3577b34da6a3ce929d0e0e4736"],
+      "x-negative-examples": [
+        {"value": "00000000000000000000000000000000", "reason": "全ゼロは無効（Trace Context §3.2.2.3）"},
+        {"value": "4BF92F3577B34DA6A3CE929D0E0E4736", "reason": "大文字（HEXDIGLC は小文字）"}
+      ]
+    },
+    "Traceparent": {
+      "$comment": "traceparent ヘッダ値（version 00）。version-format = trace-id \"-\" parent-id \"-\" trace-flags。parent-id の全ゼロは無効（W3C Trace Context Level 1 §3.2.2）[N]。外部から来た sampled flag を監査の記録可否に使わない（ADR-022 D-2 の trace 伝播行、ADR-011 D8-4）[D]。version 00 以外の扱いは Trace Context の版更新時に本定義を改版する。全ゼロの拒否は先読み（lookahead）を使わず not で表す。RE2 系の正規表現エンジン（Go・Rust など）を使うコード生成・検証器でも同じ判定になるようにするためである [D]。",
+      "description": "traceparent ヘッダ値（version 00）。",
+      "type": "string",
+      "pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+      "not": {"anyOf": [{"pattern": "^00-0{32}-"}, {"pattern": "^00-[0-9a-f]{32}-0{16}-"}]},
+      "examples": ["00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"],
+      "x-negative-examples": [
+        {"value": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000000-01", "reason": "parent-id が全ゼロ"},
+        {"value": "ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01", "reason": "version ff は禁止"},
+        {"value": "00-00000000000000000000000000000000-00f067aa0ba902b7-01", "reason": "trace-id が全ゼロ（§3.2.2.3）"}
+      ]
+    },
+    "CellId": {
+      "$comment": "判定・発行を行った cell の内部識別子（claims-catalog §3.7、ADR-013 D13-26、reconciliation-notes §3.2）。cell は可逆な内部構成で、依存サービスが資源・利用者の参照キーとして保存してよい値ではない（ADR-021 D21-08 の考え方を適用）[D]。外部に出す識別子・issuer・kid に含めない（D21-06, D21-42 (b)）[D]。形式は台帳で払い出す小文字英数字とハイフン 1〜32 文字（本書の提案）[D]。",
+      "description": "cell の内部識別子（監査・判定記録の構造欄。外部契約には出さない）。",
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+      "examples": ["c07"]
+    },
+    "NameSegment": {
+      "$comment": "名前空間コード・型名・relation 名・permission（action）名の共通規則: ASCII 小文字・数字・下線、先頭は英字、末尾は英数字、3〜64 文字（authorization-model X-2。案）[D]。SpiceDB の識別子規則（3〜64 文字）に先頭英字の制約を足した案で、OpenFGA の識別子規則と「/」を含む型名の可否は未確認（TC-ARC05-10、DL-73 凍結前に確定。所有者: 認可・PDP チーム）。組織名・チーム名・製品名・ベンダー名を含めない（ADR-021 D21-25、ADR-021/RH-09）[D]。削除した名前は再利用しない（D21-27）[D]。",
+      "description": "名前空間コード・型名・relation 名・action 名の 1 区画。",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]{1,62}[a-z0-9]$",
+      "examples": ["core", "document", "read", "restricted_external"],
+      "x-negative-examples": [
+        {"value": "Doc", "reason": "大文字"},
+        {"value": "_doc", "reason": "先頭が英字でない"},
+        {"value": "ab", "reason": "3 文字未満"},
+        {"value": "doc_", "reason": "末尾が英数字でない"}
+      ]
+    },
+    "NamespaceCode": {
+      "$comment": "事業能力のカタログ ID に対応する名前空間コード。中央の名前空間台帳（DL-71 の付表。台帳本体は本スキーマと別管理）が払い出す（ADR-021 D21-25）[D]。core は基盤所有の予約名前空間（D21-26）[D]。M&A で取り込んだ組織の型には新しいコードを払い出す（D21-27）[D]。台帳の所有者は未決（ADR-021 K21-5。推奨はプラットフォームのプロダクト責任者）。",
+      "description": "名前空間コード（中央台帳が払い出す）。",
+      "$ref": "#/$defs/NameSegment",
+      "examples": ["core", "cap_billing"]
+    },
+    "ResourceType": {
+      "$comment": "正規名 <名前空間コード>/<型名>（ADR-021 D21-26、authorization-model X-1）[D]。AuthZEN の Subject.type・Resource.type、認可モデルの型名、監査の resource 型をこの値で揃える（D21-26）[D]。AuthZEN 1.0 §5.1・§5.2 は type を REQUIRED の文字列とだけ定める [N]（RS-07#63）。本定義は自社 profile での値の制約であり、AuthZEN の項目名・意味は変えない [D]。横断型は core/user・core/workload・core/client・core/tenant・core/group・core/role・core/external_grant・core/share_link・core/exception（authorization-model §3.1）[D]。AI エージェントの主体型を core/user と分けるかは未決（ADR-017）。台帳（D21-42 (c)）に未登録の型は CI で拒否する [D]。",
+      "description": "リソース型・主体型の正規名（<名前空間コード>/<型名>）。",
+      "type": "string",
+      "maxLength": 129,
+      "pattern": "^[a-z][a-z0-9_]{1,62}[a-z0-9]/[a-z][a-z0-9_]{1,62}[a-z0-9]$",
+      "examples": ["core/user", "core/tenant", "cap_docs/folder"],
+      "x-negative-examples": [
+        {"value": "folder", "reason": "名前空間コードがない（D21-26）"},
+        {"value": "acme-team/folder", "reason": "ハイフンを含み、組織・チーム名を名前空間に使っている（D21-25）"},
+        {"value": "cap_docs/folder/v2", "reason": "区画が 3 つ。版は型名に含めず改名手順（D21-27）で扱う"},
+        {"value": "https://id-domain.invalid/types/folder", "reason": "外部公開名の形（D21-28）であり内部の正規名ではない"}
+      ]
+    },
+    "ActionName": {
+      "$comment": "action（permission）名。型の内側で一意（ADR-021 D21-26）[D]。permission は動詞（read, share）、relation は名詞（owner, parent）に分ける（authorization-model X-2。案）[D]。AuthZEN 1.0 §5.3 は Action.name を REQUIRED の文字列とだけ定める [N]。本定義は自社 profile での値の制約である [D]。第三者に公開する scope は <名前空間コード>.<型>.<action> の形（D21-28）で、ExternalScope で定義する。各 permission には操作階層の印を付けて登録する（authorization-model I-1）[D]。",
+      "description": "action（permission）名。",
+      "$ref": "#/$defs/NameSegment",
+      "examples": ["read", "share", "delete"],
+      "x-negative-examples": [
+        {"value": "Read", "reason": "大文字"},
+        {"value": "docs:read", "reason": "区切り文字を含む。型は Resource.type で表す"}
+      ]
+    },
+    "RelationName": {
+      "$comment": "relation 名。型の内側で一意（ADR-021 D21-26）。core の予約語（restricted_external、external_member など）をドメインが定義しない（authorization-model X-2, X-3）[D]。",
+      "description": "relation 名。",
+      "$ref": "#/$defs/NameSegment",
+      "examples": ["owner", "parent", "viewer"]
+    },
+    "ExternalScope": {
+      "$comment": "第三者に公開する OAuth scope の形 <名前空間コード>.<型名>.<action>（ADR-021 D21-28）[D]。台帳に未登録の scope は CI で拒否する（D21-42 (c)）[D]。",
+      "description": "第三者公開 scope。",
+      "type": "string",
+      "maxLength": 194,
+      "pattern": "^[a-z][a-z0-9_]{1,62}[a-z0-9]\\.[a-z][a-z0-9_]{1,62}[a-z0-9]\\.[a-z][a-z0-9_]{1,62}[a-z0-9]$",
+      "examples": ["cap_docs.folder.read"],
+      "x-negative-examples": [
+        {"value": "read:folders", "reason": "名前空間コードがなく、形が異なる"}
+      ]
+    },
+    "ResourceId": {
+      "$comment": "業務オブジェクト ID。各ドメインが払い出してよいが、テナント ID・個人情報・業務上の意味（患者名・疾病名など）を含めず、122 bit 以上の乱数（UUIDv4 相当）を最低線とする（ADR-021 D21-14）[D]。ID の推測困難性をアクセス制御の根拠にしない（RFC 9562 §8、N-12）[N]。PEP はオブジェクトの所属テナントを資源側の正本から導き、token の tid と突き合わせる（D21-14、R-250）[D]。時刻順 ID は外部に出ない内部 DB キーに限る（D21-14）[D]。受信側の形は OpaqueId と同じく印字可能 ASCII とし、長さ上限は 128（本書の提案。既存サービスの ID 長は as-is 棚卸しで確認が要る。DL-73 凍結前に確定）[D]。AuthZEN 1.0 §5.2 は Resource.id を type の範囲で一意な REQUIRED の文字列と定める [N]。",
+      "description": "リソース（業務オブジェクト）ID。type の範囲で一意。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\x21-\\x7E]{1,128}$",
+      "examples": ["9c1d7e2a-5b3f-4a8e-9d6c-2f4b7a1e3c50"],
+      "x-negative-examples": [
+        {"value": "t5wq2hzr7nmc4ka3vd6pxe2bfy-000123", "reason": "形式上は受理されるが、テナント ID と連番を含み D21-14 違反。払い出し側（各ドメイン）の CI で拒否する"},
+        {"value": "patient yamada", "reason": "空白と個人情報を含む"}
+      ]
+    },
+    "FederatedIdentityRef": {
+      "$comment": "外部 IdP 由来の連携 ID。(tid, 上流 IdP 識別子［OIDC issuer／SAML entityID］, 外部 subject) の 3 つ組で記録し、本基盤の sub と別に持つ（ADR-021 D21-14b、R-047、RS-14#2）[D]。Entra 由来では外部 subject に tid＋oid を使う（RS-03#64）[V]。SAML は persistent NameID を要求し、email 形式の NameID を結合キーにしない [D]。上流の値は本基盤が払い出したものではないため OpaqueId の制約を課さない（長さ上限 1024 は本書の提案）[D]。",
+      "description": "どのテナントのどの IdP がこの主体を保証したかの結合（3 つ組）。",
+      "type": "object",
+      "required": ["tid", "upstream_idp", "external_subject"],
+      "additionalProperties": false,
+      "properties": {
+        "tid": {"$ref": "#/$defs/TenantId"},
+        "upstream_idp": {
+          "description": "上流 IdP の OIDC issuer または SAML entityID（完全一致で比較）。",
+          "type": "string",
+          "format": "uri",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "external_subject": {
+          "description": "上流 IdP が発行した subject（OIDC sub、SAML persistent NameID、Entra は tid＋oid）。",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "examples": [
+        {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy", "upstream_idp": "https://login.customer-idp.example/realm1", "external_subject": "248289761001"}
+      ],
+      "x-negative-examples": [
+        {"value": {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy", "upstream_idp": "https://login.customer-idp.example/realm1", "external_subject": "248289761001", "email": "alice@example.com"}, "reason": "email を結合の構成要素にしない（D21-14c。additionalProperties false）"},
+        {"value": {"upstream_idp": "https://login.customer-idp.example/realm1", "external_subject": "248289761001"}, "reason": "tid がない（どのテナントの IdP かを結合できない。R-047）"}
+      ]
+    },
+    "OperationTier": {
+      "$comment": "操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md（REQ-03）の 5 階層（public／read-sensitive／write／privileged／break-glass）で、privileged は作用範囲で /T（1 テナント内）と /P（それ以外）、break-glass は /B（テナント内の業務データへの例外アクセス。本基盤 PDP 上の型付き例外 core/exception で表す。ADR-029 D29-80）と /P（基盤の緊急経路。DL-46、ADR-029）に分ける（REQ-03 §2.1 の表、判定規則 J1・J2、authorization-model §9.1）[D]。判定を担う閉じた enum のため、値の追加は破壊的変更（ADR-022 D-5-1）[D]。",
+      "description": "操作階層（5 分類と下位区分）。",
+      "type": "string",
+      "enum": ["public", "read-sensitive", "write", "privileged/T", "privileged/P", "break-glass/B", "break-glass/P"],
+      "examples": ["write"],
+      "x-negative-examples": [
+        {"value": "read", "reason": "未定義の階層名（read-sensitive と public を区別する）"},
+        {"value": "privileged", "reason": "下位区分（/T か /P）がない"}
+      ]
+    },
+    "TenantContext": {
+      "$comment": "要求が作用するテナントの文脈（reference-architecture-v2 X08: Tenant Context Service が login／BFF／gateway で選択・確認・routing する）。作用中テナントは 1 要求・1 token につき 1 つ（ADR-005 V9、ADR-021 D21-12）[D]。複数テナント所属（A-015）の切替はテナント選択で新しい token を得て行い、所属一覧を token や本オブジェクトに入れない（claims-catalog §3.6、R-283）[D]。resource_tid は PEP が資源側の正本から導いた値で、tid との突合（R-250、ADR-021 D21-14、T-021 tenant confusion）に使う [D]。tid が token・Txn-Token の tctx のどちらに由来するかを source で示す（ADR-009 D09-29）[D]。越境共有（ADR-024）では、ゲストは資源側テナントの文脈で認証し tid＝資源側テナントになる（authorization-model §6）[D]。",
+      "description": "tenant context（作用中テナントと資源側テナント）。",
+      "type": "object",
+      "required": ["tid", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "tid": {"$ref": "#/$defs/TenantId", "description": "作用中テナント（token の tid、または Txn-Token の tctx 内の tid）。"},
+        "source": {"type": "string", "enum": ["access_token", "txn_token_tctx"], "description": "tid の出所。判定を担うため閉じた enum。"},
+        "resource_tid": {"$ref": "#/$defs/TenantId", "description": "資源側の正本から導いた所属テナント。PEP が突合後に記録する。"},
+        "cell_id": {"$ref": "#/$defs/CellId", "description": "tid の現在の収容 cell（内部用。外部契約には出さない）。"}
+      },
+      "examples": [
+        {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy", "source": "access_token", "resource_tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy"}
+      ],
+      "x-negative-examples": [
+        {"value": {"tid": ["t5wq2hzr7nmc4ka3vd6pxe2bfy", "t9ab2hzr7nmc4ka3vd6pxe2bfy"], "source": "access_token"}, "reason": "複数テナント（1 要求 1 テナント。V9）"},
+        {"value": {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy", "source": "x_tenant_header"}, "reason": "クライアント指定のヘッダを tid の出所にしない（署名された token・Txn-Token に限る）"}
+      ]
+    },
+    "ConsistencyMode": {
+      "$comment": "整合性モード（ADR-011 D6-1）。facade は要求モードを格上げしてよいが格下げしない（D6-3）[D]。要求に欠ければ操作階層ごとの既定（authorization-model §9.1）[D]。OpenFGA の窓方式を許すかは未決（U-03、ADR-010 §2.12 決裁案 2）。判定を担う閉じた enum（ADR-022 D-5-1）。",
+      "description": "整合性モード。",
+      "type": "string",
+      "enum": ["minimize_latency", "at_least_as_fresh", "fully_consistent"],
+      "examples": ["at_least_as_fresh"],
+      "x-negative-examples": [
+        {"value": "HIGHER_CONSISTENCY", "reason": "engine 固有の値（OpenFGA）。契約は engine 非依存（ADR-011 D7-3、G-120）"}
+      ]
+    },
+    "ConsistencyToken": {
+      "$comment": "facade が発行する不透明な整合性トークン（ADR-011 D6-1、ADR-010 D-14）。内部形式（版‖engine 識別‖engine 固有値または書込時刻‖MAC）は契約外で、利用側は保存・返送するだけで解釈しない（ADR-011 C-3、authorization-model CT-3）[D]。内容と同じ DB トランザクションで保存する（CT-1）[D]。解釈できないトークンはエラーにせず fully_consistent に格上げする（ADR-011 D6-1、ADR-010 D-15）[D]。契約上の最大長は未決（ADR-011 D6-4。初期案 1,024 バイト、DL-72 凍結前に実測で確定）。本定義は初期案の 1,024 を置き、印字可能 ASCII に限ることで文字数＝バイト数とする [D]。",
+      "description": "不透明な consistency token。最大長は初期案（未決、ADR-011 D6-4）。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[\\x21-\\x7E]{1,1024}$",
+      "examples": ["v1.fga.01J9Z8K3VQ7M2XH5D4TA6PZR2N.Zx3kQ9"],
+      "x-negative-examples": [
+        {"value": "", "reason": "空文字列（トークンがない場合は欄を省く）"}
+      ]
+    },
+    "ConsistencyRequest": {
+      "$comment": "要求側の consistency 指定（ADR-011 D6-1）。mode が at_least_as_fresh のとき token を渡す（authorization-model CT-2）[D]。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"$ref": "#/$defs/ConsistencyMode"},
+        "token": {"$ref": "#/$defs/ConsistencyToken"}
+      },
+      "dependentRequired": {"token": ["mode"]},
+      "examples": [{"mode": "at_least_as_fresh", "token": "v1.fga.01J9Z8K3VQ7M2XH5D4TA6PZR2N.Zx3kQ9"}]
+    },
+    "ConsistencyResult": {
+      "$comment": "応答側の consistency。実効モードは必須、token は engine が返せる場合だけ（ADR-011 D6-1）[D]。",
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"$ref": "#/$defs/ConsistencyMode"},
+        "token": {"$ref": "#/$defs/ConsistencyToken"}
+      },
+      "examples": [{"mode": "fully_consistent"}]
+    },
+    "ModelRevision": {
+      "$comment": "model/policy revision。認可モデルは基盤 registry（DL-73）が不変の model_revision を採番し、facade が engine 固有のモデル ID（OpenFGA の ULID など）に対応付ける（ADR-011 D2-7）[D]。応答・判定記録には評価した model_revision と G 段（基盤ガードレール）カタログの版を返す（ADR-011 D6-1、claims-catalog §3.7）[D]。利用側は不透明文字列として保存・返送するだけ（ADR-011 C-3）[D]。engine 固有 ID を契約に出さない（G-120）[D]。revision 表現は AuthZEN 1.0 外で preview（ADR-022 D-2 の Authorization API 行）。",
+      "description": "評価に使った認可モデルの revision と G 段カタログの版。",
+      "type": "object",
+      "required": ["model_revision", "guardrail_catalog_version"],
+      "additionalProperties": false,
+      "properties": {
+        "model_revision": {"$ref": "#/$defs/OpaqueId", "description": "registry（DL-73）が採番した不変の model revision。"},
+        "guardrail_catalog_version": {"$ref": "#/$defs/OpaqueId", "description": "G 段カタログの版。"}
+      },
+      "examples": [{"model_revision": "m4tq7zk2vx5hd3ra6pn2bwe7cy", "guardrail_catalog_version": "g2026.10.1"}],
+      "x-negative-examples": [
+        {"value": {"model_revision": "latest", "guardrail_catalog_version": "g2026.10.1"}, "reason": "形式上は受理されるが、別名 latest は不変 revision ではない。pin は現行固定版にし最新版にしない（ADR-011 D6-1 model.pin）。registry 側で拒否する"}
+      ]
+    },
+    "ProfileVersion": {
+      "$comment": "版付き自社 profile の版（major.minor）。PEP–PDP profile（ADR-011 D6-1 の profile_version）、token profile 版 claim（ADR-016 D16-02、名前は DL-75）、txn-v1 の版（claims-catalog §4.2）で共用する [D]。後方互換な追加だけを minor で許し、制約の強化は major（ADR-011 D6-2、ADR-016 §2.1 表）[D]。未対応の major を受けた facade は decision=false、reason=unsupported_profile（ADR-011 D6-1）[D]。",
+      "description": "profile の版（major.minor）。",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$",
+      "examples": ["1.0", "1.3"],
+      "x-negative-examples": [
+        {"value": "v1", "reason": "major.minor 形式でない"},
+        {"value": "1.0.2", "reason": "profile 版は patch を持たない（契約文書の版は SemanticVersion）"},
+        {"value": "01.0", "reason": "先頭ゼロ"}
+      ]
+    },
+    "SemanticVersion": {
+      "$comment": "契約文書・スキーマ文書の版。SemVer 2.0.0: 後方互換でない変更で major、後方互換な追加と非推奨化で minor（MUST。ADR-016 N-8、RS-16#31）[N]。OpenAPI の info.version、JSON Schema の $comment の版に使う（deliverables §2.3、ADR-016 §2.1 表）[D]。pre-release・build metadata は契約の版に使わない（本書の提案）[D]。",
+      "description": "契約・スキーマ文書の版（MAJOR.MINOR.PATCH）。",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "examples": ["1.0.0", "0.1.0"],
+      "x-negative-examples": [
+        {"value": "1.0", "reason": "patch がない"},
+        {"value": "1.0.0-beta.1", "reason": "pre-release は契約の版に使わない（preview は凍結区分で表す。ADR-022 D-1）"}
+      ]
+    },
+    "ContractStatus": {
+      "$comment": "契約の凍結区分（ADR-022 D-1）。不可逆は識別子だけ。preview には期限を付ける（D-1-2）[D]。",
+      "type": "string",
+      "enum": ["irreversible", "ga", "preview", "deprecated", "sunset"],
+      "examples": ["ga"]
+    },
+    "VersionInfo": {
+      "$comment": "契約・イベント・応答に付ける版情報。非推奨の告知は HTTP では RFC 9745 の Deprecation と RFC 8594 の Sunset ヘッダで行い、両 header はヒントにすぎないため consumer 台帳への直接通知と client_id 単位の計測を併用する（ADR-022 D-5-3）[N][D]。本オブジェクトはヘッダを置き換えない [D]。非推奨期間の数値は未決（ADR-016・DL-70、DEC-8 前）。",
+      "description": "版情報。",
+      "type": "object",
+      "required": ["document_id", "version", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {"type": "string", "pattern": "^CON-[0-9]{2}$", "description": "契約の文書 ID（deliverables.md §2.3 の表）。"},
+        "version": {"$ref": "#/$defs/SemanticVersion"},
+        "status": {"$ref": "#/$defs/ContractStatus"},
+        "profile_version": {"$ref": "#/$defs/ProfileVersion"},
+        "preview_expires": {"type": "string", "format": "date", "description": "preview の判断期限（ADR-022 D-1-2）。値の決め方は ADR-016・DL-70（未決）。"}
+      },
+      "anyOf": [
+        {"properties": {"status": {"not": {"const": "preview"}}}},
+        {"required": ["preview_expires"]}
+      ],
+      "examples": [
+        {"document_id": "CON-02", "version": "0.1.0", "status": "ga"},
+        {"document_id": "CON-03", "version": "1.0.0", "status": "preview", "profile_version": "1.0", "preview_expires": "2027-09-30"}
+      ],
+      "x-negative-examples": [
+        {"value": {"document_id": "CON-03", "version": "1.0.0", "status": "preview"}, "reason": "preview に期限がない（ADR-022 D-1-2）"}
+      ]
+    },
+    "DecisionReason": {
+      "$comment": "判定理由の閉じた列挙（ADR-011 D6-1）: allow, deny_guardrail:<規則ID>, deny_no_relation, deny_indeterminate, deny_unavailable, unsupported_profile。エンドユーザーには返さない [D]。評価不能は deny（D3-3）、engine 不達は deny_unavailable で意味論と分ける（D3-6）[D]。値の追加を major 扱いにするかは未決（ADR-016 P16-2）。規則 ID の形式（小文字英数字・ドット・下線・ハイフン 1〜64 文字）は本書の提案 [D]。",
+      "description": "判定理由（閉じた列挙）。",
+      "type": "string",
+      "anyOf": [
+        {"enum": ["allow", "deny_no_relation", "deny_indeterminate", "deny_unavailable", "unsupported_profile"]},
+        {"pattern": "^deny_guardrail:[a-z0-9][a-z0-9._-]{0,63}$"}
+      ],
+      "examples": ["allow", "deny_guardrail:g.cross_tenant.01"],
+      "x-negative-examples": [
+        {"value": "deny", "reason": "列挙外（理由を区別しない値は監査で使えない）"},
+        {"value": "deny_guardrail:", "reason": "規則 ID がない"}
+      ]
+    },
+    "PepPdpProfileRequest": {
+      "$comment": "AuthZEN 1.0 の要求 context に載せる自社 profile の要求側項目（ADR-011 D6-1）。AuthZEN 1.0 外であることを DL-72 に明記する [D]。context 内のどのキー（名前空間付き）にこのオブジェクトを置くかは未決（ADR-011 D6-1 は名前を ADR-021 で確定するとしたが、ADR-021 は profile キー名を定めていない。DL-72 の凍結前に決める）。X-Request-ID はヘッダで運び本オブジェクトに入れない（AuthZEN §10.1.3）[N]。未知のメンバの扱い: 制約を強める項目は minor で追加しない（ADR-011 D6-2）ため additionalProperties を許す [D]。",
+      "description": "PEP–PDP 自社 profile（要求側）。",
+      "type": "object",
+      "required": ["profile_version"],
+      "properties": {
+        "profile_version": {"$ref": "#/$defs/ProfileVersion"},
+        "consistency": {"$ref": "#/$defs/ConsistencyRequest"},
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {"pin": {"$ref": "#/$defs/OpaqueId", "description": "registry の model_revision。欠ければテナントの現行固定版（最新版にはしない）。"}}
+        },
+        "operation_tier": {"$ref": "#/$defs/OperationTier", "description": "permission に登録された階層。欠ければ facade が registry から引く。"}
+      },
+      "examples": [{"profile_version": "1.0", "consistency": {"mode": "at_least_as_fresh", "token": "v1.fga.01J9Z8K3VQ7M2XH5D4TA6PZR2N.Zx3kQ9"}}]
+    },
+    "PepPdpProfileResponse": {
+      "$comment": "AuthZEN 1.0 の Decision.context（§5.5、OPTIONAL の object）[N] に載せる自社 profile の応答側項目（ADR-011 D6-1）。decision_id・model_revision・consistency の実効モード・reason は必須 [D]。AuthZEN の decision（REQUIRED の boolean）は本オブジェクトに含めず Decision 側に置く（項目名・意味を変えない）[N][D]。PEP は context を理解できない場合に拒否してよい（MAY、RS-07#63）[N]。",
+      "description": "PEP–PDP 自社 profile（応答側）。",
+      "type": "object",
+      "required": ["decision_id", "model_revision", "consistency", "reason"],
+      "properties": {
+        "decision_id": {"$ref": "#/$defs/DecisionId"},
+        "model_revision": {"$ref": "#/$defs/ModelRevision"},
+        "consistency": {"$ref": "#/$defs/ConsistencyResult"},
+        "reason": {"$ref": "#/$defs/DecisionReason"}
+      },
+      "examples": [
+        {"decision_id": "d3vk7zq2mx5ha4tn6pr2bwe7cy", "model_revision": {"model_revision": "m4tq7zk2vx5hd3ra6pn2bwe7cy", "guardrail_catalog_version": "g2026.10.1"}, "consistency": {"mode": "fully_consistent"}, "reason": "deny_no_relation"}
+      ],
+      "x-negative-examples": [
+        {"value": {"model_revision": {"model_revision": "m4tq7zk2vx5hd3ra6pn2bwe7cy", "guardrail_catalog_version": "g2026.10.1"}, "consistency": {"mode": "fully_consistent"}, "reason": "allow"}, "reason": "decision_id がない（監査の主キー。必須）"}
+      ]
+    },
+    "AuthzenSubject": {
+      "$comment": "AuthZEN 1.0 §5.1 の Subject。type・id は REQUIRED の文字列、properties は OPTIONAL の object [N]（RS-07#63）。自社 profile は type を ResourceType 形式（主体型は core/user・core/workload・core/client。AI エージェントの型は未決 ADR-017）、id を PrincipalId に制約する [D]。テナントは subject.properties と resource.properties の両方に入れる（ADR-011 D6-1）[D]。properties 内のテナントのキー名は未決（ADR-021 の名前空間規則で確定。下の tid は案）。",
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {"$ref": "#/$defs/ResourceType"},
+        "id": {"$ref": "#/$defs/PrincipalId"},
+        "properties": {"type": "object", "properties": {"tid": {"$ref": "#/$defs/TenantId"}}}
+      },
+      "examples": [{"type": "core/user", "id": "k3vq7m2xh5d4ta6pzr2nbw7ycu", "properties": {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy"}}],
+      "x-negative-examples": [
+        {"value": {"type": "user", "id": "alice@example.com"}, "reason": "名前空間のない型と email の id（D21-26、D21-14c）"}
+      ]
+    },
+    "AuthzenResource": {
+      "$comment": "AuthZEN 1.0 §5.2 の Resource。type・id は REQUIRED、properties は OPTIONAL [N]。自社 profile での値の制約は ResourceType・ResourceId [D]。properties.tid は PEP が資源側の正本から導いた値で、クライアント入力を写さない（R-250）[D]。キー名は未決（AuthzenSubject と同じ）。",
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {"$ref": "#/$defs/ResourceType"},
+        "id": {"$ref": "#/$defs/ResourceId"},
+        "properties": {"type": "object", "properties": {"tid": {"$ref": "#/$defs/TenantId"}}}
+      },
+      "examples": [{"type": "cap_docs/folder", "id": "9c1d7e2a-5b3f-4a8e-9d6c-2f4b7a1e3c50", "properties": {"tid": "t5wq2hzr7nmc4ka3vd6pxe2bfy"}}]
+    },
+    "AuthzenAction": {
+      "$comment": "AuthZEN 1.0 §5.3 の Action。name は REQUIRED の文字列、properties は OPTIONAL [N]。自社 profile では name を ActionName に制約する [D]。",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"$ref": "#/$defs/ActionName"},
+        "properties": {"type": "object"}
+      },
+      "examples": [{"name": "read"}]
+    },
+    "CorrelationSet": {
+      "$comment": "証跡の相関欄（ADR-021 D21-37、ADR-014 D14-18、claims-catalog §2.1 の 8 欄: iss・jti_ref・sid・grant 参照・txn・decision_id・request_id・trace_id）。欄名と必須条件の正本は DL-77（監査イベント）で、本定義は値の形式を揃えるための共有部品である [D]。証跡の主キーは txn（ADR-022 D-8-3）だが、Txn-Token の発行範囲は write・privileged・break-glass/B・FAPI 範囲の要求に限る（ADR-005 D9-3）ため、それ以外の要求では (iss, jti_ref)・sid・decision_id・request_id で相関する（ADR-021 D21-35。全要求に広げるかは未決 U-02）[D]。trace_id は権威を持たない補助欄（D21-34）[D]。Txn-Token の原文はログに残さない（草案の MUST NOT、RS-06#41）[N]。jti は生で残さず jti_ref（HMAC。ADR-014 D14-21）にする [D]。jti_ref の形式は DL-77（audit-event.schema.json の KeyedRef: k<鍵版>.<HMAC-SHA-256 の base64url 43 文字>）に揃えた。DL-77 凍結時に KeyedRef を本書へ移す [D]。grant 参照の監査欄名は DL-77 の grant_ref に揃える。access token・Txn-Token 上の claim 名（案 gref、claims-catalog §3.6、KC-1）とは別の名前である [D]。",
+      "description": "相関識別子の組（値の形式の共有部品）。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "iss": {"$ref": "#/$defs/Issuer"},
+        "jti_ref": {"type": "string", "pattern": "^k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$", "description": "k<鍵版>.HMAC-SHA-256(K_corr[鍵版], iss ‖ jti) の base64url（padding なし）。形式は DL-77 の KeyedRef と同じ。"},
+        "sid": {"$ref": "#/$defs/SessionId"},
+        "grant_ref": {"$ref": "#/$defs/GrantRef", "description": "grant 参照（監査欄名。token 上の claim 名は DL-75 で確定）。"},
+        "txn": {"$ref": "#/$defs/TransactionId"},
+        "decision_id": {"$ref": "#/$defs/DecisionId"},
+        "request_id": {"$ref": "#/$defs/RequestId"},
+        "trace_id": {"$ref": "#/$defs/TraceId"},
+        "ext_trace_id": {"$ref": "#/$defs/TraceId", "description": "外部から来た trace-id の退避（claims-catalog §2.1）。"}
+      },
+      "examples": [
+        {"iss": "https://p7k.id-domain.invalid", "jti_ref": "k1.VIsGJA3sU4HEXz1D96hiGjkrbK5tswc348qPuvPJ8es", "txn": "x7pq3mz2kv5ha4td6rn2cwe7by", "decision_id": "d3vk7zq2mx5ha4tn6pr2bwe7cy", "request_id": "r2kq7zm3vx5hd4ta6pn2bwe7cy", "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"}
+      ],
+      "x-negative-examples": [
+        {"value": {"jti": "j4kz7qm2vx5hd3ta6pnr2bw7cy"}, "reason": "jti を生で記録している（jti_ref を使う。additionalProperties false）"},
+        {"value": {"txn_token": "eyJhbGciOi..."}, "reason": "Txn-Token の原文を記録している（草案の MUST NOT）"},
+        {"value": {"jti_ref": "Q2xhdWRlLWV4YW1wbGUtaG1hYy12YWx1ZS0wMDE"}, "reason": "鍵版の接頭辞がなく、HMAC-SHA-256 の長さ（base64url 43 文字）でもない（DL-77 KeyedRef）"},
+        {"value": {"gref": "g5rz2kq7vm3xa4hd6tn2pwc7be"}, "reason": "token 上の claim 名（案）を監査欄名に使っている。監査欄名は grant_ref（DL-77）"}
+      ]
+    },
+    "ProblemCode": {
+      "$comment": "機械可読の安定したエラーコード（RFC 9457 の拡張メンバ code の値）。エラーコードの意味の変更・コードの変更は破壊的変更（ADR-022 D-5-1）[D]。判定を担わない応答の enum として開いた列挙とし、値の追加は後方互換、consumer は未知の値を deny 側に倒して扱う（ADR-022 D-5-2）[D]。初期値の登録は本書の提案で、各契約（CON-03〜CON-09）が追加を登録する [D]。read-sensitive 以上では、存在・テナント不一致・権限なしをエラー応答の差で区別させない（REQ-03 J4、RS-07#78）ため、テナント不一致は not_found または access_denied に寄せ、tenant_mismatch のようなコードを外部に返さない [D]。",
+      "description": "安定エラーコード（開いた列挙）。",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "examples": ["invalid_request", "invalid_token", "access_denied", "not_found", "conflict", "rate_limited", "unsupported_version", "service_unavailable"],
+      "x-negative-examples": [
+        {"value": "TENANT_MISMATCH", "reason": "大文字。かつテナント不一致を外部に区別させるコードは置かない"},
+        {"value": "E1234", "reason": "意味が読めない番号は runbook・監視の結合キーにしにくい（本書の提案）"}
+      ]
+    },
+    "Problem": {
+      "$comment": "エラー形式は RFC 9457（Proposed Standard、2023-07。RFC 7807 を廃止。standards-status SS-A47 で DL-71 の準拠基準）を採用する [N]（RS-16#12、ADR-022 D-2 の OIDC/OAuth profile 行）。採否の判断: 採用。不採用の代替（自社独自形式）は、RFC 9457 が拡張メンバを許し（MAY）、client に未知の拡張メンバの無視を義務づける（MUST）ため（§3.2、RS-16#12、ADR-022 N-m）、追加だけで後方互換を保てるという利点を上回る理由がない [D]。適用範囲の例外: OAuth の token・token exchange エンドポイント（RFC 6749 §5.2、RFC 8693 §2.2.2）と SCIM（RFC 7644 §3.12）は各標準のエラー形式を優先し、本形式に置き換えない（標準の項目名・意味を変えない）[D]。AuthZEN の evaluation では deny は HTTP エラーではなく decision=false で返す（§5.5）[N][D]。メンバ（§3.1）: type は URI 参照の文字列で、無ければ about:blank とみなす。consumer は type を problem type の主識別子に使う（MUST）。status は HTTP status code の数値で、実際の応答と同じ値を使う（MUST）。title は problem type の短い要約で、発生ごとに変えるべきでない（SHOULD NOT、地域化を除く）。detail は発生固有の説明で、consumer は解析すべきでない（SHOULD NOT）。instance は発生を指す URI 参照 [N]。メディアタイプ application/problem+json（§3）[N]。メンバの型が合わない場合は受信側がそのメンバを無視する（MUST、§3.1）[N]。自社の problem type URI は https://<id-domain>/problems/<ProblemCode>（<id-domain> は未決 K21-6）とする [D]。拡張メンバ: code（ProblemCode）、request_id（AuthZEN 要求 ID の echo）、trace_id（再採番後の値、補助）。detail・拡張メンバに個人情報・内部 issuer・cell 名・engine 名・decision reason を入れない（ADR-011 D6-1 の reason 非開示、ADR-021 D21-08）[D]。txn・decision_id は外部応答に出さず、外部には request_id だけを返して内部の監査（DL-77 の相関欄）で辿る（本書の提案。内部識別子を外部契約に出さない ADR-021 D21-08 の考え方と、reason 非開示の ADR-011 D6-1 から導いた）[D]。検証の向き: 本定義は生成側（producer）の適合検査用である。受信側は RFC 9457 §3.1 に従い型の合わないメンバを無視し（MUST）、§3.2 に従い未知の拡張メンバを無視する（MUST）ため、受信側で本スキーマを使って Problem 全体を拒否してはならない [N][D]。type は絶対 URI を推奨（RECOMMENDED、§3.1.1）であり、自社の problem type は絶対 URI だけを使う [N][D]。",
+      "description": "RFC 9457 Problem Details（application/problem+json）と自社拡張メンバ。",
+      "type": "object",
+      "properties": {
+        "type": {"type": "string", "format": "uri-reference", "default": "about:blank"},
+        "status": {"type": "integer", "minimum": 100, "maximum": 599},
+        "title": {"type": "string"},
+        "detail": {"type": "string"},
+        "instance": {"type": "string", "format": "uri-reference"},
+        "code": {"$ref": "#/$defs/ProblemCode"},
+        "request_id": {"$ref": "#/$defs/RequestId"},
+        "trace_id": {"$ref": "#/$defs/TraceId"}
+      },
+      "additionalProperties": true,
+      "examples": [
+        {"type": "https://id-domain.invalid/problems/not_found", "status": 404, "title": "Resource not found", "code": "not_found", "request_id": "r2kq7zm3vx5hd4ta6pn2bwe7cy"},
+        {"type": "https://id-domain.invalid/problems/unsupported_version", "status": 400, "title": "Unsupported contract version", "detail": "major version 3 is not supported; supported: 1, 2", "code": "unsupported_version"}
+      ],
+      "x-negative-examples": [
+        {"value": {"type": "https://id-domain.invalid/problems/access_denied", "status": "403", "title": "Forbidden"}, "reason": "status が文字列（RFC 9457 §3.1.2 は数値。型不一致のメンバは受信側が無視する）"},
+        {"value": {"type": "https://id-domain.invalid/problems/not_found", "status": 404, "title": "Not found", "detail": "resource belongs to tenant t9ab2hzr7nmc4ka3vd6pxe2bfy"}, "reason": "スキーマ上は受理されるが、detail で他テナントの存在を漏らしている（REQ-03 J4）。契約試験（DL-80）の負例ベクタで拒否する"},
+        {"value": {"type": "about:blank", "status": 403, "title": "Forbidden", "reason": "deny_guardrail:g.cross_tenant.01"}, "reason": "スキーマ上は受理される（RFC 9457 は拡張メンバを許す）が、判定理由（reason）をエンドユーザーに返している（ADR-011 D6-1）。契約試験（DL-80）の負例ベクタで拒否する"}
+      ]
+    }
+  }
+}

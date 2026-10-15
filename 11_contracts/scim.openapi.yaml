@@ -1,0 +1,2048 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: SCIM API profile（顧客 IdP から本基盤へのプロビジョニング受信）
+  version: 0.1.0
+  summary: SCIM 2.0（RFC 7643/7644）の User・Group 受信プロファイル。テナントスコープ、JIT との衝突解決、deprovision、ETag、filter 制限、認証、流量制限を定める。
+  x-document-id: CON-07
+  x-deliverable: DL-76
+  x-status: draft
+  x-last-updated: "2026-10-15"
+  x-adr-status-note: 本契約が従う ADR-004・ADR-005・ADR-016・ADR-021・ADR-022 はいずれも proposed（決裁前）である。凍結は DEC-8（ADR-022 D-11）で決裁する。
+  x-depends-on:
+    - CONVENTIONS.md
+    - traceability/deliverables.md
+    - 05_adr/ADR-004-b2b-federation-linking-scim.md
+    - 05_adr/ADR-005-token-profile.md
+    - 05_adr/ADR-014-audit-data.md
+    - 05_adr/ADR-016-versioning-deprecation.md
+    - 05_adr/ADR-021-irreversible-identifiers.md
+    - 05_adr/ADR-022-integration-contract-standards.md
+    - 05_adr/ADR-023-dependency-tiers.md
+    - 04_architecture/reference-architecture-v2.md
+    - 04_architecture/revocation-continuous-evaluation.md
+    - 02_requirements/identity-lifecycle.md
+    - 02_requirements/customer-admin-responsibility.md
+    - 01_governance/assumptions-register.md
+    - 03_threat-model/threat-catalog.md
+    - research/RS-03-identity-lifecycle.md
+    - research/RS-14-b2b-customer-identity.md
+    - research/standards-status.md
+  x-requirements:
+    primary: [R-040, R-132]
+    related: [R-039, R-044, R-046, R-047, R-109, R-131, R-170, R-172, G-095, G-115, G-118, G-119, G-120, G-134, G-137]
+    note: R-040・R-132 は R-requirements.md で本ファイルを対応成果物に名指す行。閉じ方はいずれも C（実測）であり、本契約は机上の定義だけを与える。合否は TC-004-12・TC-004-13・TC-004-14・TC-004-17（ADR-004 §7.1）と IL-TC12・IL-TC13・IL-TC19・IL-TC23（DL-08）の実測で判定する。
+  x-threats: [T-058, T-059, T-060]
+  x-attackers: [ATK-01, ATK-02, ATK-04, ATK-19]
+  x-assumptions:
+    - id: A-009
+      use: 最大テナント 10万人。初回一括投入の件数と、IdP 遮断時の一斉失効の対象数。
+    - id: A-031
+      use: SCIM 変更は B2B 登録の 1%/日（1 件あたり 5 tuple）。全体容量の導出に使う。
+    - id: A-073
+      use: 顧客機密（SCIM token を含む）約 4,000 件。SCIM 資格情報の保管と rotation の運用量。
+    - id: A-082
+      use: 顧客 IdP 連携 2,000 テナント、SCIM 利用 800 テナント。SCIM 資格情報と接続の件数。
+  x-standards:
+    - name: RFC 7643 SCIM Core Schema
+      status: final（Proposed Standard。RFC 9865・RFC 9967 で更新）。standards-status SS-A41、確認日 2026-10-03
+      conformance: User・Group・Enterprise User 拡張・ServiceProviderConfig・ResourceType・Schema の表現。属性名と意味は変えない。
+    - name: RFC 7644 SCIM Protocol
+      status: final（Proposed Standard。RFC 9865・RFC 9967 で更新）。standards-status SS-A42、確認日 2026-10-03
+      conformance: 作成・取得・照会（GET と POST /.search）・PUT・PATCH・DELETE・ETag・エラー形式。Bulk・/Me・sort・changePassword は v1 で非対応（501 または ServiceProviderConfig で supported=false）。
+    - name: RFC 9865 SCIM Cursor-Based Pagination
+      status: final（Proposed Standard）。standards-status SS-A43
+      conformance: v1 では採用しない。大規模テナントの全件照会での採否は未決（standards-status SS-A43 は「採否は DL-08 で判断」とするが、DL-08 に決定はない）。
+    - name: RFC 9967 SCIM Profile for Security Event Tokens
+      status: final（Proposed Standard）。standards-status SS-A44
+      conformance: preview（ADR-022 D-2 の SCIM 行、ADR-004 D04-46）。本契約 v1 の GA 範囲に含めない。
+    - name: IPSIE AL SCIM 2.0 Profile
+      status: draft（Draft 00、WG 文書、Informational。Implementer's Draft・Final は未承認）。standards-status SS-C19
+      conformance: 準拠しない。数値（受信後 5 分以内の失効、テナントごと 25 req/s）は参照値にとどめる（ADR-004 D04-40・D04-45・D04-46）。草案が Implementer's Draft 以上になった時点で ADR-004 §8 T-2 により再検討する。
+    - name: draft-wzdk-scim-agent-resource ほか SCIM エージェント拡張
+      status: draft（個人提出）。standards-status SS-B19〜SS-B21
+      conformance: 採用しない（ADR-004 D04-15c）。
+  x-extensions:
+    - urn: urn:example:authstack:scim:schemas:extension:federation:1.0:User
+      purpose: 上流 IdP の不変 ID による結合（D04-41）と、結合状態・実効状態・失効進捗の読み出し。
+      namespace-note: URN の接頭辞は仮置きである。RFC 6963 の example 名前空間を使い、本番の名前空間は未決（ADR-021 D21-25 の名前空間台帳、DL-71）。名前空間の確定は不可逆の識別子決定になるため、DEC-3・DEC-8 の対象として扱う。
+    - name: x- 接頭辞の OpenAPI 拡張
+      purpose: 要求対応、負例、監査イベント、流量制限、未決事項の機械可読な記録。SCIM の wire 形式には現れない。
+  x-description-format: OpenAPI 3.1.0 で記述する。ADR-022 D-2 は記述形式を OpenAPI 3.1.2 とするが、3.1 系の patch 版は同じ `openapi` 3.1 系の形式であり、本ファイルは 3.1.2 で明確化された規則に反する記述を含まない。`openapi` 欄の値（3.1.0 か 3.1.2 か）の 11_contracts 全体での統一は DL-69（11_contracts/README.md）で行う（申し送り）。
+  description: |
+    # SCIM API profile（CON-07 / DL-76）
+
+    > 文書ID: CON-07 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: R-040, R-132（主）／R-039, R-044, R-046, R-047, R-109, R-131, R-170, R-172, G-095, G-115, G-118, G-119, G-120, G-134, G-137（関連）
+    > 依存文書: info.x-depends-on を参照
+    > 注記: 本契約の起草と独立レビューには AI エージェント（Claude）を用いた。独立レビューの記録は 11_contracts/review-notes/CON-07.md にあり、RFC 7643・RFC 7644・RFC 6585・RFC 6963 の参照箇所は作成者以外が 2026-10-15 に原文と照合した。IPSIE 草案・SP 800-63C-4・RFC 9700 の参照は research ノートの検証済み項目に依る。
+
+    ## 1. 目的と範囲
+    - 顧客 IdP（SCIM client）から本基盤（SCIM service provider）への User・Group の受信を定める [D]（ADR-004 §1.8）。
+    - 依存サービスへの下流配信は SCIM ではなく、ライフサイクルイベント（G-137、ADR-022 D-2）で行う [D]。本 API を依存サービスが呼ぶことはない [D]。
+    - 主張タグは CONVENTIONS §3 に従う。`[N]` は原典の規範強度をそのまま写し、`[D]` は設計推論、`[A-xxx]` は前提台帳の仮定を示す。
+
+    ## 2. テナントスコープ（D04-39、C10、Y-01）
+    - テナントは SCIM client の資格情報（access token の client と tid）から導く [D]（ADR-004 D04-39）。RFC 7644 はマルチテナンシーを OPTIONAL とし、方式を規定しない [N][^2]（RS-14#33）。資格情報からテナントを推定してよい（MAY）とし、client がテナントを明示する方式を使う場合はテナント越えを防ぐアクセス制御を置くべき（小文字 should）とする [N][^2]（RS-14#33）。
+    - 本契約はテナントを明示する手段（URL prefix `/Tenants/{tenant_id}`、サブドメイン、HTTP header）を定義しない [D]。テナントを示す header を実装が認識した場合に資格情報のテナントと異なれば 403 で拒否し、SEC の検知対象にする（監査イベント `scim.tenant_mismatch` を仮名とする。名前は DL-77 で確定）[D]。
+    - 他テナントの資源 id を path・body（`members.value`、`manager.value`）で指定した要求は、存在しない id と同じ応答（path は 404、body は 400 `invalidValue`）を返し、存在の有無を漏らさない [D]。拒否は SEC の検知対象にする [D]（DL-08 C10）。
+    - SCIM 資格情報と顧客 IdP 接続は 1 対 1 とする [D]（D04-39）。上流 IdP 識別子は資格情報の接続から導き、要求では受け取らない [D]。
+    - SCIM の `id` はテナント内の所属（membership）を表す資源の不透明 ID とし、本基盤の `sub` とは別の値にする [D]。同じ主体が複数テナントに所属しても、テナントごとに別の `id` を払い出し、他テナントの所属の有無を開示しない [D]（ADR-004 D04-49）。払出し規則は ADR-021 D21-14（122 bit 以上の乱数、テナント ID・個人情報を含めない）に従い、削除後も再割当てしない [D]（ADR-021 D21-13）。`id` は安定していて再割当てされない（MUST）[N][^1]（RS-03#75）。
+    - `sub` を SCIM 応答に含めるかは未決（ADR-021・DL-71）。v1 では含めない [D]。
+
+    ## 3. プロビジョニングのモデルと JIT との衝突解決（D04-38、D04-41、D04-42、DL-08 §15.2）
+    - モデル（M1 JIT／M2 SCIM 正本／M3 SCIM＋JIT 補完）は接続ごとに trust agreement で宣言する [D]（D04-38）。SCIM 資格情報を発行できるのは M2・M3 の接続だけである [D]。どのモデルを使うかは trust agreement に文書化しなければならない（SHALL）[N][^7]（RS-03#77）。
+    - 照合と結合は、拡張属性 `federatedSubject`（上流 IdP の不変 ID。assertion の外部 subject と同じ値）で行う [D]（D04-41）。`userName`・`externalId`・email は照合キーにも結合キーにも使わない [D]（D04-21、ADR-021 D21-14c）。
+    - 事前プロビジョニングした account は、trust agreement に別の定めがない限り、作成時に連携 ID と結合しなければならない（SHALL）[N][^7]（RS-03#77）。
+
+    | # | 場面 | 本 API の応答 | 状態遷移 |
+    |---|---|---|---|
+    | C1 | M3 で JIT 作成済みの主体に、同じ `federatedSubject` の POST が届く | 201。既存の主体に新しい SCIM `id` を結び付け、`provisioningOrigin`=`jit` を返す。重複を作らない | Y-02 |
+    | C2 | SCIM 作成済みの利用者の初回ログイン | 本 API の外（連携 ID で照合） | — |
+    | C3 | POST に `federatedSubject` がない | 201。`bindingState`=`pendingBinding`。ログインを許さない | Y-03 |
+    | C4 | `userName` が別の連携 ID を持つ現存の利用者と同じ | 409 `uniqueness`。要求は要照合キューに置き、自動で統合しない | Y-04 |
+    | C4' | 同じ `federatedSubject` の SCIM 管理下の利用者が既にある | 409 `uniqueness` | Y-04 |
+    | C5 | 削除済みの利用者と同じ `userName` | 201。新しい主体・新しい `id`。409 にしない | Y-01→Y-02 |
+    | C6 | 同じ資源への同時更新 | If-Match があれば ETag で判定し不一致は 412。If-Match がなければ後勝ち | — |
+    | C7 | SRC 以外の停止理由がある利用者に `active=true` | 200。`active`=true、`effectiveStatus`=`suspended`。テナント管理者に通知 | Y-08 |
+    | C8 | 無効化・削除済みの利用者が連携ログイン | 本 API の外（M2・M3 では SCIM の状態を正本とし拒否） | — |
+    | C10 | 他テナントの資源を操作 | 404（path）／400 `invalidValue`（body）。SEC 検知 | Y-01 |
+
+    - 重複する資源の作成には 409 と `scimType`=`uniqueness` を返さなければならない（MUST）[N][^2]（RS-14#31、RS-03#76）。
+    - 削除済みの資源を衝突の判定に含めるべきでなく（SHOULD NOT）、同じ `userName` での作成を 409 で失敗させるべきでない（SHOULD NOT）[N][^2]（RS-14#10、RS-03#75）。本基盤はこれを必須の規則として扱う [D]（D04-42）。
+
+    ### 3.1 属性の mutability の扱い（POST・PUT・PATCH）
+    - POST の要求本文に含まれる readOnly 属性は無視しなければならない（SHALL）[N][^2]（RFC 7644 §3.3）。PUT でも readOnly 属性の値は無視する（SHALL）[N][^2]（RFC 7644 §3.5.1）。本基盤は `id`・`meta`・`groups` と連携拡張の readOnly 属性（`upstreamIdpIdentifier`・`connectionId`・`bindingState`・`provisioningOrigin`・`effectiveStatus`・`deprovisioning`）を 400 で拒否せず無視し、無視した属性名を `scim.received` に記録する [D]。`id` は client が指定してはならない（MUST NOT）[N][^1]（RFC 7643 §3.1、RS-03#75）が、これは client 側の義務であり、server 側の扱いは上の SHALL に従う [D]。
+    - immutable 属性（`federatedSubject`）は、PUT で既存の値と異なる値が来たら 400 `mutability` を返すべき（SHOULD）であり、既存の値がなければ適用する（SHALL）[N][^2]（RFC 7644 §3.5.1）。本基盤は 400 `mutability` を必ず返す [D]。PATCH では readOnly・immutable 属性を変更してはならず（client の MUST NOT）、値がない immutable 属性への `add` は許される（MAY）[N][^2]（RFC 7644 §3.5.2）。mutability に合わない PATCH 操作には 400 `mutability` を返す [D]。
+    - 実装上の注意: OpenAPI の `readOnly: true` を要求検証で「存在したら拒否」と解釈する validator・mock の設定は、上の SHALL に反する。要求検証では readOnly 属性を除去してから検証する設定にする [D]。
+
+    ## 4. deprovision（D04-43〜D04-45、Y-07〜Y-09）
+    - `active` の最終的な意味は service provider が決める [N][^1]（RS-14#34）。本基盤では `active=false` を当該テナントの所属の停止（停止理由 SRC）とし、web session、refresh token、PAT、API 鍵、SSH 鍵、端末の資格情報、委任ジョブ、利用者が与えた OAuth grant とエージェントへの委任をまとめて失効させる [D]（D04-43）。
+    - `active=true` は SRC の理由だけを解除し、SEC・LEG・TEN・ADM の理由は解除しない [D]（D04-44）。`active` は SCIM client が最後に設定した値を返し、実効状態は拡張属性 `effectiveStatus` で返す [D]。
+    - DELETE は当該テナントの所属を除去する（Y-09）[D]。他テナントの所属は止めない [D]（D04-51）。削除後の全操作には 404 を返さなければならず（MUST）、以後の照会結果から除かなければならない（MUST）[N][^2]。成功時は 204 を返す（SHALL）[N][^2]。
+    - 無効化・削除の時間は 2 区間に分ける [D]（D04-45）。区間 1（顧客 IdP 側の送信周期）は本基盤の統制外であり trust agreement に記す [D]。区間 2（受信から全手段の失効まで）を数値契約の対象とし、値は TBD（所有者: CISO、期限: G4、決め方: TC-004-13 の実測と DL-20）[D]。IPSIE AL SCIM 草案（Draft 00）は受信後 5 分以内の失効を SHOULD とするが、草案であり参照値にとどめる [N][^5][D]（RS-14#37）。
+    - 応答は失効の完了を待たずに返す [D]。失効の進捗は拡張属性 `deprovisioning` で読める [D]。この属性は TC-004-13 の区間 2 の計測点にも使う [D]。
+    - provisioning API への到達は利用者の認証を意味しない [N][^7]（RS-14#38）。
+
+    ## 5. 版・ETag（D04-42、C6）
+    - ETag は MAY であり、client の If-Match も MAY である [N][^2]（RS-14#32）。本基盤は全資源で弱い ETag を返し（`ETag` header と `meta.version`）、If-Match があれば検査し、不一致には 412 を返す [D]。RFC 7644 は版の不一致に 409 と 412 の両方を定義している [N][^2]（RS-03#76）。本契約は PUT・PATCH・DELETE の不一致を 412 に統一する [D]。
+    - If-Match のない更新は後勝ちになる [D]。このため IdP が管理する属性は本基盤側（管理画面・管理 API）から変更できないようにする [D]（D04-42）。
+    - If-None-Match 付きの GET で変更がなければ 304 を返す [N][^2]。
+
+    ## 6. 照会と filter の制限
+    - 認識しない filter 演算には 400 `invalidFilter` を返さなければならない（MUST）[N][^2]。結果が多すぎると判断した場合は 400 `tooMany` で拒否する（SHALL）[N][^2]。`count` を指定された場合はそれより多くの結果を返してはならない（MUST NOT）[N][^2]。これら 3 点（RFC 7644 §3.4.2.1・§3.4.2.2・§3.4.2.4 の Table 6）は research ノートの検証済み項目になく、作成者が原文を照合したうえで、独立レビューが 2026-10-15 に原文と再照合した（review-notes/CON-07.md）。
+    - 受け付ける filter は `x-filter-profile`（components.schemas.SearchRequest）に列挙したものに限る [D]。演算子は `eq`（列挙した属性）と `meta.lastModified` の `gt`・`ge`、論理演算子は `and` だけとする [D]。`or`・`not`・`ne`・`co`・`sw`・`ew`・`pr`・`lt`・`le`（`meta.lastModified` 以外の `gt`・`ge` を含む）・角括弧の値 filter（照会での使用）は 400 `invalidFilter` とする [D]。PATCH の path filter `members[value eq "<id>"]` は受け付ける [D]。
+    - 個人情報を含む filter を GET の URL で送ることについて、RFC 7644 は client に POST（/.search）を使うべき（SHOULD）とし、server に 403 で拒否すべき（SHOULD）とする [N][^2]（§7.5.2。作成者が 2026-10-15 に原文を照合）。本基盤は主要 IdP 製品との相互運用のため GET の `userName eq` と `externalId eq` を受け付け、URL の query 文字列をアクセスログに平文で残さない（filter 値を伏せる）ことで代える [D]。これは SHOULD からの逸脱であり、残余リスク（中継装置のログへの露出）を DL-26 の受容票候補として申し送る [D]。POST /.search を推奨経路とする [D]。
+    - 1 ページの上限（`filter.maxResults`）は暫定 200 とする（RFC 7643 §8.5 の例示値。TBD、所有者: CTO、期限: G4、決め方: PoC 実測と DL-20）[D]。`startIndex`＋`count` の深い paging は上限（暫定 10,000 件目まで）を超えたら 400 `tooMany` とする [D]。最大テナント 10万人 [A-009] の全件照会は `meta.lastModified` による差分照会で行う前提であり、cursor（RFC 9865）の採否は未決（DL-08・DL-20）[D]。
+
+    ## 7. 認証（D04-40、ADR-005）
+    - SCIM client は OAuth 2.0 client_credentials で本基盤の AS から短命の access token を得る [D]（D04-40）。client 認証は非対称（private_key_jwt または mTLS）とする [D]。RFC 9700 は非対称暗号による client 認証を RECOMMENDED とする [N][^6]（RS-04#20）。
+    - scope は SCIM 専用とする [D]（D04-40）。scope 名は不可逆の名前空間決定であり未決（ADR-021 D21-25〜D21-28、DL-71）。本契約では仮名 `scim` を使う [D]。IPSIE 草案は access token を `scim` scope に限ることを MUST とする [N][^5]（RS-14#36）。
+    - 外部 client に渡す access token は opaque とし、edge が introspection で検証する [D]（ADR-005 境界）。外部 M2M の sender constraint は mTLS を既定とする [D]（ADR-005 の client 種別表）。token の寿命の値は ADR-005・ADR-006 で決める（TBD）[D]。
+    - 長寿命の静的 bearer token しか送れない顧客 IdP は、移行期限付きの例外（受容票、DL-05）とし、rotation 周期の上限、送信元の制限、P-5 の保護操作を条件にする [D]（D04-40、NA-004-2）。RFC 7644 は弱い認証や無認証で発行された token を使うべきでない（SHOULD NOT）とする [N][^2]（RS-14#31）。
+    - TLS は必須である。SCIM の client と service provider は transport 層の保護を必須とし（MUST）、service provider は TLS 1.2 に対応しなければならない（MUST）[N][^2]（RS-14#31）。provisioning API は相互認証された経路で使わなければならない（SHALL）[N][^7]（RS-03#78）。
+    - SCIM 資格情報の発行・更新・削除は保護操作 P-5 とし、trust agreement の終了時に失効させる [D]（D04-47、DL-26 §4）。資格情報の管理は本 API の範囲外（管理 API）である [D]。
+    - discovery の endpoint（`/ServiceProviderConfig`・`/ResourceTypes`・`/Schemas`）も v1 では認証を求める [D]。RFC 7643 §5 は `authenticationSchemes` を事前認証なしで取得できるようにすべき（SHOULD）とする [N][^1]。本契約はこの SHOULD から逸脱しており、認証なしの公開にするか（内容はテナントに依らない静的な値）は未決とし、DL-26 の受容票候補として申し送る [D]。
+
+    ## 8. 流量制限（D04-46）
+    - テナント単位の保証値と全体容量を分けて設計する [D]（D04-46）。テナント単位の保証値は TBD（所有者: CTO、期限: G4、決め方: PoC 実測と DL-20）[D]。IPSIE 草案はテナントごとに 25 req/s 以上を MUST とするが、草案であり参照値にとどめる [N][^5]（RS-14#36）。
+    - 参考の桁: 25 req/s で最大テナント 10万人 [A-009] を 1 件 1 要求で初回投入すると 4,000 秒（約 67 分）である [D][A-009]。定常の変更量は B2B 登録 70万 × 1%/日 = 7,000 件/日（平均 0.1 req/s 未満）である [D][A-031]（前提台帳 §12 手順 16 の B2B 登録数）。容量の支配要因は定常ではなく初回投入と一斉変更である [D]。
+    - 上限を超えた要求には 429 を返し、`Retry-After` を付ける [D]。429 は送信量が多すぎることを示し、Retry-After を含めてよい（MAY）[N][^8]（RFC 6585 §4。作成者が 2026-10-15 に原文を照合）。SCIM の `scimType` に 429 用の値はないため、`scimType` は付けない [D]。
+    - 無効化（`active=false`）と DELETE を通常の作成・更新より優先して処理する優先レーンの要否は未決（ADR-004 は保証値と全体容量の分離までを決めている。DL-20 で判断）。
+    - control plane の停止中にも無効化・削除を受け付ける（Tier 0 の剥奪入力として扱う）かは未決（ADR-023 L23-3。所有者 CTO＋CISO、期限 G4）。ARC-01 の C20 は設計候補として「作成系が止まっても無効化・削除は Tier 0 の入力で受ける」としている [D]。決裁後、作成系だけが止まる場合の応答（503 と Retry-After など）を本契約に追加する [D]。
+
+    ## 9. 監査（D04-47）
+    - SCIM 資源の作成・変更・削除はすべて顧客監査ログに記録する [D]（D04-47）。IPSIE 草案は SCIM 資源を作成・削除・変更する要求の監査記録を SHALL とする [N][^5]（RS-14#36）。
+    - 各操作の `x-audit-events` に DL-08 §15.1 の監査イベント名（`scim.received`、`scim.bound`、`scim.unbound`、`scim.conflict`、`scim.disabled`、`scim.enabled`、`scim.deleted`）を記す。正準スキーマは DL-77（ADR-014）が持つ [D]。
+
+    ## 10. 版と非推奨（ADR-016）
+    - 契約の major を path に置き（`/v1/`）、文書は SemVer とする [D]（ADR-016 D16-01）。SCIM の版識別子は資源 endpoint の直前に置かなければならない（MUST）[N][^2]（RFC 7644 §3.13。作成者が 2026-10-15 に原文を照合）。両者を満たすため base URL を `/v1/scim/v2` とする [D]。`/v1` が SCIM 版 1 と誤読されないよう、資源 endpoint の直前には常に `v2` を置く [D]。
+    - 非推奨は RFC 9745 の Deprecation と RFC 8594 の Sunset で告知する [D]（ADR-022 D-5-3）。
+
+    ## 11. 未決事項（本契約では決めない）
+    | 項目 | 未決の所在 |
+    |---|---|
+    | 拡張 URN の本番名前空間（`urn:example` は RFC 6963 §3.6 により本番では NOT RECOMMENDED [N][^9]）、scope 名、SCIM host 名 | ADR-021 D21-25〜D21-28、DL-71 |
+    | テナント単位の保証流量、区間 2 の失効時間、maxResults、深い paging の上限 | DL-20（ADR-004 D04-45・D04-46） |
+    | cursor paging（RFC 9865）の採否 | DL-08・DL-20 |
+    | 入れ子 group、roles・entitlements の取込み（認可属性としての利用） | ADR-010・ADR-011（v1 は受け付けない） |
+    | Bulk の提供 | ADR-004 は決めていない。初回投入時間の実測（DL-20）で判断 |
+    | SET（RFC 9967）による非同期通知 | ADR-022 で preview |
+    | 大規模 group の members の返却方法 | ADR-010・DL-20（A-036 の fanout） |
+    | 無効化・削除の優先レーン | DL-20 |
+    | control plane 停止中の無効化・削除の受付（Tier 0 入力）と作成系停止時の応答 | ADR-023 L23-3、ARC-01 C20 |
+    | GET filter の個人情報露出（§6）の受容 | DL-26 の受容票候補 |
+    | discovery endpoint の認証要否（RFC 7643 §5 の SHOULD からの逸脱、§7） | DL-26 の受容票候補 |
+    | access token の寿命 | ADR-005・ADR-006 |
+
+    ## 参考文献
+    [^1]: P. Hunt ほか『RFC 7643 System for Cross-domain Identity Management: Core Schema』Proposed Standard, 2015-09（RFC 9865・9967 により更新）. https://www.rfc-editor.org/rfc/rfc7643 （参照箇所: §2.2 mutability・returned・caseExact、§3.1 id・externalId、§3.3 拡張、§4.1.1 userName・active、§4.2 Group.members、§4.3、§5 authenticationSchemes、§7 type、§8.5、確認日: 2026-10-15。§3.1・§4.1.1 は RS-14#33, #34、RS-03#75 で検証済み。§2.2・§3.3・§4.2・§8.5 は作成者が原文を照合し、§3.3・§4.2・§5・§7・§8.5 は独立レビューが 2026-10-15 に原文と再照合した）
+    [^2]: P. Hunt ほか『RFC 7644 System for Cross-domain Identity Management: Protocol』Proposed Standard, 2015-09（RFC 9865・9967 により更新）. https://www.rfc-editor.org/rfc/rfc7644 （参照箇所: §2, §3.3, §3.4.2.1, §3.4.2.2, §3.4.2.4, §3.4.3, §3.5.1, §3.5.2, §3.6, §3.7.4, §3.12（Table 8・Table 9）, §3.13, §3.14, §6, §6.1, §6.2, §7.2, §7.5.2、確認日: 2026-10-15。§2・§3.3・§3.6・§3.14・§6・§7.2 は RS-14#10, #31〜#33、RS-03#75, #76 で検証済み。§3.4.2.1・§3.4.2.2・§3.4.2.4・§3.4.3・§3.7.4・§3.12・§3.13・§7.5.2 は作成者が原文を照合し、§3.3（readOnly の SHALL be ignored を含む）・§3.4.2.1・§3.4.2.2・§3.4.2.4・§3.4.3・§3.5.1・§3.5.2・§3.6・§3.12・§3.13・§3.14・§7.2・§7.5.2 は独立レビューが 2026-10-15 に原文と再照合した。§3.7.4 は未再照合）
+    [^3]: P. Hunt ほか『RFC 9967 System for Cross-Domain Identity Management (SCIM) Profile for Security Event Tokens (SETs)』Proposed Standard, 2026-05. https://www.rfc-editor.org/rfc/rfc9967 （参照箇所: Abstract, §5、確認日: 2026-10-03。RS-14#35）
+    [^4]: IETF『RFC 9865 Cursor-Based Pagination of SCIM Resources』Proposed Standard, 2025-10. https://www.rfc-editor.org/rfc/rfc9865 （参照箇所: RFC Editor のメタデータ、確認日: 2026-10-03。standards-status SS-A43）
+    [^5]: OpenID Foundation IPSIE WG (J. Schreiber, D. Zollner)『IPSIE AL SCIM 2.0 Profile』Draft 00, 2026-09-08（WG 文書、Informational。Implementer's Draft・Final は未承認）. https://openid.net/specs/ipsie-al-scim-profile-1_0.html （参照箇所: §4.1, §4.3, §5.1、確認日: 2026-10-03。RS-14#36, #37、standards-status SS-C19）
+    [^6]: IETF (T. Lodderstedt ほか)『RFC 9700 Best Current Practice for OAuth 2.0 Security』BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.5、確認日: 2026-10-03。RS-04#20）
+    [^7]: NIST (D. Temoshok ほか)『SP 800-63C-4 Digital Identity Guidelines: Federation and Assertions』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63c.html （参照箇所: §4.6.3, §4.6.5、確認日: 2026-10-03。RS-03#77, #78、RS-14#38）
+    [^8]: M. Nottingham, R. Fielding『RFC 6585 Additional HTTP Status Codes』Proposed Standard, 2012-04. https://www.rfc-editor.org/rfc/rfc6585 （参照箇所: §4 429 Too Many Requests、確認日: 2026-10-15。research ノートにない原典であり、作成者が原文を照合し、独立レビューが 2026-10-15 に再照合した）
+    [^9]: P. Saint-Andre『RFC 6963 A Uniform Resource Name (URN) Namespace for Examples』BCP 183, 2013-05. https://www.rfc-editor.org/rfc/rfc6963 （参照箇所: §3.1 NID "example"、§3.6 文書・私的試験・実験以外での使用は NOT RECOMMENDED、確認日: 2026-10-15。research ノートにない原典であり、作成者が原文を照合し、独立レビューが 2026-10-15 に再照合した。本番の wire で `urn:example` を使うことは §3.6 の NOT RECOMMENDED に当たるため、DEC-8 の凍結前に本番の名前空間へ置き換える [N][D]）
+  license:
+    name: Proprietary（社内契約。外部公開の可否は DL-69 で決める）
+    identifier: LicenseRef-internal-contract
+  contact:
+    name: 認証チーム（契約所有者。ADR-022 D-3 の契約変更審査会が変更を審議）
+servers:
+  - url: https://{scimHost}/v1/scim/v2
+    description: テナントの home cell の SCIM endpoint。host 名は未決（ADR-021 D21-25、ADR-013 の cell 振分け）。`/v1` は契約 major（ADR-016）、`v2` は SCIM 版（RFC 7644 §3.13）。
+    variables:
+      scimHost:
+        default: scim.id-domain.example
+        description: 仮置き。本番の host 名は ADR-021 の `<id-domain>` 配下で DL-71 が払い出す。
+security:
+  - oauthClientCredentials: [scim]
+    mtlsClient: []
+  - oauthClientCredentials: [scim]
+x-security-note: 1 つ目（OAuth＋mTLS）が既定。2 つ目（OAuth のみ）は end-to-end mTLS を張れない相手に限る DPoP＋nonce の例外（ADR-005 の外部 M2M 行）を表し、接続単位で有効にする。staticBearerException は D04-40 の例外で、接続単位の受容票がある場合だけ有効にするためトップレベルの security に含めない。
+x-lint-notes:
+  tool: "@redocly/cli lint（recommended 設定）"
+  date: "2026-10-15"
+  errors: 0
+  warnings:
+    - rule: operation-2xx-response
+      location: /Bulk post, /Me get
+      reason: v1 で提供しない endpoint を 501 として明示するため、2xx 応答を意図して持たない（RFC 7644 §3.12 の 501）。
+    - rule: no-unused-components
+      location: components.securitySchemes.staticBearerException
+      reason: 例外専用（D04-40）。受容票のある接続に限るため、意図してトップレベル・操作の security で参照しない。
+tags:
+  - name: Users
+    description: User 資源（テナント内の所属を表す）。RFC 7643 §4.1・§4.3 と本基盤の拡張。
+  - name: Groups
+    description: Group 資源。v1 の members は同じテナントの User だけ。
+  - name: Discovery
+    description: ServiceProviderConfig・ResourceTypes・Schemas（RFC 7644 §4）。
+  - name: Unsupported
+    description: v1 で提供しない endpoint。501 を返す。
+paths:
+  /ServiceProviderConfig:
+    get:
+      tags: [Discovery]
+      operationId: getServiceProviderConfig
+      summary: 対応機能の取得
+      description: v1 の対応機能を返す。値は components.examples.ServiceProviderConfigV1 を正とする [D]。v1 では認証を求める。RFC 7643 §5 の「authenticationSchemes は事前認証なしで取得できるようにすべき（SHOULD）」からの逸脱であり、公開化の可否は未決（§7、DL-26）。
+      responses:
+        "200":
+          description: 対応機能
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/ServiceProviderConfig"
+              examples:
+                v1:
+                  $ref: "#/components/examples/ServiceProviderConfigV1"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /ResourceTypes:
+    get:
+      tags: [Discovery]
+      operationId: listResourceTypes
+      summary: 資源型の一覧
+      responses:
+        "200":
+          description: User と Group の 2 型
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/ListResponse"
+              examples:
+                v1:
+                  $ref: "#/components/examples/ResourceTypesV1"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /ResourceTypes/{name}:
+    get:
+      tags: [Discovery]
+      operationId: getResourceType
+      summary: 資源型の取得
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [User, Group]
+      responses:
+        "200":
+          description: 資源型
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/ResourceType"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /Schemas:
+    get:
+      tags: [Discovery]
+      operationId: listSchemas
+      summary: 対応スキーマの一覧
+      description: User・Group・Enterprise User 拡張・本基盤の連携拡張の 4 スキーマを返す。返す属性定義は v1 で受け付ける属性だけに絞る [D]。client はこれを見て非対応属性を送らないようにする。
+      responses:
+        "200":
+          description: スキーマ一覧
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/ListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /Schemas/{schemaUri}:
+    get:
+      tags: [Discovery]
+      operationId: getSchema
+      summary: スキーマの取得
+      parameters:
+        - name: schemaUri
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - urn:ietf:params:scim:schemas:core:2.0:User
+              - urn:ietf:params:scim:schemas:core:2.0:Group
+              - urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+              - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+      responses:
+        "200":
+          description: スキーマ（RFC 7643 §7 の表現）
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/ScimSchemaDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /Users:
+    get:
+      tags: [Users]
+      operationId: listUsers
+      summary: User の照会（GET）
+      description: |
+        資格情報のテナント内だけを照会する [D]。filter は §6 の制限に従う。個人情報を含む filter は POST /Users/.search を推奨する [D]（RFC 7644 §7.5.2 の SHOULD）。GET の query 文字列はアクセスログに平文で残さない [D]。
+      parameters:
+        - $ref: "#/components/parameters/Filter"
+        - $ref: "#/components/parameters/StartIndex"
+        - $ref: "#/components/parameters/Count"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      responses:
+        "200":
+          description: 照会結果（ListResponse）。0 件でも 200。
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+              examples:
+                byUserName:
+                  $ref: "#/components/examples/UserListByUserName"
+        "400":
+          $ref: "#/components/responses/QueryBadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: []
+      x-negative-examples:
+        - name: or を含む filter
+          request: GET /Users?filter=userName eq "a@example.com" or userName eq "b@example.com"
+          expect: 400 invalidFilter
+          reason: §6。論理演算子は and だけ。
+        - name: 存在確認だけの filter
+          request: GET /Users?filter=userName pr
+          expect: 400 invalidFilter
+          reason: pr は非対応。RFC 7644 Table 9 が tooMany の例に挙げる形でもある。
+        - name: 部分一致
+          request: GET /Users?filter=userName sw "a"
+          expect: 400 invalidFilter
+          reason: 列挙・推測に使える部分一致を提供しない [D]。
+        - name: 深い paging
+          request: GET /Users?startIndex=10001&count=200
+          expect: 400 tooMany
+          reason: 暫定上限（10,000 件目）超過。差分照会（meta.lastModified gt）を使う。
+        - name: 上限超えの count
+          request: GET /Users?count=1000
+          expect: 200。itemsPerPage は 200 以下
+          reason: count を超えて返さない（MUST NOT）。上限を超える count は maxResults に切り詰める [D]。
+        - name: テナント URL prefix
+          request: GET /Tenants/{other-tid}/v2/Users
+          expect: 404
+          reason: §2。テナント明示の手段を定義しない。
+      x-tests: [TC-004-12, TC-004-14, TC-004-17]
+    post:
+      tags: [Users]
+      operationId: createUser
+      summary: User の作成（所属の追加）
+      description: |
+        資格情報のテナントに所属を作る。`federatedSubject` で既存の主体・JIT 作成済みの主体と照合し（D04-41）、§3 の C1・C3・C4・C5 に従う。`userName`・`externalId`・email では照合・結合しない [D]。
+        `password`、`roles`、`entitlements`、`x509Certificates`、`ims`、`photos` を含む要求は 400 `invalidValue` で拒否する [D]。黙って無視すると、顧客管理者が権限や資格情報を設定したと誤認するためである [D]。password の受付は ADR-001・ADR-003 の範囲外である。
+        readOnly 属性（`id`・`meta`・`groups`、連携拡張の readOnly 属性）は拒否せず無視する（RFC 7644 §3.3 の SHALL。§3.1）。
+      parameters:
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/User"
+            examples:
+              bound:
+                $ref: "#/components/examples/UserCreateBound"
+              pendingBinding:
+                $ref: "#/components/examples/UserCreateWithoutSubject"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: 作成した（C1 の結び付けを含む）。Location と ETag を返す。
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                bound:
+                  $ref: "#/components/examples/UserCreatedBound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received, scim.bound, scim.unbound, scim.conflict]
+      x-state-transitions: [Y-01, Y-02, Y-03, Y-04]
+      x-conflict-rules: [C1, C3, C4, C5]
+      x-negative-examples:
+        - name: 同じ userName の現存利用者（別の連携 ID）
+          request: POST /Users（userName が現存利用者と同じ、federatedSubject は異なる）
+          expect: 409 uniqueness。要照合キューに置き、テナント管理者に通知
+          reason: C4。自動で統合しない。
+        - name: 同じ federatedSubject の SCIM 管理下の利用者
+          request: POST /Users（federatedSubject が既存の SCIM 作成済み利用者と同じ）
+          expect: 409 uniqueness
+          reason: 'C4''。重複アカウントを作らない（TC-004-12 の合格条件: 重複 account 0 件）。'
+        - name: email が一致するだけの既存主体
+          request: POST /Users（emails[0].value が別の主体の email と同じ、federatedSubject なし）
+          expect: 201、bindingState=pendingBinding。既存主体とは結合しない
+          reason: D04-21・D21-14c。email を結合キーにしない。
+        - name: client が id を指定
+          request: POST /Users（body に "id" を含む）
+          expect: 201。送られた id は無視し、service provider が払い出した id を返す。無視した属性名を scim.received に記録
+          reason: 'id は readOnly であり、POST 本文の readOnly 属性は無視する（SHALL、RFC 7644 §3.3）。client が id を指定してはならない（MUST NOT、RFC 7643 §3.1、RS-03#75）のは client 側の義務。§3.1。'
+        - name: 上流 IdP 識別子の指定
+          request: POST /Users（拡張に upstreamIdpIdentifier を含む）
+          expect: 201。送られた値は無視し、資格情報の接続から導いた値を返す。無視した属性名を scim.received に記録
+          reason: readOnly（RFC 7644 §3.3 の SHALL be ignored）。上流 IdP は資格情報の接続から導く（D04-39）。
+        - name: 他テナントの manager を参照
+          request: POST /Users（enterprise 拡張の manager.value が他テナントの id）
+          expect: 400 invalidValue（存在しない id と同じ応答）
+          reason: C10。存在の有無を漏らさない。
+        - name: password を含む
+          request: POST /Users（password を含む）
+          expect: 400 invalidValue
+          reason: 本基盤は SCIM で password を受け付けない [D]。
+        - name: roles を含む
+          request: POST /Users（roles を含む）
+          expect: 400 invalidValue
+          reason: 認可属性の取込みは未決（ADR-010・ADR-011）。
+      x-tests: [TC-004-12, TC-004-14, IL-TC12]
+  /Users/.search:
+    post:
+      tags: [Users]
+      operationId: searchUsers
+      summary: User の照会（POST /.search。推奨経路）
+      description: 個人情報を含む filter はこの経路で送る [D]（RFC 7644 §3.4.3・§7.5.2）。filter の制限は GET と同じ。
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+            examples:
+              byExternalId:
+                $ref: "#/components/examples/SearchByExternalId"
+      responses:
+        "200":
+          description: 照会結果
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "400":
+          $ref: "#/components/responses/QueryBadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-negative-examples:
+        - name: schemas の欠落
+          request: POST /Users/.search（schemas に SearchRequest の URN がない）
+          expect: 400 invalidSyntax
+          reason: 照会要求は SearchRequest の URN で識別しなければならない（MUST、RFC 7644 §3.4.3）。
+      x-tests: [TC-004-12]
+  /Users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Users]
+      operationId: getUser
+      summary: User の取得
+      parameters:
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: User。ETag を返す。
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                suspendedByOtherReason:
+                  $ref: "#/components/examples/UserActiveButSuspended"
+        "304":
+          description: If-None-Match が一致し、変更がない（RFC 7644 §3.14）。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-negative-examples:
+        - name: 他テナントの id
+          request: GET /Users/{テナント B の id}（テナント A の資格情報）
+          expect: 404（存在しない id と同じ本文）
+          reason: C10。SEC の検知対象にする。
+        - name: 削除済みの id
+          request: GET /Users/{削除済みの id}
+          expect: 404
+          reason: 削除後の全操作に 404（MUST、RFC 7644 §3.6）。
+      x-tests: [TC-004-12, TC-004-14]
+    put:
+      tags: [Users]
+      operationId: replaceUser
+      summary: User の置換
+      description: |
+        全属性を置き換える。`federatedSubject` は immutable であり、未設定（bindingState=pendingBinding）のときだけ設定できる（RFC 7643 §2.2 の immutable）。設定済みの値と異なる値には 400 `mutability` を返す [D]。未設定の状態で設定した値が同じテナントの SCIM 管理下の別の利用者の値と同じなら 409 `uniqueness`（C4'）とする [D]。PUT で `active` を省略しても停止状態は変えない（停止理由の解除は `active=true` の明示だけ）[D]。
+        readOnly 属性（`id`・`meta`・`groups`、連携拡張の readOnly 属性）は無視する（SHALL、RFC 7644 §3.5.1）。client は GET で得た表現をそのまま PUT してよい [D]（§3.1）。
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: 置換後の User
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received, scim.bound, scim.conflict, scim.disabled, scim.enabled]
+      x-state-transitions: [Y-02, Y-04, Y-07, Y-08]
+      x-conflict-rules: [C4', C6, C7]
+      x-negative-examples:
+        - name: federatedSubject の書換え
+          request: PUT /Users/{id}（設定済みと異なる federatedSubject）
+          expect: 400 mutability
+          reason: immutable（RFC 7644 §3.5.1 の SHOULD を本基盤は必須にする）。連携 ID の付替えは利用者の linking（D04-23）か DL-08 §9.2 の L-3〜L-5 で行う。
+        - name: GET の表現をそのまま PUT（readOnly 属性を含む）
+          request: PUT /Users/{id}（id・meta・effectiveStatus などの readOnly 属性を含む）
+          expect: 200。readOnly 属性は無視する
+          reason: RFC 7644 §3.5.1（readOnly は SHALL be ignored）。§3.1 の正例として扱う。
+        - name: 古い ETag
+          request: PUT /Users/{id}（If-Match が古い版）
+          expect: 412
+          reason: C6。
+      x-tests: [TC-004-12]
+    patch:
+      tags: [Users]
+      operationId: patchUser
+      summary: User の部分更新（無効化・再有効化を含む）
+      description: |
+        `active=false` は Y-07（停止理由 SRC、§4 の全手段の失効）、`active=true` は Y-08（SRC だけ解除）とする [D]（D04-43・D04-44）。応答は失効の完了を待たずに返し、`deprovisioning.state` で進捗を示す [D]。
+        PatchOp の `op` は RFC 7644 §3.5.2 の `add`・`remove`・`replace` である。
+        `federatedSubject`（immutable）は、未設定（bindingState=pendingBinding）のときだけ `add` で設定できる（RFC 7644 §3.5.2 の MAY）。設定すると Y-02（結合済）に移り `scim.bound` を記録する。同じテナントの SCIM 管理下の別の利用者と同じ値なら 409 `uniqueness`（C4'）、設定済みの値の `replace`・`remove` は 400 `mutability` とする [D]（§3.1）。
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/PatchOp"
+            examples:
+              deactivate:
+                $ref: "#/components/examples/PatchDeactivate"
+              reactivate:
+                $ref: "#/components/examples/PatchReactivate"
+      responses:
+        "200":
+          description: 更新後の User
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                deactivated:
+                  $ref: "#/components/examples/UserDeactivated"
+                reactivatedButSuspended:
+                  $ref: "#/components/examples/UserActiveButSuspended"
+        "204":
+          description: 更新したが、client が attributes を指定せず本文を返さない場合（RFC 7644 §3.5.2）。
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received, scim.bound, scim.conflict, scim.disabled, scim.enabled]
+      x-state-transitions: [Y-02, Y-04, Y-07, Y-08]
+      x-conflict-rules: [C4', C6, C7]
+      x-negative-examples:
+        - name: active=true で SEC 停止を解除しようとする
+          request: PATCH /Users/{id} replace active=true（SEC の停止理由あり）
+          expect: 200、active=true、effectiveStatus=suspended。テナント管理者に通知
+          reason: C7・D04-44。同期で他の停止理由を上書きしない。
+        - name: 停止中の再有効化の連打
+          request: active=false の直後に active=true（If-Match なし）
+          expect: 後勝ち。各要求を監査ログに残す
+          reason: C6。If-Match のない更新の順序は保証しない。顧客 IdP 側に If-Match の送信を推奨する [D]。
+        - name: readOnly 属性の変更
+          request: PATCH replace urn:example:authstack:scim:schemas:extension:federation:1.0:User:effectiveStatus
+          expect: 400 mutability
+          reason: readOnly（RFC 7643 §2.2 の SHALL NOT be modified。PATCH で mutability に合わない操作は RFC 7644 §3.5.2 により §3.12 のエラーを返す）。
+        - name: 設定済み federatedSubject の replace
+          request: PATCH replace urn:example:authstack:scim:schemas:extension:federation:1.0:User:federatedSubject（bindingState=bound）
+          expect: 400 mutability
+          reason: immutable。値がない場合の add だけ許す（RFC 7644 §3.5.2）。§3.1。
+        - name: path の誤り
+          request: PATCH remove path=emails[type eq "work"（閉じ括弧なし）
+          expect: 400 invalidPath
+          reason: RFC 7644 Table 9。
+      x-tests: [TC-004-12, TC-004-13, IL-TC13, IL-TC23]
+    delete:
+      tags: [Users]
+      operationId: deleteUser
+      summary: User の削除（当該テナントの所属の除去）
+      description: |
+        Y-09。当該テナントの所属を除去し、最後の所属であれば主体を P-08 へ送る [D]（DL-08 §15.1）。他テナントの所属は止めない [D]（D04-51）。削除した `id` は再割当てしない [D]（ADR-021 D21-13）。
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: 削除した（SHALL、RFC 7644 §3.6）
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received, scim.deleted]
+      x-state-transitions: [Y-09]
+      x-negative-examples:
+        - name: 二重削除
+          request: DELETE /Users/{削除済みの id}
+          expect: 404
+          reason: RFC 7644 §3.6。
+        - name: 複数所属の主体の削除
+          request: テナント A の資格情報で DELETE（主体はテナント B にも所属）
+          expect: 204。テナント B の所属・session には影響しない
+          reason: D04-51、TC-004-14 の合格条件（テナント B の所属への影響 0 件）。
+      x-tests: [TC-004-13, TC-004-14, IL-TC19]
+  /Groups:
+    get:
+      tags: [Groups]
+      operationId: listGroups
+      summary: Group の照会（GET）
+      description: filter は `displayName eq`・`externalId eq`・`id eq`・`meta.lastModified gt|ge` に限る [D]。`excludedAttributes=members` を推奨する [D]。
+      parameters:
+        - $ref: "#/components/parameters/Filter"
+        - $ref: "#/components/parameters/StartIndex"
+        - $ref: "#/components/parameters/Count"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      responses:
+        "200":
+          description: 照会結果
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/GroupListResponse"
+        "400":
+          $ref: "#/components/responses/QueryBadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-tests: [TC-004-12]
+    post:
+      tags: [Groups]
+      operationId: createGroup
+      summary: Group の作成
+      description: |
+        members は同じテナントの User の `id` だけを受け付ける [D]。`type`=`Group`（入れ子）は v1 で 400 `invalidValue` とする（入れ子 group の採否は未決: ADR-010・ADR-011）[D]。Group と所属は認可の relationship tuple に反映する（A-031 の 1 件あたり 5 tuple は容量見積りの仮定）[D][A-031]。
+      parameters:
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/Group"
+            examples:
+              basic:
+                $ref: "#/components/examples/GroupCreate"
+      responses:
+        "201":
+          description: 作成した
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received]
+      x-negative-examples:
+        - name: 他テナントの User を member に指定
+          request: POST /Groups（members[0].value がテナント B の User id）
+          expect: 400 invalidValue（存在しない id と同じ応答）
+          reason: C10。
+        - name: 入れ子 group
+          request: POST /Groups（members[0].type=Group）
+          expect: 400 invalidValue
+          reason: 'v1 の範囲外（未決: ADR-010・ADR-011）。'
+      x-tests: [TC-004-12]
+  /Groups/.search:
+    post:
+      tags: [Groups]
+      operationId: searchGroups
+      summary: Group の照会（POST /.search）
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: 照会結果
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/GroupListResponse"
+        "400":
+          $ref: "#/components/responses/QueryBadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /Groups/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Groups]
+      operationId: getGroup
+      summary: Group の取得
+      parameters:
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: Group
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "304":
+          description: 変更なし
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-open-issues:
+        - 大規模 group の members の返却方法（上限・分割）は未決（ADR-010・DL-20、A-036 の fanout）。
+    put:
+      tags: [Groups]
+      operationId: replaceGroup
+      summary: Group の置換
+      description: readOnly 属性（`id`・`meta`）の値は無視する（SHALL、RFC 7644 §3.5.1）[N][^2]。members の `display`・`$ref` は本契約で readOnly 扱いとし、同じく無視する [D]。
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/Group"
+      responses:
+        "200":
+          description: 置換後の Group
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received]
+    patch:
+      tags: [Groups]
+      operationId: patchGroup
+      summary: Group の部分更新（members の追加・除去）
+      description: |
+        members の除去は所属に由来する権限の剥奪であり、剥奪反映の時間は DL-20 の数値契約に従う [D]。path filter `members[value eq "<id>"]` を受け付ける [D]。成功時は 200 と Group 全体を返すか、204 を返してよい。`attributes` を指定された場合は 200 を返さなければならない（MUST、RFC 7644 §3.5.2）[N][^2]。
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/Attributes"
+        - $ref: "#/components/parameters/ExcludedAttributes"
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              $ref: "#/components/schemas/PatchOp"
+            examples:
+              removeMember:
+                $ref: "#/components/examples/PatchRemoveMember"
+      responses:
+        "200":
+          description: 更新後の Group
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/scim+json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "204":
+          description: 更新した（本文なし）
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received]
+      x-negative-examples:
+        - name: 一致しない member の除去
+          request: PATCH remove path=members[value eq "存在しない id"]
+          expect: 400 noTarget
+          reason: RFC 7644 Table 9。
+      x-tests: [TC-004-12]
+    delete:
+      tags: [Groups]
+      operationId: deleteGroup
+      summary: Group の削除
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: 削除した
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-audit-events: [scim.received]
+  /Bulk:
+    post:
+      tags: [Unsupported]
+      operationId: bulkNotSupported
+      summary: Bulk（v1 非対応）
+      description: v1 では提供しない。ServiceProviderConfig の bulk.supported=false と一致させる [D]。提供の要否は初回投入時間の実測（DL-20）で判断する（未決）。
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+  /Me:
+    get:
+      tags: [Unsupported]
+      operationId: meNotSupported
+      summary: /Me（非対応）
+      description: SCIM client は利用者ではないため提供しない [D]。
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+components:
+  securitySchemes:
+    oauthClientCredentials:
+      type: oauth2
+      description: |
+        本基盤の AS が SCIM client に発行する access token（opaque。ADR-005）。client 認証は private_key_jwt または mTLS（D04-40）。scope 名 `scim` は仮名（ADR-021・DL-71 で確定）。audience は SCIM API に限る（ADR-005 の共通 aud 禁止）。
+      flows:
+        clientCredentials:
+          tokenUrl: https://login.id-domain.example/oauth2/token
+          scopes:
+            scim: 'SCIM の User・Group の読み書き（仮名。他の管理 API・監査 API の scope と分離する: DL-26 IAM-SaaS-18）'
+    mtlsClient:
+      type: mutualTLS
+      description: 外部 M2M の sender constraint の既定（ADR-005）。access token を client 証明書に束縛する。DPoP＋nonce は end-to-end mTLS を張れない相手に限る例外（ADR-005）。
+    staticBearerException:
+      type: http
+      scheme: bearer
+      description: |
+        例外専用（D04-40、NA-004-2）。長寿命の静的 bearer しか送れない顧客 IdP に限り、受容票（DL-05）・移行期限・rotation 周期の上限・送信元制限・P-5 を条件に接続単位で有効にする。既定では無効。トップレベルの security には含めない。
+      x-exception-only: true
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: SCIM の id。テナント内の所属を表す不透明な値（§2）。大文字小文字を区別して比較する [D]。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: "^[a-z0-9-]+$"
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: §6 の制限付き filter。components.schemas.SearchRequest の x-filter-profile を参照。
+      schema:
+        type: string
+        maxLength: 1024
+      examples:
+        userNameEq:
+          value: userName eq "bjensen@example.com"
+        lastModified:
+          value: meta.lastModified gt "2026-10-01T00:00:00Z"
+    StartIndex:
+      name: startIndex
+      in: query
+      required: false
+      description: 1 始まり。1 未満は 1 と解釈する（SHALL、RFC 7644 §3.4.2.4）。startIndex＋count−1 が暫定上限 10,000 を超えたら 400 tooMany [D]。
+      schema:
+        type: integer
+        default: 1
+    Count:
+      name: count
+      in: query
+      required: false
+      description: 1 ページの件数。負は 0 と解釈する（SHALL）。maxResults（暫定 200）を超える値は 200 に切り詰める [D]。
+      schema:
+        type: integer
+    Attributes:
+      name: attributes
+      in: query
+      required: false
+      description: 返す属性の列挙（RFC 7644 §3.9）。
+      schema:
+        type: string
+    ExcludedAttributes:
+      name: excludedAttributes
+      in: query
+      required: false
+      description: 返さない属性の列挙（RFC 7644 §3.9）。
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: 弱い ETag。不一致は 412（§5）。送ることを推奨する [D]。
+      schema:
+        type: string
+      example: W/"3694e05e9dff590"
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: 一致すれば 304。
+      schema:
+        type: string
+  headers:
+    ETag:
+      description: 資源の弱い ETag。meta.version と同じ値（RFC 7644 §3.14）。
+      schema:
+        type: string
+    Location:
+      description: 作成した資源の URI。
+      schema:
+        type: string
+        format: uri
+    RetryAfter:
+      description: 再試行までの秒数（RFC 6585 §4 の MAY を本基盤は必須にする [D]）。
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    QueryBadRequest:
+      description: |
+        400（照会: GET と POST /.search）。scimType は invalidFilter・tooMany・invalidSyntax・invalidValue（RFC 7644 Table 9 の Applicability に従う）。mock は先頭の example（invalidFilter）を返す。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            invalidFilter:
+              $ref: "#/components/examples/ErrorInvalidFilter"
+            tooMany:
+              $ref: "#/components/examples/ErrorTooMany"
+    BadRequest:
+      description: |
+        400（作成・置換・部分更新）。scimType は RFC 7644 Table 9 の値（invalidValue・mutability・invalidSyntax・invalidPath・noTarget・invalidVers、PATCH の path filter では invalidFilter）。uniqueness は 409 で返す（§3）。mock は先頭の example（invalidValue）を返す。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            invalidValue:
+              $ref: "#/components/examples/ErrorInvalidValue"
+            mutability:
+              $ref: "#/components/examples/ErrorMutability"
+    Unauthorized:
+      description: 401。token の欠落・期限切れ・失効・sender constraint 不一致（TC-004-17）。
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+    Forbidden:
+      description: |
+        403。scope 不足、接続が停止中（顧客 IdP の切離し・遮断）、テナントを示す header と資格情報のテナントの不一致（§2）。不一致は SEC の検知対象。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            tenantMismatch:
+              $ref: "#/components/examples/ErrorTenantMismatch"
+    NotFound:
+      description: 404。存在しない、削除済み、または他テナントの資源（区別しない）。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            notFound:
+              $ref: "#/components/examples/ErrorNotFound"
+    Conflict:
+      description: 409 uniqueness（C4・C4'）。要照合キューに置き、テナント管理者に通知する。版の不一致には 409 ではなく 412 を使う（§5）。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            uniqueness:
+              $ref: "#/components/examples/ErrorUniqueness"
+    PreconditionFailed:
+      description: 412。If-Match が最新の ETag と一致しない（C6）。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+    PayloadTooLarge:
+      description: 413。要求本文が上限（暫定 1 MiB。TBD、DL-20）を超えた。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+    TooManyRequests:
+      description: 429。テナント単位の流量制限（§8）。Retry-After を必ず付ける [D]。
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+          examples:
+            rateLimited:
+              $ref: "#/components/examples/ErrorRateLimited"
+    NotImplemented:
+      description: 501。v1 で提供しない機能。
+      content:
+        application/scim+json:
+          schema:
+            $ref: "#/components/schemas/ScimError"
+  schemas:
+    ScimError:
+      type: object
+      description: RFC 7644 §3.12 のエラー形式。status は文字列（REQUIRED）。RFC 9457 Problem Details は SCIM 経路では使わない（標準の形式を変えない）[D]。
+      required: [schemas, status]
+      properties:
+        schemas:
+          type: array
+          items:
+            const: urn:ietf:params:scim:api:messages:2.0:Error
+          minItems: 1
+          maxItems: 1
+        status:
+          type: string
+          pattern: "^[1-5][0-9]{2}$"
+        scimType:
+          type: string
+          enum: [invalidFilter, tooMany, uniqueness, mutability, invalidSyntax, invalidPath, noTarget, invalidValue, invalidVers, sensitive]
+        detail:
+          type: string
+          description: 人が読む説明。他テナントの資源の有無、主体の停止理由（SEC・LEG 等）、内部 ID を含めない [D]。
+    Meta:
+      type: object
+      readOnly: true
+      properties:
+        resourceType:
+          type: string
+          enum: [User, Group]
+        created:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        location:
+          type: string
+          format: uri
+        version:
+          type: string
+          description: 弱い ETag（§5）。
+    Name:
+      type: object
+      properties:
+        formatted:
+          type: string
+        familyName:
+          type: string
+        givenName:
+          type: string
+        middleName:
+          type: string
+        honorificPrefix:
+          type: string
+        honorificSuffix:
+          type: string
+    MultiValuedAttribute:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+        display:
+          type: string
+        type:
+          type: string
+        primary:
+          type: boolean
+    Address:
+      type: object
+      properties:
+        formatted:
+          type: string
+        streetAddress:
+          type: string
+        locality:
+          type: string
+        region:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        type:
+          type: string
+        primary:
+          type: boolean
+    GroupRef:
+      type: object
+      readOnly: true
+      description: User.groups（readOnly。RFC 7643 §4.1.2）。本基盤では当該テナントの Group だけを返す [D]。
+      properties:
+        value:
+          type: string
+        display:
+          type: string
+        type:
+          type: string
+          enum: [direct, indirect]
+      patternProperties:
+        '^\$ref$':
+          type: string
+          format: uri
+          description: SCIM の "$ref" 属性（Group の URI）。OpenAPI の参照記法と衝突するため patternProperties で表す。
+    EnterpriseUser:
+      type: object
+      description: RFC 7643 §4.3。manager.value は同じテナントの User の id に限る [D]。
+      properties:
+        employeeNumber:
+          type: string
+        costCenter:
+          type: string
+        organization:
+          type: string
+        division:
+          type: string
+        department:
+          type: string
+        manager:
+          type: object
+          properties:
+            value:
+              type: string
+            displayName:
+              type: string
+              readOnly: true
+          patternProperties:
+            '^\$ref$':
+              type: string
+              format: uri
+              readOnly: true
+              description: SCIM の "$ref" 属性（manager の URI）。
+    FederationUserExtension:
+      type: object
+      description: |
+        本基盤の拡張（urn:example:authstack:scim:schemas:extension:federation:1.0:User。URN は仮置き）。RFC 7643 §3.3 に従い、拡張 URN を JSON の容器として使い、core の属性を再定義しない [N][^1]。
+      properties:
+        federatedSubject:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: |
+            上流 IdP が発行する不変の利用者 ID（OIDC の sub、Entra では tid＋oid、SAML の persistent NameID）。assertion の外部 subject と同じ値を送る（trust agreement で定める。DL-08 Y-02）。mutability=immutable、caseExact=true、returned=default。email 形式の値や UPN は不可 [D]（D04-21）。長さ上限 256 は暫定（OIDC sub と SAML persistent NameID の上限を受け入れる意図。上限値の原典照合は未了）。
+          x-scim-mutability: immutable
+          x-scim-caseExact: true
+        upstreamIdpIdentifier:
+          type: string
+          readOnly: true
+          description: 上流 IdP の識別子（OIDC issuer／SAML entityID）。資格情報の接続から導く（D04-39）。
+          x-scim-mutability: readOnly
+        connectionId:
+          type: string
+          readOnly: true
+          description: 本基盤の顧客 IdP 接続 ID（ADR-021 D21-19 の接続 ID）。
+          x-scim-mutability: readOnly
+        bindingState:
+          type: string
+          readOnly: true
+          enum: [bound, pendingBinding]
+          description: bound は Y-02（連携 ID と結合済み）、pendingBinding は Y-03（結合待ち。ログイン不可）。要照合（Y-04）は SCIM 資源にならない（409 で返し要照合キューに置く）。
+          x-scim-mutability: readOnly
+        provisioningOrigin:
+          type: string
+          readOnly: true
+          enum: [scim, jit]
+          description: jit は M3 で JIT 作成済みの主体に SCIM の id を結び付けたもの（C1）。
+          x-scim-mutability: readOnly
+        effectiveStatus:
+          type: string
+          readOnly: true
+          enum: [enabled, suspended]
+          description: 全停止理由を合わせた実効状態。停止理由の内訳（SEC・LEG 等）は返さない [D]。
+          x-scim-mutability: readOnly
+        deprovisioning:
+          type: object
+          readOnly: true
+          description: active=false・削除で起動した失効の進捗（区間 2 の計測点。TC-004-13）。
+          x-scim-mutability: readOnly
+          properties:
+            state:
+              type: string
+              enum: [none, inProgress, completed]
+            requestedAt:
+              type: string
+              format: date-time
+            completedAt:
+              type: string
+              format: date-time
+    User:
+      type: object
+      description: |
+        RFC 7643 §4.1 の User。v1 で受け付けない属性（password、roles、entitlements、x509Certificates、ims、photos）は 400 invalidValue（§createUser）。未知の拡張 URN を schemas に含む要求は 400 invalidValue [D]。
+        readOnly の属性は要求に含まれていても拒否せず無視する（POST は RFC 7644 §3.3、PUT は §3.5.1 の SHALL。説明 §3.1）。要求検証に使う validator・mock は readOnly 属性を除去してから検証する設定にする。
+      required: [schemas, userName]
+      properties:
+        schemas:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - urn:ietf:params:scim:schemas:core:2.0:User
+              - urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+              - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+          contains:
+            const: urn:ietf:params:scim:schemas:core:2.0:User
+        id:
+          type: string
+          readOnly: true
+          description: service provider が払い出す。client は指定してはならない（MUST NOT、RS-03#75）。
+        externalId:
+          type: string
+          description: client 定義。テナント（provisioning domain）内でだけ一意として扱う（RS-14#33）。照合キーに使わない [D]（D04-41）。
+        userName:
+          type: string
+          minLength: 1
+          description: テナント内で一意（大文字小文字を区別しない。RS-03#75）。表示と配送経路にだけ使い、識別・結合・認可に使わない [D]（D04-21）。
+        name:
+          $ref: "#/components/schemas/Name"
+        displayName:
+          type: string
+        nickName:
+          type: string
+        title:
+          type: string
+        userType:
+          type: string
+        preferredLanguage:
+          type: string
+        locale:
+          type: string
+        timezone:
+          type: string
+        active:
+          type: boolean
+          description: SCIM client が設定した値（停止理由 SRC の有無）。実効状態は拡張の effectiveStatus（§4）。
+        emails:
+          type: array
+          items:
+            $ref: "#/components/schemas/MultiValuedAttribute"
+        phoneNumbers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MultiValuedAttribute"
+        addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Address"
+        groups:
+          type: array
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/GroupRef"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:
+          $ref: "#/components/schemas/EnterpriseUser"
+        urn:example:authstack:scim:schemas:extension:federation:1.0:User:
+          $ref: "#/components/schemas/FederationUserExtension"
+      propertyNames:
+        description: v1 で受け付けない属性（400 invalidValue）。password は受け付けない。roles・entitlements は認可属性の取込みが未決（ADR-010・ADR-011）のため受け付けない。x509Certificates・ims・photos は v1 の範囲外。properties に空の not を置くと mock・code generator が null の欄を生成するため、属性名の禁止として表す。
+        not:
+          enum: [password, roles, entitlements, x509Certificates, ims, photos]
+      x-rejected-attributes: [password, roles, entitlements, x509Certificates, ims, photos]
+    GroupMember:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+          description: 同じテナントの User の id。
+        display:
+          type: string
+          readOnly: true
+        type:
+          type: string
+          enum: [User]
+          description: v1 は User だけ（入れ子 group は未決）。
+      patternProperties:
+        '^\$ref$':
+          type: string
+          format: uri
+          readOnly: true
+          description: SCIM の "$ref" 属性（member の URI）。
+    Group:
+      type: object
+      description: RFC 7643 §4.2。members の sub-attributes は immutable（追加・除去だけ可）[N][^1]。
+      required: [schemas, displayName]
+      properties:
+        schemas:
+          type: array
+          minItems: 1
+          items:
+            const: urn:ietf:params:scim:schemas:core:2.0:Group
+        id:
+          type: string
+          readOnly: true
+        externalId:
+          type: string
+        displayName:
+          type: string
+          minLength: 1
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupMember"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    PatchOperation:
+      type: object
+      required: [op]
+      properties:
+        op:
+          type: string
+          enum: [add, remove, replace]
+        path:
+          type: string
+        value: {}
+    PatchOp:
+      type: object
+      description: RFC 7644 §3.5.2。
+      required: [schemas, Operations]
+      properties:
+        schemas:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            const: urn:ietf:params:scim:api:messages:2.0:PatchOp
+        Operations:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: 1 要求の操作数の上限は暫定 100（TBD、DL-20）[D]。
+          items:
+            $ref: "#/components/schemas/PatchOperation"
+    SearchRequest:
+      type: object
+      description: RFC 7644 §3.4.3。sortBy・sortOrder は非対応（sort.supported=false）。
+      required: [schemas]
+      properties:
+        schemas:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            const: urn:ietf:params:scim:api:messages:2.0:SearchRequest
+        attributes:
+          type: array
+          items:
+            type: string
+        excludedAttributes:
+          type: array
+          items:
+            type: string
+        filter:
+          type: string
+          maxLength: 1024
+        startIndex:
+          type: integer
+        count:
+          type: integer
+      x-filter-profile:
+        operators: [eq]
+        timeOperators:
+          attribute: meta.lastModified
+          operators: [gt, ge]
+        logical: [and]
+        maxAndTerms: 2
+        rejected: [or, not, co, sw, ew, pr, ne, lt, le, "値 filter（照会での attr[...] 形式）"]
+        attributes:
+          User: [id, userName, externalId, "urn:example:authstack:scim:schemas:extension:federation:1.0:User:federatedSubject", meta.lastModified]
+          Group: [id, displayName, externalId, meta.lastModified]
+        onUnsupported: 400 invalidFilter
+        onTooBroad: 400 tooMany
+        note: 値はすべて暫定（TBD、所有者 CTO、期限 G4、決め方 PoC 実測と DL-20）。
+    ListResponse:
+      type: object
+      required: [schemas, totalResults]
+      properties:
+        schemas:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            const: urn:ietf:params:scim:api:messages:2.0:ListResponse
+        totalResults:
+          type: integer
+          minimum: 0
+        startIndex:
+          type: integer
+        itemsPerPage:
+          type: integer
+        Resources:
+          type: array
+          items:
+            type: object
+    UserListResponse:
+      allOf:
+        - $ref: "#/components/schemas/ListResponse"
+        - type: object
+          properties:
+            Resources:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
+    GroupListResponse:
+      allOf:
+        - $ref: "#/components/schemas/ListResponse"
+        - type: object
+          properties:
+            Resources:
+              type: array
+              items:
+                $ref: "#/components/schemas/Group"
+    ServiceProviderConfig:
+      type: object
+      description: RFC 7643 §5。
+      required: [schemas, patch, bulk, filter, changePassword, sort, etag, authenticationSchemes]
+      properties:
+        schemas:
+          type: array
+          items:
+            const: urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig
+        documentationUri:
+          type: string
+          format: uri
+        patch:
+          $ref: "#/components/schemas/Supported"
+        bulk:
+          type: object
+          required: [supported, maxOperations, maxPayloadSize]
+          properties:
+            supported:
+              type: boolean
+            maxOperations:
+              type: integer
+            maxPayloadSize:
+              type: integer
+        filter:
+          type: object
+          required: [supported, maxResults]
+          properties:
+            supported:
+              type: boolean
+            maxResults:
+              type: integer
+        changePassword:
+          $ref: "#/components/schemas/Supported"
+        sort:
+          $ref: "#/components/schemas/Supported"
+        etag:
+          $ref: "#/components/schemas/Supported"
+        authenticationSchemes:
+          type: array
+          items:
+            type: object
+            required: [type, name, description]
+            properties:
+              type:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              specUri:
+                type: string
+                format: uri
+              documentationUri:
+                type: string
+                format: uri
+              primary:
+                type: boolean
+    Supported:
+      type: object
+      required: [supported]
+      properties:
+        supported:
+          type: boolean
+    ResourceType:
+      type: object
+      description: RFC 7643 §6。
+      required: [schemas, name, endpoint, schema]
+      properties:
+        schemas:
+          type: array
+          items:
+            const: urn:ietf:params:scim:schemas:core:2.0:ResourceType
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        endpoint:
+          type: string
+        schema:
+          type: string
+        schemaExtensions:
+          type: array
+          items:
+            type: object
+            required: [schema, required]
+            properties:
+              schema:
+                type: string
+              required:
+                type: boolean
+    ScimSchemaDefinition:
+      type: object
+      description: RFC 7643 §7 のスキーマ表現（属性定義の詳細は RFC の定義に従い、ここでは外形だけを固定する）。
+      required: [id, attributes]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            required: [name, type]
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+                description: RFC 7643 §7 の列挙は binary を含まないが、§2.3.6 が binary 型を定め、§8.7.1 の User スキーマ表現（x509Certificates.value）が "binary" を使うため、受信側の互換のために含める。v1 の /Schemas は binary 型の属性を返さない [D]。
+                enum: [string, boolean, decimal, integer, dateTime, reference, complex, binary]
+              multiValued:
+                type: boolean
+              required:
+                type: boolean
+              caseExact:
+                type: boolean
+              mutability:
+                type: string
+                enum: [readOnly, readWrite, immutable, writeOnly]
+              returned:
+                type: string
+                enum: [always, never, default, request]
+              uniqueness:
+                type: string
+                enum: [none, server, global]
+  examples:
+    ServiceProviderConfigV1:
+      summary: v1 の対応機能（正例）
+      value:
+        schemas: [urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig]
+        documentationUri: https://docs.id-domain.example/scim/v1
+        patch:
+          supported: true
+        bulk:
+          supported: false
+          maxOperations: 0
+          maxPayloadSize: 0
+        filter:
+          supported: true
+          maxResults: 200
+        changePassword:
+          supported: false
+        sort:
+          supported: false
+        etag:
+          supported: true
+        authenticationSchemes:
+          - type: oauthbearertoken
+            name: OAuth 2.0 client credentials（private_key_jwt または mTLS による client 認証）
+            description: 本基盤の AS が発行する短命の access token。scope は SCIM 専用。
+            specUri: https://www.rfc-editor.org/rfc/rfc6749
+            primary: true
+    ResourceTypesV1:
+      summary: 資源型（正例）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:ListResponse]
+        totalResults: 2
+        Resources:
+          - schemas: [urn:ietf:params:scim:schemas:core:2.0:ResourceType]
+            id: User
+            name: User
+            endpoint: /Users
+            schema: urn:ietf:params:scim:schemas:core:2.0:User
+            schemaExtensions:
+              - schema: urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+                required: false
+              - schema: urn:example:authstack:scim:schemas:extension:federation:1.0:User
+                required: false
+          - schemas: [urn:ietf:params:scim:schemas:core:2.0:ResourceType]
+            id: Group
+            name: Group
+            endpoint: /Groups
+            schema: urn:ietf:params:scim:schemas:core:2.0:Group
+    UserCreateBound:
+      summary: 正例。不変 ID 付きの作成（Y-02 で結合済みになる）
+      value:
+        schemas:
+          - urn:ietf:params:scim:schemas:core:2.0:User
+          - urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+          - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+        externalId: bjensen
+        userName: bjensen@example.com
+        name:
+          familyName: Jensen
+          givenName: Barbara
+        displayName: Barbara Jensen
+        active: true
+        emails:
+          - value: bjensen@example.com
+            type: work
+            primary: true
+        urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:
+          employeeNumber: "701984"
+          department: Sales
+        urn:example:authstack:scim:schemas:extension:federation:1.0:User:
+          federatedSubject: 7c1f2b9e-0d4a-4c55-9b0e-3f6a8d2e1a90
+    UserCreateWithoutSubject:
+      summary: 正例（ただし結合待ち）。不変 ID を送れない IdP。201 で bindingState=pendingBinding、ログイン不可（Y-03・C3）
+      value:
+        schemas: [urn:ietf:params:scim:schemas:core:2.0:User]
+        userName: ajones@example.com
+        active: true
+    UserCreatedBound:
+      summary: 作成応答（正例。UserCreateBound に対する service provider の表現）
+      value:
+        schemas:
+          - urn:ietf:params:scim:schemas:core:2.0:User
+          - urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+          - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+        id: q7m2x9k4c1v8b3n6z5l0p2r4t6
+        externalId: bjensen
+        userName: bjensen@example.com
+        name:
+          familyName: Jensen
+          givenName: Barbara
+        displayName: Barbara Jensen
+        active: true
+        emails:
+          - value: bjensen@example.com
+            type: work
+            primary: true
+        urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:
+          employeeNumber: "701984"
+          department: Sales
+        meta:
+          resourceType: User
+          created: "2026-10-15T01:02:03Z"
+          lastModified: "2026-10-15T01:02:03Z"
+          location: https://scim.id-domain.example/v1/scim/v2/Users/q7m2x9k4c1v8b3n6z5l0p2r4t6
+          version: W/"a330bc54f0671c9"
+        urn:example:authstack:scim:schemas:extension:federation:1.0:User:
+          federatedSubject: 7c1f2b9e-0d4a-4c55-9b0e-3f6a8d2e1a90
+          upstreamIdpIdentifier: https://idp.customer.example
+          connectionId: c4k8w2m6q0s3v7y1
+          bindingState: bound
+          provisioningOrigin: scim
+          effectiveStatus: enabled
+          deprovisioning:
+            state: none
+    UserDeactivated:
+      summary: active=false の応答（正例）。失効は進行中
+      value:
+        schemas:
+          - urn:ietf:params:scim:schemas:core:2.0:User
+          - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+        id: q7m2x9k4c1v8b3n6z5l0p2r4t6
+        userName: bjensen@example.com
+        active: false
+        meta:
+          resourceType: User
+          version: W/"b441cd65g1782da"
+        urn:example:authstack:scim:schemas:extension:federation:1.0:User:
+          bindingState: bound
+          effectiveStatus: suspended
+          deprovisioning:
+            state: inProgress
+            requestedAt: "2026-10-15T09:00:00Z"
+    UserActiveButSuspended:
+      summary: C7。active=true だが SRC 以外の停止理由が残る（理由の内訳は返さない）
+      value:
+        schemas:
+          - urn:ietf:params:scim:schemas:core:2.0:User
+          - urn:example:authstack:scim:schemas:extension:federation:1.0:User
+        id: q7m2x9k4c1v8b3n6z5l0p2r4t6
+        userName: bjensen@example.com
+        active: true
+        urn:example:authstack:scim:schemas:extension:federation:1.0:User:
+          bindingState: bound
+          effectiveStatus: suspended
+    UserListByUserName:
+      summary: userName eq の照会結果（正例）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:ListResponse]
+        totalResults: 1
+        startIndex: 1
+        itemsPerPage: 1
+        Resources:
+          - schemas: [urn:ietf:params:scim:schemas:core:2.0:User]
+            id: q7m2x9k4c1v8b3n6z5l0p2r4t6
+            userName: bjensen@example.com
+            active: true
+    SearchByExternalId:
+      summary: POST /.search（正例）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:SearchRequest]
+        filter: externalId eq "bjensen"
+        attributes: [id, userName, active]
+        startIndex: 1
+        count: 10
+    PatchDeactivate:
+      summary: 無効化（Y-07。正例）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:PatchOp]
+        Operations:
+          - op: replace
+            path: active
+            value: false
+    PatchReactivate:
+      summary: 再有効化（Y-08。SRC だけ解除）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:PatchOp]
+        Operations:
+          - op: replace
+            path: active
+            value: true
+    PatchRemoveMember:
+      summary: member の除去（正例）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:PatchOp]
+        Operations:
+          - op: remove
+            path: members[value eq "q7m2x9k4c1v8b3n6z5l0p2r4t6"]
+    GroupCreate:
+      summary: Group の作成（正例）
+      value:
+        schemas: [urn:ietf:params:scim:schemas:core:2.0:Group]
+        displayName: Sales
+        externalId: grp-sales
+        members:
+          - value: q7m2x9k4c1v8b3n6z5l0p2r4t6
+            type: User
+    ErrorInvalidFilter:
+      summary: 負例への応答。非対応の演算子
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "400"
+        scimType: invalidFilter
+        detail: The operator 'or' is not supported by this service provider.
+    ErrorTooMany:
+      summary: 負例への応答。深い paging
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "400"
+        scimType: tooMany
+        detail: Use meta.lastModified filters for incremental retrieval.
+    ErrorMutability:
+      summary: 負例への応答。immutable・readOnly 属性の変更
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "400"
+        scimType: mutability
+        detail: Attribute federatedSubject is immutable.
+    ErrorInvalidValue:
+      summary: 負例への応答。v1 で受け付けない属性、または他テナント・存在しない id の参照（C10。区別しない）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "400"
+        scimType: invalidValue
+        detail: A required value was missing, or the value specified was not compatible with the operation or attribute type.
+    ErrorUniqueness:
+      summary: 負例への応答。重複作成（C4）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "409"
+        scimType: uniqueness
+        detail: A conflicting user exists. The request has been queued for administrator review.
+    ErrorNotFound:
+      summary: 負例への応答。存在しない・削除済み・他テナント（区別しない）
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "404"
+        detail: Resource not found.
+    ErrorTenantMismatch:
+      summary: 負例への応答。テナント header と資格情報の不一致
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "403"
+        detail: The request is not permitted for this client.
+    ErrorRateLimited:
+      summary: 負例への応答。流量超過
+      value:
+        schemas: [urn:ietf:params:scim:api:messages:2.0:Error]
+        status: "429"
+        detail: Per-tenant request rate exceeded. Retry after the indicated interval.
+x-negative-examples-global:
+  - name: 静的 bearer（例外未登録の接続）
+    request: Authorization に長寿命の静的 token
+    expect: 401
+    reason: D04-40。TC-004-17（規則外の認証による受理 0 件）。
+  - name: 期限切れ token
+    request: 期限切れの access token
+    expect: 401
+    reason: TC-004-17。
+  - name: 他テナントの client 資格情報
+    request: テナント B の SCIM client の token でテナント A の id を操作
+    expect: 404（path）／400 invalidValue（body）。SEC 検知
+    reason: C10・D04-39。TC-004-17・TC-004-12。
+  - name: SCIM 以外の scope の token
+    request: 管理 API 用 scope の token で /Users を呼ぶ
+    expect: 403
+    reason: scope の分離（D04-40、DL-26 IAM-SaaS-18）。
+  - name: 証明書に束縛されていない token
+    request: mTLS 接続の証明書と token の束縛が一致しない
+    expect: 401
+    reason: sender constraint（ADR-005）。
+  - name: TLS なし
+    request: http:// で接続
+    expect: 接続を受け付けない
+    reason: RFC 7644 §7.2（MUST）。
+  - name: 切離し済み接続の資格情報
+    request: trust agreement 終了後の token
+    expect: 401（token 失効済み）
+    reason: D04-47・DL-26 §5.4（終了時に SCIM 資格情報を失効）。
+x-traceability:
+  closes-desk: 契約の机上定義（R-040・R-132 の API 定義部分）。R-040・R-132 自体は閉じ方 C（実測）であり open のまま。
+  evidence: E4（契約試験・PoC の自動試験結果。12_poc と DL-80 で取得予定）
+  handoffs:
+    - to: DL-69（11_contracts/README.md）
+      item: openapi 欄の値（3.1.0／3.1.2）の全契約での統一、拡張 URN の名前空間の扱い。
+    - to: DL-20
+      item: テナント単位の保証流量、区間 2 の失効時間、maxResults、深い paging 上限、本文上限、PatchOp 操作数上限、優先レーンの要否。
+    - to: DL-26
+      item: GET filter の個人情報露出（RFC 7644 §7.5.2 の SHOULD からの逸脱）と discovery endpoint の認証必須（RFC 7643 §5 の SHOULD からの逸脱）の受容票候補。
+    - to: ADR-023 L23-3（CTO＋CISO、G4）
+      item: control plane 停止中の active=false・DELETE の受付（Tier 0 入力）。決裁後に作成系停止時の応答（503 等）を本契約へ追加する。
+    - to: DL-77
+      item: scim.tenant_mismatch（仮名）の監査イベント名の確定。
+    - to: traceability（照合ログ）
+      item: research ノート外の原典（RFC 7644 §3.3・§3.4.2.1・§3.4.2.2・§3.4.2.4・§3.4.3・§3.5.1・§3.5.2・§3.7.4・§3.12・§3.13・§7.5.2、RFC 7643 §2.2・§3.3・§4.2・§5・§7・§8.5、RFC 6585 §4、RFC 6963 §3.6）の照合を記録する。独立レビュー（review-notes/CON-07.md）で §3.7.4 と RFC 7643 §2.2 以外を再照合済み。

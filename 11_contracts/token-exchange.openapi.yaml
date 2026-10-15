@@ -1,0 +1,748 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Token Exchange API（RFC 8693 社内 profile と Transaction Token 要求）
+  version: 0.1.0
+  summary: cell 内 STS の利用者委任 token exchange と、TTS への Txn-Token 要求の契約（DL-74）
+  x-document-id: CON-05
+  x-deliverable: DL-74
+  x-status: draft
+  x-last-updated: "2026-10-15"
+  x-depends-on:
+    - CONVENTIONS.md
+    - traceability/deliverables.md（DL-74 行、§2.3 命名規約）
+    - 05_adr/ADR-009-workload-identity-token-exchange.md（D09-10〜D09-17, D09-22〜D09-33, D09-40, D09-42）
+    - 05_adr/ADR-005-token-profile.md（D1-2, D1-4, D9-3, V1〜V14, K-6, U2）
+    - 05_adr/ADR-017-non-human-ai-agent-identity.md（D17-18, D17-50, L17-1, L17-2, L17-5）
+    - 05_adr/ADR-022-integration-contract-standards.md（D-1, D-2, D-5, D-6-2, D-8）
+    - 05_adr/ADR-026-async-long-running-delegation.md（D26-03, D26-04a, D26-11, D26-12, D26-16, L26-1, L26-2）
+    - 05_adr/reconciliation-notes.md（§3.3 may_act は AS 側、C-26, U-02）
+    - 04_architecture/workload-identity-delegation.md（ARC-04 §5, §6, §10.3。W55-14, W55-15, W55-17, W55-18）
+    - 04_architecture/token-profile.md
+    - 04_architecture/claims-catalog.md（ARC-15 §3.5, §4.2）
+    - 01_governance/assumptions-register.md（A-043, NA09-1, NA09-2 は前提台帳へ追加要）
+    - research/RS-04-oauth-oidc-profile.md, research/RS-06-workload-identity-delegation-agents.md, research/RS-17-integration-patterns-modeling.md
+    - research/standards-status.md（SS-A09, SS-A10, SS-A07, SS-B04, SS-I16, SS-I17）
+  x-requirements:
+    - id: R-100
+      coverage: ADR-009 の token exchange 決定（D09-10〜D09-17）を機械可読な契約にした。閉じ方 A（契約として）。決裁は未了
+    - id: R-206
+      coverage: service 別 aud（resource 1 つ必須）、token exchange、workload identity（SVID mTLS）を契約で固定。実証は H09-01・H09-05（閉じ方 C、要実測）
+    - id: R-251
+      coverage: resource 必須・共通 aud なし・sub と act の分離・宛先＝要求元検査（W55-15）。閉じ方 A
+    - id: R-255
+      coverage: actor の身元を SVID の mTLS から取り actor_token を拒否、共有秘密によるクライアント認証を定義しない。閉じ方 A
+    - id: R-109
+      coverage: info.version・profile 版・凍結区分（x-freeze-class）の記載。互換性の数値は DL-70 / ADR-016
+    - id: G-102
+      coverage: act チェーン上限・循環拒否・aud 誤りの負例を x-negative-examples に列挙。PoC の拒否確認は未実施（閉じ方 C）
+    - id: G-118
+      coverage: Token Exchange API の契約ファイル本体
+    - id: G-119
+      coverage: x-standards に準拠標準・版・状態・準拠範囲、draft 依存（Txn-Token）の互換方針を記載
+    - id: G-120
+      coverage: AS 製品の delegation 対応（未決 ADR-017 L17-1）に依存しない要求・応答形を固定。変わり得る箇所は x-open-issues に列挙
+    - id: G-138
+      coverage: P-03（同期呼出し）・P-04/P-05（内部開始）が使う token exchange インタフェースを定義
+    - id: R-118
+      coverage: /txn-token が払い出す txn（取引単位の監査主キー、ADR-009 D09-28）の要求経路を定義。証跡の再構成は H09-07（閉じ方 C、未実施）
+    - id: R-128
+      coverage: txn を trace sampling と独立に token で伝播する前提（ADR-009 D09-33〜D09-36）の発行側インタフェース。実証は H09-07（閉じ方 C、未実施）
+    - id: G-088
+      coverage: subject_token の typ・issuer・aud の検査結果をエラー応答と理由コードで固定（負例ベクタは DL-80 に供給）
+  x-standards:
+    - id: SS-A09
+      name: RFC 8693 OAuth 2.0 Token Exchange
+      status: final（Proposed Standard、2020-01。standards-status 確認日 2026-10-03）
+      conformance: 準拠基準。要求・応答・エラーの項目名と意味は変えない。社内 profile として許容値を絞る（actor_token 不使用、resource 1 つ必須、audience は access token 要求で不使用）
+    - id: SS-A10
+      name: RFC 8707 Resource Indicators for OAuth 2.0
+      status: final（Proposed Standard、2020-02。確認日 2026-10-03）
+      conformance: resource を必須化（1 値）
+    - id: SS-A07
+      name: RFC 9068 JWT Profile for OAuth 2.0 Access Tokens
+      status: final（Proposed Standard、2021-10。確認日 2026-10-03）
+      conformance: 発行する内部 access token の形式（typ=at+jwt）。claim の正本は DL-75
+    - id: SS-B04
+      name: draft-ietf-oauth-transaction-tokens-11（Transaction Tokens）
+      status: draft（Internet-Draft。WG Consensus Waiting for Write-Up、IESG 未提出、2027-01-31 失効予定。確認日 2026-10-03。Datatracker の rev 11・I-D Exists は ADR-009 起草者が 2026-10-15 に確認）
+      conformance: preview。requested_token_type=txn_token の要求（/txn-token）だけが依存する。失効・大改訂時は ADR-022 D-8-5・ADR-009 D09-26 の自社形式 txn へ退避する
+    - id: SS-I16
+      name: OpenAPI Specification 3.1 系（ADR-022 D-2 は 3.1.2 を指定）
+      status: final（3.1.2 が 3.1 系の最新 patch。確認日 2026-10-03）
+      conformance: 記述言語。openapi 欄は 3.1.0 とした（理由は info.description「記述形式」）
+    - id: SS-I17
+      name: JSON Schema 2020-12
+      status: 公式サイト上の現行版（IETF 上は失効した I-D。確認日 2026-10-03）
+      conformance: jsonSchemaDialect に明示
+  x-profile:
+    name: 内部 token exchange profile v1（DL-74）。Txn-Token は社内 profile txn-v1（ADR-009 D09-22）
+    act-chain:
+      max-depth-N_act: 3
+      max-depth-status: 初期案（NA09-2、前提台帳へ追加要）。値は TBD（所有者 CTO、期限 G3、決め方 As-Is の呼出しグラフ DL-50 と H09-01）
+      agent-redelegation-max: 1
+      agent-redelegation-status: 初期案「利用者→エージェント→エージェント」の 1 段（ADR-017 D17-18 が値を DL-74 に委任）。値は TBD（所有者 CTO、期限 G3、決め方 TC-017-06）
+      cycle: 同じ actor が連鎖に 2 回現れる交換を拒否（ADR-009 D09-16）
+      job-counts-as-one-hop: true
+      evaluation: 深さと循環の判定は STS だけが行う。RS・PDP は最上位 claim と現在の actor だけを使う（RFC 8693 §4.1 の MUST）
+    may_act:
+      issued: false
+      evaluated-from-subject-token: false
+      authority: 交換登録簿・委任 grant 台帳・TTS 発行方針台帳（AS 側。ADR-009 D09-17、reconciliation-notes §3.3）
+    lifetimes: 派生 token の最大寿命の値は凍結しない区分（ADR-022 D-2）で TBD（ADR-006・DL-20）。不変条件 exp ≤ min(入力 token の残存寿命, 要求元 SVID の残存寿命, 操作階層の派生 token 最大寿命) だけを契約にする
+  description: |
+    > 文書ID: CON-05 / 版: 0.1 / 状態: draft / 最終更新: 2026-10-15
+    > 対応要求: R-100, R-206, R-251, R-255, G-102, G-118, G-119（全件は info.x-requirements）
+    > 依存文書: info.x-depends-on
+
+    ## 0. 要旨
+
+    - 本契約は、cell 内 STS が提供する RFC 8693 token exchange（利用者委任の各 hop で、呼出し先 1 サービスを aud とする内部 access token を取り直す）と、TTS への Transaction Token 要求の 2 操作を定める [D]（ADR-009 D09-10, D09-32）。
+    - Transaction Token の要求を同じ RFC 8693 の形式で扱うのは ADR-009 D09-27・D09-32 に従う [D]。草案は、リモートの TTS に HTTP で要求する場合は RFC 8693 を使わなければならない（MUST）とする [N][^4]（RS-06#32）。ADR-022 D-2 は `requested_token_type` に txn_token を指定する行を preview、それ以外を GA 候補と分けたので、本契約も 2 つの operation に分け、各要素に `x-freeze-class` を付けた [D]。
+    - 標準の項目名・意味は変えない。社内 profile は許容値を絞るだけである [D]。絞った点は次の 6 つである [D]。(1) `actor_token` を送られたら拒否（ADR-009 D09-14）、(2) `resource` をちょうど 1 つ必須（D09-11）、(3) access token 要求では `audience` を受け付けない（ARC-04 W55-14 を本契約で確定）、(4) scope は subject_token の scope と交換登録簿の上限の共通部分以下（D09-15）、(5) `act` の深さ上限と循環拒否（D09-16）、(6) refresh token を発行しない。
+    - `may_act` は token に載せず、subject_token に含まれていても判定に使わない [D]（ADR-009 D09-17）。RFC 8693 は `may_act` を、ある主体が actor になることを認可されているという表明として定義し [N][^1]、処理義務を定めていない（RS-06#45）。
+    - 値（N_act、各寿命）は根拠となる実測がないため初期案または TBD とし、所有者・期限・決め方を `info.x-profile` に記した [D]。
+
+    ## 1. 本契約の範囲
+
+    | 範囲内 | 範囲外（正本） |
+    |---|---|
+    | 同期呼出しの各 hop の exchange（P-03）、edge の最初の exchange | 外部 client の token 取得・OIDC profile（ADR-005、DL-69 収載） |
+    | Txn-Token の要求（edge 起点、内部開始） | M2M の client credentials grant（ADR-009 D09-19、ARC-04 §4.4） |
+    | エラーコードと理由コード（R01〜R10、T01〜T08） | 発行する token の claim の正本（DL-75、DL-115） |
+    | 負例の期待結果 | 法域パーティション越えの委任（identity chaining。下記「未決」） |
+
+    ## 2. 処理の要点（ADR-009・ARC-04 の写像）
+
+    1. クライアント認証は X.509-SVID による mTLS（RFC 8705 の `tls_client_auth`、SAN URI 照合）だけとする [D]（ADR-009 D09-14）。RFC 8693 はクライアント認証を OAuth 2.0 の通常の仕組みで行うとする [N][^1]。RFC 9700 は非対称暗号のクライアント認証を RECOMMENDED とする [N][^7]（RS-17#19）。共有 client secret（client_secret_basic 等）は定義しない [D]（ADR-009 D09-18）。
+    2. actor（`act` の現在の actor）は、STS がクライアント認証で確かめた要求元の主体とし、要求元の自己申告を使わない [D]（ARC-04 §5.3）。actor を別の bearer token で表すと、その token の窃取・偽造が委任の偽装に直結するためである [D]（ADR-009 D09-14、CVE-2025-55241 の教訓。RS-05#34）。
+    3. 判定順は ARC-04 §5.2 の図のとおり（mTLS → actor_token 有無 → subject_token → resource → 登録簿 → scope → act 深さ・循環 → 失効状態）とし、最初に該当した理由で拒否する [D]。
+    4. 出力 token の不変条件: `aud`＝`resource` の 1 値、`sub`・tid・grant 参照・`sid` は入力と同じ、`act` は現在の actor を最外に追加、`cnf` は要求元 SVID の x5t#S256、`exp` は info.x-profile.lifetimes の式 [D]（ARC-04 §5.5）。RFC 8693 は入力 token と出力 token の間に強い結び付きを作らず、失効の伝播を STS の一般的性質としないので [N][^1]（RS-06#44）、寿命の入れ子で上限を固定する [D]（ADR-009 D09-40）。
+    5. 拒否の理由詳細（R01〜R10、T01〜T08）は `error_description` に入れず、交換台帳・発行台帳にだけ記録する [D]（ARC-04 W55-18）。要求元への応答から交換登録簿の内容を推測させないためである [D]。
+    6. TTS・STS に届かない場合（503 等）、呼出し元は未署名の代替経路で下流を呼ばない [D]（ADR-009 D09-42、ADR-013 D13-15・D13-23）。
+
+    ## 3. 凍結区分（ADR-022 D-1・D-2）
+
+    | 要素 | 区分 |
+    |---|---|
+    | `/token`（access token の exchange）の要求・応答・エラーコード・subject/actor token 種別・resource 必須・act の深さ上限の規則 | GA 候補（DEC-8 前は draft） |
+    | `/txn-token`（requested_token_type=txn_token）の要求・応答 | preview（draft-11 依存） |
+    | 内部開始の subject_token 種別（本契約の提案） | preview |
+    | 派生 token の寿命の値、エンドポイント URL・配置 | 凍結しない |
+    | 理由コード R01〜R10・T01〜T08 の意味 | GA 候補（エラーコードの意味の変更は破壊的変更。ADR-022 D-5-1） |
+
+    preview の要素には GA 昇格・改版・廃止を判断する期限を付ける（ADR-022 D-1-2）。期限の値は TBD（所有者 CTO、期限 DEC-8 前、決め方 ADR-022 D-1-2）[D]。`/token`（GA 候補）は `/txn-token`（preview）に必須依存しない（ADR-022 D-1-1）[D]。
+
+    ## 4. 記述形式
+
+    `openapi` 欄は 3.1.0 とした [D]。ADR-022 D-2 は記述言語を OpenAPI 3.1.2 とするが、OAS の patch 版は文書の誤りの訂正・明確化であって機能集合を変えず、3.1 を支えるツールは 3.1.* のすべてと互換であるべき（SHOULD）で、patch 版をツールは考慮すべきでない（SHOULD NOT）とされる [N][^8]。本契約は 3.1 系の機能だけを使い、契約群の統一表記は DL-69（11_contracts/README.md）で決める（未決。所有者 CTO、期限 DEC-8 前）[D]。
+
+    モック・コード生成の注意 [D]: 拒否すべき標準パラメータ（`actor_token`、`audience` 等）は `not: {}` で表したため、スキーマ検証型のモック（要求検証つきのモックサーバ）は、これらを含む要求を RFC 6749 §5.2 形式の 400 ではなく各ツール固有の検証エラーで返す。契約試験で期待するエラー応答（`invalid_request` 等）は `x-negative-request-examples` と `info.x-negative-examples` を正とし、モックの検証エラーで代用しない。コード生成では `not: {}` のプロパティが任意型の欄として生成され得るので、client SDK はこれらを送出しない。
+
+    ## 5. 未決（ADR で決まっていない点）
+
+    info.x-open-issues に一覧化した。主なものは、Txn-Token の発行範囲（未決（ADR-005 U2／ADR-009 P09-2、U-02））、内部束縛 I1/I2（未決（ADR-005 K-6））、内部開始の `tctx`（未決（ADR-026 L26-1））と `txn` の意味（未決（ADR-026 L26-2））、AS 製品の delegation 対応（未決（ADR-017 L17-1））である [D]。
+
+    ## 6. 誠実性
+
+    本契約は AI エージェント（Claude）が ADR・設計文書・research を通読して起草した [D]。research にない原典（RFC 8693 §2.2.1・§2.2.2・§3、RFC 6749 §3.2・§5.1・§5.2、Transaction Tokens draft-11 §11.1・§11.4・§13.3、OAS 3.1.2 §4.1）は起草者が 2026-10-15 に取得して照合した。作成者以外のエージェントによる独立レビュー（RFC 8693 §2.1〜§3、draft-11 §9.1・§9.2・§11.1〜§11.4・§13.15 を 2026-10-15 に再取得して照合）を 2026-10-15 に行い、記録を 11_contracts/review-notes/CON-05.md に置いた。人による照合と traceability/ への照合ログ追記は未了である（CONVENTIONS §8）。負例は 1 件も実行しておらず、本契約の主張はすべて設計段階のものである [D]。
+
+    ## 参考文献
+
+    [^1]: M. Jones, A. Nadalin, B. Campbell, J. Bradley, C. Mortimore / IETF『RFC 8693: OAuth 2.0 Token Exchange』Standards Track, 2020-01. https://www.rfc-editor.org/rfc/rfc8693 （参照箇所: §1.1, §2.1, §4.1, §4.4 は RS-06#43〜#45・RS-04#66（確認日 2026-10-03）。§2.1 の各パラメータの強度、§2.2.1, §2.2.2, §3 は起草者が 2026-10-15 に確認。research ノート外）
+
+    [^2]: B. Campbell, J. Bradley, H. Tschofenig / IETF『RFC 8707: Resource Indicators for OAuth 2.0』Standards Track, 2020-02. https://www.rfc-editor.org/rfc/rfc8707 （参照箇所: §2、確認日: 2026-10-03。RS-04#65、RS-06#59）
+
+    [^3]: D. Hardt, Ed. / IETF『RFC 6749: The OAuth 2.0 Authorization Framework』2012-10. https://www.rfc-editor.org/rfc/rfc6749 （参照箇所: §3.2, §5.1, §5.2、確認日: 2026-10-15。research ノート外。§4.4 は RS-17#18）
+
+    [^4]: A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11, 2026-07-30（Internet-Draft、IESG 未提出、2027-01-31 失効予定）. https://www.ietf.org/archive/id/draft-ietf-oauth-transaction-tokens-11.txt （参照箇所: §5.1, §9.1, §9.2, §11.1〜§11.4, §12, §13.3, §13.14, §15.2。RS-06#29〜#42（確認日 2026-10-03）。§11.1 の各パラメータ、§11.4、§13.3 は起草者が 2026-10-15 に確認）
+
+    [^5]: B. Campbell, J. Bradley, N. Sakimura, T. Lodderstedt / IETF『RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』Standards Track, 2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §3, §6.3、確認日: 2026-10-03。RS-17#22。§2.1.2 は ADR-009 起草者が 2026-10-15 に確認）
+
+    [^6]: M. Jones / IETF『RFC 9068: JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens』Proposed Standard, 2021-10. https://www.rfc-editor.org/rfc/rfc9068 （参照箇所: §2, §4、確認日: 2026-10-03。RS-04#60）
+
+    [^7]: T. Lodderstedt, J. Bradley, A. Labunets, D. Fett / IETF『RFC 9700: Best Current Practice for OAuth 2.0 Security』BCP 240, 2025-01. https://www.rfc-editor.org/rfc/rfc9700 （参照箇所: §2.3, §2.5、確認日: 2026-10-03。RS-04#17、RS-17#19）
+
+    [^8]: OpenAPI Initiative『OpenAPI Specification v3.1.2』2025-09-19. https://spec.openapis.org/oas/v3.1.2.html （参照箇所: §4.1 Versions, §4.8.1.1 の openapi・jsonSchemaDialect、確認日: 2026-10-15。版・状態は standards-status SS-I16）
+  x-lint-notes:
+    - rule: info-license
+      result: warning（1 件）
+      reason: 社内の連携契約であり、公開ライセンスは決まっていない。値を仮置きすると事実と異なる表明になるため license 欄を置かない。扱いは DL-69（11_contracts/README.md）で契約群一括で決める
+  x-open-issues:
+    - id: U-02（ADR-005 U2／ADR-009 P09-2）
+      text: Txn-Token を全要求に発行するか、write・privileged・break-glass/B・FAPI 範囲に限るか。本契約の /txn-token は両方の結論で使える。決める人 CTO＋CISO（ADR-005 H-20 の後）
+    - id: ADR-005 K-6
+      text: 出力 token の送信者束縛を I1（cnf＝要求元 SVID）とするか I2（mesh mTLS＋aud＋呼出し元照合）とするか。本契約は I1 を既定とする。I2 になれば応答の cnf 規則と N-24 の期待値が変わる。CTO＋CISO、G4
+    - id: ADR-026 L26-1
+      text: 内部開始の Txn-Token の tctx で起点 jti の代わりに grant 参照（A3 はジョブ定義 ID）を必須にする例外。DL-115 凍結前
+    - id: ADR-026 L26-2
+      text: 内部開始取引の txn の意味（入口を edge と内部開始の 2 つとするか）。DEC-3 の決裁資料、CTO＋CISO
+    - id: ADR-026（内部開始の subject_token 種別）
+      text: 本契約の提案 X74-01（下記 InternalStartReference）。ADR-026 D26-16 が DL-74 に内部開始の要求形式を求め、ADR-009 D09-24 が unsigned_json を禁じたため、受付記録への不透明な参照を subject_token にする形を置いた。A4（イベント consumer）の参照形式は DL-71 の受付記録参照形式と合わせて決める（未決）
+    - id: Txn-Token の置換（ADR-026 D26-03 の段内置換、draft-11 §13.15）
+      text: ADR-026 は同一段の内部で scope を狭める置換を認めるが、草案は Txn-Token を subject_token にする要求の subject_token_type を定めていない（§11.2 に Txn-Token の値がない）。v0.1 は置換要求を定義せず T03 で拒否する。追加時は txn・sub・aud を変えない・期限切れを置換しない（草案 §13.15 の MUST NOT）を負例 N-34 として契約に入れる。所有者 CTO、期限 DL-115 凍結前
+    - id: ADR-017 L17-1
+      text: AS 製品（第一候補）の公式文書が delegation を Preview とし token exchange の resource に未対応と記す。本契約は製品に依存しない要求・応答形を固定し、STS の構成基盤は TC-017-11 の結果で決める（CTO、Gate 3）
+    - id: ADR-017 L17-2
+      text: +AGT の要求で tctx に起点エージェントを入れるか（U-02 と同時）
+    - id: ADR-017 L17-5
+      text: authorization_details（RFC 9396）の受付開始。v1 では受け付けない（invalid_request）
+    - id: ADR-009 P09-1（DEC-3）
+      text: SPIFFE trust domain の数（本番 3 か 1 か）。例の SPIFFE ID はパーティション別の案で書いたが、契約の形は変わらない
+    - id: ADR-009 D09-37
+      text: 法域パーティション越えの委任（identity chaining 草案 -17、RFC Ed Queue）。本契約 v0.1 では定義せず、RFC 発行後に preview として追加する
+    - id: DL-115 KC-1
+      text: tctx の claim 名（tid, root_jti, gref, sid, tier, ptxn, ver）は名前案。確定は DL-115
+    - id: 記述形式
+      text: openapi 欄 3.1.0 と ADR-022 D-2 の 3.1.2 の表記統一（DL-69）
+  x-reason-codes:
+    sts:
+      R01: { error: invalid_client, http: 401, meaning: mTLS の SVID が無効、または trust domain×anchor×SPIFFE ID が登録されていない }
+      R02: { error: invalid_request, http: 400, meaning: actor_token または actor_token_type が含まれる }
+      R03: { error: invalid_request, http: 400, meaning: subject_token が未署名・期限切れ・他 cell の issuer・typ 不一致・宛先が要求元でない（W55-15）・subject_token_type 不一致 }
+      R04: { error: invalid_request, http: 400, meaning: resource が欠落、または絶対 URI でない・fragment を含む }
+      R05: { error: invalid_target, http: 400, meaning: resource が複数、または audience が指定された }
+      R06: { error: invalid_target, http: 400, meaning: 交換登録簿に（呼出し元×呼出し先）の組がない }
+      R07: { error: invalid_scope, http: 400, meaning: 要求 scope が subject_token の scope ∩ 登録簿上限を超える、または subject_token の scope を判定できない }
+      R08: { error: invalid_request, http: 400, meaning: 出力 token の act の深さが N_act（またはエージェント再委任の上限）を超える }
+      R09: { error: invalid_request, http: 400, meaning: 同じ actor が連鎖に再登場する（循環） }
+      R10: { error: invalid_request, http: 400, meaning: subject・grant・テナントが失効状態に該当する }
+    tts:
+      T01: { error: invalid_client, http: 401, meaning: mTLS の SVID が無効、または未登録 }
+      T02: { error: invalid_request, http: 400, meaning: actor_token が含まれる }
+      T03: { error: invalid_request, http: 400, meaning: subject_token が未署名・期限切れ・他 cell の issuer・typ 不一致、または subject_token_type が unsigned_json・self_signed・v0.1 で定義しない種別（Txn-Token を subject_token にする置換要求を含む） }
+      T04: { error: invalid_request, http: 400, meaning: 同期の要求で、要求元が edge でない、または subject_token の cnf が要求元 SVID と一致しない（W55-17） }
+      T05: { error: invalid_target, http: 400, meaning: audience がこの TTS の cell の trust domain 値でない }
+      T06: { error: invalid_scope, http: 400, meaning: scope が entry point 台帳の操作 ID でない、subject_token の scope を超える、または判定できない }
+      T07: { error: invalid_request, http: 400, meaning: 内部開始で、要求元が TTS 発行方針台帳に登録されていない、受付記録・委任 grant が無効、または要求 scope が委任 grant を超える（ADR-026 D26-03） }
+      T08: { error: invalid_request, http: 400, meaning: 起点主体・テナント・委任 grant が失効状態に該当する }
+  x-negative-examples:
+    description: ARC-04 §10.3 の負例のうち本契約の操作に掛かるもの。期待結果はすべて「拒否」と、交換台帳・発行台帳への理由コード付き記録。TC-ID は 12_poc（DL-22）で採番する。2026-10-15 時点で未実施
+    items:
+      - { ref: N-08, op: exchangeToken, case: 登録のない SVID で mTLS 接続, expect: "401 invalid_client / R01" }
+      - { ref: N-17, op: exchangeToken, case: actor_token・actor_token_type 付きの exchange, expect: "400 invalid_request / R02" }
+      - { ref: N-18, op: exchangeToken, case: 期限切れ subject_token, expect: "400 invalid_request / R03" }
+      - { ref: N-20, op: exchangeToken, case: 他サービス宛て（aud≠要求元）の token を subject_token にする, expect: "400 invalid_request / R03" }
+      - { ref: N-21, op: exchangeToken, case: 未署名の内部 token（alg=none）・未署名 JSON の subject_token, expect: "400 invalid_request / R03" }
+      - { ref: N-22, op: exchangeToken, case: 他 cell の issuer の内部 access token, expect: "400 invalid_request / R03" }
+      - { ref: N-26, op: exchangeToken, case: typ のない JWT・ID Token を subject_token にする（ARC-04 の N-26 は RS への提示。本契約では STS への持込みに当てる）, expect: "400 invalid_request / R03" }
+      - { ref: N-10, op: exchangeToken, case: resource 欠落, expect: "400 invalid_request / R04" }
+      - { ref: N-11, op: exchangeToken, case: resource 複数, expect: "400 invalid_target / R05" }
+      - { ref: X74-N1, op: exchangeToken, case: access token 要求に audience を指定（W55-14）, expect: "400 invalid_target / R05" }
+      - { ref: N-09, op: exchangeToken, case: 未登録の組の exchange, expect: "400 invalid_target / R06" }
+      - { ref: N-12, op: exchangeToken, case: scope 拡大, expect: "400 invalid_scope / R07" }
+      - { ref: N-13, op: exchangeToken, case: subject_token の scope を判定できない, expect: "400 invalid_scope / R07" }
+      - { ref: N-15, op: exchangeToken, case: act 深さ N_act＋1, expect: "400 invalid_request / R08" }
+      - { ref: N-16, op: exchangeToken, case: actor の循環（A→B→A）, expect: "400 invalid_request / R09" }
+      - { ref: N-19, op: exchangeToken, case: 失効済み grant・停止済み利用者の subject_token, expect: "400 invalid_request / R10（反映時間を記録）" }
+      - { ref: N-14, op: exchangeToken, case: tid を変える exchange, expect: "tid を指定するパラメータを定義しない。追加パラメータで tid を送っても RFC 6749 §3.2 の MUST により無視し、出力 tid は入力と同じ（tid を変えた発行 0 件）。ARC-04 §10.3 の期待値「拒否」とは判定の形が異なるので、合格条件を「tid を変えた発行 0 件」に読み替えるよう ARC-04 所有者へ申し送る" }
+      - { ref: X74-N2, op: exchangeToken, case: authorization_details 付きの exchange（v1 未対応）, expect: "400 invalid_request" }
+      - { ref: X74-N3, op: exchangeToken, case: requested_token_type に txn_token・refresh_token・id_token を指定, expect: "400 invalid_request" }
+      - { ref: X74-N4, op: requestTxnToken, case: edge 以外の workload が同期の Txn-Token を要求、または subject_token の cnf が要求元と不一致, expect: "400 invalid_request / T04" }
+      - { ref: X74-N5, op: requestTxnToken, case: audience に別 cell の trust domain 値, expect: "400 invalid_target / T05" }
+      - { ref: X74-N6, op: requestTxnToken, case: subject_token_type が unsigned_json・self_signed, expect: "400 invalid_request / T03" }
+      - { ref: N-42, op: requestTxnToken, case: TTS 発行方針台帳にない workload の内部開始要求, expect: "400 invalid_request / T07" }
+      - { ref: N-39, op: requestTxnToken, case: 代理される利用者の停止後のジョブ実行, expect: "400 invalid_request / T08（allow 0 件）" }
+      - { ref: N-34, op: requestTxnToken, case: 期限切れ subject_token による発行・scope 拡大（ARC-04 の N-34 のうち置換・txn 変更の部分は、置換要求を v0.1 で定義しないため T03 で拒否。x-open-issues「Txn-Token の置換」）, expect: "400 invalid_request / T03、400 invalid_scope / T06" }
+servers:
+  - url: https://sts.{cell}.id-domain.example
+    description: cell 内 STS。ホスト名は仮置き（`<id-domain>` は ADR-021 の名前空間で未確定）。実際の URL は署名付き配置スナップショットで配布し、凍結しない（ADR-022 D-2）。SDK は処理中テナントの収容 cell の STS にだけ送る（ARC-04 §9）
+    variables:
+      cell:
+        default: cell-opaque-code
+        description: cell を示す不透明な短いコード（ADR-013 D13-42 の趣旨により、リージョン名・テナント名を含めない）
+tags:
+  - name: token-exchange
+    description: 利用者委任の各 hop の token exchange（RFC 8693 社内 profile）。GA 候補
+  - name: transaction-token
+    description: TTS への Txn-Token 要求（draft-11 依存）。preview
+paths:
+  /token:
+    post:
+      operationId: exchangeToken
+      tags: [token-exchange]
+      summary: 内部 access token の exchange（呼出し先 1 サービスを aud とする）
+      x-freeze-class: GA 候補
+      x-requirements: [R-100, R-206, R-251, R-255, G-102]
+      description: |
+        RFC 8693 の token exchange で、呼出し先 1 サービスを `aud` とし要求元インスタンスの SVID に `cnf` で束縛した内部 access token（RFC 9068 の at+jwt）を発行する [D]（ADR-009 D09-10〜D09-12、ADR-005 D1-4）。
+
+        - 要求の本文は `application/x-www-form-urlencoded` で送る [N][^1]（§2.1）。
+        - 2 つの使い方がある [D]。(a) edge の最初の exchange: subject_token は外部 opaque token、要求元は edge の SVID に限る。出力は `act` なし（edge は経路上の PEP であって代理人ではない。ADR-005 D1-4）。(b) 業務サービスの hop: subject_token は自分が受け取った内部 access token（`aud`＝要求元）で、出力の `act` の最外に要求元の主体を加える。
+        - 受信した token を下流へ素通しせず、下流ごとに本操作で取り直す [D]（ADR-009 D09-32 の 5）。
+        - RFC 6749 は token endpoint が認識しないパラメータを無視しなければならない（MUST）とする [N][^3]（§3.2）。本 profile が「拒否」とするのは RFC 8693・RFC 9396 で定義済みのパラメータ（actor_token、audience、authorization_details）に限る [D]。
+        - 成功応答には `Cache-Control: no-store` と `Pragma: no-cache` を付ける（MUST）[N][^3]（§5.1）。
+      x-negative-request-examples:
+        description: 負例の要求本文（期待は拒否）。スキーマに適合しない値を意図して含むため media type の examples ではなく本拡張に置く。DL-80 の負例ベクタへ供給する
+        negActorToken:
+          summary: 負例 N-17。actor_token を含むため R02 で拒否
+          value:
+            grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+            subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+            subject_token_type: urn:ietf:params:oauth:token-type:access_token
+            actor_token: eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJzdmMtYSJ9.ZHVtbXk
+            actor_token_type: urn:ietf:params:oauth:token-type:jwt
+            resource: https://svc.id-domain.example/s/b9k2q7xw
+        negNoResource:
+          summary: 負例 N-10。resource 欠落のため R04 で拒否
+          value:
+            grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+            subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+            subject_token_type: urn:ietf:params:oauth:token-type:access_token
+        negAudience:
+          summary: 負例 X74-N1。access token 要求に audience を指定したため R05 で拒否
+          value:
+            grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+            subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+            subject_token_type: urn:ietf:params:oauth:token-type:access_token
+            resource: https://svc.id-domain.example/s/b9k2q7xw
+            audience: common-backend
+      security:
+        - svidMtls: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccessTokenExchangeRequest'
+            examples:
+              hopAtoB:
+                summary: 正例。サービス A が受け取った内部 access token で B 宛ての token を得る
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+                  resource: https://svc.id-domain.example/s/b9k2q7xw
+                  scope: invoice.read
+              edgeFirst:
+                summary: 正例。edge の最初の exchange（subject_token は外部 opaque token）
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token: opq_2YQx8mWm4rT1kZ9vA0cN
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+                  resource: https://svc.id-domain.example/s/a3m8p1zt
+      responses:
+        '200':
+          description: 発行成功。出力 token の不変条件は info.description §2 の 4
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            Pragma:
+              $ref: '#/components/headers/PragmaNoCache'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenExchangeResponse'
+              examples:
+                hopAtoB:
+                  summary: 正例。B 宛て、act={sub=A}、cnf=A の SVID（中身は AccessTokenExchangeResponse.access_token の x-decoded-payload-example）
+                  value:
+                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImMxLWF0LTAxIn0.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2I5azJxN3h3In0.ZHVtbXktc2lnbmF0dXJl
+                    issued_token_type: urn:ietf:params:oauth:token-type:access_token
+                    token_type: Bearer
+                    expires_in: 120
+                    scope: invoice.read
+        '400':
+          $ref: '#/components/responses/TokenError400'
+        '401':
+          $ref: '#/components/responses/InvalidClient401'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
+  /txn-token:
+    post:
+      operationId: requestTxnToken
+      tags: [transaction-token]
+      summary: Transaction Token（txn-v1）の要求
+      x-freeze-class: preview
+      x-requirements: [R-100, R-118, R-128, G-102, G-138]
+      servers:
+        - url: https://tts.{cell}.id-domain.example
+          description: cell の edge に併設する TTS（ADR-009 D09-09, D09-27）。ホスト名は仮置き。草案は trust domain ごとに論理的に 1 つの TTS を求める（MUST）[N][^4]（RS-06#38）
+          variables:
+            cell:
+              default: cell-opaque-code
+      description: |
+        Transaction Tokens 草案（draft-11、Internet-Draft、IESG 未提出）の §11 に従い、RFC 8693 の形式で Txn-Token を要求する [N][^4]（RS-06#32）。本操作は draft 依存のため preview である [D]（ADR-022 D-2）。
+
+        - 草案の MUST: `grant_type` は token-exchange、`requested_token_type` は `urn:ietf:params:oauth:token-type:txn_token`、`audience` は trust domain 名 [N][^4]（§11.1）。本基盤の trust domain 値は cell ごとの内部値であり、SPIFFE trust domain とは別物である [D]（ADR-009 D09-09、reconciliation-notes C-26）。
+        - 応答: `token_type` は `N_A`、`access_token` は Txn-Token の JWT、`issued_token_type` は txn_token で、`refresh_token` を含めてはならない（MUST NOT）[N][^4]（§11.4, §13.3）。RFC 8693 も、発行した token が access token として使えない場合は `token_type` に `N_A` を使うとする [N][^1]（§2.2.1）。
+        - TTS は要求元 workload を認証し（MUST）、発行する `scope` を subject_token の scope 以下にし、判定できなければ拒否する [N][^4]（RS-06#33, #34）。
+        - 2 つの使い方がある [D]。(a) 同期（edge 起点）: subject_token は edge の最初の exchange で得た内部 access token（最初の呼出し先宛て、edge に cnf 束縛）。TTS は「宛先＝要求元」ではなく「subject_token の `cnf`＝要求元 SVID」と「要求元＝edge」を確かめる（ARC-04 W55-17 を本契約で確定）。(b) 内部開始（ジョブ・consumer）: subject_token は受付記録への不透明な参照（本契約の提案 X74-01、未決）で、TTS は発行方針台帳・受付記録・委任 grant・失効状態・scope 上限を確かめる（ADR-026 D26-03, D26-12）。
+        - 草案は subject_token に署名なし JSON や自己署名 JWT も使えるとするが [N][^4]（RS-06#32）、本 profile は `unsigned_json`・`self_signed` を受け付けない [D]（ADR-009 D09-24、T-040）。
+        - `request_context`・`request_details`（草案で RECOMMENDED）[N][^4] は、txn-v1 が `rctx` を発行しないので（ADR-009 D09-30）、送られても Txn-Token の生成に使わず無視する [D]。v2 で `rctx` に載せる候補は ADR-009 P09-3 で扱う。
+        - Txn-Token は Authorization ヘッダではなく `Txn-Token` ヘッダで下流へ無改変で渡し、全文をログに残さない [N][^4]（RS-06#35, #41）。これらは受信側の義務で、本操作の範囲外（正本 ADR-009 D09-24、ARC-04 §6.2）である。
+      x-negative-request-examples:
+        description: 負例の要求本文（期待は拒否）。スキーマに適合しない値を意図して含むため media type の examples ではなく本拡張に置く。DL-80 の負例ベクタへ供給する
+        negUnsignedJson:
+          summary: 負例 X74-N6。unsigned_json の subject_token のため T03 で拒否
+          value:
+            grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+            requested_token_type: urn:ietf:params:oauth:token-type:txn_token
+            audience: txn-td-c07
+            scope: op.invoice.approve
+            subject_token: eyJzdWIiOiJ1c3ItN2Y0YyJ9
+            subject_token_type: urn:ietf:params:oauth:token-type:unsigned_json
+      security:
+        - svidMtls: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TxnTokenRequest'
+            examples:
+              edgeSync:
+                summary: 正例。edge が外部要求 1 件について Txn-Token を要求
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  requested_token_type: urn:ietf:params:oauth:token-type:txn_token
+                  audience: txn-td-c07
+                  scope: op.invoice.approve
+                  subject_token: eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJodHRwczovL3N2Yy5pZC1kb21haW4uZXhhbXBsZS9zL2EzbThwMXp0In0.ZHVtbXktc2lnbmF0dXJl
+                  subject_token_type: urn:ietf:params:oauth:token-type:access_token
+              internalStart:
+                summary: 正例（preview・本契約の提案 X74-01）。ジョブ実行主体が job_run_id で内部開始を要求
+                value:
+                  grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+                  requested_token_type: urn:ietf:params:oauth:token-type:txn_token
+                  audience: txn-td-c07
+                  scope: op.report.generate
+                  subject_token: jr_9fK2mQ7xL0pV3sT8
+                  subject_token_type: https://id-domain.example/token-types/internal-start-ref
+      responses:
+        '200':
+          description: 発行成功
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            Pragma:
+              $ref: '#/components/headers/PragmaNoCache'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TxnTokenResponse'
+              examples:
+                edgeSync:
+                  summary: 正例（中身は TxnTokenResponse.access_token の x-decoded-payload-example）
+                  value:
+                    access_token: eyJhbGciOiJFUzI1NiIsInR5cCI6InR4bnRva2VuK2p3dCIsImtpZCI6ImMwNy10eC0wMSJ9.eyJ0eG4iOiJ0eF9rN1FwMnZYOW1MNHNSOHdaMSJ9.ZHVtbXktc2lnbmF0dXJl
+                    issued_token_type: urn:ietf:params:oauth:token-type:txn_token
+                    token_type: N_A
+                    expires_in: 60
+        '400':
+          $ref: '#/components/responses/TokenError400'
+        '401':
+          $ref: '#/components/responses/InvalidClient401'
+        '503':
+          $ref: '#/components/responses/Unavailable503'
+components:
+  securitySchemes:
+    svidMtls:
+      type: mutualTLS
+      description: |
+        X.509-SVID による mTLS クライアント認証（RFC 8705 の tls_client_auth。登録 metadata は tls_client_auth_san_uri で SPIFFE ID を 1 つ示す）[D]（ADR-009 D09-14）。RFC 8705 は PKI 方式の client が期待する証明書 subject を metadata のうちちょうど 1 つで示すことを MUST とする [N][^5]（§2.1.2。ADR-009 起草者が確認）。
+        SVID は URI SAN をちょうど 1 つ持ち、検証は SVID が属する trust domain の bundle で行う（ADR-009 N-a, N-c2）。共有 client secret・private_key_jwt は本 API では受け付けない [D]（STS・TTS は cell 内部の workload だけが呼ぶ。外部 partner の M2M は client credentials の別契約）。
+  headers:
+    CacheControlNoStore:
+      description: RFC 6749 §5.1 は token を含む成功応答に付けることを MUST とする [N][^3]。エラー応答（400・401）にも付けるのは本 profile の選択 [D]
+      required: true
+      schema:
+        type: string
+        const: no-store
+    PragmaNoCache:
+      description: RFC 6749 §5.1 は token を含む成功応答に付けることを MUST とする [N][^3]。エラー応答（400・401）にも付けるのは本 profile の選択 [D]
+      required: true
+      schema:
+        type: string
+        const: no-cache
+    RetryAfter:
+      description: 再試行までの秒数。呼出し元は jitter を加えて再試行する（ADR-013 D13-19）。再試行の間に未署名の代替経路を使わない（ADR-009 D09-42）
+      schema:
+        type: integer
+        minimum: 0
+  responses:
+    TokenError400:
+      description: |
+        要求の拒否（RFC 6749 §5.2 の形式）。RFC 8693 は、要求が不正な場合、または subject_token・actor_token が不正か方針上受け入れられない場合に `invalid_request` を返さなければならない（MUST）とし、`resource`・`audience` の対象に発行できない場合は `invalid_target` を使うべき（SHOULD）とする [N][^1]（§2.2.2）。`invalid_scope` は RFC 6749 §5.2 の定義（要求 scope が無効・未知・不正、または資源所有者が与えた範囲を超える）[N][^3] に当たる場合に使う [D]。`invalid_grant` は使わない [D]（ARC-04 W55-18）。
+        理由コード（R01〜R10、T01〜T08。info.x-reason-codes）は応答に入れず台帳にだけ記録する [D]。
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+        Pragma:
+          $ref: '#/components/headers/PragmaNoCache'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenErrorResponse'
+          examples:
+            invalidRequest:
+              summary: R02〜R04・R08〜R10・T02〜T04・T07・T08 の応答（理由は台帳だけに記録）
+              value:
+                error: invalid_request
+            invalidTarget:
+              summary: R05・R06・T05 の応答
+              value:
+                error: invalid_target
+            invalidScope:
+              summary: R07・T06 の応答
+              value:
+                error: invalid_scope
+            unsupportedGrantType:
+              summary: grant_type が token-exchange でない
+              value:
+                error: unsupported_grant_type
+    InvalidClient401:
+      description: |
+        クライアント認証の失敗（R01・T01）。RFC 6749 §5.2 の `invalid_client`。Authorization ヘッダで認証を試みた場合は 401 と WWW-Authenticate を返さなければならない（MUST）[N][^3] が、本 API は mTLS だけを使うため、401 を返し WWW-Authenticate は付けない [D]。
+        SVID の証明書チェーンが trust bundle で検証できない場合は TLS ハンドシェイクで失敗し、HTTP 応答（本 401）は返らない。本 401 は TLS は成立したが SPIFFE ID・trust domain×anchor の組が登録されていない場合に返る [D]（R01・T01 の記録は両方の場合で残す）。
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+        Pragma:
+          $ref: '#/components/headers/PragmaNoCache'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenErrorResponse'
+          examples:
+            invalidClient:
+              summary: 負例 N-08。登録されていない SVID
+              value:
+                error: invalid_client
+    Unavailable503:
+      description: |
+        STS・TTS が一時的に処理できない。呼出し元は exchange 済み token の cache を寿命内だけ使い、その後は操作階層ごとの fail-mode（ADR-013 D13-25、DL-19）に従う。未署名の代替経路で下流を呼ばない [D]（ADR-009 D09-42）。
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+  schemas:
+    GrantTypeTokenExchange:
+      type: string
+      const: urn:ietf:params:oauth:grant-type:token-exchange
+      description: RFC 8693 §2.1 の REQUIRED [N][^1]
+    TokenTypeAccessToken:
+      type: string
+      const: urn:ietf:params:oauth:token-type:access_token
+      description: RFC 8693 §3 の token type 識別子 [N][^1]
+    TokenTypeTxnToken:
+      type: string
+      const: urn:ietf:params:oauth:token-type:txn_token
+      description: Transaction Tokens 草案（draft-11）が定める識別子。IANA 登録は草案上の記述で、RFC 発行時に登録される段階 [N][^4]（RS-06#41）
+    InternalStartReferenceType:
+      type: string
+      pattern: '^https://[a-z0-9.-]+/token-types/internal-start-ref$'
+      description: |
+        本契約の提案 X74-01（preview、未決（ADR-026））。RFC 8693 §3 は他の URI を token type に使ってよい（MAY）とする [N][^1]。草案は subject_token_type を URI でなければならない（MUST）とし、独自の種別を「要求元と TTS が合意した独自の URN」と書く [N][^4]（§11.2）。https URI は MUST を満たすが草案の例示（URN）とは異なるので、URN 形式に揃えるかを ADR-021 の名前空間とともに決める（未決（ADR-026））[D]。ホスト部は ADR-021 の `<id-domain>`（未確定）。subject_token の値は受付記録への不透明な参照（ジョブは `job_run_id`、ADR-026 D26-11）で、TTS が台帳を引き直して `sub`・tid・grant 参照を決める（メッセージの値を使わない）[D]。
+      examples:
+        - https://id-domain.example/token-types/internal-start-ref
+    JwsCompact:
+      type: string
+      pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
+      maxLength: 8192
+      description: JWS Compact Serialization。署名部が空の token（alg=none）は pattern で弾く。署名・typ・iss・exp の検証規則は ADR-005 V1〜V14
+    Scope:
+      type: string
+      pattern: '^[\x21\x23-\x5B\x5D-\x7E]+( [\x21\x23-\x5B\x5D-\x7E]+)*$'
+      description: 空白区切り・大文字小文字を区別する文字列のリスト（RFC 8693 §2.1 が RFC 6749 §3.3 を参照）[N][^1]
+    ResourceUri:
+      type: string
+      format: uri
+      pattern: '^https://[^#\s]+$'
+      maxLength: 512
+      description: |
+        呼出し先サービスの正規識別子（ADR-021 の名前空間台帳が払い出す不透明値の絶対 URI）。RFC 8693 §2.1 は `resource` を絶対 URI とし fragment を含んではならない（MUST NOT）とする [N][^1]。RFC 8707 は AS が発行する access token を `resource` の資源に audience 制限すべき（SHOULD）とする [N][^2]（RS-04#65）。本 profile は https に限り、query を含めない運用にする [D]（RFC 8707 は query を含むべきでない（SHOULD NOT）とする [N][^2]）。
+      examples:
+        - https://svc.id-domain.example/s/b9k2q7xw
+    AccessTokenExchangeRequest:
+      type: object
+      description: |
+        利用者委任の hop の exchange 要求。標準の項目名と意味は RFC 8693 §2.1 のまま、許容値を絞る [D]。
+        `resource` は form 本文で 1 回だけ送る。RFC 8693 は `resource` を複数回送れるとするが、本 profile は 2 つ以上を `invalid_target`（R05）で拒否する [D]（ADR-009 D09-11）。
+      required: [grant_type, subject_token, subject_token_type, resource]
+      properties:
+        grant_type:
+          $ref: '#/components/schemas/GrantTypeTokenExchange'
+        subject_token:
+          type: string
+          minLength: 1
+          maxLength: 8192
+          description: |
+            業務サービスの hop では、要求元が受け取った署名済み内部 access token（at+jwt、`aud`＝要求元、自 cell の issuer、期限内）だけを受け付ける（R03）[D]（ADR-009 D09-24、ARC-04 W55-15）。edge の最初の exchange に限り外部 opaque token を受け付け、edge が ADR-005 D1-2 の検証を行う [D]。RFC 8693 は AS が subject_token を種別に応じて検証しなければならない（MUST）とする [N][^1]（RS-06#44）。subject_token に `may_act` があっても判定に使わない [D]（ADR-009 D09-17）。
+          examples:
+            - eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiJ1c3ItN2Y0YyJ9.ZHVtbXktc2lnbmF0dXJl
+        subject_token_type:
+          $ref: '#/components/schemas/TokenTypeAccessToken'
+        resource:
+          $ref: '#/components/schemas/ResourceUri'
+        scope:
+          $ref: '#/components/schemas/Scope'
+        requested_token_type:
+          allOf:
+            - $ref: '#/components/schemas/TokenTypeAccessToken'
+          description: 省略時は access_token。他の値（txn_token、refresh_token、id_token、jwt 等）は invalid_request で拒否する [D]（Txn-Token は /txn-token で要求する）
+        audience:
+          not: {}
+          description: access token 要求では受け付けない（R05、invalid_target）。宛先は resource に一本化する [D]（ARC-04 W55-14 を本契約で確定）
+        actor_token:
+          not: {}
+          description: 送られたら拒否する（R02）[D]（ADR-009 D09-14）。actor の身元は STS への mTLS クライアント認証から取る
+        actor_token_type:
+          not: {}
+          description: 送られたら拒否する（R02）。RFC 8693 は actor_token があるときに REQUIRED、ないときは含めてはならない（MUST NOT）とする [N][^1]
+        authorization_details:
+          not: {}
+          description: v1 では受け付けない（invalid_request）。承認 grant への発行開始は未決（ADR-017 L17-5）
+      additionalProperties: true
+    AccessTokenExchangeResponse:
+      type: object
+      description: RFC 8693 §2.2.1 の成功応答 [N][^1]。refresh token は発行しない [D]（一時的な資格情報の交換では refresh token は通常発行されないと RFC 8693 も述べる [N][^1]）
+      required: [access_token, issued_token_type, token_type, expires_in, scope]
+      properties:
+        access_token:
+          allOf:
+            - $ref: '#/components/schemas/JwsCompact'
+          description: |
+            内部 access token（JWS header typ=at+jwt、RFC 9068 [N][^6]）。claim の正本は DL-75（11_contracts/schemas/access-token-claims.schema.json）。本 profile の不変条件: `aud` は要求の resource の 1 値、`sub`・tid・grant 参照・`sid` は入力と同じ、`act` の最外は STS が mTLS で確かめた要求元の主体（主体種別を含む。ADR-017 D17-50）、`cnf` は要求元 SVID の x5t#S256（ADR-005 K-6 が I2 になれば変わる）[D]。依存サービスは中身を読まず SDK の検証結果を使う（ADR-009 D09-24）。
+          x-decoded-payload-example:
+            description: |
+              /token の出力（サービス A → B の hop）の payload の参考例。正本は DL-75。現在の actor は最外の `act.sub`、過去の actor は入れ子で監査用（RFC 8693 §4.1。アクセス制御には最上位 claim と現在の actor だけを使う MUST）[N][^1]（RS-06#45）。`act` の深さはこの例で 1。claim 名 `ptype`・`gref`・`ver` は名前案（DL-75・DL-115）。
+            payload:
+              iss: https://sts.cell-opaque-code.id-domain.example
+              sub: usr-7f4c9e2a
+              aud: https://svc.id-domain.example/s/b9k2q7xw
+              client_id: cl-web-01
+              scope: invoice.read
+              tid: tnt-3k9q
+              iat: 1792051200
+              exp: 1792051320
+              jti: jti-e5f6a7b8
+              act:
+                sub: spiffe://jp.id-domain.example/w/svc-a
+                ptype: workload
+              cnf:
+                x5t#S256: bwcK0esc3ACC3DB2Y5_lESsXE8o9ltc05O89jdN-dg2
+              gref: gr-55x8
+              sid: sid-0p9o
+              ver: '1.0'
+        issued_token_type:
+          allOf:
+            - $ref: '#/components/schemas/TokenTypeAccessToken'
+          description: RFC 8693 §2.2.1 の REQUIRED [N][^1]
+        token_type:
+          type: string
+          const: Bearer
+          description: RFC 8693 §2.2.1 の REQUIRED [N][^1]。証明書への束縛は token 内の `cnf` で表し、RS は TLS 層の証明書と一致しない提示を拒否する（RFC 8705 §3 の MUST）[N][^5]（RS-17#22）[D]
+        expires_in:
+          type: integer
+          minimum: 1
+          description: RFC 8693 では RECOMMENDED [N][^1]。本 profile では必須にする [D]。値は min(入力 token の残存寿命, 要求元 SVID の残存寿命, 操作階層の派生 token 最大寿命) 以下（最大寿命の値は TBD、ADR-006・DL-20）
+        scope:
+          allOf:
+            - $ref: '#/components/schemas/Scope'
+          description: RFC 8693 は要求と同一なら OPTIONAL、異なれば REQUIRED とする [N][^1]。本 profile では常に返す [D]（省略要求時に共通部分を返すため）
+        refresh_token:
+          not: {}
+          description: 発行しない [D]
+      additionalProperties: false
+    TxnTokenRequest:
+      type: object
+      description: |
+        Txn-Token の要求（draft-11 §11.1）[N][^4]。subject_token_type により同期（access_token）と内部開始（internal-start-ref、本契約の提案）を分ける。
+      required: [grant_type, requested_token_type, audience, scope, subject_token, subject_token_type]
+      properties:
+        grant_type:
+          $ref: '#/components/schemas/GrantTypeTokenExchange'
+        requested_token_type:
+          $ref: '#/components/schemas/TokenTypeTxnToken'
+        audience:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{1,62}$'
+          description: cell の trust domain 値（可逆な内部値、ADR-005 D9-3・ADR-009 D09-09）。草案は trust domain 名でなければならない（MUST）とする [N][^4]。この TTS の cell の値でなければ invalid_target（T05）[D]
+          examples:
+            - txn-td-c07
+        scope:
+          allOf:
+            - $ref: '#/components/schemas/Scope'
+          description: entry point 台帳の操作 ID（例 op.invoice.approve）。草案は REQUIRED とし、TTS は要求の scope を評価しなければならない（MUST）[N][^4]（§11.1, §11.3）。外部 client の scope より狭くし、subject_token の scope 以下（草案の MUST）[N][^4]（RS-06#33）。草案の旧版の `purp` は使わない（ADR-009 D09-31）
+        subject_token:
+          type: string
+          minLength: 1
+          maxLength: 8192
+          description: 同期は edge の最初の exchange で得た署名済み内部 access token。内部開始は受付記録への不透明な参照（X74-01）。未署名 JSON・自己署名 JWT は受け付けない（T03）[D]
+        subject_token_type:
+          oneOf:
+            - $ref: '#/components/schemas/TokenTypeAccessToken'
+            - $ref: '#/components/schemas/InternalStartReferenceType'
+        request_context:
+          type: string
+          contentMediaType: application/json
+          description: 草案で RECOMMENDED の JSON オブジェクトで、form 本文の 1 値として URL エンコードして送る [N][^4]（§11.1）。txn-v1 は rctx を発行しないため、受け取っても使わない（無視）[D]（ADR-009 D09-30）
+        request_details:
+          type: string
+          contentMediaType: application/json
+          description: 草案で RECOMMENDED の JSON オブジェクトで、form 本文の 1 値として URL エンコードして送る [N][^4]（§11.1）。txn-v1 では使わない（無視）[D]
+        actor_token:
+          not: {}
+          description: 送られたら拒否する（T02）[D]
+        actor_token_type:
+          not: {}
+          description: 送られたら拒否する（T02）[D]
+      additionalProperties: true
+    TxnTokenResponse:
+      type: object
+      description: draft-11 §11.4 の応答 [N][^4]
+      required: [access_token, issued_token_type, token_type]
+      properties:
+        access_token:
+          allOf:
+            - $ref: '#/components/schemas/JwsCompact'
+          description: Txn-Token の JWT（typ=txntoken+jwt）。草案の MUST [N][^4]。claim 構成は preview（txn-v1）で、例は x-decoded-payload-example
+          x-decoded-payload-example:
+            description: |
+              Txn-Token（txn-v1）の JWT payload の参考例。正本は DL-115（04_architecture/claims-catalog.md §3.5, §4.2）で、tctx の claim 名は名前案（KC-1 で確定）。署名・typ・aud・exp の検証は受信側 SDK が行う。`rctx`・`purp` は発行しない。業務パラメータ・個人識別属性・権限を tctx に入れない（ADR-009 D09-29）。
+            payload:
+              iss: https://tts.cell-opaque-code.id-domain.example
+              aud: txn-td-c07
+              iat: 1792051200
+              exp: 1792051260
+              txn: tx_k7Qp2vX9mL4sR8wZ1
+              sub: usr-7f4c9e2a
+              scope: op.invoice.approve
+              req_wl: spiffe://jp.id-domain.example/w/edge-gw
+              tctx:
+                tid: tnt-3k9q
+                root_jti: jti-a1b2c3d4
+                gref: gr-55x8
+                sid: sid-0p9o
+                tier: write
+                ver: '1.0'
+        issued_token_type:
+          $ref: '#/components/schemas/TokenTypeTxnToken'
+        token_type:
+          type: string
+          const: N_A
+          description: 草案の MUST（RFC 8693 の指針による）[N][^4][^1]
+        expires_in:
+          type: integer
+          minimum: 1
+          description: 草案は規定しない。本 profile では返す [D]。値は subject_token の残存寿命以下（ADR-009 D09-40）。上限値は TBD（ADR-006・DL-20）
+        refresh_token:
+          not: {}
+          description: 含めてはならない（MUST NOT）[N][^4]（§11.4, §13.3）
+      additionalProperties: false
+    TokenErrorResponse:
+      type: object
+      description: RFC 6749 §5.2 のエラー応答 [N][^3]。v1 で返す error は下の enum に限る。エラーコードの意味の変更は破壊的変更（ADR-022 D-5-1）
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [invalid_request, invalid_client, invalid_target, invalid_scope, unsupported_grant_type]
+        error_description:
+          type: string
+          pattern: '^[\x20-\x21\x23-\x5B\x5D-\x7E]*$'
+          description: RFC 6749 §5.2 の文字制限 [N][^3]。交換登録簿・台帳の内容、理由コードを入れない [D]
+        error_uri:
+          type: string
+          format: uri-reference
+      additionalProperties: false

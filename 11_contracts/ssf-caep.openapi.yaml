@@ -1,0 +1,1855 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: SSF/CAEP stream API profile
+  version: 0.1.1
+  summary: OpenID Shared Signals Framework 1.0 の stream 管理・push/poll 配送・検証のうち、本基盤が送受信する範囲の profile
+  description: |
+    文書ID: CON-09 / 成果物: DL-78 / 版: 0.1.1 / 状態: draft / 最終更新: 2026-10-15
+
+    本契約は、OpenID Shared Signals Framework 1.0（以下 SSF。OIDF Final、Published 2025-08-29、
+    standards-status.md SS-C09、確認日 2026-10-03）、RFC 8935（push 配送）、RFC 8936（poll 配送）を
+    準拠基準とし、本基盤が送受信する範囲だけを profile として定める [N][^ssf][^8935][^8936]（RS-04#77）。
+    SET の payload（イベント種別ごとの中身と受信義務）は DL-79（11_contracts/schemas/ssf-caep-set.schema.json、CON-10）が正本であり、
+    本契約は stream・配送・検証・受信者認証・配送保証・再送を扱う [D]。
+
+    ## 1. 本基盤の役割（ADR-006 D6-23〜D6-26 の写し）
+    | 役割 | 部品（ARC-01） | 相手 | 本契約での表現 |
+    |---|---|---|---|
+    | Transmitter（基盤が送信者） | C17 SSF transmitter | trust agreement を結んだ顧客の受信者（SIEM・自社アプリ）、SSF stream を登録した外部連携アプリ（PC-15） | `paths` の `/.well-known/ssf-configuration`、`/ssf/*`（stream 管理・poll）と `webhooks.setPushDelivery`（push） |
+    | Receiver（基盤が受信者） | C16 SSF receiver | 顧客 IdP・外部 IdP | `paths` の `/ssf-receiver/{binding_id}/events`（push 受信）と `x-ssf-receiver-profile`（顧客 IdP の stream 管理 API・poll endpoint を呼ぶ側の義務） |
+
+    - SSF/CAEP/RISC は組織の境界だけで使い、内部の約 300 依存サービスを SSF の受信者にしない [D]（ADR-006 D6-25）。
+      依存サービスへの伝播はライフサイクル事象（ADR-022 のイベント配送契約、G-137）と失効状態の配布（ADR-006 D6-04）で行う [D]。
+    - 失効の効力は基盤所有の強制点（E1〜E6）で生じる。本契約の配送の成否は強制に影響させない [D]（ADR-006 D6-03、D6-24）。
+      したがって本契約の「配送保証」は外部の受信者が後始末（アプリ内 session・保存データ）を行うための保証であり、拒否の保証ではない [D]。
+
+    ## 2. 凍結区分（ADR-022 D-2）
+    - GA: stream 管理、push/poll、SET の形式（secevent+jwt）、v1 イベント種別（CAEP session-revoked・credential-change・
+      token-claims-change・assurance-level-change、RISC account-disabled・credential-compromise・identifier-recycled）と受信義務の枠 [D]（ADR-022 D-2）。
+    - preview: CAEP Interoperability Profile（Implementer's Draft 1。Final 化のレビューやり直し中、SS-C12）への準拠表明。本契約は同 profile に依存しない [N][^caepinterop][D]（RS-04#79）。
+    - 凍結しない: 配送基盤（queue・broker 製品）[D]。
+    - 各要素の区分は `x-contract-tier` に記す。値（秒・件数）はすべて TBD であり、DL-20（07_slo）で決裁する [D]（ADR-006 §2.10）。
+
+    ## 3. 標準からの変更の有無
+    - SSF・RFC 8935・RFC 8936 の項目名・意味・状態コードは変えない [D]。本 profile は (a) 標準が OPTIONAL・配備委任とする点の選択、
+      (b) 標準が範囲外とする点（受信者認証の方式、保持期間、再送間隔、テナント境界）の追加、だけを行う [D]。
+    - 追加要素は `x-` 接頭辞の拡張か、本書で「profile 追加」と明示した応答本文（RFC 9457 problem details。SSF は管理 API のエラー本文を定めない）に限る [D]。
+
+    ## 4. 未決事項（本契約では決めない）
+    | 項目 | 状態 |
+    |---|---|
+    | SET・Transmitter の `iss` の粒度（単一 issuer かテナント別 issuer か。テナント別なら約 1 万） | 未決（ADR-006 L6-7、DEC-3 の U-01）。本契約は両方を `/.well-known/ssf-configuration/{issuer_path}` で表せるようにした |
+    | テナント停止（EV-05・EV-06）の外部通知 | 未決（ARC-09 §5.4。ADR-022 改版へ申し送り） |
+    | RISC account-purged の受信時の処理 | 未決（ADR-006 L6-1、ADR-022 改版） |
+    | RISC recovery-activated の送受信 | 未決（ADR-006 L6-8） |
+    | OIDC Back-Channel Logout の契約上の位置 | 未決（ADR-006 L6-2）。本契約の対象外 |
+    | 外部連携アプリの受信義務を契約条件にするか | 決裁案 K6-3（ADR-006 D6-26、NA-006-4） |
+    | 配送・再送・保持・検証間隔・D_in・D_tx の数値 | TBD（ADR-006 §2.10、DL-20） |
+    | 記述言語の版（ADR-022 D-2 は OpenAPI 3.1.2 を凍結版とする。本ファイルは作業指示に従い 3.1.0 で記述） | 11_contracts/README.md（DL-69）で統一を判断する申し送り |
+
+    ## 5. 作成方法と誠実性
+    AI エージェント（Claude）が ADR-006・ARC-09 を正本として起草した。判断は自己レビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。
+    SSF §6〜§9 と RFC 8935・RFC 8936 の各節は research ノートの検証済み主張（RS-04#77）が対象とする節を超えるため、
+    起草者が 2026-10-15 に原典を取得して照合した。同日、作成者以外の独立レビュー（11_contracts/review-notes/CON-09.md）が SSF §3〜§10、RFC 8935 §2〜§4、
+    RFC 8936 §2〜§3、RISC §2.6・§2.11 を原典で再照合し、指摘を本ファイルに反映した（版 0.1.1）。traceability/ の照合ログへの追記は未了である [D]。
+  x-document-id: CON-09
+  x-deliverable: DL-78
+  x-status: draft
+  x-last-updated: '2026-10-15'
+  x-depends-on:
+    - CONVENTIONS.md
+    - traceability/deliverables.md
+    - 05_adr/ADR-006-revocation-continuous-evaluation.md
+    - 05_adr/ADR-005-token-profile.md
+    - 05_adr/ADR-007-key-hierarchy-kms-hsm.md
+    - 05_adr/ADR-021-irreversible-identifiers.md
+    - 05_adr/ADR-022-integration-contract-standards.md
+    - 04_architecture/revocation-continuous-evaluation.md
+    - 02_requirements/identity-lifecycle.md
+    - 01_governance/assumptions-register.md
+    - 01_governance/kri.md
+    - research/RS-03-identity-lifecycle.md
+    - research/RS-04-oauth-oidc-profile.md
+    - research/RS-14-b2b-customer-identity.md
+    - research/standards-status.md
+    - 11_contracts/schemas/ssf-caep-set.schema.json
+    - 11_contracts/schemas/common.schema.json
+    - 11_contracts/schemas/audit-event.schema.json
+  x-requirements:
+    - id: R-112
+      note: 全 session 失効の外部伝播（session-revoked の送信）。完了時間は要実測
+    - id: R-143
+      note: 剥奪→拒否の最大時間のうち D_in（SSF 受信から失効状態への書込）を本契約の受信 profile で測定可能にする
+    - id: R-191
+      note: 数値契約（剥奪）。本契約の数値はすべて TBD（DL-20）
+    - id: R-109
+      note: 連携契約の機械可読化
+    - id: G-118
+      note: SSF/CAEP の stream 契約が OpenAPI で定義され検証を通る
+    - id: G-111
+      note: SSF 受信経路を含む剥奪反映の端から端の実測（TC-ARC09-01、TC-ARC09-11）
+    - id: G-137
+      note: ライフサイクル事象と SSF/CAEP の役割分担（内部サービスは SSF 受信者にしない）
+    - id: G-138
+      note: パターン×インタフェース×契約の行列で失効・継続評価の外部インタフェースを埋める
+    - id: G-121
+      note: モックで失効・不正 SET の負例を再現（x-negative-examples を DL-80 の負例ベクタに供給）
+  x-standards:
+    - id: SS-C09
+      name: OpenID Shared Signals Framework 1.0
+      status: final
+      published: '2025-08-29'
+      checked: '2026-10-03'
+      conformance: 準拠基準
+    - id: SS-C10
+      name: OpenID CAEP 1.0
+      status: final
+      published: '2025-08-29'
+      checked: '2026-10-03'
+      conformance: 準拠基準（イベント種別。payload は DL-79）
+    - id: SS-C11
+      name: OpenID RISC Profile 1.0
+      status: final
+      published: '2025-08-29'
+      checked: '2026-10-03'
+      conformance: 準拠基準（イベント種別。payload は DL-79）
+    - id: SS-C12
+      name: OpenID CAEP Interoperability Profile 1.0
+      status: draft（Implementer's Draft 1、Final 化レビューやり直し）
+      checked: '2026-10-03'
+      conformance: 監視のみ（依存しない）
+    - id: RFC8935
+      name: Push-Based Security Event Token (SET) Delivery Using HTTP
+      status: Proposed Standard
+      checked: '2026-10-15'
+      conformance: 準拠基準
+    - id: RFC8936
+      name: Poll-Based Security Event Token (SET) Delivery Using HTTP
+      status: Proposed Standard
+      checked: '2026-10-15'
+      conformance: 準拠基準
+  x-references:
+    ssf: OpenID Foundation Shared Signals WG『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所 §3.3, §4.1.1〜§4.1.9, §4.2.3, §6.1.1, §6.1.2, §7.1, §7.1.1, §7.2, §8, §8.1.1〜§8.1.5, §9.1〜§9.3, §10.1、確認日 2026-10-15。§4.1.1・§4.1.5・§6.1 は RS-04#77、tenant メンバーは RS-14#62。その他の節は起草者が原典で照合、照合ログ追記は未了）
+    '8935': IETF (A. Backman, Ed., M. Jones, Ed., M. Scurtescu, M. Ansari, A. Nadalin)『RFC 8935 Push-Based Security Event Token (SET) Delivery Using HTTP』2020-11. https://www.rfc-editor.org/rfc/rfc8935 （参照箇所 §2, §2.1〜§2.4, §3, §4、確認日 2026-10-15。research ノート外、起草者が原典で照合）
+    '8936': IETF (A. Backman, Ed., M. Jones, Ed., M. Scurtescu, M. Ansari, A. Nadalin)『RFC 8936 Poll-Based Security Event Token (SET) Delivery Using HTTP』2020-11. https://www.rfc-editor.org/rfc/rfc8936 （参照箇所 §2, §2.1〜§2.6、確認日 2026-10-15。research ノート外、起草者が原典で照合）
+    caep: OpenID Foundation Shared Signals WG『OpenID Continuous Access Evaluation Profile 1.0』Final, 2025-08-29. https://openid.net/specs/openid-caep-1_0-final.html （参照箇所 §3.1〜§3.8、確認日 2026-10-03。RS-04#78、イベント種別 URI は 2026-10-15 に原典で再確認）
+    risc: OpenID Foundation Shared Signals WG『OpenID RISC Profile Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-risc-1_0-final.html （参照箇所 §2, §2.6, §2.11、確認日 2026-10-03。RS-04#78、RS-03#66、イベント種別 URI は 2026-10-15 に原典で再確認。§2.6 の主体種別の MUST は 2026-10-15 に独立レビューが原典で照合）
+    caepinterop: OpenID Foundation『Public Review Period for Proposed OpenID CAEP Interoperability Profile Final Specification』2026-07-27（2026-09-12・09-15 UPDATE）. https://openid.net/public-review-period-for-proposed-openid-caep-interoperbility-profile-final-specification/ （確認日 2026-10-03。RS-04#79）
+    sp80063c4: NIST『SP 800-63C-4 Digital Identity Guidelines Federation and Assertions』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63c.html （参照箇所 §4.8 Shared Signaling、確認日 2026-10-03。RS-03#72、RS-14#61）
+    '9493': IETF (A. Backman, M. Scurtescu, P. Jain)『RFC 9493 Subject Identifiers for Security Event Tokens』2023-12. https://www.rfc-editor.org/rfc/rfc9493 （参照箇所 §3.2.3, §4.1, §6.1、確認日 2026-10-15。ADR-021 [^38] と同じ原典）
+    '8705': IETF『RFC 8705 OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』2020-02. https://www.rfc-editor.org/rfc/rfc8705 （確認日 2026-10-03。RS-04#58, #59）
+    '9457': IETF『RFC 9457 Problem Details for HTTP APIs』2023-07. https://www.rfc-editor.org/rfc/rfc9457 （ADR-022 D-2 の OIDC/OAuth profile 行が GA のエラー形式として採用）
+  contact:
+    name: プラットフォームチーム（仮置き。所有者は 11_contracts/README.md で定める）
+  license:
+    name: 社内連携契約（第三者向け公開条件は DL-69 で定める）
+    identifier: LicenseRef-Internal-Contract
+
+servers:
+  - url: https://ssf.{id_domain}
+    description: |
+      Transmitter（C17）。`id_domain` は ADR-021 D21-28 の自社所有ドメイン（仮置き）。
+      cell・法域ごとの host の分け方は issuer の粒度（U-01、未決）に従う。
+    variables:
+      id_domain:
+        default: id.example.net
+        description: 自社所有ドメイン（仮置き）
+
+tags:
+  - name: discovery
+    description: Transmitter Configuration Metadata（SSF §7）
+  - name: stream-management
+    description: Event Stream Management API（SSF §8.1.1〜§8.1.3）。基盤が Transmitter
+  - name: verification
+    description: 検証イベントの要求（SSF §8.1.4）
+  - name: poll-delivery
+    description: 基盤が Transmitter の poll 配送（RFC 8936、SSF §6.1.2）
+  - name: receiver
+    description: 基盤が Receiver の push 受信（RFC 8935、SSF §6.1.1）
+
+security:
+  - ssfOAuth: [core.ssf_stream.manage]
+    receiverMtls: []
+  - ssfOAuth: [core.ssf_stream.manage]
+    dpopProof: []
+
+x-ssf-profile:
+  x-contract-tier: GA
+  transmitter:
+    spec_version: '1_0'
+    delivery_methods_supported:
+      - urn:ietf:rfc:8935
+      - urn:ietf:rfc:8936
+    default_subjects: NONE
+    default_subjects_rationale: |
+      新規 stream にはどの主体も含めない。受信者は trust agreement で合意したテナントだけを
+      complex subject の `tenant` で追加する [D]。SP 800-63C-4 が signal に全用途の記載（SHALL）と
+      対象アカウントの特定に要る範囲を超える個人情報を含めないこと（SHALL NOT）を求めるため、
+      既定で全主体を流す ALL は採らない [N][^sp80063c4][D]（RS-03#72、RS-14#61）。
+    critical_subject_members: [tenant]
+    critical_subject_members_rationale: |
+      SSF は complex subject の `tenant` メンバーを定義し [N][^ssf]（RS-14#62）、critical_subject_members に
+      挙げた名前は受信者が解釈しなければならず（MUST）[N][^ssf]（§7.1）、
+      解釈できない critical member を主体に持つ SET を受信者は破棄しなければならない（MUST）[N][^ssf]（§3.6）。テナント文脈を無視した処理
+      （他テナントの所属への波及）を受信側で防ぐために `tenant` を必須解釈にする [D]（identity-lifecycle M-03）。
+    events_supported_v1:
+      - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+      - https://schemas.openid.net/secevent/caep/event-type/credential-change
+      - https://schemas.openid.net/secevent/caep/event-type/token-claims-change
+      - https://schemas.openid.net/secevent/caep/event-type/assurance-level-change
+      - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+      - https://schemas.openid.net/secevent/risc/event-type/credential-compromise
+      - https://schemas.openid.net/secevent/risc/event-type/identifier-recycled
+    events_always_possible:
+      - https://schemas.openid.net/secevent/ssf/event-type/verification
+      - https://schemas.openid.net/secevent/ssf/event-type/stream-updated
+    events_not_sent:
+      - uri: https://schemas.openid.net/secevent/risc/event-type/account-enabled
+        reason: 再有効化は管理操作で行う（ADR-006 L6-1、決定）
+      - uri: https://schemas.openid.net/secevent/risc/event-type/sessions-revoked
+        reason: 非推奨。新しい実装は CAEP session-revoked を使わなければならない（MUST）[N][^risc]（RS-03#66）
+      - uri: https://schemas.openid.net/secevent/risc/event-type/recovery-activated
+        reason: v1 では送らない。未決（ADR-006 L6-8）
+    subject_formats_sent:
+      - complex（tenant は必須。user は iss_sub、session は opaque）。identifier-recycled・verification・stream-updated 以外の v1 イベント
+      - email または phone_number の単純主体。identifier-recycled に限る（RISC §2.6 の MUST）
+      - opaque の単純主体（id は stream_id）。verification・stream-updated に限る（SSF §8.1.4.1・§8.1.5 の MUST）
+    subject_formats_not_sent:
+      - identifier-recycled 以外のイベントでの email・phone_number
+    identifier_recycled_subject: |
+      RISC identifier-recycled は主体の種別が email か phone でなければならない（MUST）[N][^risc]（§2.6）。このため本イベントだけは
+      単純主体（email・phone_number）で送り、tenant メンバーを持たない（DL-79 の outboundProfile と同じ）[D]。
+      SSF の主体照合では単純主体は完全に同一の場合だけ一致する（§8.1.3.1）[N][^ssf]。受信者が addSubject で追加した tenant の complex subject とは
+      照合規則で結び付かないため、本基盤はその識別子を当該テナントの文脈でその受信者に過去に渡した stream にだけ送る（profile 追加）[D]。
+      受信者が既知でない識別子は送らない（SSF §10.1 の SHOULD NOT の適用）[N][^ssf][D]。
+      ADR-006 D6-24 の「主体は SSF の complex subject で表す」に対する例外であり、ADR-006 改版時の注記として申し送る [D]。
+    subject_formats_rationale: |
+      受信者に送る主体は、受信者がすでに知る識別子（その受信者に払い出した OIDC の sub、ADR-021 の tid）に限る [D]。
+      SSF は、受信者が既知でない主張の相関を許す識別子種別を使うべきでない（SHOULD NOT）とし、同じ相手には同じ種別・値を使うべき（SHOULD）とする [N][^ssf]（§10.1）。
+      RFC 9493 も複数識別子の同時提示が意図以上の情報を伝え得るとする [N][^9493]（§6.1、ADR-021 D21-31）。
+    set_header:
+      typ: secevent+jwt
+      typ_rationale: SSF のイベントは明示的な型付けを使わなければならない（MUST）[N][^ssf]（§4.1.1、RS-04#77）
+      alg: ADR-015 の暗号 profile（CP）が (issuer 区分, typ=secevent+jwt) に割り当てた fully-specified alg。値はこの契約に固定しない
+      key: ADR-007 D7-10 の L2 用途族 4「SET」の鍵。jwks_uri で公開し、内部 token の鍵と共有しない
+    set_claims_rules:
+      - '`sub` を含めない（MUST NOT）[N][^ssf]（§4.1.2）'
+      - '`exp` を含めない（MUST NOT）[N][^ssf]（§4.1.7）'
+      - '`iss` は stream 構成の `iss` と同一（MUST）[N][^ssf]（§4.1.6）'
+      - '`aud` は受信者の client_id の単一文字列とする。同一主体と確認できない複数受信者に同じ SET を送らない（SSF §4.1.8 の SHOULD の適用）[N][^ssf][D]'
+      - '`events` は 1 イベントだけを含める（SSF §4.2.1 の SHOULD の適用）[N][^ssf][D]'
+      - '`txn` を付ける（SHOULD の適用）。値は失効記録の revocation_id から導いた不透明な文字列で、同じ原因から生じた複数の SET で同じ値を使う [N][^ssf]（§4.1.9）[D]。内部の Transaction Token の `txn`（ADR-022 D-8 の相関 ID 2）とは別の値であり、内部の txn を外部へ出さない [D]'
+      - payload の詳細と受信義務は DL-79 が正本
+    x-example-set-payload-session-revoked:
+      summary: 本基盤が送る session-revoked SET の payload（参考。正本は DL-79）
+      description: |
+        `sub`・`exp` を含めない。主体は complex subject で tenant と user（受信者に払い出した sub）と session。
+        数値（min_verification_interval=60、inactivity_timeout=7776000）を含む他の例の値は形式の例示であり、決定値ではない（TBD、DL-20）。
+      value:
+        jti: 0b6a7c1e5d9f4a2b8c3d1e0f9a8b7c6d
+        iss: https://ssf.id.example.net
+        aud: c_8d2f61a0
+        iat: 1792036800
+        txn: r_5f0e2d1c
+        sub_id:
+          format: complex
+          tenant:
+            format: opaque
+            id: t_01J9Z3K7Q2
+          user:
+            format: iss_sub
+            iss: https://ssf.id.example.net
+            sub: '248289761001'
+          session:
+            format: opaque
+            id: s_7Kp2Qx
+        events:
+          https://schemas.openid.net/secevent/caep/event-type/session-revoked:
+            event_timestamp: 1792036795
+  receiver:
+    x-description: |
+      基盤が顧客 IdP・外部 IdP から受信するときの義務。基盤は顧客 IdP の Transmitter Configuration と
+      stream 管理 API を「呼ぶ側」であり、その API は相手の契約である。ここでは本基盤側の振舞いを定める。
+    x-ref-path: '#/x-ssf-receiver-profile'
+
+x-ssf-receiver-profile:
+  x-contract-tier: GA
+  role: 基盤が Receiver（C16 SSF receiver、ADR-006 D6-23）
+  scale_hint: 受信 stream の上限の手掛かりは顧客 IdP 連携 2,000 [A-082]。外部 IdP（社員の上流 IdP 等）の件数は前提台帳にない（前提台帳へ追加要）
+  binding:
+    description: |
+      受信 stream は「binding」（顧客 IdP 1 つとテナント文脈 1 つの結合）ごとに 1 本作る [D]。
+      受信の効果はその IdP に結合したテナント文脈に限る [D]（ADR-006 D6-23、identity-lifecycle M-03）。
+      binding_id は不透明な文字列で、push 受信 endpoint の path に入れる（SSF §6.1.1 の RECOMMENDED: stream ごとに一意の URL）[N][^ssf][D]。
+  discovery:
+    - 顧客 IdP の issuer URL は trust agreement とテナント管理者の設定から得る。`/.well-known/ssf-configuration` の応答の `issuer` が取得に使った issuer URL と同一でなければ、その構成を使わない（SSF §7.2.4 の MUST）[N][^ssf]
+    - '`spec_version` がない Transmitter は 1_0-ID1 と見なされる（SSF §7.1）。本基盤は 1_0 を表明する Transmitter だけを GA の受信対象にし、それ以外は preview として個別に受け入れ判断する [N][^ssf][D]'
+    - '`/.well-known/risc-configuration`（SSF §7.2.2 の後方互換）は、`ssf-configuration` を持たない RISC Transmitter に限って使う [N][^ssf][D]'
+  stream_creation:
+    - 顧客 IdP の configuration_endpoint へ stream を作成し、応答の `iss` が構成取得元の issuer と一致すること（MUST）と、`aud` が本基盤の期待値と一致すること（SHOULD の適用）を確認する [N][^ssf]（§8.1.1.1, §8.1.1.1.1）[D]
+    - '`events_requested` は v1 受信 7 種（ADR-006 D6-23 の表）に限る。SSF は受信者が理解し処理できるイベントだけを要求すべき（SHOULD）とする [N][^ssf]（§8.1.1）'
+    - '`events_delivered` を受信できるイベントの正とする（SSF §8.1.1 の MUST）。7 種のうち欠けるものは binding の健全性表示（テナント管理者向け）に出し、SCIM の無効化（RR6-02 の残余）で補う [N][^ssf][D]'
+    - push を優先し、顧客 IdP が push を提供しない場合だけ poll にする（ADR-006 D6-23 は両方を受け付ける）[D]
+  receiver_authentication:
+    description: |
+      受信者認証は「SET の真正性」と「HTTP 要求の認証」の 2 層で行う。SET の真正性が主であり、
+      HTTP 要求の認証は受信口への大量投入（未認証の SET 検証負荷）を前段で落とすための補助である [D]。
+    set_authenticity:
+      - JWS 署名を必須にする。`alg` が `none` の SET、署名のない SET、暗号化だけの SET は処理しない [D]。RFC 8935 は SET の真正性の確認方式を配備に委ねる [N][^8935]（§2）
+      - 'header の `typ` が `secevent+jwt` であること（SSF §4.1.1 の MUST）[N][^ssf]'
+      - '`iss` が binding に登録した Transmitter の issuer と一致し、署名鍵がその issuer の `jwks_uri` から得た鍵であること（SSF §4.1.6 の MUST、ADR-006 D6-23）[N][^ssf][D]'
+      - '`aud` に binding の受信者識別子が含まれること（RFC 8935 §2 の SHALL）[N][^8935]'
+      - '`sub` または `exp` を含む JWT は SSF の SET として受理しない（SSF §4.1.3 の識別規則）[N][^ssf][D]'
+      - 主体の complex subject に `tenant` がある場合、その値が binding のテナント文脈と一致しなければ `access_denied` で拒否する [D]
+      - 検証できない SET は処理しない（ADR-006 D6-23）[D]
+      - 顧客 IdP の構成が critical_subject_members を宣言し、SET の主体にその member があって本基盤が解釈できない場合は、その SET を破棄する（SSF §3.6 の MUST）[N][^ssf]
+    http_authentication:
+      push: |
+        本基盤が顧客 IdP に stream を作成するとき、binding ごとに生成した高エントロピーの不透明値を
+        `delivery.authorization_header` に設定し（SSF §6.1.1 の SHOULD の適用）、push 受信 endpoint はこの値を照合する [N][^ssf][D]。
+        値は秘密情報として保管し、漏えいの疑い・定期更新では stream の PATCH で差し替える（更新周期は TBD、ADR-007 の鍵・秘密の運用に合わせる）[D]。
+        顧客 IdP が mutual TLS で接続できる場合は TLS client 証明書の照合を併用してよい（RFC 8935 §3 は mutual TLS を手段の例に挙げる）[N][^8935][D]。
+      poll_and_management: |
+        顧客 IdP の `authorization_schemes` に従う（SSF §7.1.1）[N][^ssf]。OAuth（urn:ietf:rfc:6749）の場合は client credentials で取得した
+        token を使い、sender constraint の方式は ADR-005 D5（外部 M2M は mTLS を既定）に合わせる [D]。
+  delivery_guarantee:
+    push:
+      - SET を検証し耐久記録へ書き込んだ後に限り 202 を返す。202 の前に強制処理（失効状態への書込）を行わない（RFC 8935 §2 の SHOULD / SHOULD NOT の適用）[N][^8935][D]
+      - 同じ SET の再送には、初めて受け取ったときと同じ応答を返す（RFC 8935 §2 の MUST）[N][^8935]。重複排除は (iss, jti) で行い、処理は冪等にする [D]
+      - 受信者は送信者の再送に依存してはならない（RFC 8935 §2 の MUST NOT）ため、202 の後の処理失敗は本基盤側の再試行で解決する [N][^8935][D]
+    poll:
+      - 既定は long poll（returnImmediately=false）とし、timeout と poll 間隔は TBD（DL-20）[N][^8936][D]
+      - SET を検証し耐久記録へ書き込んだ後に、次の poll 要求の `ack` で確認する。確認は局所の処理より前に行う（RFC 8936 §2.4 の SHOULD）[N][^8936]
+      - 検証に失敗した SET は `setErrs` で報告する。`setErrs` は解析・検証の誤り以外に使わない（RFC 8936 §2 の SHALL NOT）[N][^8936]
+      - 再配送された SET は重複として受け入れ、再度 ack する（RFC 8936 §2.4 の SHOULD）[N][^8936]
+    processing:
+      - 受信から失効状態への書込までの時間 D_in を ADR-006 D6-29 の D_w(c) に含めて計測する。値は TBD（DL-20）。計測は TC-ARC09-01 [D]
+      - 受信の停止中は顧客 IdP 側の失効が基盤に届かない（ARC-01 C16 の残余）。最終受信時刻と検証イベントの往復で無音の故障を検知する [D]
+  stream_health:
+    - 顧客 IdP の verification_endpoint がある場合、`min_verification_interval` 以上の間隔で検証イベントを要求し、`state` に 1 回限りの値を入れて往復を確認する（間隔は TBD）[N][^ssf][D]
+    - 検証要求の 204 は送信済みを意味しない。検証イベントの到着を同期的・順序どおりと見なさない（SSF §8.1.4.2 の MUST NOT）[N][^ssf]
+    - '`state` が一致しない検証イベントには `invalid_state` を返す（SSF §8.1.4.1 の SHOULD）[N][^ssf]'
+    - stream-updated で paused・disabled を受けたら、binding を「劣化」と表示し、テナント管理者とプラットフォーム運用に通知する。SCIM の無効化と顧客管理者向け失効 API（ADR-006 D6-27）を代替経路として案内する [D]
+    - 削除済み主体のイベントを受けても誤りとして報告しない（SSF §9.3 の MUST NOT）[N][^ssf]
+  unknown_content:
+    - 理解できない追加フィールドは無視する（SSF §4.2.3 の MUST）[N][^ssf]
+    - '`events_delivered` 外のイベント種別、および v1 受信 7 種外のイベント種別は、検証に通れば受理（202 / ack）して記録するが強制執行しない [D]。RISC account-purged の強制処理は未決（ADR-006 L6-1）'
+    - RISC sessions-revoked は互換のためだけに CAEP session-revoked と同じ処理で受ける（ADR-006 D6-23）[D]
+
+x-ssf-transmitter-delivery:
+  x-contract-tier: GA
+  role: 基盤が Transmitter（C17 SSF transmitter、ADR-006 D6-24）
+  scale_hint: 受信者の上限の手掛かりは顧客の受信者（テナント約 1 万 [A-007]）と外部連携アプリ（client 800 [A-013]）
+  guarantee:
+    summary: |
+      送信は best-effort ではなく、stream ごとに送信済み・確認済みの記録を持つ（ADR-006 D6-24）[D]。
+      保証の水準は「確認（push の 202 / poll の ack）または保持期限の到来まで、少なくとも 1 回」（at-least-once）である [D]。
+      同じ SET の再送では同じ `jti` を使う（RFC 8935 §2 は同じ SET の複数回送信を許す）[N][^8935][D]。
+      送信の成否は基盤の強制に影響させない（ADR-006 D6-24）[D]。
+    ordering: |
+      同じ主体（Subject Principal）に関する SET は生成順に送る [D]。paused 中に保持した SET は、生成順に送るか、
+      後のイベントで取り消された・古くなったものを除いて最後のものだけを送る（SSF §8.1.2.1 の MUST）[N][^ssf]。
+      stream 全体の順序は保証しない。受信者は `iat` と `txn` で前後関係を判断する [D]。
+    retention: 未確認の SET の保持期限 R_ret は TBD（DL-20。所有者・決め方は ADR-006 §2.10）。期限を超えた SET は dead letter に移し、受信者別の件数を運用に通知する [D]
+    metrics: 送信済み・確認済み・未確認の件数と最古の未確認 SET の滞留時間を stream ごとに計測し、K-17 (b) に入れる [D]（01_governance/kri.md、ARC-09 §5.3）。送信遅延 D_tx は TC-ARC09-11 で測る
+  push_retry:
+    retry_when:
+      - 接続失敗・TLS 失敗・timeout（RFC 8935 §2 の「回復可能な誤りの疑い」）[N][^8935]
+      - HTTP 5xx、429、503（Retry-After があれば従う）[D]
+      - 400 の `access_denied` と `authentication_failed`。RFC 8935 §4 は access_denied を、送信側が資格情報を更新すれば回復し得る一時的な誤りの例に挙げる [N][^8935]。SSF の push で送信側が使う資格情報は受信者が与えた authorization_header であり（SSF §6.1.1）、受信者の PATCH による差替えで回復し得るので、authentication_failed も同じ扱いにする。再送回数の上限を別に設ける [D]
+    do_not_retry:
+      - 400 の `invalid_request`、`invalid_key`、`invalid_issuer`、`invalid_audience`。RFC 8935 §4 が再送で成功する見込みが極めて小さい例に挙げるのは invalid_request である [N][^8935]。他の 3 種も同じ SET の再送では内容が変わらないので同じ扱いにする [D]。dead letter に移し、送信側の構成誤りとして運用へ通知する [D]
+      - それ以外の場合は再送しない（RFC 8935 §2 の SHOULD NOT）[N][^8935]
+    backoff: 指数 backoff＋jitter。初回間隔・上限間隔・最大再送時間（≦ R_ret）は TBD（DL-20）。受信者を過負荷にしないよう遅延させる（RFC 8935 §2 の SHOULD）[N][^8935][D]
+    unknown_outcome: 応答を受け取れず配送の成否が不明な場合は、確認されるまで再送する（重複の可能性を受信者の (iss, jti) 重複排除に委ねる）。RFC 8935 §4 が実装者に委ねる選択のうち、配送を優先する側を採る [N][^8935][D]
+    stream_pause: 連続失敗が閾値（TBD）を超えた stream は paused にできる。paused にする前に stream-updated を送らなければならない（SSF §8.1.5 の MUST）[N][^ssf]。送れない場合も状態の変更と理由を監査イベント（DL-77）に残す [D]
+  poll_redelivery:
+    - 未確認の SET は再配送間隔（TBD）の後に再び `sets` に含める（RFC 8936 §2.4 の MAY）[N][^8936]
+    - 確認済みの SET は保持しない（RFC 8936 §2 は確認後の保持義務を課さない）[N][^8936][D]
+    - 長期間 poll されない stream の未確認 SET は R_ret で破棄でき（RFC 8936 §2 の配備依存の破棄）、破棄件数を K-17 (b) に入れる [N][^8936][D]
+  inactivity:
+    - inactivity_timeout（値は TBD）を超えて受信者の活動がない stream は、削除せず paused にし、stream-updated を送る（SSF §8.1.1 の MUST）[N][^ssf][D]
+  endpoint_url_policy:
+    - push の `endpoint_url` は https に限る [N][^8935]（§2.1 TLS-enabled）。host は trust agreement または client 登録で事前に登録したものに限る [D]
+    - 'IP literal、内部アドレス、本基盤の内部 host への配送は拒否する（SET を攻撃者の endpoint へ向けさせる設定変更と SSRF への対策）[D]'
+    - endpoint_url・authorization_header の変更は監査イベント（DL-77）に残し、テナント管理者に通知する [D]
+  data_minimization:
+    - 送るイベントは ADR-022 D-2 の v1 範囲に限り、trust agreement に全用途を記載する（SP 800-63C-4 の SHALL）[N][^sp80063c4][D]（ADR-006 D6-24）
+    - 受信者に送る前に、その受信者がそのテナントの情報を受け取る権限を持つことを確認する（SSF §9.2 の SHOULD）[N][^ssf][D]
+
+paths:
+  /.well-known/ssf-configuration:
+    get:
+      tags: [discovery]
+      operationId: getTransmitterConfiguration
+      summary: Transmitter Configuration Metadata の取得（単一 issuer の場合）
+      description: |
+        SSF §7.2 の discovery。Transmitter は `/.well-known/ssf-configuration` に JSON 文書を置かなければならない（MUST）[N][^ssf]。
+        応答の `issuer` は取得に使った issuer URL と同一で、SET の `iss` と同一でなければならない（MUST）[N][^ssf]（§7.2.4）。
+        `authorization_schemes` は認証なしで取得できるべき（SHOULD）とされるため、本 endpoint は認証を要求しない [N][^ssf]（§7.1）。
+      security: []
+      x-contract-tier: GA
+      x-requirements: [G-118, R-109]
+      responses:
+        '200':
+          description: 構成メタデータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransmitterConfiguration'
+              examples:
+                singleIssuer:
+                  $ref: '#/components/examples/TransmitterConfiguration'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-negative-examples:
+        - id: NEG-CFG-01
+          input: 受信者が http スキームの issuer URL で構成を取得する
+          expected: 受信者は構成を使わない
+          reason: 受信者は issuer URL が信頼できる取得元から得たもので https であることを確認すべき（SHOULD）[N][^ssf]（§7.2）
+        - id: NEG-CFG-02
+          input: 応答の `issuer` が取得に使った issuer URL と 1 文字でも異なる（末尾スラッシュの有無を含む）
+          expected: 受信者は構成を破棄し、以後の stream 操作を中止する
+          reason: SSF §7.2.4 の MUST（issuer mix-up の防止。ADR-022 D-6 の負例ベクタ 3）[N][^ssf][D]
+  /.well-known/ssf-configuration/{issuer_path}:
+    get:
+      tags: [discovery]
+      operationId: getTransmitterConfigurationWithPath
+      summary: Transmitter Configuration Metadata の取得（issuer が path を持つ場合）
+      description: |
+        issuer が path 成分を持つ場合、末尾の `/` を除いて host と path の間に `/.well-known/ssf-configuration` を挿入する（MUST）[N][^ssf]（§7.2.1）。
+        テナント別 issuer を採るかは未決（ADR-006 L6-7、DEC-3 の U-01）。採る場合の `issuer_path` の形式は ADR-021 の issuer URL 規則に従う [D]。
+      security: []
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      parameters:
+        - name: issuer_path
+          in: path
+          required: true
+          description: issuer URL の path 成分（先頭・末尾の `/` を除いたもの）
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9._~-]+(/[A-Za-z0-9._~-]+)*$'
+          example: t/7f3c9a2e
+      responses:
+        '200':
+          description: 構成メタデータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransmitterConfiguration'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ssf/stream:
+    post:
+      tags: [stream-management]
+      operationId: createStream
+      summary: stream の作成（SSF §8.1.1.1）
+      description: |
+        受信者（顧客の受信者・外部連携アプリ）が stream を作る。要求に含めてよいのは受信者が与える
+        `events_requested`・`delivery`・`description` である [N][^ssf]。
+        `delivery` がなければ poll（urn:ietf:rfc:8936）と見なし、本基盤が `endpoint_url` を払い出す（MUST）[N][^ssf]。
+
+        profile の追加:
+        - stream を作れるのは、trust agreement（顧客の受信者）または連携契約（外部連携アプリ）が登録済みの client に限る（ADR-006 D6-24）[D]。それ以外は 403。
+        - 1 受信者あたりの stream 数の上限は TBD。本基盤は複数 stream を許すので 409 は返さず、上限超過は 403 とする [D]。
+        - push の `endpoint_url` は `x-ssf-transmitter-delivery.endpoint_url_policy` に従い、外れれば 400。
+        - 作成直後の stream は主体を含まない（`default_subjects: NONE`）。受信者は `addSubject` でテナントを追加する [D]。
+        - 作成・変更・削除はすべて監査イベント（DL-77）に残す [D]。
+      x-contract-tier: GA
+      x-requirements: [G-118, G-138, R-112]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamCreateRequest'
+            examples:
+              push:
+                $ref: '#/components/examples/StreamCreatePushRequest'
+              poll:
+                $ref: '#/components/examples/StreamCreatePollRequest'
+      responses:
+        '201':
+          description: 作成された stream の構成。受信者は `iss` が構成取得元の issuer と一致することを確認しなければならない（MUST）[N][^ssf]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamConfiguration'
+              examples:
+                push:
+                  $ref: '#/components/examples/StreamConfigurationPush'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-negative-examples:
+        - id: NEG-STR-01
+          input: trust agreement も連携契約も登録されていない client が stream を作る
+          expected: 403。stream は作られない
+          reason: 送信先を trust agreement と連携契約のある受信者に限る（ADR-006 D6-24、SP 800-63C-4 の SHALL）[N][^sp80063c4][D]
+        - id: NEG-STR-02
+          input: '`delivery.endpoint_url` が http://、IP literal、内部 host、または未登録の host'
+          expected: 400。problem の type は endpoint-not-allowed
+          reason: SET の宛先差替えと SSRF の防止（x-ssf-transmitter-delivery.endpoint_url_policy）[D]
+        - id: NEG-STR-03
+          input: 受信者が `stream_id`・`iss`・`aud`・`events_delivered` を要求に含める
+          expected: 本基盤はこれらを無視し、自らの値で応答する
+          reason: これらは Transmitter が与える値であり（§8.1.1）、作成要求に含めてよいのは受信者が与える 3 項目である（§8.1.1.1）[N][^ssf]。含まれた場合に無視するのは本 profile の選択 [D]
+        - id: NEG-STR-04
+          input: '`events_requested` に v1 範囲外（例 RISC account-enabled）だけを含める'
+          expected: 201。`events_delivered` は空配列。受信者は events_delivered だけを当てにする
+          reason: Transmitter は理解しない値を無視しなければならず（MUST）、受信者は events_delivered を当てにしなければならない（MUST）[N][^ssf]（§8.1.1）
+    get:
+      tags: [stream-management]
+      operationId: readStreamConfiguration
+      summary: stream 構成の読取り（SSF §8.1.1.2）
+      description: |
+        `stream_id` があればその stream を、なければこの受信者が参照できる全 stream の配列を返す（MUST）[N][^ssf]。
+        stream がなければ空配列を返す（MUST）[N][^ssf]。他の受信者の stream は存在の有無を含めて見せない（404）[D]。
+      security:
+        - ssfOAuth: [core.ssf_stream.read]
+          receiverMtls: []
+        - ssfOAuth: [core.ssf_stream.read]
+          dpopProof: []
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      parameters:
+        - $ref: '#/components/parameters/StreamIdQueryOptional'
+      responses:
+        '200':
+          description: stream 構成（stream_id 指定時は 1 件、未指定時は配列）
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/StreamConfiguration'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/StreamConfiguration'
+              examples:
+                one:
+                  $ref: '#/components/examples/StreamConfigurationPush'
+                none:
+                  summary: stream がない場合
+                  value: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-negative-examples:
+        - id: NEG-STR-05
+          input: 受信者 A の token で受信者 B の stream_id を指定する
+          expected: 404（403 ではない）
+          reason: 管理 API の認可は受信者を stream ID と aud に結び付けなければならない（MUST）[N][^ssf]（§8）。存在の推測を避けるため 404 に統一する [D]
+    patch:
+      tags: [stream-management]
+      operationId: updateStreamConfiguration
+      summary: stream 構成の部分更新（SSF §8.1.1.3）
+      description: |
+        `stream_id` は必須（MUST）。要求にある受信者側の項目は更新し（MUST）、ない項目は変えない（MUST NOT）[N][^ssf]。
+        Transmitter 側の項目を含める場合は期待値と一致しなければならず、`events_delivered` は更新前の値と一致しなければならない（MUST）[N][^ssf]。
+        処理を保留した場合は 202 を返し、受信者は後で同じ要求を再試行してよい [N][^ssf]。
+        `delivery` の変更は endpoint_url_policy の検査と監査・通知の対象とする [D]。
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamUpdateRequest'
+            examples:
+              changeEvents:
+                summary: 要求イベントの変更
+                value:
+                  stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+                  events_requested:
+                    - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+                    - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+      responses:
+        '200':
+          description: 更新後の stream 構成全体
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamConfiguration'
+        '202':
+          description: 受理したが未処理（SSF §8.1.1.3 Table 3）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-negative-examples:
+        - id: NEG-STR-06
+          input: '`events_delivered` に本基盤の現在値と異なる配列を入れて PATCH する'
+          expected: 400
+          reason: SSF §8.1.1.3 の MUST（events_delivered は更新前の期待値と一致）[N][^ssf]
+        - id: NEG-STR-07
+          input: '`aud` を別の値に変える PATCH'
+          expected: 400
+          reason: aud は更新できない [N][^ssf]（§8.1.1）。Transmitter 側の項目は期待値と一致しなければならない（MUST）[N][^ssf]
+    put:
+      tags: [stream-management]
+      operationId: replaceStreamConfiguration
+      summary: stream 構成の置換（SSF §8.1.1.4）
+      description: |
+        `stream_id` と受信者側の項目の全体を含めなければならず（MUST）、欠けた受信者側の項目は削除要求と解釈しなければならない（MUST）[N][^ssf]。
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamReplaceRequest'
+            examples:
+              replace:
+                summary: 構成の置換
+                value:
+                  stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+                  delivery:
+                    method: urn:ietf:rfc:8935
+                    endpoint_url: https://siem.customer-a.example.org/ssf/events
+                  events_requested:
+                    - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+                  description: customer-a SIEM
+      responses:
+        '200':
+          description: 置換後の stream 構成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamConfiguration'
+        '202':
+          description: 受理したが未処理（SSF §8.1.1.4 Table 4）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [stream-management]
+      operationId: deleteStream
+      summary: stream の削除（SSF §8.1.1.5）
+      description: |
+        `stream_id` を query で指定しなければならない（MUST）[N][^ssf]。成功時は 204。
+        削除した stream の未確認 SET は破棄し、件数を監査イベントに残す [D]。
+        外部連携アプリが受信義務（ADR-006 D6-26。K6-3 の決裁次第）を負う場合、削除は連携契約上の義務違反の兆候として運用に通知する [D]。
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      parameters:
+        - $ref: '#/components/parameters/StreamIdQueryRequired'
+      responses:
+        '204':
+          description: 削除した
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ssf/status:
+    get:
+      tags: [stream-management]
+      operationId: readStreamStatus
+      summary: stream 状態の読取り（SSF §8.1.2.1）
+      description: |
+        未認証の要求には 401 を返さなければならない（MUST）。存在しない stream には 404 を返さなければならない（MUST）[N][^ssf]。
+      security:
+        - ssfOAuth: [core.ssf_stream.read]
+          receiverMtls: []
+        - ssfOAuth: [core.ssf_stream.read]
+          dpopProof: []
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      parameters:
+        - $ref: '#/components/parameters/StreamIdQueryRequired'
+      responses:
+        '200':
+          description: stream の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamStatus'
+              examples:
+                paused:
+                  summary: 保守で一時停止
+                  value:
+                    stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+                    status: paused
+                    reason: SYSTEM_DOWN_FOR_MAINTENANCE
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [stream-management]
+      operationId: updateStreamStatus
+      summary: stream 状態の更新（SSF §8.1.2.2）
+      description: |
+        受信者は stream を enabled・paused・disabled に変えられる [N][^ssf]。
+        paused の間、本基盤は送信せず SET を保持し、enabled に戻ったら送る（SHOULD の適用）。保持は R_ret まで [N][^ssf][D]。
+        disabled の間は送信してはならず（MUST NOT）、保持もしない（保持しないことは §8.1.2.1 の規範語のない記述）[N][^ssf]。判断を保留する場合は 202 を返さなければならない（MUST）[N][^ssf]。
+        状態の変更は監査イベントに残す。受信義務を負う外部連携アプリ（ADR-006 D6-26）が disabled にした場合は運用に通知する [D]。
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamStatusUpdateRequest'
+            examples:
+              pause:
+                summary: 受信者の保守による一時停止
+                value:
+                  stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+                  status: paused
+                  reason: receiver maintenance
+      responses:
+        '200':
+          description: 更新後の状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamStatus'
+        '202':
+          description: 受理したが未処理（SSF §8.1.2.2 Table 7）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-negative-examples:
+        - id: NEG-STS-01
+          input: '`status` に `stopped` など SSF の 3 値以外を指定する'
+          expected: 400
+          reason: status は enabled・paused・disabled のいずれかでなければならない（MUST）[N][^ssf]（§8.1.2.1）
+
+  /ssf/subjects/add:
+    post:
+      tags: [stream-management]
+      operationId: addSubject
+      summary: stream への主体の追加（SSF §8.1.3.2）
+      description: |
+        主体は complex subject で指定し、`tenant` メンバーを必須とする（本 profile の追加）[D]。
+        `tenant` だけを指定すると、SSF の主体照合規則（未定義の欄は一致と見なす）により、そのテナントの全主体のイベントが対象になる [N][^ssf]（§8.1.3.1）。
+
+        profile の追加:
+        - 受信者が trust agreement・連携契約・テナント管理者の同意で認められていないテナントを指定した場合は 403 [D]。
+        - 認められたテナント内の個別の利用者が存在しない場合も 200 を返す。SSF §8.1.3.2 Table 8 は認識できない主体に 404 を返すか黙って 200 を返すことを許し、
+          §9.1 は add subject の誤り応答の条件を慎重に評価すべき（SHOULD）とする [N][^ssf]。主体の存在の推測を防ぐため 200 を選ぶ [D]。
+          §9.1 は成功応答をイベントが届く約束と見なしてはならない（MUST NOT）とする。同節の本文は成功応答を 204 と書き §8.1.3.2 の 200 と食い違うため、本 profile は 200 に読み替える [N][^ssf][D]。
+        - `verified` は省略時 true と見なされる（SHOULD）[N][^ssf]。本基盤は false の追加を受け付けるが、送る内容は変えない [D]。
+      x-contract-tier: GA
+      x-requirements: [G-118, R-112]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSubjectRequest'
+            examples:
+              wholeTenant:
+                $ref: '#/components/examples/AddSubjectTenant'
+      responses:
+        '200':
+          description: 追加した（または黙って無視した）。本文は空
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-negative-examples:
+        - id: NEG-SUB-01
+          input: テナント T1 とだけ trust agreement を結んだ受信者が、tenant=T2 の complex subject を追加する
+          expected: 403。T2 のイベントは送られない
+          reason: cross-tenant の情報収集の防止（SSF §9.2 の SHOULD の適用、DL-80 の cross-tenant 負例）[N][^ssf][D]
+        - id: NEG-SUB-02
+          input: '`tenant` を含まない単純主体（format=email）を追加する'
+          expected: 400
+          reason: 本 profile は主体にテナント文脈を必須とする（critical_subject_members=tenant）[D]
+        - id: NEG-SUB-03
+          input: 認められたテナント内の存在しない利用者を、complex subject の user（iss_sub）と tenant で追加する
+          expected: 200（404 ではない）
+          reason: 主体の存在の推測を防ぐ（SSF §8.1.3.2 Table 8 が許す黙った 200、§9.1 の SHOULD の適用）[N][^ssf][D]
+
+  /ssf/subjects/remove:
+    post:
+      tags: [stream-management]
+      operationId: removeSubject
+      summary: stream からの主体の削除（SSF §8.1.3.3）
+      description: |
+        成功時は 204 [N][^ssf]。悪意ある削除への対策として、本基盤は削除後も一定時間（TBD）イベントを送り続けてよい（MAY）。
+        受信者は削除済み主体のイベントを許容し、誤りとして報告してはならない（MUST NOT）[N][^ssf]（§9.3）。
+        stream の検証用主体（stream 自身）は削除できない [N][^ssf]（§8.1.4.1）。
+      x-contract-tier: GA
+      x-requirements: [G-118]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveSubjectRequest'
+      responses:
+        '204':
+          description: 削除した
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /ssf/verify:
+    post:
+      tags: [verification]
+      operationId: requestVerification
+      summary: 検証イベントの要求（SSF §8.1.4.2）
+      description: |
+        受信者は stream 上に検証イベント（`https://schemas.openid.net/secevent/ssf/event-type/verification`）を要求できる [N][^ssf]。
+        本基盤は `state` をそのまま検証イベントに入れて返さなければならない（MUST）[N][^ssf]。成功時は 204 で、204 は送信済みを意味しない [N][^ssf]。
+        SSF は検証イベントの送信時間の SLA を公開すべき（SHOULD）とするので、本基盤は値を DL-20 で公開する（値は TBD）[N][^ssf][D]。
+        `min_verification_interval` より短い間隔の要求には 429 を返してよく、超えていない要求に 429 を返すべきでない（SHOULD NOT）[N][^ssf]（§8.1.1）。
+        本基盤は受信者からの要求がなくても、配送経路の健全性確認のために検証イベントを送ることがある（MAY）。その場合 `state` は付けない（MUST not set）[N][^ssf]。
+        SSF §8.1.4.2 Table 10 は 403 を挙げないが、本 profile は token の scope 不足に 403 を返す（profile 追加）[D]。
+      x-contract-tier: GA
+      x-requirements: [G-118, G-111]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+            examples:
+              withState:
+                summary: 相関用の state を付けた要求
+                value:
+                  stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+                  state: VGhpcyBpcyBhbiBleGFtcGxlIHN0YXRlIHZhbHVlLgo=
+      responses:
+        '204':
+          description: 受け付けた（送信済みとは限らない）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-negative-examples:
+        - id: NEG-VER-01
+          input: 受信者が min_verification_interval 未満の間隔で検証を繰り返し要求する
+          expected: 429（Retry-After 付き）
+          reason: SSF §8.1.1 の MAY
+        - id: NEG-VER-02
+          input: 受信した検証イベントの `state` が要求時の値と異なる
+          expected: 受信者は `invalid_state` を返し（push は 400、poll は setErrs）、stream を健全と見なさない
+          reason: SSF §8.1.4.1 の SHALL（state の確認）と SHOULD（invalid_state）[N][^ssf]
+
+  /ssf/poll/{stream_id}:
+    post:
+      tags: [poll-delivery]
+      operationId: pollSets
+      summary: SET の poll と確認（RFC 8936、SSF §6.1.2）
+      description: |
+        poll 配送の stream で本基盤が払い出す endpoint。URL は受信者ごと・stream ごとに一意でなければならない（MUST）[N][^ssf]（§6.1.2）。
+        認証は管理 API と同じ方式を使う（SSF §7.1.1 の SHOULD の適用）[N][^ssf]。
+        要求は poll のみ・確認のみ（maxEvents=0）・確認と poll の 3 通り [N][^8936]（§2.4）。
+        `returnImmediately` が true でなく SET がない場合、本基盤は SET が出るか timeout（TBD）まで応答を遅らせる（SHALL）[N][^8936]（§2.5）。
+        確認（`ack`）された SET は保持しない。未確認の SET は再配送間隔（TBD）の後に再び返す [N][^8936][D]。
+        無効な poll 要求には 400 を返し、本文は定めない（RFC 8936 §2.5.1）[N][^8936]。
+      security:
+        - ssfOAuth: [core.ssf_events.poll]
+          receiverMtls: []
+        - ssfOAuth: [core.ssf_events.poll]
+          dpopProof: []
+      x-contract-tier: GA
+      x-requirements: [G-118, R-112, R-143]
+      parameters:
+        - name: stream_id
+          in: path
+          required: true
+          description: 対象 stream の stream_id（Transmitter が払い出した値）
+          schema:
+            $ref: '#/components/schemas/StreamId'
+        - name: Content-Language
+          in: header
+          required: false
+          description: 要求に setErrs を含める場合、受信者は誤り説明の言語を示す Content-Language を付ける（RFC 8936 §2.6。規範語ではない小文字の must）[N][^8936]
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollRequest'
+            examples:
+              initial:
+                summary: 初回の poll（確認なし）
+                value:
+                  returnImmediately: true
+              ackAndPoll:
+                summary: 確認と poll（1 件は検証失敗を報告）
+                value:
+                  ack: [3d0c3cf797584bd193bd0fb1bd4e7d30]
+                  setErrs:
+                    4d3559ec67504aaba65d40b0363faad8:
+                      err: authentication_failed
+                      description: The SET could not be authenticated
+                  returnImmediately: false
+              ackOnly:
+                summary: 確認のみ
+                value:
+                  ack: [4d3559ec67504aaba65d40b0363faad8]
+                  maxEvents: 0
+                  returnImmediately: true
+      responses:
+        '200':
+          description: 0 件以上の SET（初回送信と未確認の再送を含む）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+              examples:
+                twoSets:
+                  summary: 2 件の SET（キーは各 SET の jti と一致。署名部はダミー）
+                  value:
+                    sets:
+                      4d3559ec67504aaba65d40b0363faad8: eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6InNldC0yMDI2LTEwIn0.eyJqdGkiOiI0ZDM1NTllYzY3NTA0YWFiYTY1ZDQwYjAzNjNmYWFkOCIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0IiwiYXVkIjoiY184ZDJmNjFhMCIsImlhdCI6MTc5MjAzNjgwMCwidHhuIjoicl81ZjBlMmQxYyIsInN1Yl9pZCI6eyJmb3JtYXQiOiJjb21wbGV4IiwidGVuYW50Ijp7ImZvcm1hdCI6Im9wYXF1ZSIsImlkIjoidF8wMUo5WjNLN1EyIn0sInVzZXIiOnsiZm9ybWF0IjoiaXNzX3N1YiIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0Iiwic3ViIjoiMjQ4Mjg5NzYxMDAxIn0sInNlc3Npb24iOnsiZm9ybWF0Ijoib3BhcXVlIiwiaWQiOiJzXzdLcDJReCJ9fSwiZXZlbnRzIjp7Imh0dHBzOi8vc2NoZW1hcy5vcGVuaWQubmV0L3NlY2V2ZW50L2NhZXAvZXZlbnQtdHlwZS9zZXNzaW9uLXJldm9rZWQiOnsiZXZlbnRfdGltZXN0YW1wIjoxNzkyMDM2Nzk1fX19.c2lnbmF0dXJl
+                      3d0c3cf797584bd193bd0fb1bd4e7d30: eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6InNldC0yMDI2LTEwIn0.eyJqdGkiOiIzZDBjM2NmNzk3NTg0YmQxOTNiZDBmYjFiZDRlN2QzMCIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0IiwiYXVkIjoiY184ZDJmNjFhMCIsImlhdCI6MTc5MjAzNjgwMSwidHhuIjoicl81ZjBlMmQxYyIsInN1Yl9pZCI6eyJmb3JtYXQiOiJjb21wbGV4IiwidGVuYW50Ijp7ImZvcm1hdCI6Im9wYXF1ZSIsImlkIjoidF8wMUo5WjNLN1EyIn0sInVzZXIiOnsiZm9ybWF0IjoiaXNzX3N1YiIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0Iiwic3ViIjoiMjQ4Mjg5NzYxMDAxIn19LCJldmVudHMiOnsiaHR0cHM6Ly9zY2hlbWFzLm9wZW5pZC5uZXQvc2VjZXZlbnQvcmlzYy9ldmVudC10eXBlL2FjY291bnQtZGlzYWJsZWQiOnt9fX0.c2lnbmF0dXJl
+                    moreAvailable: false
+                empty:
+                  summary: SET がない
+                  value:
+                    sets: {}
+        '400':
+          description: 無効な poll 要求。本文は定めず、受信者は本文を無視すべき（RFC 8936 §2.5.1）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-negative-examples:
+        - id: NEG-POL-01
+          input: 受信者 A が受信者 B の stream の poll URL を自分の token で呼ぶ
+          expected: 403 または 400（情報開示を避けるため 400 でもよい）。SET は返さない
+          reason: poll endpoint は受信者ごと・stream ごとに一意で、管理 API と同じ認可で保護する [N][^ssf][^8936]（RFC 8936 §2.5.1 は 400 への一本化を許す）
+        - id: NEG-POL-02
+          input: 受信者が `setErrs` で「処理に失敗した」（例 アプリ内 session が見つからない）を報告する
+          expected: 本基盤はその SET を確認済みとして扱わず、運用上の誤り報告としてだけ記録する。受信者側の義務違反（RFC 8936 §2 の SHALL NOT）
+          reason: setErrs は解析・検証の誤り以外に使わない（SHALL NOT）[N][^8936]
+
+  /ssf-receiver/{binding_id}/events:
+    servers:
+      - url: https://ssf-rx.{id_domain}
+        description: Receiver（C16）の push 受信 host。Transmitter 側の管理 API と host を分ける [D]
+        variables:
+          id_domain:
+            default: id.example.net
+            description: 自社所有ドメイン（仮置き）
+    post:
+      tags: [receiver]
+      operationId: receivePushedSet
+      summary: 顧客 IdP・外部 IdP からの SET の push 受信（RFC 8935、SSF §6.1.1）
+      description: |
+        基盤が Receiver になる endpoint（ADR-006 D6-23）。`binding_id` は顧客 IdP とテナント文脈の結合ごとに一意 [D]。
+        要求の Content-Type は `application/secevent+jwt`、Accept は `application/json` でなければならない（MUST）[N][^8935]（§2.1）。
+        Accept は OpenAPI 3.1 の header parameter では表せない（無視される）ため本文で定める。
+
+        処理順（x-ssf-receiver-profile.receiver_authentication の順に検査する）:
+        1. HTTP 認証（binding ごとに本基盤が払い出し `authorization_header` に設定した値）。不一致は 401（RFC 8935 の SET 誤りではなく HTTP の誤り）[D]
+        2. SET の解析、`typ`、署名（binding に登録した issuer の jwks_uri の鍵）、`iss`、`aud`、`sub`/`exp` の不在、tenant の一致 [N][^ssf][^8935][D]
+        3. (iss, jti) の重複確認と耐久記録への書込 [D]
+        4. 202（本文なし。RFC 8935 §2.2 の SHALL / MUST）[N][^8935]
+        5. 非同期に強制処理（DL-79 の受信義務、ADR-006 D6-23 の表）。D_in を計測 [D]
+
+        検証に失敗した SET は 400 と `err` を返し、処理しない（RFC 8935 §2.3 の SHALL、ADR-006 D6-23）[N][^8935][D]。
+        400 の応答には Content-Language を付けなければならない（MUST）。Accept-Language がないか対応する言語がなければ、英語話者が理解できる説明で返さなければならない（MUST）[N][^8935]（§2.3）。
+      security:
+        - pushBearer: []
+      x-contract-tier: GA
+      x-requirements: [R-143, R-112, R-191, G-111, G-118, G-121]
+      parameters:
+        - name: binding_id
+          in: path
+          required: true
+          description: 顧客 IdP 1 つとテナント文脈 1 つの結合の識別子（不透明な文字列）
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9_-]{16,64}$'
+          example: b_9Qm2xT7rK4pL8vN3
+        - name: Accept-Language
+          in: header
+          required: false
+          description: 誤り説明の言語の希望（RFC 8935 §2.1 の MAY）
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/secevent+jwt:
+            schema:
+              $ref: '#/components/schemas/SetCompactJws'
+            examples:
+              sessionRevoked:
+                summary: CAEP session-revoked の SET（compact JWS。payload は DL-79 のルート基準に適合。署名部はダミーで検証は通らない）
+                value: eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlkcC1rZXktMSJ9.eyJqdGkiOiI3YzJlOWE0MWIwZDM0ZjZlOGExNWMzZDJlMWYwYTliOCIsImlzcyI6Imh0dHBzOi8vaWRwLmN1c3RvbWVyLWEuZXhhbXBsZS5vcmciLCJhdWQiOiJodHRwczovL3NzZi1yeC5pZC5leGFtcGxlLm5ldCIsImlhdCI6MTc5MjAzNjkwMCwic3ViX2lkIjp7ImZvcm1hdCI6Imlzc19zdWIiLCJpc3MiOiJodHRwczovL2lkcC5jdXN0b21lci1hLmV4YW1wbGUub3JnIiwic3ViIjoidS01NTIxIn0sImV2ZW50cyI6eyJodHRwczovL3NjaGVtYXMub3BlbmlkLm5ldC9zZWNldmVudC9jYWVwL2V2ZW50LXR5cGUvc2Vzc2lvbi1yZXZva2VkIjp7ImV2ZW50X3RpbWVzdGFtcCI6MTc5MjAzNjg5MH19fQ.c2lnbmF0dXJl
+      responses:
+        '202':
+          description: SET を検証し記録した（本文は空でなければならない）。強制処理は非同期
+        '400':
+          description: SET の解析・検証・認証の誤り（RFC 8935 §2.3）
+          headers:
+            Content-Language:
+              required: true
+              description: 誤り説明の言語（RFC 8935 §2.3 の MUST）
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetDeliveryError'
+              examples:
+                wrongIssuer:
+                  summary: binding に登録されていない issuer
+                  value:
+                    err: invalid_issuer
+                    description: Issuer is not registered for this binding
+                tenantMismatch:
+                  summary: complex subject の tenant が binding のテナント文脈と異なる
+                  value:
+                    err: access_denied
+                    description: Subject tenant does not match this binding
+        '401':
+          description: HTTP 認証の失敗（authorization_header の不一致・欠落）
+          headers:
+            WWW-Authenticate:
+              required: true
+              description: Bearer を示す [D]
+              schema:
+                type: string
+        '413':
+          description: 要求が大きすぎる（上限 TBD）
+        '415':
+          description: Content-Type が application/secevent+jwt でない
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          description: 一時的に受信できない。Retry-After を付ける。送信側の再送（RFC 8935 §2 の回復可能な誤り）を期待するが、依存はしない
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+      x-negative-examples:
+        - id: NEG-RCV-01
+          input: header の `typ` が `JWT`、または `typ` がない SET（ID Token や access token の流用）
+          expected: 400 invalid_request。処理しない
+          reason: SSF §4.1.1 の MUST（明示的な型付け）と §4.1.3（他の JWT との区別）[N][^ssf]
+        - id: NEG-RCV-02
+          input: '`alg: none` または署名検証に失敗する SET'
+          expected: 400 invalid_key または authentication_failed。処理しない
+          reason: 検証できない SET は処理しない（ADR-006 D6-23）。DL-80 の alg 混同負例 [D]
+        - id: NEG-RCV-03
+          input: 別テナントの binding に登録された顧客 IdP の鍵で署名し、`iss` もその IdP の SET を、この binding へ送る
+          expected: 400 invalid_issuer。処理しない
+          reason: 送信者の iss と鍵の結合を binding ごとに検証する（ADR-006 D6-23）。顧客 IdP 侵害（ATK-04）の効果をそのテナント文脈に閉じる [D]
+        - id: NEG-RCV-04
+          input: '`aud` が本基盤の受信者識別子を含まない SET'
+          expected: 400 invalid_audience
+          reason: RFC 8935 §2 の SHALL（受信者が意図された audience であること）[N][^8935]
+        - id: NEG-RCV-05
+          input: '`sub` claim または `exp` claim を含む SET'
+          expected: 400 invalid_request
+          reason: SSF §4.1.2・§4.1.7 の MUST NOT [N][^ssf]
+        - id: NEG-RCV-06
+          input: 同じ (iss, jti) の SET を 2 回受ける
+          expected: 2 回とも 202。強制処理は 1 回だけ
+          reason: RFC 8935 §2 の MUST（再送には初回と同じ応答）[N][^8935]。冪等処理 [D]
+        - id: NEG-RCV-07
+          input: complex subject の tenant が binding のテナント文脈と異なる SET
+          expected: 400 access_denied。他テナントの所属・session に影響しない
+          reason: 受信の効果は IdP に結合したテナント文脈に限る（ADR-006 D6-23、identity-lifecycle M-03）[D]
+        - id: NEG-RCV-08
+          input: authorization_header の値が一致しない要求（SET 自体は正しく署名）
+          expected: 401。SET の検証処理に進まない
+          reason: HTTP 層の受信者認証（本 profile）[D]
+        - id: NEG-RCV-09
+          input: 検証イベントの `state` が本基盤の要求した値と異なる
+          expected: 400 invalid_state。stream を健全と見なさない
+          reason: SSF §8.1.4.1 の SHOULD [N][^ssf]
+
+webhooks:
+  setPushDelivery:
+    post:
+      tags: [stream-management]
+      operationId: pushSetToReceiver
+      summary: 本基盤（Transmitter）から受信者への SET の push（RFC 8935、SSF §6.1.1）
+      description: |
+        本基盤が、push 配送の stream の `delivery.endpoint_url` へ送る要求の契約。受信者が実装する。
+        Content-Type は `application/secevent+jwt`、Accept は `application/json`（MUST）[N][^8935]（§2.1）。
+        OpenAPI 3.1 は名前が Accept・Content-Type・Authorization の header parameter を無視するので、Accept は本文で、Authorization は security で表す。
+        受信者が `authorization_header` を与えた場合、本基盤はその値をすべての要求に付けなければならない（MUST）[N][^ssf]（§6.1.1）。
+
+        受信者に求める義務（本 profile。外部連携アプリの受信義務の段階は ADR-006 D6-26）:
+        - RFC 8935 §2 の検証（解析・真正性・aud・iss・送信者）を行う（SHALL）[N][^8935]。署名鍵は本基盤の `jwks_uri` から得る [N][^ssf]（§4.1.4）
+        - `iss` が stream 構成の `iss` と構成取得元の issuer に一致することを確認する（MUST）[N][^ssf]（§4.1.6）
+        - critical_subject_members の `tenant` を解釈する（MUST）[N][^ssf]（§7.1）
+        - 検証と記録の後に 202 を返し、処理は非同期にする（SHOULD）。同じ SET の再送には同じ応答を返す（MUST）[N][^8935]
+        - 理解できない追加フィールドは無視する（MUST）[N][^ssf]（§4.2.3）
+        - 受信後に何秒以内に何をするか（アプリ内 session の終了など）は DL-79 と ADR-006 D6-26 の受信プロファイルで定める（SSF §4.1.5 が配備に委ねる）[N][^ssf][D]
+
+        再送・保持・順序は `x-ssf-transmitter-delivery` に従う。
+      x-contract-tier: GA
+      x-requirements: [R-112, G-118, G-138]
+      security:
+        - receiverSuppliedAuthorization: []
+        - {}
+      parameters:
+        - name: Accept-Language
+          in: header
+          required: false
+          description: 誤り説明の言語の希望（RFC 8935 §2.1 の MAY）。本基盤は ja, en;q=0.5 を送る [D]
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/secevent+jwt:
+            schema:
+              $ref: '#/components/schemas/SetCompactJws'
+            examples:
+              sessionRevoked:
+                summary: CAEP session-revoked（payload は x-ssf-profile.transmitter.x-example-set-payload-session-revoked と同じ。署名部はダミーで検証は通らない。alg は例示）
+                value: eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6InNldC0yMDI2LTEwIn0.eyJqdGkiOiIwYjZhN2MxZTVkOWY0YTJiOGMzZDFlMGY5YThiN2M2ZCIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0IiwiYXVkIjoiY184ZDJmNjFhMCIsImlhdCI6MTc5MjAzNjgwMCwidHhuIjoicl81ZjBlMmQxYyIsInN1Yl9pZCI6eyJmb3JtYXQiOiJjb21wbGV4IiwidGVuYW50Ijp7ImZvcm1hdCI6Im9wYXF1ZSIsImlkIjoidF8wMUo5WjNLN1EyIn0sInVzZXIiOnsiZm9ybWF0IjoiaXNzX3N1YiIsImlzcyI6Imh0dHBzOi8vc3NmLmlkLmV4YW1wbGUubmV0Iiwic3ViIjoiMjQ4Mjg5NzYxMDAxIn0sInNlc3Npb24iOnsiZm9ybWF0Ijoib3BhcXVlIiwiaWQiOiJzXzdLcDJReCJ9fSwiZXZlbnRzIjp7Imh0dHBzOi8vc2NoZW1hcy5vcGVuaWQubmV0L3NlY2V2ZW50L2NhZXAvZXZlbnQtdHlwZS9zZXNzaW9uLXJldm9rZWQiOnsiZXZlbnRfdGltZXN0YW1wIjoxNzkyMDM2Nzk1fX19.c2lnbmF0dXJl
+      responses:
+        '202':
+          description: 受信者が SET を検証し記録した。本文は空
+        '400':
+          description: 受信者が SET の誤りを返した。`err` に応じて再送の可否を判断する（x-ssf-transmitter-delivery.push_retry）
+          headers:
+            Content-Language:
+              required: true
+              description: 誤り説明の言語（RFC 8935 §2.3 の MUST）
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetDeliveryError'
+              examples:
+                revokedKey:
+                  summary: 鍵が失効済み（再送しない）
+                  value:
+                    err: invalid_key
+                    description: Key ID set-2026-10 has been revoked.
+        '429':
+          description: 受信者の過負荷。Retry-After に従い再送する
+        '503':
+          description: 受信者の一時停止。backoff して再送する
+      x-negative-examples:
+        - id: NEG-PSH-01
+          input: 受信者が 400 invalid_request を返す
+          expected: 本基盤は再送せず dead letter に移し、運用に通知する
+          reason: RFC 8935 §4（invalid_request は再送で成功する見込みが小さい）と §2 の SHOULD NOT [N][^8935]
+        - id: NEG-PSH-02
+          input: 接続 timeout で成否不明
+          expected: 同じ jti で backoff して再送する。受信者は重複として 202 を返す
+          reason: RFC 8935 §2・§4、本 profile の unknown_outcome [N][^8935][D]
+        - id: NEG-PSH-03
+          input: 受信者が本基盤の SET を `aud` を確認せずに処理する（他の受信者宛 SET の転送を受理）
+          expected: 受信者側の契約違反。契約試験（DL-80）で不合格にする
+          reason: RFC 8935 §2 の SHALL、SSF §4.1.8 [N][^8935][^ssf]
+
+components:
+  securitySchemes:
+    ssfOAuth:
+      type: oauth2
+      description: |
+        SSF は管理 API の認証方式を定めず、配備間の合意に委ねる（§7.1.1）。本 profile は `authorization_schemes` で
+        urn:ietf:rfc:6749（OAuth 2.0）と urn:ietf:rfc:8705（mTLS）を表明する [N][^ssf]。
+        受信者は client credentials で access token を取得する。外部に渡す access token は opaque（ADR-005 D1-1）[D]。
+        sender constraint は mTLS を既定とし、CDN・WAF で end-to-end mTLS を張れない相手に限り DPoP＋nonce を許す（ADR-005 D5、NA-03）[D]。
+        scope 名は ADR-021 D21-28 の `<名前空間コード>.<型>.<action>` に従う仮名であり、名前空間台帳への登録が必要（未登録）[D]。
+        管理 API の認可は受信者を stream ID と aud に結び付けなければならない（MUST）[N][^ssf]（§8）。
+      flows:
+        clientCredentials:
+          tokenUrl: https://as.id.example.net/oauth2/token
+          scopes:
+            core.ssf_stream.manage: stream の作成・変更・削除・状態更新・主体の追加と削除・検証要求
+            core.ssf_stream.read: stream の構成と状態の読取り
+            core.ssf_events.poll: poll 配送の SET 取得と確認
+    receiverMtls:
+      type: mutualTLS
+      description: |
+        受信者 client の TLS client 証明書（RFC 8705）。access token の `cnf.x5t#S256` と照合する（ADR-005 V8）[N][^8705][D]。
+        mTLS を要求する endpoint は host 名で分ける（ADR-005 D5）[D]。
+    dpopProof:
+      type: apiKey
+      in: header
+      name: DPoP
+      description: |
+        DPoP proof（RFC 9449）。ssfOAuth と組で使い、mTLS の代わりの sender constraint とする。CDN・WAF で end-to-end mTLS を張れない受信者に限り、
+        nonce を併用して許す（ADR-005 D5、NA-03。既定の選択は K-3 で決裁）[D]。OpenAPI に DPoP の型がないため apiKey で header の存在だけを表す。
+    receiverSuppliedAuthorization:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        webhooks.setPushDelivery 用。受信者が stream 作成・更新時に与えた `authorization_header` の値をそのまま Authorization header に入れて送る。
+        与えられた場合はすべての要求に付けなければならない（MUST）[N][^ssf]（§6.1.1）。与えられない場合は付けない（security の `{}`）。
+    pushBearer:
+      type: http
+      scheme: bearer
+      description: |
+        push 受信 endpoint の HTTP 認証。値は OAuth の access token ではなく、本基盤が binding ごとに生成し、
+        顧客 IdP の stream 構成の `delivery.authorization_header` に設定した不透明な秘密値である [D]。
+        SSF は受信者がこの値を与えるべき（SHOULD）とし、与えた場合 Transmitter はすべての要求に付けなければならない（MUST）[N][^ssf]（§6.1.1）。
+        SET の真正性（署名・iss・aud）の検証を置き換えない [D]。
+
+  parameters:
+    StreamIdQueryRequired:
+      name: stream_id
+      in: query
+      required: true
+      description: 対象 stream の stream_id
+      schema:
+        $ref: '#/components/schemas/StreamId'
+    StreamIdQueryOptional:
+      name: stream_id
+      in: query
+      required: false
+      description: 省略時はこの受信者の全 stream を配列で返す
+      schema:
+        $ref: '#/components/schemas/StreamId'
+
+  headers:
+    CacheControlNoStore:
+      description: 管理 API の応答を cache させない
+      schema:
+        type: string
+        const: no-store
+    RetryAfter:
+      description: 再試行までの秒数または HTTP 日付
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: 要求を解析できない、または無効（profile 追加として RFC 9457 の本文を返す。SSF は本文を定めない）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: 認可の失敗または欠落（SSF の各表の 401）
+      headers:
+        WWW-Authenticate:
+          required: true
+          description: 対応する認証方式を示す。poll endpoint では RFC 8936 §3 の SHALL [N][^8936]。管理 API でも同じく付ける [D]
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: 受信者にその操作が許されていない（trust agreement・連携契約・テナントの範囲外を含む）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: この受信者に対して該当する stream がない（他の受信者の stream の存在は明かさない）
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    TooManyRequests:
+      description: 要求が多すぎる（SSF §8.1.1 の min_verification_interval、§8.1.3 の 429）
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    StreamId:
+      type: string
+      description: |
+        Transmitter が stream 作成時に払い出す一意の識別子（MUST）。RFC 3986 §2.3 の非予約文字を使うべき（SHOULD）[N][^ssf]（§8.1.1）。
+        本基盤は 32 桁の 16 進数（不透明な乱数）で払い出す [D]。受信者は形式に依存してはならない [D]。
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9._~-]+$'
+      examples: [f67e39a0a4d34d56b3aa1bc4cff0069f]
+
+    EventTypeUri:
+      type: string
+      format: uri
+      description: イベント種別の URI。v1 で本基盤が送受信する 7 種は x-ssf-profile.transmitter.events_supported_v1
+      examples:
+        - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+
+    AuthorizationScheme:
+      type: object
+      description: SSF §7.1.1 の authorization scheme
+      required: [spec_urn]
+      properties:
+        spec_urn:
+          type: string
+          description: 使う認証・認可プロトコルの仕様を表す URN（REQUIRED）
+      additionalProperties: true
+
+    TransmitterConfiguration:
+      type: object
+      description: |
+        SSF §7.1 の Transmitter Configuration Metadata。要素 0 個の配列は応答から省かなければならない（MUST）[N][^ssf]（§7.2.3）。
+        その他の項目を返してもよい（MAY）ので、受信者は未知の項目を無視する [N][^ssf]。
+      required: [issuer]
+      properties:
+        spec_version:
+          type: string
+          description: 実装する仕様の版。本基盤は `1_0` を返す（省略時は 1_0-ID1 と見なされる）
+          examples: ['1_0']
+        issuer:
+          type: string
+          format: uri
+          pattern: '^https://[^?#]+$'
+          description: https スキームで query・fragment を持たない Issuer Identifier（REQUIRED）。SET の `iss` と同一（MUST）
+        jwks_uri:
+          type: string
+          format: uri
+          pattern: '^https://'
+          description: SET 署名鍵の JWK Set（署名する場合は MUST）。本基盤は署名するので必ず返す [D]
+        delivery_methods_supported:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [urn:ietf:rfc:8935, urn:ietf:rfc:8936]
+        configuration_endpoint:
+          type: string
+          format: uri
+          pattern: '^https://'
+        status_endpoint:
+          type: string
+          format: uri
+          pattern: '^https://'
+        add_subject_endpoint:
+          type: string
+          format: uri
+          pattern: '^https://'
+        remove_subject_endpoint:
+          type: string
+          format: uri
+          pattern: '^https://'
+        verification_endpoint:
+          type: string
+          format: uri
+          pattern: '^https://'
+        critical_subject_members:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        authorization_schemes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AuthorizationScheme'
+        default_subjects:
+          type: string
+          enum: [ALL, NONE]
+      additionalProperties: true
+
+    SubjectIdentifier:
+      type: object
+      description: |
+        RFC 9493 の Subject Identifier、または SSF §3.5 の追加形式（jwt_id、saml_assertion_id、ip-addresses）。
+        `format` で形式を表す [N][^9493][^ssf]。形式ごとの必須メンバーの検証は DL-79 が正本。
+      required: [format]
+      properties:
+        format:
+          type: string
+          not:
+            const: complex
+      additionalProperties: true
+      examples:
+        - format: iss_sub
+          iss: https://ssf.id.example.net
+          sub: '248289761001'
+        - format: opaque
+          id: f67e39a0a4d34d56b3aa1bc4cff0069f
+
+    ComplexSubject:
+      type: object
+      description: |
+        SSF §3.3 の complex subject。全メンバーは同じ主体の属性でなければならず、全体で 1 つの主体を指さなければならない（MUST）[N][^ssf]。
+        各メンバー名は高々 1 回。追加のメンバー名を使ってもよい（MAY）[N][^ssf]。
+        format のほかに 1 つ以上の単純主体メンバーを持つ（§3.3）ため minProperties を 2 とする [N][^ssf]。
+      required: [format]
+      minProperties: 2
+      properties:
+        format:
+          const: complex
+        user:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        device:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        session:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        application:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        tenant:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        org_unit:
+          $ref: '#/components/schemas/SubjectIdentifier'
+        group:
+          $ref: '#/components/schemas/SubjectIdentifier'
+      additionalProperties:
+        $ref: '#/components/schemas/SubjectIdentifier'
+
+    TenantScopedSubject:
+      description: |
+        本 profile が stream の主体の追加・削除で受け付ける形。complex subject で `tenant` を必須にする（profile の追加）[D]。
+        tenant の値は ADR-021 の tid を `opaque` 形式で表す [D]。
+      allOf:
+        - $ref: '#/components/schemas/ComplexSubject'
+        - type: object
+          required: [tenant]
+          properties:
+            tenant:
+              type: object
+              required: [format, id]
+              properties:
+                format:
+                  const: opaque
+                id:
+                  type: string
+                  minLength: 1
+
+    PushDelivery:
+      type: object
+      description: SSF §6.1.1（RFC 8935）
+      required: [method, endpoint_url]
+      properties:
+        method:
+          const: urn:ietf:rfc:8935
+        endpoint_url:
+          type: string
+          format: uri
+          pattern: '^https://'
+          description: 受信者が設定する。stream ごとに一意が推奨（RECOMMENDED）。本基盤は登録済み host に限る [D]
+        authorization_header:
+          type: string
+          writeOnly: true
+          description: 受信者が与えた場合、Transmitter はすべての要求に付けなければならない（MUST）。応答では返さない [D]
+      additionalProperties: true
+
+    PollDelivery:
+      type: object
+      description: SSF §6.1.2（RFC 8936）。`endpoint_url` は Transmitter が払い出す
+      required: [method]
+      properties:
+        method:
+          const: urn:ietf:rfc:8936
+        endpoint_url:
+          type: string
+          format: uri
+          pattern: '^https://'
+          description: 受信者ごと・stream ごとに一意（MUST）。作成要求では省略し、応答で本基盤が返す
+      additionalProperties: true
+
+    Delivery:
+      description: 配送方式。`method` で判別する
+      oneOf:
+        - $ref: '#/components/schemas/PushDelivery'
+        - $ref: '#/components/schemas/PollDelivery'
+      discriminator:
+        propertyName: method
+        mapping:
+          urn:ietf:rfc:8935: '#/components/schemas/PushDelivery'
+          urn:ietf:rfc:8936: '#/components/schemas/PollDelivery'
+
+    StreamConfiguration:
+      type: object
+      description: SSF §8.1.1 の stream 構成（応答）
+      required: [stream_id, iss, aud, events_delivered, delivery]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        iss:
+          type: string
+          format: uri
+          pattern: '^https://[^?#]+$'
+        aud:
+          description: 受信者を表す audience。本基盤は受信者の client_id を単一文字列で返す [D]。更新できない
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              items:
+                type: string
+        events_supported:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        events_requested:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        events_delivered:
+          type: array
+          description: Transmitter が stream に含めなければならないイベント（MUST）。events_supported と events_requested の共通部分の部分集合
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        delivery:
+          $ref: '#/components/schemas/Delivery'
+        min_verification_interval:
+          type: integer
+          minimum: 0
+          description: 検証要求の最小間隔（秒）。値は TBD（DL-20）
+        description:
+          type: string
+          description: 受信者が与える説明。本基盤は上限（TBD）を超える部分を切り詰めてよい
+        inactivity_timeout:
+          type: integer
+          minimum: 1
+          description: 無活動による停止までの秒数（RFC 6749 の expires_in と同じ構文）。値は TBD
+      additionalProperties: true
+
+    StreamCreateRequest:
+      type: object
+      description: SSF §8.1.1.1 の作成要求。受信者が与える項目だけを含めてよい
+      properties:
+        events_requested:
+          type: array
+          description: 空配列にすべきでない（SHOULD NOT）[N][^ssf]（§8.1.1）。SSF は空配列を誤りとしないので、本基盤は受理し events_delivered を空にする [D]
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        delivery:
+          $ref: '#/components/schemas/Delivery'
+        description:
+          type: string
+      additionalProperties: true
+
+    StreamUpdateRequest:
+      type: object
+      description: SSF §8.1.1.3 の部分更新要求
+      required: [stream_id]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        events_requested:
+          type: array
+          description: 空配列にすべきでない（SHOULD NOT）[N][^ssf]（§8.1.1）。SSF は空配列を誤りとしないので、本基盤は受理し events_delivered を空にする [D]
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        delivery:
+          $ref: '#/components/schemas/Delivery'
+        description:
+          type: string
+        events_delivered:
+          type: array
+          description: 含める場合は更新前の本基盤の値と一致しなければならない（MUST）
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+      additionalProperties: true
+
+    StreamReplaceRequest:
+      type: object
+      description: SSF §8.1.1.4 の置換要求。欠けた受信者側の項目は削除要求と解釈する（MUST）
+      required: [stream_id]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        events_requested:
+          type: array
+          description: 空配列にすべきでない（SHOULD NOT）[N][^ssf]（§8.1.1）。SSF は空配列を誤りとしないので、本基盤は受理し events_delivered を空にする [D]
+          items:
+            $ref: '#/components/schemas/EventTypeUri'
+        delivery:
+          $ref: '#/components/schemas/Delivery'
+        description:
+          type: string
+      additionalProperties: true
+
+    StreamStatusValue:
+      type: string
+      enum: [enabled, paused, disabled]
+      description: |
+        enabled: 構成した配送方式で送信しなければならない（MUST）。
+        paused: 送信してはならない（MUST NOT）。保持して enabled で送るべき（SHOULD）。
+        disabled: 送信せず、保持もしない [N][^ssf]（§8.1.2.1）
+
+    StreamStatus:
+      type: object
+      required: [stream_id, status]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        status:
+          $ref: '#/components/schemas/StreamStatusValue'
+        reason:
+          type: string
+      additionalProperties: true
+
+    StreamStatusUpdateRequest:
+      type: object
+      required: [stream_id, status]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        status:
+          $ref: '#/components/schemas/StreamStatusValue'
+        reason:
+          type: string
+      additionalProperties: true
+
+    AddSubjectRequest:
+      type: object
+      required: [stream_id, subject]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        subject:
+          $ref: '#/components/schemas/TenantScopedSubject'
+        verified:
+          type: boolean
+          description: 受信者が主体を確認したか。省略時は true と見なされる（SHOULD）
+      additionalProperties: true
+
+    RemoveSubjectRequest:
+      type: object
+      required: [stream_id, subject]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        subject:
+          $ref: '#/components/schemas/TenantScopedSubject'
+      additionalProperties: true
+
+    VerificationRequest:
+      type: object
+      required: [stream_id]
+      properties:
+        stream_id:
+          $ref: '#/components/schemas/StreamId'
+        state:
+          type: string
+          description: 本基盤が検証イベントにそのまま入れて返す任意の文字列（MUST echo）
+      additionalProperties: true
+
+    SetErrorCode:
+      type: string
+      description: |
+        IANA "Security Event Token Error Codes" registry の値。RFC 8935 §2.4 の初期 6 種と SSF §11 の invalid_state を列挙する。
+        registry は拡張可能なので、受信した未知の値も受け付ける [N][^8935][^ssf]。
+      anyOf:
+        - enum:
+            - invalid_request
+            - invalid_key
+            - invalid_issuer
+            - invalid_audience
+            - authentication_failed
+            - access_denied
+            - invalid_state
+        - type: string
+
+    SetDeliveryError:
+      type: object
+      description: RFC 8935 §2.3 の誤り応答（RFC 8936 §2.6 の setErrs の値も同じ形）
+      required: [err, description]
+      properties:
+        err:
+          $ref: '#/components/schemas/SetErrorCode'
+        description:
+          type: string
+          description: 人が読む説明。個人情報・内部構成を含めない [D]
+      additionalProperties: true
+
+    PollRequest:
+      type: object
+      description: RFC 8936 §2.2 の poll 要求
+      properties:
+        maxEvents:
+          type: integer
+          minimum: 0
+          description: 返す未確認 SET の上限。0 は確認のみ
+        returnImmediately:
+          type: boolean
+          default: false
+          description: true なら SET がなくても直ちに応答する（short poll）
+        ack:
+          type: array
+          description: 正しく受信した SET の jti
+          items:
+            type: string
+        setErrs:
+          type: object
+          description: 無効だった SET の jti をキー、誤りを値とする
+          additionalProperties:
+            $ref: '#/components/schemas/SetDeliveryError'
+      additionalProperties: true
+
+    PollResponse:
+      type: object
+      description: RFC 8936 §2.3 の poll 応答
+      required: [sets]
+      properties:
+        sets:
+          type: object
+          description: jti をキー、SET（compact JWS）を値とする。0 件なら空オブジェクト（SHALL）
+          additionalProperties:
+            $ref: '#/components/schemas/SetCompactJws'
+        moreAvailable:
+          type: boolean
+          default: false
+      additionalProperties: false
+
+    SetCompactJws:
+      type: string
+      description: |
+        SET（RFC 8417）の JWS compact serialization。header の typ は secevent+jwt（SSF §4.1.1 の MUST）。
+        payload の検証は DL-79（11_contracts/schemas/ssf-caep-set.schema.json）が正本。本契約は形だけを定める。
+      pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
+
+    Problem:
+      type: object
+      description: |
+        RFC 9457 の problem details（profile 追加。SSF は管理 API の誤り本文を定めないため、ADR-022 D-2 の GA エラー形式を使う）。
+        DL-71（common.schema.json）の誤り形式と揃える申し送りがある [D]。
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+      additionalProperties: true
+
+  examples:
+    TransmitterConfiguration:
+      summary: 本基盤の Transmitter Configuration（単一 issuer の場合の例。issuer の粒度は未決）
+      value:
+        spec_version: '1_0'
+        issuer: https://ssf.id.example.net
+        jwks_uri: https://ssf.id.example.net/jwks.json
+        delivery_methods_supported: [urn:ietf:rfc:8935, urn:ietf:rfc:8936]
+        configuration_endpoint: https://ssf.id.example.net/ssf/stream
+        status_endpoint: https://ssf.id.example.net/ssf/status
+        add_subject_endpoint: https://ssf.id.example.net/ssf/subjects/add
+        remove_subject_endpoint: https://ssf.id.example.net/ssf/subjects/remove
+        verification_endpoint: https://ssf.id.example.net/ssf/verify
+        critical_subject_members: [tenant]
+        authorization_schemes:
+          - spec_urn: urn:ietf:rfc:6749
+          - spec_urn: urn:ietf:rfc:8705
+        default_subjects: NONE
+    StreamCreatePushRequest:
+      summary: 顧客 SIEM が push の stream を作る
+      value:
+        delivery:
+          method: urn:ietf:rfc:8935
+          endpoint_url: https://siem.customer-a.example.org/ssf/events
+          authorization_header: Bearer q1w2e3r4t5y6u7i8o9p0
+        events_requested:
+          - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+          - https://schemas.openid.net/secevent/caep/event-type/credential-change
+          - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+          - https://schemas.openid.net/secevent/risc/event-type/credential-compromise
+        description: customer-a SIEM
+    StreamCreatePollRequest:
+      summary: 外部連携アプリが poll の stream を作る（delivery 省略で poll）
+      value:
+        events_requested:
+          - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+          - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+        description: partner-app-42
+    StreamConfigurationPush:
+      summary: 作成された push の stream
+      value:
+        stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+        iss: https://ssf.id.example.net
+        aud: c_8d2f61a0
+        delivery:
+          method: urn:ietf:rfc:8935
+          endpoint_url: https://siem.customer-a.example.org/ssf/events
+        events_supported:
+          - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+          - https://schemas.openid.net/secevent/caep/event-type/credential-change
+          - https://schemas.openid.net/secevent/caep/event-type/token-claims-change
+          - https://schemas.openid.net/secevent/caep/event-type/assurance-level-change
+          - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+          - https://schemas.openid.net/secevent/risc/event-type/credential-compromise
+          - https://schemas.openid.net/secevent/risc/event-type/identifier-recycled
+        events_requested:
+          - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+          - https://schemas.openid.net/secevent/caep/event-type/credential-change
+          - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+          - https://schemas.openid.net/secevent/risc/event-type/credential-compromise
+        events_delivered:
+          - https://schemas.openid.net/secevent/caep/event-type/session-revoked
+          - https://schemas.openid.net/secevent/caep/event-type/credential-change
+          - https://schemas.openid.net/secevent/risc/event-type/account-disabled
+          - https://schemas.openid.net/secevent/risc/event-type/credential-compromise
+        min_verification_interval: 60
+        description: customer-a SIEM
+        inactivity_timeout: 7776000
+    AddSubjectTenant:
+      summary: テナント全体を stream に追加する（tid は opaque）
+      value:
+        stream_id: f67e39a0a4d34d56b3aa1bc4cff0069f
+        subject:
+          format: complex
+          tenant:
+            format: opaque
+            id: t_01J9Z3K7Q2
+        verified: true

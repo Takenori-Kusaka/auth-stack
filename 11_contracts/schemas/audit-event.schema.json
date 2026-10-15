@@ -1,0 +1,3281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.id-domain.example/auth-stack/schemas/audit-event/1/audit-event.schema.json",
+  "$comment": "文書ID: CON-08 / DL-77 / 版: 0.2 / 状態: draft / 最終更新: 2026-10-15（作成者以外による独立レビュー RV-01〜RV-14 を反映。記録は 11_contracts/review-notes/CON-08.md）。対応要求: R-118, R-119, R-127, R-128, R-232, R-257（R-requirements.md で本ファイルを対応成果物に含む行は R-119, R-127, R-232, R-257。R-118・R-127 は deliverables.md の DL-77 行）、関連 R-102, R-109, R-134, R-193.1〜R-193.6; G-118, G-063, G-064, G-095, G-134。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-77 行・§2.3）, 05_adr/ADR-014-audit-data.md（正本。D14-06〜D14-27・D14-43〜D14-45・D14-54）, 05_adr/ADR-009-workload-identity-token-exchange.md（D09-16・D09-35・D09-36）, 05_adr/ADR-011（D6-1 の reason・consistency・model_revision）, 05_adr/ADR-013（D13-26 の判定記録項目）, 05_adr/ADR-021（D21-09・D21-26・D21-36 の識別子・正規名の形式）, 05_adr/ADR-005（D9-3 の要求 context の範囲）, 11_contracts/schemas/common.schema.json（CON-02。値の形式を揃える）, 05_adr/ADR-022（監査イベント行・記述形式）, 05_adr/reconciliation-notes.md（§3.2 の相関 8 欄、C-34）, 04_architecture/audit-privacy.md（ARC-10 §2・§3・§5.4）, 04_architecture/claims-catalog.md（ARC-15 §3.7・§2.5）, 02_requirements/data-classification.md（§3 の基本区分・加重ラベル）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-10（#1〜#16, #22, #33, #42）, RS-06（#41, #45, #73）, RS-07（#66, #68）, research/standards-status.md（SS-I17, SS-I24, SS-C13, SS-A09, SS-B04）。作成方法: AI エージェント（Claude）が ADR-014 を正本として起草した。自己レビューであり、実在の CTO/CISO・契約変更審査会の承認ではない（CONVENTIONS §8）。凍結（DEC-8）前の draft であり、欄名・列挙値は変わり得る。 機械利用: x- で始まる欄は JSON Schema 2020-12 の未知 keyword（注釈）であり検証に影響しない。Ajv（ajv/dist/2020）は strict:false で使うか、x- の keyword を addKeyword で登録する（既定の strict モードは未知 keyword で compile を止める）。if/then 内の properties・required に type を重ねていないため、Ajv の strictTypes は警告を出す（検証結果は変わらない）。モックは examples（E1・E7・E2・E4・E10 の 5 族）を起点に作る。",
+  "title": "監査イベント（正準スキーマ v1）",
+  "description": "本基盤の監査の正本である正準スキーマ（ADR-014 D14-06）。1 インスタンスが 1 件の監査レコードを表す。族は E1 判定〜E10 集約の 10 族（D14-08）。各欄には x-field-class（structural=構造欄・平文、correlation=相関欄・不透明値、pseudonymous=仮名欄、protected=保護欄・暗号文）を付け、CI で WORM 層の形を検査する（D14-09、TC-014-13）。OCSF は正準ではなく版固定の写像先（OCSF 1.9.0、x-ocsf-mapping）であり、CADF 1.0.0 は任意の写像先である（D14-07）。最小化: 全階層で unevaluatedProperties=false とし、未定義の欄を受理しない。token・session cookie・Txn-Token の全文・資格情報・password・OTP・回復コードを置く欄は定義しない（D14-10）。自然人の識別子・IP・資源 ID の原文は平文で置かず、仮名欄（subj_ref・res_ref・ip_ref）と保護欄（prot）に置く（D14-43〜D14-45、AP-01、AP-02）。",
+  "type": "object",
+  "x-document-id": "CON-08",
+  "x-deliverable": "DL-77",
+  "x-status": "draft",
+  "x-depends-on": [
+    "05_adr/ADR-014-audit-data.md",
+    "05_adr/ADR-009-workload-identity-token-exchange.md",
+    "05_adr/ADR-011-policy-language-pep-pdp-api.md",
+    "05_adr/ADR-013-cell-partitioning-fail-mode.md",
+    "05_adr/ADR-021-irreversible-identifiers.md",
+    "05_adr/ADR-022-integration-contract-standards.md",
+    "05_adr/reconciliation-notes.md",
+    "04_architecture/audit-privacy.md",
+    "04_architecture/claims-catalog.md",
+    "02_requirements/data-classification.md",
+    "02_requirements/operation-risk-tiers-assurance.md",
+    "research/standards-status.md",
+    "05_adr/ADR-005-token-profile.md",
+    "11_contracts/schemas/common.schema.json"
+  ],
+  "x-requirements": [
+    "R-118",
+    "R-119",
+    "R-127",
+    "R-128",
+    "R-232",
+    "R-257",
+    "R-102",
+    "R-109",
+    "R-134",
+    "G-118",
+    "G-063",
+    "G-064",
+    "G-095",
+    "G-134"
+  ],
+  "properties": {
+    "schema_ver": {
+      "description": "正準スキーマの版（SemVer）。同一 major 内は欄の追加だけを許し、欄の削除・意味の変更は major 改訂（D14-13、ADR-016）。凍結前は pre-release 付き。",
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.]+)?$",
+      "x-field-class": "structural"
+    },
+    "ocsf_map_ver": {
+      "description": "export・顧客 API で使う OCSF 写像先の版。正準スキーマの版と別欄にする（D14-13、RS-10#3）。OCSF の版追随は四半期ごとに判断する（SS-I24）。",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "x-field-class": "structural"
+    },
+    "record_stage": {
+      "description": "レコードの段階。produced=producer が出した直後、journaled=cell ジャーナルが受理済み（received_time 付与）、sealed=封印済み（integrity.seal と tenant_seq 付与）（D14-23）。",
+      "enum": [
+        "produced",
+        "journaled",
+        "sealed"
+      ],
+      "x-field-class": "structural"
+    },
+    "event_id": {
+      "description": "レコードの一意 ID。不透明な乱数で時刻・ホスト名・cell 名を含めない（ADR-021 D21-36）。",
+      "$ref": "#/$defs/OpaqueId",
+      "x-field-class": "structural"
+    },
+    "family": {
+      "description": "イベント族（D14-08）。decision=E1、enforcement=E2、authentication=E3、issuance=E4、session_grant=E5、admin_change=E6、privileged_access=E7、key=E8、audit_system=E9、aggregate=E10。",
+      "enum": [
+        "decision",
+        "enforcement",
+        "authentication",
+        "issuance",
+        "session_grant",
+        "admin_change",
+        "privileged_access",
+        "key",
+        "audit_system",
+        "aggregate"
+      ],
+      "x-field-class": "structural"
+    },
+    "event_type": {
+      "description": "族ごとの閉じた列挙の種別。許される値は族ごとに allOf の条件で限定する。値の追加は minor 版。",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+      "x-field-class": "structural"
+    },
+    "event_time": {
+      "description": "事象の発生時刻（UTC）。SP 800-53 AU-8（RS-10#33）。",
+      "$ref": "#/$defs/UtcTime",
+      "x-field-class": "structural"
+    },
+    "observed_time": {
+      "description": "producer が事象を受け付けた時刻（UTC）（D14-27）。",
+      "$ref": "#/$defs/UtcTime",
+      "x-field-class": "structural"
+    },
+    "received_time": {
+      "description": "cell ジャーナルが受理した時刻（UTC）。record_stage が journaled 以降で必須（D14-27）。",
+      "$ref": "#/$defs/UtcTime",
+      "x-field-class": "structural"
+    },
+    "clock": {
+      "description": "時刻の品質。producer の時計のずれを heartbeat で監視し、閾値超過の producer の記録に印を付ける（D14-27）。閾値と同期精度の目標（R-193.6）は TBD（所有者: SRE 責任者、期限: G4、TC-014-09）。",
+      "type": "object",
+      "properties": {
+        "skew_exceeded": {
+          "type": "boolean",
+          "description": "ずれが閾値を超えた producer の記録なら true。"
+        },
+        "skew_estimate_ms": {
+          "type": "integer",
+          "description": "直近 heartbeat で推定したずれ（ミリ秒、符号付き）。"
+        }
+      },
+      "required": [
+        "skew_exceeded"
+      ],
+      "unevaluatedProperties": false,
+      "x-field-class": "structural"
+    },
+    "integrity": {
+      "$ref": "#/$defs/Integrity",
+      "x-field-class": "structural"
+    },
+    "tenant_seq": {
+      "description": "テナント連番。封印時に払い出し、顧客が顧客 API で欠落を検知するのに使う（D14-54、照合 C6）。テナント外の基盤操作（tid=~platform）には付けない。",
+      "type": "integer",
+      "minimum": 1,
+      "x-field-class": "structural"
+    },
+    "cell_id": {
+      "description": "帰属 cell。値の形式は claims-catalog 残課題 12 の結論として本スキーマで不透明な短いコードに定める（ADR-009 D09-07・ADR-021 の趣旨に合わせ、リージョン名・cell 名を入れない）。",
+      "type": "string",
+      "pattern": "^[a-z0-9]{4,16}$",
+      "x-field-class": "structural"
+    },
+    "jurisdiction": {
+      "description": "法域パーティション（ADR-013 D13-09）。英国利用者は A-063 の仮置きで eu に収容する。値の追加は minor 版。",
+      "enum": [
+        "jp",
+        "eu",
+        "us"
+      ],
+      "x-field-class": "structural"
+    },
+    "tid": {
+      "$ref": "#/$defs/TenantId",
+      "x-field-class": "structural"
+    },
+    "tier": {
+      "description": "操作階層（正本: 02_requirements/operation-risk-tiers-assurance.md §2 の操作 5 分類）。",
+      "enum": [
+        "public",
+        "read-sensitive",
+        "write",
+        "privileged",
+        "break-glass"
+      ],
+      "x-field-class": "structural"
+    },
+    "tier_sub": {
+      "description": "操作階層の副区分（正本: 02_requirements/operation-risk-tiers-assurance.md §2.1 の副区分欄と判定規則 J1・J2）。privileged は T（作用範囲が 1 テナント内）か P（テナント横断または基盤）、break-glass は B（テナント内の業務データへの例外アクセス）か P（基盤の緊急経路）。public・read-sensitive・write では置かない。CON-02 OperationTier の privileged/T 等は tier と本欄の組で表す。修飾子（+SEC・+FIN・+XT・+AGT・+REG、同 §2.3）の記録欄は未決（x-open-issues）。",
+      "enum": [
+        "T",
+        "P",
+        "B"
+      ],
+      "x-field-class": "structural"
+    },
+    "outcome": {
+      "description": "事象の結果。CADF の outcome root 値（success・failure・unknown・pending。RS-10#12）と同じ集合にする。E1 の許可・拒否は outcome ではなく detail.decision で表す（outcome は判定処理自体の成否）。",
+      "enum": [
+        "success",
+        "failure",
+        "unknown",
+        "pending"
+      ],
+      "x-field-class": "structural"
+    },
+    "reason_code": {
+      "description": "閉じた列挙の理由コード。E1・E2 は ADR-011 D6-1 の reason（allow / deny_guardrail:<規則ID> / deny_no_relation / deny_indeterminate / deny_unavailable / unsupported_profile）。他族の列挙は族ごとの登録簿で管理する（未決: 登録簿の所在は DL-69 で決める）。自由記述は置かない（目的の自由記述は保護欄）。",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,63}(:[A-Za-z0-9._-]{1,64})?$",
+      "x-field-class": "structural"
+    },
+    "data_class": {
+      "$ref": "#/$defs/DataClass",
+      "x-field-class": "structural"
+    },
+    "subject": {
+      "$ref": "#/$defs/Principal",
+      "description": "権限の主体（token の sub に当たる主体）。AuthZEN 1.0 の subject に対応する。ただし本欄の type は主体類型（PrincipalType）であり、AuthZEN の Subject.type（core/user 等の正規名、ADR-021 D21-26）とは値域が異なる。自然人の識別子は subj_ref（仮名）で置き、AuthZEN の subject.id の値は記録しない。",
+      "x-field-class": "structural"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "x-field-class": "structural"
+    },
+    "resource": {
+      "$ref": "#/$defs/Resource",
+      "x-field-class": "structural"
+    },
+    "action": {
+      "$ref": "#/$defs/Action",
+      "x-field-class": "structural"
+    },
+    "corr": {
+      "$ref": "#/$defs/Correlation",
+      "x-field-class": "correlation"
+    },
+    "purpose": {
+      "$ref": "#/$defs/Purpose",
+      "x-field-class": "structural"
+    },
+    "prot": {
+      "$ref": "#/$defs/Protected",
+      "x-field-class": "protected"
+    },
+    "detail": {
+      "description": "族ごとの追加欄。family に応じて $defs の Detail* のいずれかに一致させる（allOf の条件が正）。anyOf は型生成ツールに Detail* の和型を示すためのもので、族との対応は allOf で検査する。",
+      "type": "object",
+      "x-field-class": "structural",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DetailDecision"
+        },
+        {
+          "$ref": "#/$defs/DetailEnforcement"
+        },
+        {
+          "$ref": "#/$defs/DetailAuthentication"
+        },
+        {
+          "$ref": "#/$defs/DetailIssuance"
+        },
+        {
+          "$ref": "#/$defs/DetailSessionGrant"
+        },
+        {
+          "$ref": "#/$defs/DetailAdminChange"
+        },
+        {
+          "$ref": "#/$defs/DetailPrivilegedAccess"
+        },
+        {
+          "$ref": "#/$defs/DetailKey"
+        },
+        {
+          "$ref": "#/$defs/DetailAuditSystem"
+        },
+        {
+          "$ref": "#/$defs/DetailAggregate"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_ver",
+    "ocsf_map_ver",
+    "record_stage",
+    "event_id",
+    "family",
+    "event_type",
+    "event_time",
+    "observed_time",
+    "integrity",
+    "cell_id",
+    "jurisdiction",
+    "tid",
+    "tier",
+    "outcome",
+    "reason_code",
+    "data_class",
+    "corr",
+    "detail"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "decision"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailDecision"
+          },
+          "event_type": {
+            "enum": [
+              "authz.evaluation",
+              "authz.evaluations_item",
+              "authz.search"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "read-sensitive",
+              "write",
+              "privileged",
+              "break-glass"
+            ],
+            "description": "public は PDP 判定を伴わず E1 を生じない（D14-17）。"
+          },
+          "corr": {
+            "required": [
+              "decision_id",
+              "request_id",
+              "iss",
+              "jti_ref"
+            ]
+          }
+        },
+        "required": [
+          "subject",
+          "actor",
+          "resource",
+          "action"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "enforcement"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailEnforcement"
+          },
+          "event_type": {
+            "enum": [
+              "pep.enforce"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "read-sensitive",
+              "write",
+              "privileged",
+              "break-glass"
+            ]
+          },
+          "corr": {
+            "required": [
+              "decision_id",
+              "request_id"
+            ]
+          }
+        },
+        "required": [
+          "subject",
+          "actor",
+          "resource",
+          "action"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "authentication"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailAuthentication"
+          },
+          "event_type": {
+            "enum": [
+              "authn.login",
+              "authn.step_up",
+              "authn.recovery",
+              "authn.authenticator_change",
+              "authn.federation"
+            ]
+          },
+          "corr": {
+            "required": [
+              "auth_event_id"
+            ]
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "issuance"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailIssuance"
+          },
+          "event_type": {
+            "enum": [
+              "token.issue",
+              "token.exchange",
+              "token.txn_issue"
+            ]
+          },
+          "corr": {
+            "required": [
+              "iss"
+            ]
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "session_grant"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailSessionGrant"
+          },
+          "event_type": {
+            "enum": [
+              "session.change",
+              "grant.change"
+            ]
+          },
+          "corr": {
+            "anyOf": [
+              {
+                "required": [
+                  "sid"
+                ]
+              },
+              {
+                "required": [
+                  "grant_ref"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "admin_change"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailAdminChange"
+          },
+          "event_type": {
+            "enum": [
+              "admin.change"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "write",
+              "privileged",
+              "break-glass"
+            ]
+          }
+        },
+        "required": [
+          "actor",
+          "action"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "privileged_access"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailPrivilegedAccess"
+          },
+          "event_type": {
+            "enum": [
+              "priv.jit",
+              "priv.access",
+              "priv.impersonation",
+              "priv.break_glass"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "privileged",
+              "break-glass"
+            ]
+          }
+        },
+        "required": [
+          "purpose",
+          "actor"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "key"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailKey"
+          },
+          "event_type": {
+            "enum": [
+              "key.lifecycle",
+              "key.reconcile",
+              "key.ceremony"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "privileged",
+              "break-glass"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "audit_system"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailAuditSystem"
+          },
+          "event_type": {
+            "enum": [
+              "audit.path",
+              "audit.access",
+              "audit.hold",
+              "audit.privacy",
+              "audit.heartbeat"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "privileged",
+              "break-glass"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "aggregate"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/DetailAggregate"
+          },
+          "event_type": {
+            "enum": [
+              "edge.public_aggregate"
+            ]
+          },
+          "tier": {
+            "const": "public"
+          },
+          "data_class": {
+            "properties": {
+              "base": {
+                "const": "PUB"
+              }
+            }
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "subject"
+              ]
+            },
+            {
+              "required": [
+                "actor"
+              ]
+            },
+            {
+              "required": [
+                "prot"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "enum": [
+              "decision",
+              "enforcement"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "write",
+              "privileged"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "tier"
+        ]
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "required": [
+              "txn"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "decision"
+          }
+        },
+        "required": [
+          "family"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "pattern": "^(allow|deny_guardrail:[a-z0-9][a-z0-9._-]{0,63}|deny_no_relation|deny_indeterminate|deny_unavailable|unsupported_profile)$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "family": {
+            "const": "audit_system"
+          },
+          "detail": {
+            "properties": {
+              "operation": {
+                "enum": [
+                  "view",
+                  "search",
+                  "export",
+                  "reconstruct",
+                  "reidentify"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "required": [
+          "purpose"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "record_stage": {
+            "enum": [
+              "journaled",
+              "sealed"
+            ]
+          }
+        },
+        "required": [
+          "record_stage"
+        ]
+      },
+      "then": {
+        "required": [
+          "received_time"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "record_stage": {
+            "const": "sealed"
+          }
+        },
+        "required": [
+          "record_stage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "integrity": {
+            "required": [
+              "seal"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "record_stage": {
+            "const": "sealed"
+          },
+          "tid": {
+            "not": {
+              "const": "~platform"
+            }
+          }
+        },
+        "required": [
+          "record_stage",
+          "tid"
+        ]
+      },
+      "then": {
+        "required": [
+          "tenant_seq"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tid": {
+            "const": "~platform"
+          }
+        },
+        "required": [
+          "tid"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "tenant_seq"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "privileged"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "required": [
+          "tier_sub"
+        ],
+        "properties": {
+          "tier_sub": {
+            "enum": [
+              "T",
+              "P"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "break-glass"
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "required": [
+          "tier_sub"
+        ],
+        "properties": {
+          "tier_sub": {
+            "enum": [
+              "B",
+              "P"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "enum": [
+              "public",
+              "read-sensitive",
+              "write"
+            ]
+          }
+        },
+        "required": [
+          "tier"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "tier_sub"
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "ADR-005 D9-3: 要求 context（txn）は write・privileged・break-glass/B で発行する。write・privileged は前出の条件で検査する。",
+      "if": {
+        "properties": {
+          "family": {
+            "enum": [
+              "decision",
+              "enforcement"
+            ]
+          },
+          "tier": {
+            "const": "break-glass"
+          },
+          "tier_sub": {
+            "const": "B"
+          }
+        },
+        "required": [
+          "family",
+          "tier",
+          "tier_sub"
+        ]
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "required": [
+              "txn"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "REQ-03 §3.7 AU-2: 判定記録に acr・auth_time を含める。自然人主体の E1 で必須にする。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "decision"
+          },
+          "subject": {
+            "properties": {
+              "type": {
+                "const": "human"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "subject"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "required": [
+              "acr",
+              "auth_time"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "ADR-009 D09-35: STS の交換台帳は出力 token の (iss, jti) を持つ。監査の写しでは (iss, jti_ref)（D14-21）。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "issuance"
+          },
+          "detail": {
+            "properties": {
+              "ledger": {
+                "const": "sts"
+              }
+            },
+            "required": [
+              "ledger"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "required": [
+              "iss",
+              "jti_ref"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "ADR-009 D09-35・ADR-014 D14-20: TTS の発行記録は txn を持つ。",
+      "if": {
+        "properties": {
+          "family": {
+            "const": "issuance"
+          },
+          "detail": {
+            "properties": {
+              "ledger": {
+                "const": "tts"
+              }
+            },
+            "required": [
+              "ledger"
+            ]
+          }
+        },
+        "required": [
+          "family",
+          "detail"
+        ]
+      },
+      "then": {
+        "properties": {
+          "corr": {
+            "required": [
+              "txn"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "OpaqueId": {
+      "description": "不透明な乱数の識別子。ADR-021 D21-09: 64 文字以下・小文字英数字（UUIDv4 正準表記の hyphen を許す）。時刻・テナント・リージョン・連番を含めない。符号化（base32 26 文字か UUIDv4 36 文字）は DL-71 で決める（TBD）。",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{15,63}$"
+    },
+    "TenantId": {
+      "description": "テナント ID（tid、ADR-021 D21-12・D21-38）。テナント外の基盤操作は予約値 ~platform（予約値の表記は DL-71 と突合要。未決）。",
+      "type": "string",
+      "pattern": "^([a-z0-9][a-z0-9-]{15,63}|~platform)$"
+    },
+    "UtcTime": {
+      "description": "UTC の RFC 3339 時刻。ミリ秒以上の精度を必須にし（小数 3〜9 桁）、末尾は Z に限る（D14-27）。",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3,9}Z$"
+    },
+    "Digest": {
+      "description": "アルゴリズム名付きのハッシュ値（base64url、padding なし）。alg 名を前置して暗号移行（ADR-015、A-103）に備える。",
+      "type": "string",
+      "pattern": "^(sha-256|sha-384|sha-512|sha3-256|sha3-384):[A-Za-z0-9_-]{43,88}$"
+    },
+    "KeyedRef": {
+      "description": "鍵版付きの鍵付きハッシュ（HMAC-SHA-256、base64url 43 文字）。先頭の k<版> で鍵 rotation 後も旧版で結合できる（D14-21）。",
+      "type": "string",
+      "pattern": "^k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$"
+    },
+    "SubjRef": {
+      "description": "自然人主体の仮名 ID（subj_ref）。(tid, sub) ごとに払い出す乱数で、対応表は K 層に置く（D14-44）。接頭辞 sr_ で sub と区別し、sub の誤記録を CI で検知できるようにする（本スキーマの設計）。",
+      "type": "string",
+      "pattern": "^sr_[a-z0-9]{26,40}$"
+    },
+    "StaffRef": {
+      "description": "事業者要員・顧客管理者の安定した仮名 ID（E7・E9 の要求者・承認者。D14-53）。",
+      "type": "string",
+      "pattern": "^st_[a-z0-9]{26,40}$"
+    },
+    "NhiId": {
+      "description": "非自然人主体（workload・service account・AI エージェント・基盤部品）の ID。平文で記録する（D14-44）。workload は SPIFFE ID、それ以外は基盤が払い出す不透明 ID。",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^spiffe://[a-z0-9.-]{1,255}(/[A-Za-z0-9._-]{1,128}){1,16}$"
+        },
+        {
+          "$ref": "#/$defs/OpaqueId"
+        }
+      ]
+    },
+    "PrincipalType": {
+      "description": "主体類型。v1 は human・service_account・workload・ai_agent（ADR-005 D9-4、claims-catalog の ptype）と、基盤部品自身を表す system。device の追加は未決（ADR-017 L17-4）で、追加時は minor 版。",
+      "enum": [
+        "human",
+        "service_account",
+        "workload",
+        "ai_agent",
+        "system"
+      ]
+    },
+    "PrincipalRef": {
+      "description": "主体の参照。human は subj_ref だけ、それ以外は nhi_id だけを持つ。",
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/PrincipalType"
+        },
+        "subj_ref": {
+          "$ref": "#/$defs/SubjRef",
+          "x-field-class": "pseudonymous"
+        },
+        "nhi_id": {
+          "$ref": "#/$defs/NhiId",
+          "x-field-class": "structural"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "human"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subj_ref"
+            ],
+            "not": {
+              "required": [
+                "nhi_id"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "nhi_id"
+            ],
+            "not": {
+              "required": [
+                "subj_ref"
+              ]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Principal": {
+      "description": "主体。",
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/PrincipalType"
+        },
+        "subj_ref": {
+          "$ref": "#/$defs/SubjRef",
+          "x-field-class": "pseudonymous"
+        },
+        "nhi_id": {
+          "$ref": "#/$defs/NhiId",
+          "x-field-class": "structural"
+        },
+        "client_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "x-field-class": "structural",
+          "description": "要求に使われた client_id（ADR-021 D21-22）。"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "human"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subj_ref"
+            ],
+            "not": {
+              "required": [
+                "nhi_id"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "nhi_id"
+            ],
+            "not": {
+              "required": [
+                "subj_ref"
+              ]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Actor": {
+      "description": "行為者と委任の連鎖（actor chain）。chain[0] は現在の actor（RFC 8693 の最上位 act に当たる）で、chain[1] 以降は入れ子の過去 actor。RFC 8693 §4.1 は、アクセス制御に最上位 claim と現在の actor だけを使い、入れ子の過去 actor は情報扱いとする（MUST、RS-06#45）。本欄も過去 actor を監査と STS の発行判断の再現にだけ使う（ADR-009 D09-16）。mode は動作区分（autonomous=自律、delegated=委任）で、AI エージェントでは委任元主体と合わせて必須（D14-12、T-075）。chain の上限（N_act、初期案 3）は DL-74 の社内 profile で決める可逆な値であり、本スキーマは拒否された交換の記録も残せるよう maxItems を 16 にする。",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "autonomous",
+            "delegated"
+          ],
+          "x-field-class": "structural"
+        },
+        "chain": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/PrincipalRef"
+          },
+          "x-field-class": "structural",
+          "description": "workload は nhi_id（平文）、自然人は subj_ref（仮名）。"
+        },
+        "on_behalf_of": {
+          "$ref": "#/$defs/PrincipalRef",
+          "x-field-class": "pseudonymous",
+          "description": "委任元主体。mode=delegated のとき、または chain に ai_agent を含むときに必須（D14-12）。"
+        }
+      },
+      "required": [
+        "mode",
+        "chain"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "delegated"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "on_behalf_of"
+            ]
+          }
+        },
+        {
+          "$comment": "D14-12: AI エージェントが関わるイベントは委任元主体を必須にする（自律でも委任元を記録する）。",
+          "if": {
+            "properties": {
+              "chain": {
+                "contains": {
+                  "properties": {
+                    "type": {
+                      "const": "ai_agent"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "chain"
+            ]
+          },
+          "then": {
+            "required": [
+              "on_behalf_of"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Resource": {
+      "description": "対象資源。type は AuthZEN 1.0 の resource.type と同じ値（SS-C13、ADR-021 D21-26）。資源 ID の原文は平文で置かず、テナント鍵による鍵付きハッシュ res_ref（等価検索用）と保護欄の暗号文に分ける（D14-09）。",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,62}[a-z0-9]/[a-z][a-z0-9_]{1,62}[a-z0-9]$",
+          "x-field-class": "structural",
+          "description": "資源型の正規名 <名前空間コード>/<型名>（ADR-021 D21-26 は監査の resource 型を AuthZEN の Resource.type と同じ値で揃えるとする。形式は CON-02 ResourceType と同じ）。"
+        },
+        "res_ref": {
+          "type": "string",
+          "pattern": "^rr_k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$",
+          "x-field-class": "pseudonymous"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Action": {
+      "description": "操作。name は AuthZEN 1.0 の action.name と同じ意味（SS-C13）。CADF の ACTION への写像は x-cadf-mapping。",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.:-]{0,63}$",
+          "x-field-class": "structural",
+          "description": "AuthZEN の action.name（CON-02 ActionName、例 can_read）か、E6〜E9 の管理操作名。CON-02 ActionName より広い値域を受理する。"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DataClass": {
+      "description": "対象資源のデータ分類（02_requirements/data-classification.md §3）。base は基本区分（PUB 公開・INT 社内・CUS 顧客機密）を 1 つ、labels は加重ラベル（PII・SPI・PCI・MED・SEC・AUD・AZD）を 0 個以上。未分類は CUS＋PII として記録する（同 決裁案 6.1）。",
+      "type": "object",
+      "properties": {
+        "base": {
+          "enum": [
+            "PUB",
+            "INT",
+            "CUS"
+          ]
+        },
+        "labels": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 7,
+          "items": {
+            "enum": [
+              "PII",
+              "SPI",
+              "PCI",
+              "MED",
+              "SEC",
+              "AUD",
+              "AZD"
+            ]
+          }
+        }
+      },
+      "required": [
+        "base",
+        "labels"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Correlation": {
+      "description": "相関欄。整合調整で揃えた 8 欄（iss・jti_ref・sid・grant_ref・txn・decision_id・request_id・trace_id。reconciliation-notes §3.2、ADR-014 D14-18）と補助 2 欄（ext_trace_id・auth_event_id）。値はいずれも不透明な乱数か鍵付きハッシュ（ADR-021 D21-36）。証跡の真正性は署名付き token・発行台帳・decision_id 突合・封印で示し、trace_id・ext_trace_id は索引にだけ使う（D14-19）。ADR-022 の監査イベント行の `jti` と ADR-005 D9-2・ADR-021 D21-37 の (iss, jti) は、ADR-014 D14-21 に従い jti_ref と読み替える（ADR-014 §2.13 論点 2）。",
+      "type": "object",
+      "properties": {
+        "iss": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "maxLength": 255,
+          "description": "発行元（署名付き token の iss）。"
+        },
+        "jti_ref": {
+          "$ref": "#/$defs/KeyedRef",
+          "description": "k<版>.HMAC-SHA-256(K_corr[版], iss ‖ jti)。K_corr は法域パーティションごとの相関用鍵。発行台帳（ADR-007 D7-45）と同じ関数・同じ鍵（C-34 の解消、D14-21）。生の jti は記録しない。"
+        },
+        "sid": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "session ID（OIDC の sid と同じ意味）。"
+        },
+        "grant_ref": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "grant 参照（内部 token の gref 案。claims-catalog §3.6）。昇格 grant ID もこの欄で運ぶ案（ADR-029 L29-3、未決）。"
+        },
+        "txn": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "取引の一意 ID（Transaction Tokens の txn、意味は RFC 8417 の登録で固定。draft-11 は SS-B04 で draft・IESG 未提出）。write 以上で必須（ADR-005 D9-3）。read-sensitive への拡大は未決（U-02）で、どちらの結論でも本欄の形は変えない。"
+        },
+        "decision_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "PDP façade が採番する判定 ID（ADR-011 D6-1）。E1・E2 の突合キー。"
+        },
+        "request_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "PEP SDK が全要求に付ける要求 ID（X-Request-ID）。AuthZEN 1.0 は要求 ID を付けた場合に PDP が同じ値を返すことを MUST とする（RS-07#66）。"
+        },
+        "trace_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "not": {
+            "const": "00000000000000000000000000000000"
+          },
+          "description": "edge で再採番した W3C trace-id。索引だけ（D14-03、D14-19）。 全ゼロは無効値（W3C Trace Context §3.2.2.3 の \"All bytes as zero ... is considered an invalid value.\"。x-references [5]、レビュー時 2026-10-15 に原典を再確認）。RE2 系の正規表現エンジンで動くよう、先読みを使わず not で拒否する（CON-02 TraceId と同じ書き方）。"
+        },
+        "ext_trace_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "description": "外部から届いた trace-id の退避値。信頼しない（D14-03）。"
+        },
+        "auth_event_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "認証イベント ID。E3・E4 だけ。token に載せない（claims-catalog §3.6）。"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Purpose": {
+      "description": "人によるアクセスの目的。E7 と、人による閲覧・検索・export・再識別・再構成（E9）で必須（D14-11、Pankki S: RS-10#60）。目的は token の claim ではなく JIT・support case の手続から記録する。自由記述は保護欄に置く。",
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "incident_response",
+            "customer_support",
+            "legal_obligation",
+            "data_subject_request",
+            "audit_review",
+            "authorization_verification",
+            "operations_recovery"
+          ],
+          "x-field-class": "structural",
+          "description": "目的の閉じた列挙。D14-01 の 5 目的（a〜e）を細分した初期案。値の追加は minor 版。"
+        },
+        "basis_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,63}$",
+          "x-field-class": "structural",
+          "description": "ticket・support case・JIT 申請等の参照番号（本文は保護欄）。"
+        }
+      },
+      "required": [
+        "code",
+        "basis_ref"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Protected": {
+      "description": "保護欄。送信元 IP・user agent・位置・資源 ID の原文・変更の前後値・目的の自由記述・ticket 本文への参照に限り（AP-01、SP 800-53 AU-3(3): RS-10#15）、自然人に関わるものは主体 DEK、それ以外はテナント DEK で暗号化した 1 つの暗号文にまとめる（D14-45）。",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "src_ip",
+              "user_agent",
+              "geo",
+              "resource_id",
+              "change_before_after",
+              "purpose_text",
+              "ticket_ref"
+            ]
+          },
+          "x-field-class": "structural",
+          "description": "暗号文に含めた要素の名前（最小化の検査用）。"
+        },
+        "ciphertext": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{16,}$",
+          "maxLength": 65536,
+          "x-field-class": "protected",
+          "description": "保護欄の暗号文（base64url）。暗号方式は ADR-007 の用途族追加（ADR-014 §2.13 論点 1、未決）に従う。"
+        },
+        "dek_ref": {
+          "type": "object",
+          "x-field-class": "structural",
+          "properties": {
+            "scope": {
+              "enum": [
+                "subject",
+                "tenant"
+              ]
+            },
+            "epoch": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}$",
+              "description": "主体 DEK の epoch（月単位、NA-014-4）。"
+            },
+            "key_ver": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "alg": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{2,32}$"
+            }
+          },
+          "required": [
+            "scope",
+            "epoch",
+            "key_ver",
+            "alg"
+          ],
+          "unevaluatedProperties": false
+        },
+        "ip_ref": {
+          "type": "string",
+          "pattern": "^ir_k[0-9]{1,4}\\.[A-Za-z0-9_-]{43}$",
+          "x-field-class": "pseudonymous",
+          "description": "送信元 IP の法域鍵による鍵付きハッシュ（等価検索用、AP-02）。"
+        }
+      },
+      "required": [
+        "fields",
+        "ciphertext",
+        "dek_ref"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Integrity": {
+      "description": "改ざん検知の L1（producer 連鎖）と L2（封印）の欄（D14-29）。prev_fp は直前レコードの fingerprint で、OCSF record_integrity の prev_event と同じ考え方（RS-10#42）。fingerprint の正準化規則（canonical serialization）は未決（DL-77 付属文書で TC-014-13 の前に決める）。",
+      "type": "object",
+      "properties": {
+        "producer_id": {
+          "$ref": "#/$defs/NhiId",
+          "description": "producer（PEP SDK・façade・AS 等）の workload ID。ジャーナルに登録済みの producer だけを受理する（DV-9）。"
+        },
+        "producer_seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "producer ごとの連番（照合 C1）。"
+        },
+        "prev_fp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "直前レコードの fingerprint。producer_seq=1 のときだけ null。"
+        },
+        "producer_sdk_ver": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+        },
+        "seal": {
+          "type": "object",
+          "description": "封印（sealer が付与）。tree head は法域の監査署名（ES256 と ML-DSA の二重、ADR-007 D7-63）で署名され、透明性ログに登録される（L4）。",
+          "properties": {
+            "segment_id": {
+              "$ref": "#/$defs/OpaqueId"
+            },
+            "leaf_index": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "segment_id",
+            "leaf_index"
+          ],
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "producer_id",
+        "producer_seq",
+        "prev_fp"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "producer_seq": {
+                "const": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "prev_fp": {
+                "$ref": "#/$defs/Digest"
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailDecision": {
+      "description": "E1 判定（PDP façade）。ADR-010 D-51・ADR-011 D6-1・ADR-013 D13-26 の項目。",
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "boolean",
+          "description": "AuthZEN 1.0 の decision と同じ意味（true=許可）。評価不能・不達は false と reason で表す（ADR-011 D3-3・D3-6）。"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "^(allow|deny_guardrail:[a-z0-9][a-z0-9._-]{0,63}|deny_no_relation|deny_indeterminate|deny_unavailable|unsupported_profile)$",
+          "description": "ADR-011 D6-1 の閉じた列挙。エンドユーザーには返さない。値の追加を major とするかは未決（ADR-016 P16-2）。 規則 ID の形式は CON-02 DecisionReason に揃える（小文字英数字で始まる）。"
+        },
+        "acr": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "判定に使った token の acr（REQ-03 §3.7 AU-2）。自然人主体で必須。"
+        },
+        "auth_time": {
+          "$ref": "#/$defs/UtcTime",
+          "description": "判定に使った token の auth_time を UTC の RFC 3339 に直した値（REQ-03 §3.7 AU-2）。自然人主体で必須。"
+        },
+        "profile_version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$",
+          "description": "要求の PEP–PDP profile 版（major.minor）。 形式は CON-02 ProfileVersion と同じ。"
+        },
+        "model_revision": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$",
+          "description": "評価した model の不変 revision（policy/model revision の正本。ADR-011 D2-7）。 長さは CON-02 ModelRevision（OpaqueId、64 文字以下）に揃える。"
+        },
+        "guardrail_catalog_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$",
+          "description": "G 段カタログの版。"
+        },
+        "consistency": {
+          "type": "object",
+          "properties": {
+            "requested_mode": {
+              "enum": [
+                "minimize_latency",
+                "at_least_as_fresh",
+                "fully_consistent"
+              ]
+            },
+            "effective_mode": {
+              "enum": [
+                "minimize_latency",
+                "at_least_as_fresh",
+                "fully_consistent"
+              ]
+            },
+            "data_version": {
+              "type": "string",
+              "maxLength": 256,
+              "description": "データ版（engine が返せる場合の consistency token。不透明文字列）。"
+            }
+          },
+          "required": [
+            "effective_mode"
+          ],
+          "unevaluatedProperties": false
+        },
+        "freshness": {
+          "enum": [
+            "fresh",
+            "known_good"
+          ],
+          "description": "鮮度区分（ADR-013 D13-26）。"
+        },
+        "known_good_age_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revocation_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "判定時点で PDP が反映していた失効状態の版（ADR-013 D13-26 の失効 epoch。欄名は claims-catalog §3.7 の委任により本スキーマで決定）。"
+        },
+        "valid_until": {
+          "$ref": "#/$defs/UtcTime"
+        },
+        "engine": {
+          "type": "object",
+          "properties": {
+            "pdp_node": {
+              "$ref": "#/$defs/NhiId"
+            },
+            "engine_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{1,31}$"
+            },
+            "engine_version": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "pdp_node",
+            "engine_id"
+          ],
+          "unevaluatedProperties": false
+        },
+        "request_id_echo": {
+          "enum": [
+            "pdp",
+            "facade",
+            "absent"
+          ],
+          "description": "要求 ID を誰が応答に echo したか。OpenFGA の AuthZEN 実装は返さないため façade が補う（RS-07#68、ADR-011 D5-5）。absent は突合不能として K-21 に計上。"
+        }
+      },
+      "required": [
+        "decision",
+        "reason",
+        "profile_version",
+        "model_revision",
+        "guardrail_catalog_version",
+        "consistency",
+        "freshness",
+        "engine",
+        "request_id_echo"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "freshness": {
+                "const": "known_good"
+              }
+            },
+            "required": [
+              "freshness"
+            ]
+          },
+          "then": {
+            "required": [
+              "known_good_age_ms",
+              "revocation_epoch",
+              "valid_until"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": true
+              }
+            },
+            "required": [
+              "decision"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "const": "allow"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "reason": {
+                "not": {
+                  "const": "allow"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "x-pdp-signature": "判定 1 件ごとの PDP 署名の欄は定義しない。採否は未決（U-04、ADR-013 KD13-6、ADR-014 D14-35）。採る場合は minor 版で追加する。",
+      "unevaluatedProperties": false
+    },
+    "DetailEnforcement": {
+      "description": "E2 enforcement（PEP SDK）。PEP は自分の層で見えたものだけを記録し、decision_id で E1 と相関させる（CADF の observer モデル: RS-10#13、D14-22）。",
+      "type": "object",
+      "properties": {
+        "entry_point_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,128}$",
+          "description": "entry point 台帳の ID（ADR-012）。"
+        },
+        "result": {
+          "enum": [
+            "permitted",
+            "denied",
+            "degraded"
+          ],
+          "description": "適用結果。degraded は操作階層別 fail-mode（DL-19）を適用した場合。"
+        },
+        "fail_mode": {
+          "enum": [
+            "known_good",
+            "deny",
+            "spool_reject"
+          ],
+          "description": "result=degraded または fail-mode による拒否のときの適用方式。"
+        },
+        "pep_id": {
+          "$ref": "#/$defs/NhiId"
+        },
+        "pep_sdk_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+        }
+      },
+      "required": [
+        "entry_point_id",
+        "result",
+        "pep_id",
+        "pep_sdk_version"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "degraded"
+              }
+            },
+            "required": [
+              "result"
+            ]
+          },
+          "then": {
+            "required": [
+              "fail_mode"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailAuthentication": {
+      "description": "E3 認証（AS・IdP）。PCI DSS 10.2.1.4〜10.2.1.5 の無効なアクセス試行・識別認証情報の変更を含む（RS-10#23）。",
+      "type": "object",
+      "properties": {
+        "stage": {
+          "enum": [
+            "primary",
+            "second_factor",
+            "step_up",
+            "recovery_start",
+            "recovery_complete",
+            "authenticator_add",
+            "authenticator_remove",
+            "federation_assertion"
+          ]
+        },
+        "amr": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,31}$"
+          },
+          "description": "使った認証方式（OIDC の amr と同じ意味の値）。"
+        },
+        "acr": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "達成した認証文脈クラス（acr と同じ意味）。"
+        },
+        "step_up": {
+          "type": "boolean"
+        },
+        "federation_idp": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 255,
+          "description": "federation の発行 IdP の issuer（顧客 IdP。組織の識別子であり自然人の識別子ではない）。"
+        }
+      },
+      "required": [
+        "stage",
+        "step_up"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailIssuance": {
+      "description": "E4 発行（発行台帳の監査経路への写し。ADR-007 D7-45、ADR-009 D09-35）。生の sub・生の jti は発行台帳の正本（WORM の外）にだけ置き、写しでは subj_ref・jti_ref に置き換える（AP-03）。Txn-Token の全文は記録しない（draft-11 §15.2 の MUST NOT: RS-06#41）。",
+      "type": "object",
+      "properties": {
+        "ledger": {
+          "enum": [
+            "as",
+            "sts",
+            "tts"
+          ]
+        },
+        "token_type": {
+          "enum": [
+            "id_token",
+            "access_token_external",
+            "access_token_internal",
+            "refresh_token",
+            "txn_token"
+          ]
+        },
+        "kid": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+        },
+        "aud": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": "発行先。内部 token と Txn-Token は 1 値（共通 aud を発行しない: ADR-009 D09-11）。"
+        },
+        "exp": {
+          "$ref": "#/$defs/UtcTime"
+        },
+        "input_token": {
+          "type": "object",
+          "description": "STS: 入力 token。",
+          "properties": {
+            "iss": {
+              "type": "string",
+              "format": "uri"
+            },
+            "jti_ref": {
+              "$ref": "#/$defs/KeyedRef"
+            }
+          },
+          "required": [
+            "iss",
+            "jti_ref"
+          ],
+          "unevaluatedProperties": false
+        },
+        "caller": {
+          "$ref": "#/$defs/NhiId",
+          "description": "STS: 呼出し元 SPIFFE ID（mTLS のクライアント認証から取る。ADR-009 D09-14）。"
+        },
+        "callee": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "STS: 呼出し先サービスの正規識別子（resource）。"
+        },
+        "scope": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "pattern": "^[\\x21\\x23-\\x5B\\x5D-\\x7E]{1,128}$"
+          }
+        },
+        "act_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16,
+          "description": "STS: 出力 token の act の入れ子の深さ（上限 N_act は DL-74）。"
+        },
+        "txn_token_hash": {
+          "$ref": "#/$defs/Digest",
+          "description": "TTS: Txn-Token のハッシュ（全文は記録しない）。"
+        },
+        "req_wl": {
+          "$ref": "#/$defs/NhiId",
+          "description": "TTS: 発行を求めた workload（edge の SPIFFE ID）。"
+        },
+        "root_jti_ref": {
+          "$ref": "#/$defs/KeyedRef",
+          "description": "TTS: 起点 jti の jti_ref（tctx の root_jti 案）。"
+        },
+        "origin_tier": {
+          "enum": [
+            "public",
+            "read-sensitive",
+            "write",
+            "privileged",
+            "break-glass"
+          ],
+          "description": "TTS: 起点の操作階層。"
+        }
+      },
+      "required": [
+        "ledger",
+        "token_type",
+        "kid",
+        "aud",
+        "exp"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "ledger": {
+                "const": "sts"
+              }
+            },
+            "required": [
+              "ledger"
+            ]
+          },
+          "then": {
+            "required": [
+              "input_token",
+              "caller",
+              "callee",
+              "scope",
+              "act_depth"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ledger": {
+                "const": "tts"
+              }
+            },
+            "required": [
+              "ledger"
+            ]
+          },
+          "then": {
+            "required": [
+              "txn_token_hash",
+              "req_wl",
+              "root_jti_ref",
+              "origin_tier"
+            ],
+            "properties": {
+              "token_type": {
+                "const": "txn_token"
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailSessionGrant": {
+      "description": "E5 session・grant（AS）。",
+      "type": "object",
+      "properties": {
+        "operation": {
+          "enum": [
+            "session_create",
+            "session_revoke",
+            "session_revoke_all",
+            "grant_create",
+            "grant_revoke"
+          ]
+        },
+        "scope_of_effect": {
+          "enum": [
+            "single",
+            "subject_all",
+            "client",
+            "tenant"
+          ]
+        },
+        "revocation_floor_time": {
+          "$ref": "#/$defs/UtcTime",
+          "description": "失効下限時刻（ADR-019）。"
+        }
+      },
+      "required": [
+        "operation",
+        "scope_of_effect"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailAdminChange": {
+      "description": "E6 管理・IAM 変更（R-232: 全 IAM 変更の監視）。変更の前後値または差分の要約は保護欄（prot.fields に change_before_after）に置く。",
+      "type": "object",
+      "properties": {
+        "object_type": {
+          "enum": [
+            "relation",
+            "policy",
+            "model",
+            "role",
+            "tenant_setting",
+            "federation",
+            "scim",
+            "domain",
+            "client",
+            "principal_lifecycle",
+            "exchange_registry",
+            "entry_point",
+            "ssf_stream"
+          ],
+          "description": "変更対象の種別。ssf_stream は CON-05（ssf-caep.openapi.yaml）が監査に残すとする stream 設定の変更。値の追加は minor 版。"
+        },
+        "operation": {
+          "enum": [
+            "create",
+            "update",
+            "delete",
+            "publish",
+            "pin",
+            "rollback",
+            "suspend",
+            "resume"
+          ]
+        },
+        "change_ticket": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,63}$"
+        },
+        "approvers": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/StaffRef"
+          }
+        },
+        "channel": {
+          "enum": [
+            "scim",
+            "ui",
+            "api",
+            "pap"
+          ]
+        },
+        "change_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "一括変更の件数（relation の一括書込み等）。"
+        }
+      },
+      "required": [
+        "object_type",
+        "operation",
+        "channel"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailPrivilegedAccess": {
+      "description": "E7 特権・support（ADR-029 D29-61 の監査属性）。同期記録（privileged・break-glass）。目的は最上位の purpose 欄に必須。",
+      "type": "object",
+      "properties": {
+        "staff_ref": {
+          "$ref": "#/$defs/StaffRef"
+        },
+        "staff_org": {
+          "enum": [
+            "provider",
+            "customer",
+            "vendor"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,63}$"
+        },
+        "support_level": {
+          "enum": [
+            "SL0",
+            "SL1",
+            "SL2",
+            "SL3",
+            "SL4"
+          ],
+          "description": "昇格の段階（ADR-029）。"
+        },
+        "operation": {
+          "enum": [
+            "jit_request",
+            "jit_grant",
+            "jit_expire",
+            "access",
+            "impersonation_start",
+            "impersonation_end",
+            "preapproved_action",
+            "break_glass_open",
+            "break_glass_step",
+            "break_glass_close"
+          ]
+        },
+        "access_scope": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.:-]{1,127}$"
+        },
+        "period": {
+          "$ref": "#/$defs/Period"
+        },
+        "internal_approver": {
+          "$ref": "#/$defs/StaffRef"
+        },
+        "customer_approver": {
+          "$ref": "#/$defs/StaffRef"
+        },
+        "preapproved_action_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$"
+        },
+        "elevation_grant_id": {
+          "$ref": "#/$defs/OpaqueId",
+          "description": "JIT 付与 ID（昇格 grant ID。ADR-029 L29-3）。"
+        },
+        "target_tid": {
+          "$ref": "#/$defs/TenantId"
+        },
+        "break_glass_seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "break-glass の逐次番号（帯域外複写との突合用）。"
+        }
+      },
+      "required": [
+        "staff_ref",
+        "staff_org",
+        "role",
+        "support_level",
+        "operation",
+        "access_scope"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "enum": [
+                  "break_glass_open",
+                  "break_glass_step",
+                  "break_glass_close"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "break_glass_seq"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "jit_grant"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "internal_approver",
+              "period",
+              "elevation_grant_id"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailKey": {
+      "description": "E8 鍵（鍵台帳・Signer。ADR-007）。",
+      "type": "object",
+      "properties": {
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+        },
+        "key_family": {
+          "enum": [
+            "id_token_external",
+            "access_token_external",
+            "token_internal",
+            "txn_context",
+            "set",
+            "introspection",
+            "saml",
+            "audit_signing",
+            "policy_bundle",
+            "l1_authorization",
+            "l0_root",
+            "audit_encryption",
+            "audit_correlation"
+          ],
+          "description": "ADR-007 D7-10 の用途族と L1/L0。audit_encryption・audit_correlation は ADR-007 の改訂待ち（ADR-014 §2.13 論点 1、未決）。"
+        },
+        "operation": {
+          "enum": [
+            "generate",
+            "activate",
+            "rotate",
+            "revoke",
+            "destroy",
+            "sign_count_reconcile",
+            "ceremony"
+          ]
+        },
+        "ceremony_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$"
+        },
+        "reconcile": {
+          "type": "object",
+          "description": "発行台帳の件数と KMS の Sign 回数の照合（照合 C4）。",
+          "properties": {
+            "window": {
+              "$ref": "#/$defs/Period"
+            },
+            "ledger_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sign_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "matched": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "window",
+            "ledger_count",
+            "sign_count",
+            "matched"
+          ],
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "key_id",
+        "key_family",
+        "operation"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "sign_count_reconcile"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "reconcile"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailAuditSystem": {
+      "description": "E9 監査系（PCI DSS 10.2.1.3・10.2.1.6: RS-10#23）。監査記録の閲覧・検索・export、legal hold、再識別、暗号消去、heartbeat、経路の停止・再開。",
+      "type": "object",
+      "properties": {
+        "operation": {
+          "enum": [
+            "path_start",
+            "path_stop",
+            "config_change",
+            "outage_start",
+            "outage_end",
+            "view",
+            "search",
+            "export",
+            "reconstruct",
+            "legal_hold_set",
+            "legal_hold_release",
+            "reidentify",
+            "crypto_erase",
+            "heartbeat"
+          ]
+        },
+        "outage_kind": {
+          "enum": [
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5"
+          ],
+          "description": "停止の種別（D14-28）。"
+        },
+        "query_scope": {
+          "type": "object",
+          "properties": {
+            "tenant_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "subject_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "period": {
+              "$ref": "#/$defs/Period"
+            },
+            "cross_tenant": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "tenant_count",
+            "period",
+            "cross_tenant"
+          ],
+          "unevaluatedProperties": false
+        },
+        "requester": {
+          "$ref": "#/$defs/StaffRef"
+        },
+        "approvers": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/StaffRef"
+          }
+        },
+        "viewer_country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "参照元の国（ISO 3166-1 alpha-2）（D14-40）。"
+        },
+        "transfer_basis_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$",
+          "description": "移転根拠の台帳参照（DL-34）。"
+        },
+        "heartbeat": {
+          "type": "object",
+          "properties": {
+            "producer_id": {
+              "$ref": "#/$defs/NhiId"
+            },
+            "last_seq": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "producer_id",
+            "last_seq"
+          ],
+          "unevaluatedProperties": false
+        },
+        "erasure": {
+          "type": "object",
+          "description": "暗号消去の証跡（D14-46 手順 4、SP 800-88r2 §3.2.5: RS-10#57）。残るものを明記する。",
+          "properties": {
+            "scope": {
+              "enum": [
+                "subject",
+                "tenant",
+                "period"
+              ]
+            },
+            "keys_destroyed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "residual": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "pseudonym_id",
+                  "ciphertext",
+                  "hash",
+                  "key_backup_until_expiry",
+                  "kms_pending_deletion"
+                ]
+              }
+            },
+            "unreadable_after": {
+              "$ref": "#/$defs/UtcTime",
+              "description": "K 層の全コピーと KMS 待機期間を含めて復号できなくなる予定時刻（D14-48）。"
+            }
+          },
+          "required": [
+            "scope",
+            "keys_destroyed",
+            "residual",
+            "unreadable_after"
+          ],
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "enum": [
+                  "outage_start",
+                  "outage_end"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "outage_kind"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "enum": [
+                  "view",
+                  "search",
+                  "export",
+                  "reconstruct",
+                  "reidentify"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "query_scope",
+              "requester",
+              "viewer_country"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "enum": [
+                  "export",
+                  "reidentify",
+                  "legal_hold_release",
+                  "crypto_erase"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "approvers"
+            ],
+            "properties": {
+              "approvers": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "heartbeat"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "heartbeat"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "crypto_erase"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "required": [
+              "erasure"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DetailAggregate": {
+      "description": "E10 集約（PDP 判定を伴わない public 階層の要求の集計。D14-16）。",
+      "type": "object",
+      "properties": {
+        "period": {
+          "$ref": "#/$defs/Period"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "client_id": {
+          "$ref": "#/$defs/OpaqueId"
+        },
+        "denied_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rate_limited_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sample_event_ids": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/OpaqueId"
+          },
+          "description": "代表例の event_id。backpressure 時に捨ててよいのは代表例だけ（D14-24）。"
+        }
+      },
+      "required": [
+        "period",
+        "count",
+        "denied_count",
+        "rate_limited_count"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Period": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/UtcTime"
+        },
+        "end": {
+          "$ref": "#/$defs/UtcTime"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "x-ocsf-mapping": {
+    "$comment": "OCSF 1.9.0（SS-I24、release、2026-08-03、確認 2026-10-03）への写像の初期案。属性名は RS-10#3〜#9・#42 で確認したものだけを書き、それ以外は「写像表で確認」とする（未確認の属性名を書かない）。写像は版付きで本スキーマと別に管理する（ADR-022 監査イベント行）。",
+    "event_class": {
+      "decision": "API Activity クラス（actor・api・src_endpoint が required）に actor.authorizations を付ける。Authorize Session クラス（ログイン時の権限付与）には写像しない（D14-07、RS-10#7）",
+      "enforcement": "API Activity クラス（同上）",
+      "authentication": "写像表で確認（RS-10 で未確認）",
+      "issuance": "写像表で確認（RS-10 で未確認）",
+      "session_grant": "写像表で確認（actor.session を使う案。RS-10#6）",
+      "admin_change": "写像表で確認（RS-10 で未確認）",
+      "privileged_access": "写像表で確認（RS-10 で未確認）",
+      "key": "写像表で確認（RS-10 で未確認）",
+      "audit_system": "写像表で確認（RS-10 で未確認）",
+      "aggregate": "写像しない（正準 JSON だけで提供）"
+    },
+    "fields": {
+      "ocsf_map_ver": "metadata.version（required、SemVer。RS-10#3）",
+      "tid": "metadata.tenant_uid（recommended。RS-10#8）",
+      "integrity.producer_seq": "metadata.sequence（optional。RS-10#8）",
+      "corr.decision_id": "metadata.correlation_uid（RS-10#8）",
+      "received_time": "metadata.logged_time（RS-10#8。意味の一致は写像表で確認）",
+      "integrity.prev_fp": "attestation_list[].prev_event（record_integrity profile。RS-10#42）",
+      "integrity.seal": "attestation_list[].chain_uid・signatures（record_integrity profile。RS-10#42）",
+      "detail.decision": "actor.authorizations[].decision（列挙型なし。値は自社 profile で固定: true→\"Approved\"、false→\"Denied\" の初期案。RS-10#4）",
+      "detail.model_revision": "actor.authorizations[].policy.version（recommended。RS-10#5）",
+      "detail.guardrail_catalog_version": "actor.authorizations[].policy.uid に G 段カタログ ID を置く案（RS-10#5）",
+      "actor.chain": "delegation オブジェクト（1.9.0 追加）を候補とする（D14-07、RS-10#9）",
+      "actor.chain[type=ai_agent]": "ai_agent オブジェクト（1.9.0 追加）を候補とする（RS-10#9）",
+      "corr.trace_id": "trace profile（API Activity が含む。RS-10#7）の属性名は写像表で確認",
+      "prot": "写像しない。顧客 API では復号権限を持つ顧客にだけ復号済みの値を返す（AP-50）"
+    }
+  },
+  "x-cadf-mapping": {
+    "$comment": "CADF DSP0262 1.0.0（DMTF Standard、2014-06-19。RS-10#10）への写像。顧客の要求があれば提供する任意の形式（D14-07）。",
+    "OBSERVER": "integrity.producer_id（各 observer は自分の層で見えたものだけを記録する: RS-10#13）",
+    "INITIATOR": "actor.chain[0]（なければ subject）",
+    "ACTION": "E1 は control イベントとして allow/deny（detail.decision）。他族は action.name を写像表で CADF の action 分類へ対応させる（RS-10#12）",
+    "TARGET": "resource（type と res_ref）",
+    "OUTCOME": "outcome（success/failure/unknown/pending と同じ集合。RS-10#12）",
+    "REASON": "reason_code（CADF は REASON を must be included とする: RS-10#12）"
+  },
+  "x-minimization": [
+    "記録しない（欄を定義しないことで unevaluatedProperties=false により拒否）: token・session cookie・Txn-Token の全文、Authorization・Cookie・Txn-Token ヘッダの値、password・OTP・回復コード・client secret（D14-10、Transaction Tokens draft-11 §15.2 の MUST NOT: RS-06#41）",
+    "自然人の sub・email・氏名は平文で置かない。subj_ref（sr_ 接頭辞の乱数、対応表は K 層）に置く（D14-44）",
+    "非自然人主体の ID は平文で置く（D14-44）",
+    "送信元 IP・user agent・位置・資源 ID の原文・変更の前後値・目的の自由記述・ticket 本文参照は prot の暗号文にだけ置く（AP-01）。IP の等価検索は ip_ref、資源の等価検索は res_ref で行う",
+    "trace_id・ext_trace_id に識別子を含めない。trace 状態（sampled flag・tracestate・baggage）で記録の有無と内容を変えない（D14-03、D14-04、Trace Context §6 の MUST NOT: RS-10#16）",
+    "tuple 一式・Expand の結果・権限一覧・業務データの本文・カード会員データは記録しない（audit-privacy.md §2.5）",
+    "識別子の形式（小文字英数字の pattern）は JWT（eyJ で始まる base64url）を受理しないため、token の誤記録は検証で拒否される"
+  ],
+  "examples": [
+    {
+      "schema_ver": "1.0.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "sealed",
+      "event_id": "q3v7m2k9x4c8b1n5z6p0r2t4wy",
+      "family": "decision",
+      "event_type": "authz.evaluation",
+      "event_time": "2026-10-15T03:12:45.123Z",
+      "observed_time": "2026-10-15T03:12:45.121Z",
+      "received_time": "2026-10-15T03:12:45.140Z",
+      "clock": {
+        "skew_exceeded": false,
+        "skew_estimate_ms": 2
+      },
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/pdp/facade",
+        "producer_seq": 884213,
+        "prev_fp": "sha-256:Xq8yH2m0c4Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8Y",
+        "producer_sdk_ver": "1.4.2",
+        "seal": {
+          "segment_id": "s0a1b2c3d4e5f6g7h8i9j0k1lm",
+          "leaf_index": 10442
+        }
+      },
+      "tenant_seq": 5521880,
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "write",
+      "outcome": "success",
+      "reason_code": "deny_no_relation",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "subject": {
+        "type": "human",
+        "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6",
+        "client_id": "c1l2i3e4n5t6i7d8x9y0z1a2b3"
+      },
+      "actor": {
+        "mode": "delegated",
+        "chain": [
+          {
+            "type": "workload",
+            "nhi_id": "spiffe://jp1.id-domain.example/svc/orders"
+          },
+          {
+            "type": "workload",
+            "nhi_id": "spiffe://jp1.id-domain.example/svc/bff"
+          }
+        ],
+        "on_behalf_of": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      },
+      "resource": {
+        "type": "commerce/order",
+        "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
+      },
+      "action": {
+        "name": "can_update"
+      },
+      "corr": {
+        "iss": "https://sts.jp1.id-domain.example",
+        "jti_ref": "k2.R7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4Tf9bVw1LkP3s",
+        "sid": "s9d8f7g6h5j4k3l2m1n0b9v8c7",
+        "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
+        "decision_id": "d3e4c5i6s7i8o9n0i1d2a3b4c5",
+        "request_id": "r5e6q7u8e9s0t1i2d3a4b5c6d7",
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "prot": {
+        "fields": [
+          "resource_id",
+          "src_ip"
+        ],
+        "ciphertext": "eA9kZ3RmUjQyVnBzN0xxV2hYbTFjQ2RmRzh0WWJu",
+        "dek_ref": {
+          "scope": "subject",
+          "epoch": "2026-10",
+          "key_ver": 1,
+          "alg": "A256GCM"
+        },
+        "ip_ref": "ir_k1.P3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4Tf9bVw1Lk"
+      },
+      "detail": {
+        "decision": false,
+        "reason": "deny_no_relation",
+        "acr": "urn:example:acr:aal2",
+        "auth_time": "2026-10-15T02:58:10.000Z",
+        "profile_version": "1.0",
+        "model_revision": "m-2026-10-01-7f3a",
+        "guardrail_catalog_version": "g-12",
+        "consistency": {
+          "requested_mode": "at_least_as_fresh",
+          "effective_mode": "fully_consistent"
+        },
+        "freshness": "fresh",
+        "engine": {
+          "pdp_node": "spiffe://jp1.id-domain.example/pdp/node-a",
+          "engine_id": "openfga",
+          "engine_version": "1.8.0"
+        },
+        "request_id_echo": "facade"
+      }
+    },
+    {
+      "schema_ver": "1.0.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "journaled",
+      "event_id": "p7r8i9v0a1c2c3e4s5s6e7v8t9",
+      "family": "privileged_access",
+      "event_type": "priv.jit",
+      "event_time": "2026-10-15T04:00:00.000Z",
+      "observed_time": "2026-10-15T04:00:00.002Z",
+      "received_time": "2026-10-15T04:00:00.010Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/pam/broker",
+        "producer_seq": 1,
+        "prev_fp": null
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "privileged",
+      "tier_sub": "T",
+      "outcome": "success",
+      "reason_code": "approved",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII",
+          "AUD"
+        ]
+      },
+      "actor": {
+        "mode": "autonomous",
+        "chain": [
+          {
+            "type": "human",
+            "subj_ref": "sr_a1b2c3d4e5f6g7h8i9j0k1l2m3"
+          }
+        ]
+      },
+      "purpose": {
+        "code": "customer_support",
+        "basis_ref": "CASE-2026-104233"
+      },
+      "corr": {},
+      "detail": {
+        "staff_ref": "st_a1b2c3d4e5f6g7h8i9j0k1l2m3",
+        "staff_org": "provider",
+        "role": "support_tier2",
+        "support_level": "SL2",
+        "operation": "jit_grant",
+        "access_scope": "tenant.audit.read",
+        "period": {
+          "start": "2026-10-15T04:00:00.000Z",
+          "end": "2026-10-15T06:00:00.000Z"
+        },
+        "internal_approver": "st_z9y8x7w6v5u4t3s2r1q0p9o8n7",
+        "customer_approver": "st_c1u2s3t4o5m6e7r8a9d0m1i2n3",
+        "elevation_grant_id": "e1l2e3v4a5t6i7o8n9g0r1a2n3",
+        "target_tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz"
+      }
+    },
+    {
+      "schema_ver": "1.0.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "produced",
+      "event_id": "n4qz7kv2mx5ha3td6pr2cwe7by",
+      "family": "enforcement",
+      "event_type": "pep.enforce",
+      "event_time": "2026-10-15T03:12:45.131Z",
+      "observed_time": "2026-10-15T03:12:45.131Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "producer_seq": 120044,
+        "prev_fp": "sha-256:Lm9Xa4Rt6Yb8Wc1Ds5Fe0Gh2Ji4Ku6Lw8MHn3vQk7Zp2",
+        "producer_sdk_ver": "2.3.0"
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "write",
+      "outcome": "success",
+      "reason_code": "deny_no_relation",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "subject": {
+        "type": "human",
+        "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+      },
+      "actor": {
+        "mode": "delegated",
+        "chain": [
+          {
+            "type": "workload",
+            "nhi_id": "spiffe://jp1.id-domain.example/svc/orders"
+          }
+        ],
+        "on_behalf_of": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      },
+      "resource": {
+        "type": "commerce/order",
+        "res_ref": "rr_k3.Tf9bVw1LkP3sR7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4"
+      },
+      "action": {
+        "name": "can_update"
+      },
+      "corr": {
+        "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
+        "decision_id": "d3e4c5i6s7i8o9n0i1d2a3b4c5",
+        "request_id": "r5e6q7u8e9s0t1i2d3a4b5c6d7",
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "detail": {
+        "entry_point_id": "orders:patch:/orders/id",
+        "result": "denied",
+        "pep_id": "spiffe://jp1.id-domain.example/svc/orders",
+        "pep_sdk_version": "2.3.0"
+      }
+    },
+    {
+      "schema_ver": "1.0.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "journaled",
+      "event_id": "i5sv3kq7zm2xa4hd6tn2pwc7be",
+      "family": "issuance",
+      "event_type": "token.txn_issue",
+      "event_time": "2026-10-15T03:12:44.980Z",
+      "observed_time": "2026-10-15T03:12:44.981Z",
+      "received_time": "2026-10-15T03:12:44.995Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/edge/tts",
+        "producer_seq": 7730021,
+        "prev_fp": "sha-256:Ds5Fe0Gh2Ji4Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb8Wc1"
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "t4k8p2m6x0c3v7b1n5q9r3s7uz",
+      "tier": "write",
+      "outcome": "success",
+      "reason_code": "issued",
+      "data_class": {
+        "base": "CUS",
+        "labels": [
+          "PII"
+        ]
+      },
+      "subject": {
+        "type": "human",
+        "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+      },
+      "corr": {
+        "iss": "https://tts.jp1.id-domain.example",
+        "txn": "x1t2r3a4n5s6a7c8t9i0o1n2id",
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "detail": {
+        "ledger": "tts",
+        "token_type": "txn_token",
+        "kid": "tts-jp1-2026-10",
+        "aud": [
+          "c7f2"
+        ],
+        "exp": "2026-10-15T03:13:44.980Z",
+        "txn_token_hash": "sha-256:Gh2Ji4Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb8Wc1Ds5Fe0",
+        "req_wl": "spiffe://jp1.id-domain.example/edge/gateway",
+        "root_jti_ref": "k2.R7uN5aJ6dE0gZ2iO4lQ8YXq8yH2m0c4Tf9bVw1LkP3s",
+        "origin_tier": "write"
+      }
+    },
+    {
+      "schema_ver": "1.0.0-draft.1",
+      "ocsf_map_ver": "1.9.0",
+      "record_stage": "sealed",
+      "event_id": "a7gq2kz5mv3xh4td6pn2rwc7by",
+      "family": "aggregate",
+      "event_type": "edge.public_aggregate",
+      "event_time": "2026-10-15T03:13:00.000Z",
+      "observed_time": "2026-10-15T03:13:00.004Z",
+      "received_time": "2026-10-15T03:13:00.020Z",
+      "integrity": {
+        "producer_id": "spiffe://jp1.id-domain.example/edge/gateway",
+        "producer_seq": 99120,
+        "prev_fp": "sha-256:Ku6Lw8MHn3vQk7Zp2Lm9Xa4Rt6Yb8Wc1Ds5Fe0Gh2Ji4",
+        "seal": {
+          "segment_id": "s0a1b2c3d4e5f6g7h8i9j0k1lm",
+          "leaf_index": 10501
+        }
+      },
+      "cell_id": "c7f2",
+      "jurisdiction": "jp",
+      "tid": "~platform",
+      "tier": "public",
+      "outcome": "success",
+      "reason_code": "window_closed",
+      "data_class": {
+        "base": "PUB",
+        "labels": []
+      },
+      "corr": {},
+      "detail": {
+        "period": {
+          "start": "2026-10-15T03:12:00.000Z",
+          "end": "2026-10-15T03:13:00.000Z"
+        },
+        "count": 18452,
+        "denied_count": 37,
+        "rate_limited_count": 12,
+        "sample_event_ids": [
+          "e2kq7zm3vx5hd4ta6pn2bwe7cy"
+        ]
+      }
+    }
+  ],
+  "x-negative-examples-semantics": "各負例は examples[base] に patch を RFC 7396（JSON Merge Patch）で適用し（null は欄の削除、配列は置換。[10] §2）、続いて patch_remove の各 RFC 6901（JSON Pointer。[11] §3）が指す欄を削除したインスタンスである。CI は負例が全件不合格、examples が全件合格であることを検査する（violates は主な拒否理由で、他の理由が併発してもよい）。レビュー時の確認: jsonschema 4.26.0 Draft202012Validator（format 検査あり）。",
+  "x-negative-examples": [
+    {
+      "description": "生の jti を記録している（corr.jti を定義していないため unevaluatedProperties で拒否）。jti は jti_ref で記録する（D14-21）。",
+      "base": 0,
+      "violates": "corr.unevaluatedProperties",
+      "patch": {
+        "corr": {
+          "jti": "a1b2c3"
+        }
+      }
+    },
+    {
+      "description": "access token の全文を corr.sid に入れている（OpaqueId の pattern に一致せず拒否）。D14-10。",
+      "base": 0,
+      "violates": "$defs/OpaqueId.pattern",
+      "patch": {
+        "corr": {
+          "sid": "eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJ4In0.sig"
+        }
+      }
+    },
+    {
+      "description": "自然人の主体を subj_ref ではなく nhi_id（平文）で記録している。Principal の条件で拒否（D14-44）。",
+      "base": 0,
+      "violates": "$defs/Principal.allOf",
+      "patch": {
+        "subject": {
+          "subj_ref": null,
+          "nhi_id": "u4k8p2m6x0c3v7b1n5q9r3s7uz"
+        }
+      }
+    },
+    {
+      "description": "write 階層の E1 に txn がない（ADR-005 D9-3）。",
+      "base": 0,
+      "violates": "allOf（write 以上の txn 必須）",
+      "patch_remove": [
+        "/corr/txn"
+      ]
+    },
+    {
+      "description": "時刻がローカル時刻で秒精度（+09:00、小数なし）。UtcTime の pattern で拒否（D14-27）。",
+      "base": 0,
+      "violates": "$defs/UtcTime.pattern",
+      "patch": {
+        "event_time": "2026-10-15T12:12:45+09:00"
+      }
+    },
+    {
+      "description": "E1 で decision=true なのに reason が deny_no_relation。DetailDecision の条件で拒否。",
+      "base": 0,
+      "violates": "$defs/DetailDecision.allOf",
+      "patch": {
+        "detail": {
+          "decision": true
+        }
+      }
+    },
+    {
+      "description": "public 階層の判定記録（E1 は public で生じない。D14-17）。",
+      "base": 0,
+      "violates": "allOf（decision の tier）",
+      "patch": {
+        "tier": "public"
+      }
+    },
+    {
+      "description": "送信元 IP を平文で src_ip 欄に置いている（未定義欄。IP は prot の暗号文と ip_ref だけ。AP-01・AP-02）。",
+      "base": 0,
+      "violates": "unevaluatedProperties",
+      "patch": {
+        "src_ip": "203.0.113.10"
+      }
+    },
+    {
+      "description": "E7（特権・support）で purpose（目的と ticket 参照）がない（D14-11）。",
+      "base": 1,
+      "violates": "allOf（privileged_access の purpose 必須）",
+      "patch_remove": [
+        "/purpose"
+      ]
+    },
+    {
+      "description": "sealed なのに integrity.seal と tenant_seq がない（D14-54）。",
+      "base": 0,
+      "violates": "allOf（record_stage=sealed）",
+      "patch_remove": [
+        "/integrity/seal",
+        "/tenant_seq"
+      ]
+    },
+    {
+      "description": "producer_seq が 2 以上なのに prev_fp が null（L1 連鎖の断絶。D14-29）。基底の例 1 は producer_seq=1・prev_fp=null。",
+      "base": 1,
+      "violates": "$defs/Integrity.allOf",
+      "patch": {
+        "integrity": {
+          "producer_seq": 2
+        }
+      }
+    },
+    {
+      "description": "E10 集約に subject を記録している（集約は主体単位の記録を持たない。D14-16）。",
+      "base": 4,
+      "violates": "allOf（aggregate の not anyOf）",
+      "patch": {
+        "subject": {
+          "type": "human",
+          "subj_ref": "sr_h2k4m6p8r0t2v4x6z8b0d2f4g6"
+        }
+      }
+    },
+    {
+      "description": "resource.type が名前空間なしの型名（ADR-021 D21-26 の正規名 <名前空間コード>/<型名> でない）。",
+      "base": 0,
+      "violates": "$defs/Resource.properties.type.pattern",
+      "patch": {
+        "resource": {
+          "type": "order"
+        }
+      }
+    },
+    {
+      "description": "privileged なのに副区分（T/P）がない（REQ-03 §2.1・J2）。",
+      "base": 1,
+      "violates": "allOf（privileged の tier_sub 必須）",
+      "patch_remove": [
+        "/tier_sub"
+      ]
+    },
+    {
+      "description": "break-glass/B の判定記録に txn がない（ADR-005 D9-3）。",
+      "base": 0,
+      "violates": "allOf（break-glass/B の txn 必須）",
+      "patch": {
+        "tier": "break-glass",
+        "tier_sub": "B"
+      },
+      "patch_remove": [
+        "/corr/txn"
+      ]
+    },
+    {
+      "description": "AI エージェントが actor なのに委任元主体（on_behalf_of）がない（D14-12、T-075）。",
+      "base": 0,
+      "violates": "$defs/Actor.allOf（ai_agent の on_behalf_of 必須）",
+      "patch": {
+        "actor": {
+          "mode": "autonomous",
+          "on_behalf_of": null,
+          "chain": [
+            {
+              "type": "ai_agent",
+              "nhi_id": "agt7kq2zm5vx3ha4td6pn2rwcb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "description": "TTS の発行記録（E4）に txn がない（ADR-009 D09-35、D14-20）。",
+      "base": 3,
+      "violates": "allOf（issuance・tts の txn 必須）",
+      "patch_remove": [
+        "/corr/txn"
+      ]
+    },
+    {
+      "description": "自然人主体の判定記録に acr がない（REQ-03 §3.7 AU-2）。",
+      "base": 0,
+      "violates": "allOf（E1 自然人の acr・auth_time 必須）",
+      "patch_remove": [
+        "/detail/acr"
+      ]
+    },
+    {
+      "description": "write 階層の記録に副区分を付けている（副区分は privileged・break-glass だけ。REQ-03 §2.1）。",
+      "base": 0,
+      "violates": "allOf（public・read-sensitive・write の tier_sub 禁止）",
+      "patch": {
+        "tier_sub": "T"
+      }
+    },
+    {
+      "description": "trace_id が全ゼロ（W3C Trace Context の無効値）。",
+      "base": 0,
+      "violates": "$defs/Correlation.properties.trace_id.not",
+      "patch": {
+        "corr": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      }
+    }
+  ],
+  "x-open-issues": [
+    "未決（ADR-014 §2.13 論点 1）: 保護欄の暗号化鍵・K_corr・res_ref/ip_ref 用の鍵の用途族を ADR-007 に追加するまで、prot.dek_ref.alg と key_family の audit_encryption・audit_correlation は暫定",
+    "未決（ADR-014 §2.13 論点 2）: ADR-005 D9-2・ADR-021 D21-37・ADR-022 の `jti` 欄名を jti_ref に読み替える注記（期限: 本スキーマの凍結前）",
+    "未決（U-02、ADR-005 §2.15 U2）: txn の read-sensitive への拡大。本スキーマは write・privileged で txn を必須にし、結論によらず欄の形は変えない",
+    "未決（U-04、ADR-013 KD13-6、ADR-014 D14-35）: 判定 1 件ごとの PDP 署名の欄",
+    "未決（ADR-016 P16-2）: reason の値の追加を major とするか",
+    "未決（ADR-017 L17-4）: 主体類型 device の追加",
+    "未決（ADR-029 L29-3）: 昇格 grant ID を grant_ref で運ぶか detail.elevation_grant_id に限るか",
+    "未決（DL-71）: OpaqueId の符号化（base32 26 文字か UUIDv4。CON-02 IssuedOpaqueId の 2 候補。本書の OpaqueId はどちらも受理する）、テナント外の予約値 ~platform の表記（CON-02 に未定義）。CON-02（common.schema.json）は作成済みだが $id の host が異なり（CON-02 は contracts.id-domain.invalid、本書は contracts.id-domain.example。ADR-021 K21-6 未決）、$ref で寄せるのは host の統一後とする。それまでは resource.type・reason・profile_version・model_revision の形式を CON-02 と同じ値域に手で揃える（レビュー RV-03〜RV-05）",
+    "未決（DL-77 付属）: fingerprint の正準化規則、OCSF 写像表（版付き）、族ごとの reason_code 登録簿、purpose.code の最終列挙",
+    "TBD（DL-19・DL-20）: 欠損検知時間（R-193.2）、時刻同期精度（R-193.6）の目標値。本スキーマは欄だけを定める",
+    "未決（DL-71・DL-77）: corr.request_id の値域。CON-02 RequestId は AuthZEN の任意文字列を受ける ASCII 1〜128 文字、本書は PEP SDK が払い出す OpaqueId。PEP SDK 以外が採番した要求 ID を記録する経路の有無を DL-72 と突合する（不一致の記録が検証で拒否されると監査欠損になる）",
+    "未決（REQ-03 §2.3）: 修飾子（+SEC・+FIN・+XT・+AGT・+REG）の記録欄。照会に要るが、付与の正本（permission 登録の registry）と欄名が未定",
+    "未決（CON-04 scim.openapi.yaml・DL-08 §15.1）: x-audit-events の名前（scim.received・scim.bound 等）を family・event_type・detail.operation に写す表。現状の E6 の event_type は admin.change だけである"
+  ],
+  "x-references": [
+    "[1] Open Cybersecurity Schema Framework『ocsf-schema Release 1.9.0』2026-08-03. https://github.com/ocsf/ocsf-schema/releases/tag/1.9.0 （確認日 2026-10-03）RS-10#1, #9",
+    "[2] Open Cybersecurity Schema Framework『ocsf-schema（tag 1.9.0 のスキーマ定義）』https://github.com/ocsf/ocsf-schema/tree/1.9.0 （objects/authorization.json, policy.json, actor.json, metadata.json, attestation.json, events/application/api_activity.json、確認日 2026-10-03）RS-10#3〜#8, #42",
+    "[3] DMTF『DSP0262 CADF』1.0.0, 2014-06-19. https://www.dmtf.org/sites/default/files/standards/documents/DSP0262_1.0.0.pdf （§4.2.2, §4.5.1, §4.7.1, Annex A.3.4, A.4.5、確認日 2026-10-03）RS-10#10〜#13",
+    "[4] NIST『SP 800-53 Rev.5 Release 5.2.0（OSCAL catalog）』https://github.com/usnistgov/oscal-content/blob/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json （AU-3, AU-3(3), AU-8、確認日 2026-10-03）RS-10#15, #33",
+    "[5] W3C『Trace Context』Recommendation, 2021-11-23. https://www.w3.org/TR/trace-context/ （§3.2.2.3, §6, §7.2、確認日 2026-10-03。§3.2.2.3 はレビュー時 2026-10-15 に確認）RS-10#16, #17",
+    "[6] OpenID Foundation『AuthZEN Authorization API 1.0』Final, 2026-01-11. https://openid.net/specs/authorization-api-1_0.html （§10.1.3 要求 ID、確認日 2026-10-03。SS-C13）RS-07#66",
+    "[7] IETF『RFC 8693 OAuth 2.0 Token Exchange』Proposed Standard, 2020-01. https://www.rfc-editor.org/rfc/rfc8693 （§4.1、確認日 2026-10-03。SS-A09）RS-06#45",
+    "[8] IETF OAuth WG『draft-ietf-oauth-transaction-tokens-11』Internet-Draft, 2026-07-30（IESG 未提出、2027-01-31 失効予定）. https://datatracker.ietf.org/doc/draft-ietf-oauth-transaction-tokens/ （§15.2、確認日 2026-10-03。SS-B04）RS-06#41",
+    "[9] JSON Schema『Specification 2020-12』https://json-schema.org/specification （確認日 2026-10-03。SS-I17）RS-16#4",
+    "[10] IETF『RFC 7396 JSON Merge Patch』Proposed Standard, 2014-10. https://www.rfc-editor.org/rfc/rfc7396 （§2、確認日 2026-10-15。research 外、レビュー時に原典を取得）",
+    "[11] IETF『RFC 6901 JavaScript Object Notation (JSON) Pointer』Proposed Standard, 2013-04. https://www.rfc-editor.org/rfc/rfc6901 （§3、確認日 2026-10-15。research 外、レビュー時に原典を取得）"
+  ],
+  "x-arc10-name-map": {
+    "$comment": "04_architecture/audit-privacy.md（ARC-10）§2.2 は欄名を「仮名」とし、正本は本スキーマである。ARC-10 の名前と本スキーマの位置の対応。ARC-10 は actor.* を全族で必須とするが、本スキーマは族ごとに必須を変え、E10 は actor を持たない（D14-16）。ARC-10 側の改訂要（レビュー RV-11）。",
+    "producer_id, producer_seq, prev_fp": "integrity.producer_id, integrity.producer_seq, integrity.prev_fp",
+    "actor.type, actor.subj_ref, actor.nhi_id": "subject.type・subject.subj_ref・subject.nhi_id（権限の主体）と actor.chain[]（行為者）",
+    "actor.client_id": "subject.client_id",
+    "actor.mode": "actor.mode",
+    "actor.act_chain": "actor.chain",
+    "target.res_type, target.res_ref": "resource.type, resource.res_ref",
+    "purpose_code, basis_ref": "purpose.code, purpose.basis_ref",
+    "prot.ciphertext, prot.dek_ref, prot.ip_ref": "prot.ciphertext, prot.dek_ref, prot.ip_ref"
+  }
+}

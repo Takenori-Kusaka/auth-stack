@@ -1,0 +1,756 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.id-domain.example/schemas/ssf-caep-set/0.1.0/ssf-caep-set.schema.json",
+  "$comment": "文書ID: CON-10 / DL-79 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15。対応要求: R-112, R-143, R-191, R-191.1, R-191.2 ／ G-111, G-118, G-121, G-138。依存文書: 05_adr/ADR-006-revocation-continuous-evaluation.md（D6-23〜D6-26、L6-1、L6-7、L6-8、K6-3）、05_adr/ADR-021-irreversible-identifiers.md（sub_id、D21-25〜D21-28）、05_adr/ADR-022-integration-contract-standards.md（D-1、D-2）、04_architecture/revocation-continuous-evaluation.md（§5）、11_contracts/ssf-caep.openapi.yaml（CON-09 / DL-78、stream profile）、research/RS-04-oauth-oidc-profile.md（#77〜#79）、research/RS-03-identity-lifecycle.md（#66）、research/standards-status.md（SS-C09〜SS-C12）。$id のホスト id-domain.example は ADR-021 の <id-domain>（未確定、NA-021-3）の置き場所であり、確定後に差し替える。本スキーマは SET（RFC 8417）の JWS を検証・復号した後の JWT Claims Set（payload）を検証する。JOSE header は $defs/joseHeader で検証する。ルートは送受信共通の基準（標準準拠＋本基盤の最小要件）であり、受信（基盤が SSF Receiver になる場合、ADR-006 D6-23）に使う。本基盤が送信する SET（ADR-006 D6-24）は、より厳しい $defs/outboundProfile で検証する。標準の項目名と意味は変えていない。本基盤固有の注記は x- 接頭辞のキーワードだけに置く（JSON Schema 2020-12 では未知のキーワードは注釈として無視される）。主張タグ: [N]=原典の規範、[D]=設計推論、[A-xxx]=仮定。独立レビュー（2026-10-15）の記録は 11_contracts/review-notes/CON-10.md。",
+  "title": "SSF/CAEP/RISC Security Event Token payload profile v1",
+  "description": "SSF 1.0・CAEP 1.0・RISC 1.0（いずれも OIDF Final、2025-08-29、standards-status.md SS-C09〜SS-C11）に基づく SET payload の profile。v1 の GA イベントは CAEP session-revoked・credential-change・token-claims-change・assurance-level-change と RISC account-disabled・credential-compromise・identifier-recycled の 7 種である（ADR-022 D-2、ADR-006 D6-24）[D]。CAEP Interoperability Profile（Implementer's Draft 1、SS-C12）には依存しない [D]。",
+  "type": "object",
+  "required": ["iss", "iat", "jti", "sub_id", "events"],
+  "properties": {
+    "iss": {
+      "type": "string",
+      "minLength": 1,
+      "description": "SET の発行者。RFC 8417 §2.2 で REQUIRED [N]。SSF 1.0 §4.1.6 により Stream Configuration の iss と一致しなければならない（MUST）[N]。受信側は送信者の iss と署名鍵（jwks_uri）の結合を検証し、検証できない SET は処理しない（ADR-006 D6-23）[D]。"
+    },
+    "iat": {
+      "type": "number",
+      "minimum": 0,
+      "description": "発行時刻（NumericDate）。RFC 8417 §2.2 で REQUIRED [N]。"
+    },
+    "jti": {
+      "type": "string",
+      "minLength": 1,
+      "description": "SET の一意識別子。RFC 8417 §2.2 で REQUIRED [N]。受信側は (iss, jti) で重複受信を検出し、冪等に処理する [D]。"
+    },
+    "aud": {
+      "description": "受信者。RFC 8417 §2.2 で RECOMMENDED [N]。SSF 1.0 §4.1.8 で文字列または文字列の配列 [N]。本基盤の送信では必須にし、受信者の client_id の単一文字列に限る（$defs/outboundProfile、CON-09 の transmitter profile と同じ）[D]。",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+    "txn": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC 8417 §2.2 の取引識別子（OPTIONAL）[N]。SSF 1.0 §4.1.9 は送信者が設定すべき（SHOULD）とし、基になる事象に一意で、同じ原因の SET 間で再利用してよいとする [N]。注意: この txn は RFC 8417 の意味であり、ADR-022 D-6 の相関 ID 表の行 2（Transaction Token の txn）とは別物である。両者を同じ値にしない [D]。本基盤の送信では、失効記録（ADR-006 の revocation_id）と 1 対 1 に対応する不透明値を入れ、内部の revocation_id・Txn-Token の値そのものは出さない [D]。"
+    },
+    "toe": {
+      "type": "number",
+      "minimum": 0,
+      "description": "事象の発生時刻（RFC 8417 §2.2、OPTIONAL）[N]。CAEP 1.0 §2 と RISC 1.0 §2.7 は各イベント内の OPTIONAL な event_timestamp を定める [N]。SSF・CAEP の読んだ範囲には toe と event_timestamp の関係を定める規定は見当たらなかった（未確認）。本 profile は toe を禁止しないが、遅延の計測（04_architecture/revocation-continuous-evaluation.md の T_up）には event_timestamp を優先し、無ければ toe、どちらも無ければ iat を使う [D]。"
+    },
+    "sub_id": {
+      "$ref": "#/$defs/subjectIdentifierAny",
+      "description": "主たる主体。SSF 1.0 §3.1 で top-level の sub_id を使わなければならない（MUST）[N]。値は RFC 9493 §4.1 の Subject Identifier [N]。"
+    },
+    "events": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "RFC 8417 §2.2: 少なくとも 1 つのメンバーを持つ JSON object で、メンバー名はイベント種別 URI、値は JSON object（空でもよい）[N]。SSF 1.0 §4.2.1 は 1 つの SET に 1 イベントだけを含めるべき（SHOULD）とする [N]。受信の基準では SHOULD のまま扱い、送信では 1 件に限る（$defs/outboundProfile）[D]。",
+      "propertyNames": { "format": "uri", "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:" },
+      "additionalProperties": { "type": "object" },
+      "properties": {
+        "https://schemas.openid.net/secevent/caep/event-type/session-revoked": { "$ref": "#/$defs/caepSessionRevoked" },
+        "https://schemas.openid.net/secevent/caep/event-type/token-claims-change": { "$ref": "#/$defs/caepTokenClaimsChange" },
+        "https://schemas.openid.net/secevent/caep/event-type/credential-change": { "$ref": "#/$defs/caepCredentialChange" },
+        "https://schemas.openid.net/secevent/caep/event-type/assurance-level-change": { "$ref": "#/$defs/caepAssuranceLevelChange" },
+        "https://schemas.openid.net/secevent/caep/event-type/device-compliance-change": { "$ref": "#/$defs/caepDeviceComplianceChange" },
+        "https://schemas.openid.net/secevent/caep/event-type/session-established": { "$ref": "#/$defs/caepSessionEstablished" },
+        "https://schemas.openid.net/secevent/caep/event-type/session-presented": { "$ref": "#/$defs/caepSessionPresented" },
+        "https://schemas.openid.net/secevent/caep/event-type/risk-level-change": { "$ref": "#/$defs/caepRiskLevelChange" },
+        "https://schemas.openid.net/secevent/risc/event-type/account-disabled": { "$ref": "#/$defs/riscAccountDisabled" },
+        "https://schemas.openid.net/secevent/risc/event-type/credential-compromise": { "$ref": "#/$defs/riscCredentialCompromise" },
+        "https://schemas.openid.net/secevent/risc/event-type/identifier-recycled": { "$ref": "#/$defs/riscIdentifierRecycled" },
+        "https://schemas.openid.net/secevent/risc/event-type/account-purged": { "$ref": "#/$defs/riscNoAttributeEvent" },
+        "https://schemas.openid.net/secevent/risc/event-type/account-enabled": { "$ref": "#/$defs/riscNoAttributeEvent" },
+        "https://schemas.openid.net/secevent/risc/event-type/recovery-activated": { "$ref": "#/$defs/riscNoAttributeEvent" },
+        "https://schemas.openid.net/secevent/risc/event-type/sessions-revoked": { "$ref": "#/$defs/riscSessionsRevokedDeprecated" },
+        "https://schemas.openid.net/secevent/ssf/event-type/verification": { "$ref": "#/$defs/ssfVerification" },
+        "https://schemas.openid.net/secevent/ssf/event-type/stream-updated": { "$ref": "#/$defs/ssfStreamUpdated" }
+      }
+    }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["sub"] },
+      { "required": ["exp"] }
+    ]
+  },
+  "x-prohibited-claims": {
+    "sub": "SSF 1.0 §4.1.2: SSF イベントを含む SET に JWT の sub claim があってはならない（MUST NOT）[N]。主体は sub_id で表す。",
+    "exp": "SSF 1.0 §4.1.7: SET で exp claim を使ってはならない（MUST NOT）[N]。"
+  },
+  "x-unknown-members": "SSF 1.0 §4.2.3: 受信者は理解できない field を無視しなければならない（MUST）[N]。このため標準イベントの payload と root には additionalProperties: false を置かない。RFC 9493 §3 は Subject Identifier が Identifier Format に記述のないメンバーを含んではならない（MUST NOT）とするので、既知の識別子形式にだけ additionalProperties: false を置く [N]。SSF 1.0 §3.6 により、受信者は処理できない Critical member（送信者 metadata の critical_subject_members、SSF 1.0 §7.1）を含むイベントを破棄しなければならない（MUST）[N]。この判定は stream metadata（CON-09）に依存するため本スキーマでは表現できず、受信実装で行う [D]。",
+  "x-unknown-event-types": "本 profile が処理を定めていないイベント種別 URI（他社の独自イベントを含む）は、署名・iss・aud の検証と記録だけを行い、失効状態を変更しない [D]。SSF 1.0 の読んだ範囲には、未知のイベント種別の扱いの規定は見当たらなかった（未確認）。",
+  "x-receive-obligations": {
+    "$comment": "受信義務の範囲（DL-79 の要点）。SSF 1.0 §4.1.5 はイベント処理の振る舞いを配備・連携ごとに『情報提供』から『強制執行』まで定めてよいとする [N]（RS-04#77）。このため誰が何を何秒以内に処理するかを本 profile と ADR-006 で定める [D]。秒数はすべて TBD（所有者と期限は ADR-006 §2.10）。",
+    "platform-as-receiver": {
+      "scope": "顧客 IdP・外部 IdP からの SSF stream（push RFC 8935 と poll RFC 8936 の両方）。上限の手掛かりは顧客 IdP 連携 2,000 [A-082]。",
+      "obligation": "強制執行。各イベント定義の x-profile.inbound の処理を行い、受信から失効状態への確定書込までの D_in を基盤の SLO（D_w）に含める（ADR-006 D6-23、D6-29）[D]。",
+      "tenantScope": "効果は、その stream を結合した IdP に結合したテナント文脈に限る。SET の sub_id.tenant の値で効果の範囲を広げない（identity-lifecycle M-03、ADR-006 D6-23）[D]。",
+      "verification": "JOSE header の typ と、iss と署名鍵の結合を検証し、検証できない SET は処理しない [N][D]。",
+      "deadline": "D_in: TBD（所有者 プラットフォームチーム長、ADR-006 §2.10）"
+    },
+    "external-integration-apps": {
+      "scope": "SSF stream を登録した外部連携アプリ（PC-15、上限の手掛かり外部 client 800 [A-013]）。",
+      "obligation": "テナント管理者の同意を要する scope を持つアプリ、または利用者の session を自ら保持するアプリは、session-revoked・account-disabled（または OIDC Back-Channel Logout）の受信を連携契約の条件にする。それ以外は任意（ADR-006 D6-26）[D]。対象範囲の決裁は未決（ADR-006 K6-3、推奨 (b)、所有者 プロダクト責任者＋CISO、G3）。",
+      "required-events": [
+        "https://schemas.openid.net/secevent/caep/event-type/session-revoked",
+        "https://schemas.openid.net/secevent/risc/event-type/account-disabled"
+      ],
+      "deadline": "受信からアプリ内 session の無効化までの時間: TBD（未決（ADR-006 K6-3））。API 利用は edge（E1）の照会で止まるので、この期限は基盤の剥奪 SLO R(t, c) には含めない [D]。"
+    },
+    "customer-receivers": {
+      "scope": "trust agreement を結んだ顧客の受信者（SIEM・自社アプリ）。上限の手掛かりはテナント約 1 万 [A-007]。",
+      "obligation": "情報提供（処理義務は trust agreement で定める）[D]。SP 800-63C-4 §4.8 は signal の送信に事前の trust agreement（SHALL）、全用途の記載（SHALL）、対象アカウントの特定に必要な範囲を超える個人情報を含めないこと（SHALL NOT）を求める [N]（RS-03#72、RS-14#61）。",
+      "deadline": "送信まで（D_tx）は基盤の R に含める。D_tx: TBD（所有者 プロダクト責任者）"
+    },
+    "internal-services": {
+      "scope": "約 300 の内部依存サービス [A-050]。",
+      "obligation": "SSF の受信者にしない。独自 session・長時間接続・非同期ジョブ・署名付き URL・データ複製を持つサービスだけが、ライフサイクル事象（ADR-022 のイベント配送契約、G-137）で受信義務を負う（ADR-006 D6-25）[D]。下限の手掛かりは独自セッション 105 サービス [A-110]。本スキーマの SET はこれらのサービスに配らない [D]。"
+    }
+  },
+  "x-custom-event-naming": {
+    "status": "未決（ADR-022。独自イベントの命名規則は ADR で決まっていない。以下は ADR-021 D21-25〜D21-28 から導いた preview の提案）",
+    "rule": "https://schemas.<id-domain>/secevent/<名前空間コード>/event-type/<kebab-case 名>/v<major>",
+    "rationale": [
+      "外部に出す名前は自社所有ドメインで修飾し、組織名・チーム名・製品名を含めない（ADR-021 D21-25、D21-28）[D]。",
+      "名前空間コードは名前空間台帳（DL-71 付表）に登録したものに限る。基盤所有のイベントは予約名前空間 core を使う（ADR-021 D21-26）[D]。",
+      "非互換変更では major を上げた新しい URI を並行提供する（ADR-016、ADR-022 D-1）[D]。削除した名前は再利用しない（ADR-021 D21-27）[D]。",
+      "schemas.openid.net 配下の名前を独自イベントに使わない。標準イベントと同じ意味の独自イベントを作らない [D]。",
+      "新しいイベント種別は events 内の subject field を主たる主体に使ってはならない（SSF 1.0 §3.1.2、MUST NOT）[N]。主体は top-level の sub_id で表す。"
+    ],
+    "v1-status": "v1 の GA に独自イベントはない（ADR-022 D-2）[D]。候補はテナント単位の停止の外部通知（04_architecture/revocation-continuous-evaluation.md §5 で未決、DL-78・DL-79 と ADR-022 改版へ申し送り）。鍵の緊急失効は SSF でなく連携契約の通知経路で扱う（ADR-006 D6-20）。",
+    "patternRef": "#/$defs/customEventTypeUri"
+  },
+  "x-references": [
+    "[1] IETF (P. Hunt, Ed., M. Jones, W. Denniss, M. Ansari)『RFC 8417: Security Event Token (SET)』2018-07. https://www.rfc-editor.org/rfc/rfc8417 （参照箇所: §2.2 Core SET Claims, §2.3 Explicit Typing、確認日: 2026-10-15。research 未収録・standards-status.md 未登録。本書作成時に原典を取得。台帳への追加要）",
+    "[2] OpenID Foundation Shared Signals WG『OpenID Shared Signals Framework Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html （参照箇所: §3.1, §3.1.1, §3.1.2, §3.3, §3.4, §3.5.1〜§3.5.3, §3.6, §4.1.1, §4.1.2, §4.1.5〜§4.1.9, §4.2.1, §4.2.3, §8.1.2.1, §8.1.4.1, §8.1.5、確認日: 2026-10-15。RS-04#77。§4.1.5 以外の節は本書作成時に原典で確認）",
+    "[3] OpenID Foundation Shared Signals WG (T. Cappalli, A. Tulshibagwale)『OpenID Continuous Access Evaluation Profile 1.0』Final, 2025-08-29. https://openid.net/specs/openid-caep-1_0-final.html （参照箇所: §2 Optional Event Claims, §3.1〜§3.8、確認日: 2026-10-15。RS-04#78、RS-03#66。イベント種別名は RS で検証済み、各 field の定義は本書作成時に原典で確認）",
+    "[4] OpenID Foundation Shared Signals WG『OpenID RISC Profile Specification 1.0』Final, 2025-08-29. https://openid.net/specs/openid-risc-1_0-final.html （参照箇所: §2.2 Account Purged, §2.3 Account Disabled, §2.4 Account Enabled, §2.6 Identifier Recycled, §2.7 Credential Compromise, §2.9 Recovery Activated, §2.11 Sessions Revoked、確認日: 2026-10-15。RS-04#78、RS-03#66）",
+    "[5] IETF (A. Backman, M. Scurtescu, P. Jain)『RFC 9493: Subject Identifiers for Security Event Tokens』2023-12. https://www.rfc-editor.org/rfc/rfc9493 （参照箇所: §3, §3.2.1〜§3.2.8, §4.1、確認日: 2026-10-15。ADR-021 [^38] と同じ原典。standards-status.md 未登録。台帳への追加要）",
+    "[6] NIST『SP 800-63C-4 Digital Identity Guidelines: Federation and Assertions』Final, 2025-07. https://pages.nist.gov/800-63-4/sp800-63c.html （参照箇所: §4.8 Shared Signaling、確認日: 2026-10-03。RS-03#72、RS-14#61）",
+    "[7] OpenID Foundation『Public Review Period for Proposed OpenID CAEP Interoperability Profile Final Specification』2026-07-27（UPDATE 2026-09-12, 09-15）. https://openid.net/public-review-period-for-proposed-openid-caep-interoperbility-profile-final-specification/ （参照箇所: UPDATE 2 件、確認日: 2026-10-03。RS-04#79。Interop Profile に依存しない根拠）"
+  ],
+  "x-open-items": [
+    "未決（ADR-006 L6-1、ADR-022 改版）: RISC account-purged の受信を account-disabled と同じ処理で受ける案（preview）。",
+    "未決（ADR-006 L6-8、ADR-022 改版）: RISC recovery-activated を受信する場合に RC-6 の疑いとして扱う案（preview）。",
+    "未決（ADR-006 L6-7、DEC-3 の U-01）: 送信 SET の iss の数（issuer の粒度でテナント別なら約 1 万）。本スキーマは https で path なしの形（ADR-021）だけを課す。CON-09 は /.well-known/ssf-configuration/{issuer_path} でテナント別 issuer も表せるので、U-01 で path 型 issuer を採る場合は outboundProfile の iss の pattern を改める。",
+    "未決（ADR-022、DL-78・DL-79）: テナント単位の停止の外部通知を独自イベントにするか、主体ごとの account-disabled にするか。",
+    "未決（ADR-002）: 本基盤の保証区分と CAEP assurance-level-change の namespace・level 値の対応表。",
+    "未決（ADR-006 K6-3）: 外部連携アプリの受信義務の対象範囲。",
+    "前提台帳へ追加要: RFC 8417 と RFC 9493 の standards-status.md への登録、CAEP §2・§3 と SSF の各節（本書作成時に確認）の照合ログへの追記。"
+  ],
+  "$defs": {
+    "joseHeader": {
+      "$comment": "SET の JOSE protected header。SSF 1.0 §4.1.1 は RFC 8417 §2.3 の明示的型付けを使わなければならない（MUST）とし、値は secevent+jwt [N]（RS-04#77）。RFC 8417 §2.3 自体は typ を MAY（他の JWT と混同し得る文脈では MUST）とし、値は secevent+jwt にすべき（SHOULD、application/ 接頭辞の省略を RECOMMENDED）とするが、SSF の SET では明示的型付けが MUST になる [N]。本 profile は受信でも typ の値を secevent+jwt に限り、application/secevent+jwt は受理しない（CON-09 の受信規則と同じ）[D]。alg の許可リストは ADR-007・ADR-015 に従い、本スキーマは none の禁止だけを課す [D]。",
+      "type": "object",
+      "required": ["typ", "alg", "kid"],
+      "properties": {
+        "typ": { "const": "secevent+jwt" },
+        "alg": { "type": "string", "not": { "enum": ["none", "NONE", "None"] } },
+        "kid": { "type": "string", "minLength": 1, "description": "送信者の jwks_uri（SSF 1.0 §7）で鍵を引くための識別子。kid の必須化は本 profile の要求 [D]。" }
+      },
+      "examples": [
+        { "typ": "secevent+jwt", "alg": "ES256", "kid": "k-2026-10-a" }
+      ]
+    },
+    "langTaggedMessages": {
+      "$comment": "CAEP 1.0 §2 の reason_admin・reason_user: 1 つ以上のメンバーを持つ JSON object で、キーは BCP47 の言語タグ、値はメッセージ [N]。言語タグの検査は簡略化した正規表現で行う [D]。",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*$" },
+      "additionalProperties": { "type": "string" }
+    },
+    "caepCommonClaims": {
+      "$comment": "CAEP 1.0 §2 Optional Event Claims [N]。",
+      "type": "object",
+      "properties": {
+        "event_timestamp": { "type": "number", "minimum": 0, "description": "事象の時刻（1970-01-01T00:00:00Z からの秒、OPTIONAL）[N]。" },
+        "initiating_entity": { "enum": ["admin", "user", "policy", "system"], "description": "OPTIONAL。値は 4 つのいずれかでなければならない（MUST）[N]。" },
+        "reason_admin": { "$ref": "#/$defs/langTaggedMessages" },
+        "reason_user": { "$ref": "#/$defs/langTaggedMessages" }
+      }
+    },
+    "caepCredentialType": {
+      "$comment": "CAEP 1.0 §3.3 の credential_type。列挙値のほか、送信者と受信者が相互に対応する型も許される [N]。",
+      "anyOf": [
+        { "enum": ["password", "pin", "x509", "fido2-platform", "fido2-roaming", "fido-u2f", "verifiable-credential", "phone-voice", "phone-sms", "app"] },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "caepSessionRevoked": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "description": "CAEP 1.0 §3.1。イベント固有の claim はない [N]。",
+      "x-profile": {
+        "standard": "CAEP 1.0 §3.1 [N]（RS-04#78、RS-03#66）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "対象の sid・sub の session を失効する。区分 RC-4、EV-07（ADR-006 D6-23）[D]。sub_id.session が無く user だけの場合は、その IdP に結合したテナント文脈の当該利用者の全 session を失効する [D]。",
+        "outbound": "送信する。sub_id は complex（user=iss_sub、tenant=opaque、session=opaque は個別 session の場合だけ）[D]。session を含めない場合は当該テナント文脈の全 session の失効を意味する（R-112）[D]。",
+        "receiveObligation": "外部連携アプリのうち D6-26 の対象には受信必須（未決（ADR-006 K6-3））。"
+      }
+    },
+    "caepTokenClaimsChange": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "required": ["claims"],
+      "properties": {
+        "claims": { "type": "object", "minProperties": 1, "description": "REQUIRED。新しい値を持つ 1 つ以上の claim [N]。" }
+      },
+      "x-profile": {
+        "standard": "CAEP 1.0 §3.2 [N]（RS-04#78）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "該当主体の introspection 結果と内部 token を再発行させる（範囲境界）。区分 RC-1（ADR-006 D6-23）[D]。上流 IdP の claim 値を token に転記しない（ADR-002）[D]。",
+        "outbound": "送信する。claims には access token claims 契約（CON-06）に載る claim だけを入れ、email・phone_number 等の個人情報を入れない（SP 800-63C-4 §4.8 の SHALL NOT、ADR-021）[N][D]。"
+      }
+    },
+    "caepCredentialChange": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "required": ["credential_type", "change_type"],
+      "properties": {
+        "credential_type": { "$ref": "#/$defs/caepCredentialType" },
+        "change_type": { "enum": ["create", "revoke", "update", "delete"], "description": "REQUIRED。4 つのいずれかでなければならない（MUST）[N]。" },
+        "friendly_name": { "type": "string" },
+        "x509_issuer": { "type": "string" },
+        "x509_serial": { "type": "string" },
+        "fido2_aaguid": { "type": "string" }
+      },
+      "x-profile": {
+        "standard": "CAEP 1.0 §3.3 [N]（RS-04#78）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "当該認証器・資格情報に束縛した session と refresh token を失効し再認証を求める。区分 RC-6、EV-11（ADR-006 D6-23）[D]。",
+        "outbound": "送信する。friendly_name は利用者が付けた名前で個人情報を含み得るため送らない（SP 800-63C-4 §4.8 の最小化）[N][D]。"
+      }
+    },
+    "caepAssuranceLevelChange": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "required": ["namespace", "current_level"],
+      "properties": {
+        "namespace": { "type": "string", "minLength": 1, "description": "REQUIRED。RFC8176、RFC6711、ISO-IEC-29115、NIST-IAL、NIST-AAL、NIST-FAL のいずれかであってよい（MAY）。それ以外は送受信者が合意した独自 namespace の別名 [N]。" },
+        "current_level": { "type": "string", "minLength": 1 },
+        "previous_level": { "type": "string", "minLength": 1, "description": "OPTIONAL。省略時、受信者は前の水準を不明とみなさなければならない（MUST）[N]。" },
+        "change_direction": { "enum": ["increase", "decrease"], "description": "OPTIONAL。previous_level を示す場合は送信者が値を示すべき（SHOULD）[N]。" }
+      },
+      "x-profile": {
+        "standard": "CAEP 1.0 §3.4 [N]（RS-04#78）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "低下した場合、必要 AAL を満たさない session を step-up 待ちにする（G 段規則 4）。区分 RC-4、EV-14（ADR-006 D6-23）[D]。change_direction が無く previous_level も無い場合は低下として扱う [D]。",
+        "outbound": "送信する。namespace は CAEP が列挙する値に限り、previous_level を示すときは change_direction を必須にする [D]。保証区分と level 値の対応は未決（ADR-002）。"
+      }
+    },
+    "caepDeviceComplianceChange": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "required": ["previous_status", "current_status"],
+      "properties": {
+        "previous_status": { "enum": ["compliant", "not-compliant"] },
+        "current_status": { "enum": ["compliant", "not-compliant"] }
+      },
+      "x-profile": {
+        "standard": "CAEP 1.0 §3.5 [N]",
+        "v1Status": "v1 GA 外（ADR-022 D-2 の 7 種に含まれない）",
+        "inbound": "検証と記録だけを行い、失効状態を変更しない [D]。",
+        "outbound": "送信しない [D]。"
+      }
+    },
+    "caepSessionEstablished": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "properties": {
+        "fp_ua": { "type": "string" },
+        "acr": { "type": "string" },
+        "amr": { "type": "array", "items": { "type": "string" } },
+        "ext_id": { "type": "string" }
+      },
+      "x-profile": { "standard": "CAEP 1.0 §3.6 [N]", "v1Status": "v1 GA 外", "inbound": "検証と記録だけ [D]。", "outbound": "送信しない [D]。" }
+    },
+    "caepSessionPresented": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "properties": {
+        "fp_ua": { "type": "string" },
+        "ext_id": { "type": "string" }
+      },
+      "x-profile": { "standard": "CAEP 1.0 §3.7 [N]", "v1Status": "v1 GA 外", "inbound": "検証と記録だけ [D]。", "outbound": "送信しない [D]。" }
+    },
+    "caepRiskLevelChange": {
+      "allOf": [{ "$ref": "#/$defs/caepCommonClaims" }],
+      "type": "object",
+      "required": ["principal", "current_level"],
+      "properties": {
+        "risk_reason": { "type": "string", "description": "RECOMMENDED [N]。" },
+        "principal": { "type": "string", "minLength": 1, "description": "REQUIRED。USER、DEVICE、SESSION、TENANT、ORG_UNIT、GROUP、または SSF §2 の他の実体 [N]。" },
+        "current_level": { "enum": ["LOW", "MEDIUM", "HIGH"], "description": "REQUIRED。LOW・MEDIUM・HIGH のいずれかでなければならない（MUST）[N]。" },
+        "previous_level": { "enum": ["LOW", "MEDIUM", "HIGH"] }
+      },
+      "x-profile": { "standard": "CAEP 1.0 §3.8 [N]", "v1Status": "v1 GA 外", "inbound": "検証と記録だけ。不正対策（03_threat-model）の入力にするかは未決（ADR-022）。", "outbound": "送信しない [D]。" }
+    },
+    "riscReason": {
+      "$comment": "RISC 1.0 §2.7 は reason_admin・reason_user の型を定めていない（原典確認 2026-10-15）[N]。受信では文字列と CAEP §2 形式の object の両方を受け付け、送信では CAEP 形式の object に揃える [D]。",
+      "anyOf": [
+        { "type": "string" },
+        { "$ref": "#/$defs/langTaggedMessages" }
+      ]
+    },
+    "riscAccountDisabled": {
+      "type": "object",
+      "properties": {
+        "reason": { "type": "string", "description": "OPTIONAL。RISC 1.0 §2.3 が挙げる値は hijacking と bulk-account [N]。送信ではこの 2 値に限る [D]。" }
+      },
+      "x-profile": {
+        "standard": "RISC 1.0 §2.3 [N]（RS-04#78）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "当該テナント文脈の所属を停止（identity-lifecycle M-03）し、INV-6 の全手段を失効する。区分 RC-2、EV-04（ADR-006 D6-23）[D]。",
+        "outbound": "送信する。sub_id は complex で tenant を必須にする（効果をテナント文脈に限るため）[D]。",
+        "receiveObligation": "外部連携アプリのうち D6-26 の対象には受信必須（未決（ADR-006 K6-3））。"
+      }
+    },
+    "riscCredentialCompromise": {
+      "type": "object",
+      "required": ["credential_type"],
+      "properties": {
+        "credential_type": { "$ref": "#/$defs/caepCredentialType", "description": "REQUIRED。値は CAEP Credential Change の credential_type と同じ（RISC 1.0 §2.7）[N]。" },
+        "event_timestamp": { "type": "number", "minimum": 0, "description": "OPTIONAL。送信者が事象を発見した時刻 [N]。" },
+        "reason_admin": { "$ref": "#/$defs/riscReason" },
+        "reason_user": { "$ref": "#/$defs/riscReason" }
+      },
+      "x-profile": {
+        "standard": "RISC 1.0 §2.7 [N]（RS-04#78）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "ADR-006 D6-21 の処理（区分 RC-6、EV-11）[D]。",
+        "outbound": "送信する。reason_* は CAEP §2 形式の object にする [D]。"
+      }
+    },
+    "riscIdentifierRecycled": {
+      "type": "object",
+      "description": "RISC 1.0 §2.6。属性はない。subject は email または phone でなければならない（MUST）[N]。RFC 9493 の登録名は phone_number であり、本 profile は phone を phone_number として扱う [D]。",
+      "x-profile": {
+        "standard": "RISC 1.0 §2.6 [N]（RS-03#66）",
+        "v1Status": "GA（ADR-022 D-2）",
+        "inbound": "その識別子に結び付く回復先・通知先・未受諾の招待を凍結する（identity-lifecycle §9、ADR-021 D21-14c、ADR-006 D6-23）[D]。email・phone は結合キーにしない（ADR-021）ので、主体の失効には使わない [D]。sub_id が email・phone_number 以外の SET は RISC §2.6 の MUST に反するので、検証と記録だけを行い凍結しない [D]（ルートでは拒否しない。RISC の phone は RFC 9493 の登録名と一致しないため）。",
+        "outbound": "送信する。sub_id は email または phone_number に限る [N][D]。"
+      }
+    },
+    "riscNoAttributeEvent": {
+      "type": "object",
+      "description": "属性を持たない RISC イベント（account-purged §2.2、account-enabled §2.4、recovery-activated §2.9）[N]。",
+      "x-profile": {
+        "v1Status": "v1 GA 外",
+        "account-purged": "受信は account-disabled と同じ処理（RC-2）で受け、削除はライフサイクル事象で行う案（preview）。未決（ADR-006 L6-1）。送信しない。",
+        "account-enabled": "送受信しない。再有効化は SSF でなく管理操作で行う（ADR-006 L6-1、決定）[D]。受信時は検証と記録だけ。",
+        "recovery-activated": "v1 では送受信しない。受信する場合は RC-6 の疑い（再認証と認証器の健全性確認）として扱う案（preview）。未決（ADR-006 L6-8）。"
+      }
+    },
+    "riscSessionsRevokedDeprecated": {
+      "type": "object",
+      "deprecated": true,
+      "description": "RISC 1.0 §2.11。この種別は非推奨であり、新しい実装は CAEP の session-revoked を使わなければならない（MUST）[N]（RS-04#78、RS-03#66）。",
+      "x-profile": {
+        "v1Status": "受信互換のみ（deprecated）",
+        "inbound": "互換のためだけに CAEP session-revoked（sub_id の全 session）と同じ処理で受ける（ADR-006 D6-23）[D]。",
+        "outbound": "送信してはならない（RISC §2.11 の MUST から、新しい実装である本基盤は CAEP session-revoked を使う）[N]。"
+      }
+    },
+    "ssfVerification": {
+      "type": "object",
+      "properties": { "state": { "type": "string" } },
+      "description": "SSF 1.0 §8.1.4.1。state は OPTIONAL。sub_id は REQUIRED で format opaque、id に stream ID [N]。stream 管理は CON-09（DL-78）[D]。",
+      "x-profile": { "v1Status": "GA（stream 管理、ADR-022 D-2）", "inbound": "stream の疎通確認だけ。失効状態を変えない [D]。", "outbound": "送信する [D]。" }
+    },
+    "ssfStreamUpdated": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["enabled", "paused", "disabled"], "description": "REQUIRED。値は SSF 1.0 §8.1.2.1 の stream status [N]。" },
+        "reason": { "type": "string" }
+      },
+      "description": "SSF 1.0 §8.1.5。sub_id は REQUIRED で format opaque、id に stream ID [N]。",
+      "x-profile": { "v1Status": "GA（stream 管理、ADR-022 D-2）", "inbound": "paused・disabled を受けたら、その IdP の SSF 経路を停止中として監視に上げ、SCIM 経路の同期遅延 U を顧客側の責任分界として扱う（ADR-006 D6-23）[D]。", "outbound": "送信する [D]。" }
+    },
+    "customEventTypeUri": {
+      "$comment": "独自イベントの命名規則（preview の提案、未決（ADR-022））。x-custom-event-naming を参照。",
+      "type": "string",
+      "pattern": "^https://schemas\\.[a-z0-9.-]+/secevent/[a-z0-9]+(-[a-z0-9]+)*/event-type/[a-z0-9]+(-[a-z0-9]+)*/v[1-9][0-9]*$",
+      "not": { "pattern": "^https://schemas\\.openid\\.net/" },
+      "examples": ["https://schemas.id-domain.example/secevent/core/event-type/tenant-suspended/v1"]
+    },
+    "fmtAccount": {
+      "type": "object", "required": ["format", "uri"], "additionalProperties": false,
+      "properties": { "format": { "const": "account" }, "uri": { "type": "string", "minLength": 1, "pattern": "^acct:" } }
+    },
+    "fmtEmail": {
+      "type": "object", "required": ["format", "email"], "additionalProperties": false,
+      "properties": { "format": { "const": "email" }, "email": { "type": "string", "minLength": 1 } }
+    },
+    "fmtIssSub": {
+      "type": "object", "required": ["format", "iss", "sub"], "additionalProperties": false,
+      "properties": { "format": { "const": "iss_sub" }, "iss": { "type": "string", "minLength": 1 }, "sub": { "type": "string", "minLength": 1 } }
+    },
+    "fmtOpaque": {
+      "type": "object", "required": ["format", "id"], "additionalProperties": false,
+      "properties": { "format": { "const": "opaque" }, "id": { "type": "string", "minLength": 1 } }
+    },
+    "fmtPhoneNumber": {
+      "type": "object", "required": ["format", "phone_number"], "additionalProperties": false,
+      "properties": { "format": { "const": "phone_number" }, "phone_number": { "type": "string", "pattern": "^\\+[0-9]{1,15}$" } }
+    },
+    "fmtDid": {
+      "type": "object", "required": ["format", "url"], "additionalProperties": false,
+      "properties": { "format": { "const": "did" }, "url": { "type": "string", "minLength": 1, "pattern": "^did:" } }
+    },
+    "fmtUri": {
+      "type": "object", "required": ["format", "uri"], "additionalProperties": false,
+      "properties": { "format": { "const": "uri" }, "uri": { "type": "string", "minLength": 1 } }
+    },
+    "fmtJwtId": {
+      "type": "object", "required": ["format", "iss", "jti"], "additionalProperties": false,
+      "properties": { "format": { "const": "jwt_id" }, "iss": { "type": "string", "minLength": 1 }, "jti": { "type": "string", "minLength": 1 } }
+    },
+    "fmtSamlAssertionId": {
+      "type": "object", "required": ["format", "issuer", "assertion_id"], "additionalProperties": false,
+      "properties": { "format": { "const": "saml_assertion_id" }, "issuer": { "type": "string", "minLength": 1 }, "assertion_id": { "type": "string", "minLength": 1 } }
+    },
+    "fmtIpAddresses": {
+      "$comment": "SSF 1.0 §3.5.3。ip-addresses は RFC 4001 の表記の文字列の配列 [N]。表記の検査は受信実装で行う [D]。",
+      "type": "object", "required": ["format", "ip-addresses"], "additionalProperties": false,
+      "properties": { "format": { "const": "ip-addresses" }, "ip-addresses": { "type": "array", "minItems": 1, "items": { "type": "string" } } }
+    },
+    "subjectIdentifierSimple": {
+      "$comment": "aliases と complex 以外の Subject Identifier。RFC 9493 §3 は format メンバーを必須とする（MUST）[N]。SSF 1.0 §3.4 は RFC 9493 の登録形式、SSF §3.5 の形式（jwt_id、saml_assertion_id、ip-addresses）、当事者が合意した独自形式を許す [N]。独自形式は format だけを検査する。",
+      "type": "object",
+      "required": ["format"],
+      "properties": { "format": { "type": "string", "minLength": 1, "not": { "enum": ["aliases", "complex"] } } },
+      "allOf": [
+        { "if": { "properties": { "format": { "const": "account" } } }, "then": { "$ref": "#/$defs/fmtAccount" } },
+        { "if": { "properties": { "format": { "const": "email" } } }, "then": { "$ref": "#/$defs/fmtEmail" } },
+        { "if": { "properties": { "format": { "const": "iss_sub" } } }, "then": { "$ref": "#/$defs/fmtIssSub" } },
+        { "if": { "properties": { "format": { "const": "opaque" } } }, "then": { "$ref": "#/$defs/fmtOpaque" } },
+        { "if": { "properties": { "format": { "const": "phone_number" } } }, "then": { "$ref": "#/$defs/fmtPhoneNumber" } },
+        { "if": { "properties": { "format": { "const": "did" } } }, "then": { "$ref": "#/$defs/fmtDid" } },
+        { "if": { "properties": { "format": { "const": "uri" } } }, "then": { "$ref": "#/$defs/fmtUri" } },
+        { "if": { "properties": { "format": { "const": "jwt_id" } } }, "then": { "$ref": "#/$defs/fmtJwtId" } },
+        { "if": { "properties": { "format": { "const": "saml_assertion_id" } } }, "then": { "$ref": "#/$defs/fmtSamlAssertionId" } },
+        { "if": { "properties": { "format": { "const": "ip-addresses" } } }, "then": { "$ref": "#/$defs/fmtIpAddresses" } }
+      ]
+    },
+    "subjectIdentifierAliases": {
+      "$comment": "RFC 9493 §3.2.8。identifiers は 1 つ以上の Subject Identifier の配列で、すべて同じ実体を指さなければならず（MUST）、aliases を入れ子にしてはならない（MUST NOT）[N]。ADR-021 は aliases の送信を M&A・専用 issuer 間の移動の旧識別子の表現に限り、受信側がその対応をすでに知っている場合だけ送るとする [D]。",
+      "type": "object",
+      "required": ["format", "identifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "const": "aliases" },
+        "identifiers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/subjectIdentifierSimple" } }
+      }
+    },
+    "subjectIdentifierComplex": {
+      "$comment": "SSF 1.0 §3.3 の Complex Subject。format は complex。user・device・session・application・tenant・org_unit・group は OPTIONAL で、それぞれ Subject Identifier。追加のメンバー名も許されるが、各名前は 1 回まで [N]（RS-14#62）。",
+      "type": "object",
+      "required": ["format"],
+      "minProperties": 2,
+      "properties": {
+        "format": { "const": "complex" },
+        "user": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "device": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "session": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "application": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "tenant": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "org_unit": { "$ref": "#/$defs/subjectIdentifierNonComplex" },
+        "group": { "$ref": "#/$defs/subjectIdentifierNonComplex" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/subjectIdentifierNonComplex" }
+    },
+    "subjectIdentifierNonComplex": {
+      "oneOf": [
+        { "$ref": "#/$defs/subjectIdentifierSimple" },
+        { "$ref": "#/$defs/subjectIdentifierAliases" }
+      ]
+    },
+    "subjectIdentifierAny": {
+      "oneOf": [
+        { "$ref": "#/$defs/subjectIdentifierSimple" },
+        { "$ref": "#/$defs/subjectIdentifierAliases" },
+        { "$ref": "#/$defs/subjectIdentifierComplex" }
+      ]
+    },
+    "outboundUserTenantSubject": {
+      "$comment": "送信の主体表現: complex で user=iss_sub、tenant=opaque を必須、session は opaque（任意）。識別子は ADR-021 の sub_id 表現に従い、email 等を主体の識別に使わない（ADR-021 D21-14c、SP 800-63C-4 §4.8 の最小化）[D]。",
+      "type": "object",
+      "required": ["format", "user", "tenant"],
+      "properties": {
+        "format": { "const": "complex" },
+        "user": { "$ref": "#/$defs/fmtIssSub" },
+        "tenant": { "$ref": "#/$defs/fmtOpaque" },
+        "session": { "$ref": "#/$defs/fmtOpaque" }
+      },
+      "additionalProperties": false
+    },
+    "outboundProfile": {
+      "$comment": "本基盤が SSF Transmitter として送る SET の profile（ADR-006 D6-24、ADR-022 D-2 の v1 GA 範囲）。ルートの基準に加えて次を課す [D]。(1) aud・txn 必須、(2) events は 1 件だけ、(3) 種別は GA 7 種と SSF の verification・stream-updated だけ（RISC sessions-revoked と独自イベントは送らない）、(4) iss は https で path なし（ADR-021 の issuer 規則。ただし ADR-021 は ADR-007 のテナント別 issuer と対立し KD7-1 と同時決裁であり、CON-09 は issuer_path を持つ discovery も表せる。U-01 の決裁でテナント別 path 型 issuer を採る場合は本 pattern を改める。未決（ADR-006 L6-7、DEC-3 の U-01））、(5) イベントごとの主体表現と payload の追加制約。",
+      "allOf": [
+        { "$ref": "#" },
+        {
+          "type": "object",
+          "required": ["aud", "txn"],
+          "properties": {
+            "aud": { "type": "string", "minLength": 1 },
+            "iss": { "type": "string", "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$" },
+            "iat": { "type": "integer" },
+            "events": {
+              "maxProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "https://schemas.openid.net/secevent/caep/event-type/session-revoked",
+                  "https://schemas.openid.net/secevent/caep/event-type/token-claims-change",
+                  "https://schemas.openid.net/secevent/caep/event-type/credential-change",
+                  "https://schemas.openid.net/secevent/caep/event-type/assurance-level-change",
+                  "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
+                  "https://schemas.openid.net/secevent/risc/event-type/credential-compromise",
+                  "https://schemas.openid.net/secevent/risc/event-type/identifier-recycled",
+                  "https://schemas.openid.net/secevent/ssf/event-type/verification",
+                  "https://schemas.openid.net/secevent/ssf/event-type/stream-updated"
+                ]
+              },
+              "additionalProperties": { "not": { "required": ["subject"] } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "events": { "anyOf": [
+            { "required": ["https://schemas.openid.net/secevent/caep/event-type/session-revoked"] },
+            { "required": ["https://schemas.openid.net/secevent/caep/event-type/token-claims-change"] },
+            { "required": ["https://schemas.openid.net/secevent/caep/event-type/credential-change"] },
+            { "required": ["https://schemas.openid.net/secevent/caep/event-type/assurance-level-change"] },
+            { "required": ["https://schemas.openid.net/secevent/risc/event-type/account-disabled"] },
+            { "required": ["https://schemas.openid.net/secevent/risc/event-type/credential-compromise"] }
+          ] } }, "required": ["events"] },
+          "then": { "properties": { "sub_id": { "$ref": "#/$defs/outboundUserTenantSubject" } } }
+        },
+        {
+          "if": { "properties": { "events": { "required": ["https://schemas.openid.net/secevent/risc/event-type/identifier-recycled"] } }, "required": ["events"] },
+          "then": { "properties": { "sub_id": { "oneOf": [ { "$ref": "#/$defs/fmtEmail" }, { "$ref": "#/$defs/fmtPhoneNumber" } ] } } }
+        },
+        {
+          "if": { "properties": { "events": { "anyOf": [
+            { "required": ["https://schemas.openid.net/secevent/ssf/event-type/verification"] },
+            { "required": ["https://schemas.openid.net/secevent/ssf/event-type/stream-updated"] }
+          ] } }, "required": ["events"] },
+          "then": { "properties": { "sub_id": { "$ref": "#/$defs/fmtOpaque" } } }
+        },
+        {
+          "properties": { "events": { "properties": {
+            "https://schemas.openid.net/secevent/caep/event-type/token-claims-change": {
+              "properties": { "claims": { "propertyNames": { "not": { "enum": ["email", "email_verified", "phone_number", "phone_number_verified", "name", "given_name", "family_name", "middle_name", "nickname", "preferred_username", "address", "birthdate", "picture"] } } } }
+            },
+            "https://schemas.openid.net/secevent/caep/event-type/credential-change": {
+              "not": { "required": ["friendly_name"] }
+            },
+            "https://schemas.openid.net/secevent/caep/event-type/assurance-level-change": {
+              "properties": { "namespace": { "enum": ["RFC8176", "RFC6711", "ISO-IEC-29115", "NIST-IAL", "NIST-AAL", "NIST-FAL"] } },
+              "dependentRequired": { "previous_level": ["change_direction"] }
+            },
+            "https://schemas.openid.net/secevent/risc/event-type/account-disabled": {
+              "properties": { "reason": { "enum": ["hijacking", "bulk-account"] } }
+            },
+            "https://schemas.openid.net/secevent/risc/event-type/credential-compromise": {
+              "properties": { "reason_admin": { "$ref": "#/$defs/langTaggedMessages" }, "reason_user": { "$ref": "#/$defs/langTaggedMessages" } }
+            }
+          } } }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "iss": "https://p7k2.id-domain.example",
+      "iat": 1792022400,
+      "jti": "5f1c0b7e-9d6a-4b1e-8c11-3a2f0e9d4c10",
+      "aud": "https://receiver.customer.example",
+      "txn": "rv-8b3e2a",
+      "sub_id": {
+        "format": "complex",
+        "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-4f9a1c7d2e" },
+        "tenant": { "format": "opaque", "id": "t-0a71c3" },
+        "session": { "format": "opaque", "id": "s-77d0e1" }
+      },
+      "events": {
+        "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {
+          "initiating_entity": "admin",
+          "reason_admin": { "en": "Revoked by tenant administrator", "ja": "テナント管理者による失効" },
+          "event_timestamp": 1792022398
+        }
+      }
+    },
+    {
+      "iss": "https://p7k2.id-domain.example",
+      "iat": 1792022500,
+      "jti": "0c9a2f44-1b8e-4d2c-9e7a-61b5d0a3f2e8",
+      "aud": "c_8d2f61a0",
+      "txn": "rv-8b3e2b",
+      "sub_id": {
+        "format": "complex",
+        "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-4f9a1c7d2e" },
+        "tenant": { "format": "opaque", "id": "t-0a71c3" }
+      },
+      "events": {
+        "https://schemas.openid.net/secevent/caep/event-type/credential-change": {
+          "credential_type": "fido2-roaming",
+          "change_type": "revoke",
+          "fido2_aaguid": "00000000-0000-0000-0000-000000000000",
+          "initiating_entity": "user",
+          "event_timestamp": 1792022490
+        }
+      }
+    },
+    {
+      "iss": "https://p7k2.id-domain.example",
+      "iat": 1792022600,
+      "jti": "a3d4e5f6-0718-4293-a4b5-c6d7e8f90a1b",
+      "aud": "https://receiver.customer.example",
+      "txn": "rv-8b3e2c",
+      "sub_id": {
+        "format": "complex",
+        "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-4f9a1c7d2e" },
+        "tenant": { "format": "opaque", "id": "t-0a71c3" }
+      },
+      "events": {
+        "https://schemas.openid.net/secevent/caep/event-type/assurance-level-change": {
+          "namespace": "NIST-AAL",
+          "current_level": "nist_aal1",
+          "previous_level": "nist_aal2",
+          "change_direction": "decrease",
+          "initiating_entity": "policy",
+          "event_timestamp": 1792022590
+        }
+      }
+    },
+    {
+      "iss": "https://p7k2.id-domain.example",
+      "iat": 1792022700,
+      "jti": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "aud": "https://receiver.customer.example",
+      "txn": "rv-8b3e2d",
+      "sub_id": { "format": "email", "email": "recycled-user@customer.example" },
+      "events": {
+        "https://schemas.openid.net/secevent/risc/event-type/identifier-recycled": {}
+      }
+    },
+    {
+      "iss": "https://idp.customer.example",
+      "iat": 1792022800,
+      "jti": "idp-evt-00123",
+      "aud": "https://p7k2.id-domain.example",
+      "sub_id": { "format": "iss_sub", "iss": "https://idp.customer.example", "sub": "248289761001" },
+      "events": {
+        "https://schemas.openid.net/secevent/risc/event-type/account-disabled": { "reason": "hijacking" }
+      }
+    }
+  ],
+  "x-examples-notes": [
+    "examples[0]〜[3] は送信（$defs/outboundProfile）とルートの両方に適合する正例。値はすべて架空であり、iss のホスト p7k2.id-domain.example は ADR-021 の不透明ラベル＋<id-domain> の形の置き場所である [D]。",
+    "examples[2] の current_level・previous_level の値（nist_aal1 等）は表記例であり、保証区分との対応は未決（ADR-002）。",
+    "examples[4] は顧客 IdP から受信する SET（ルートだけに適合）の正例。txn が無く sub_id が iss_sub でも受信の基準には適合する。効果は stream を結合したテナント文脈に限る [D]。"
+  ],
+  "x-negative-examples": [
+    {
+      "id": "NEG-01",
+      "description": "JWT の sub claim を含む。SSF 1.0 §4.1.2 の MUST NOT に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n1", "sub": "248289761001", "sub_id": { "format": "iss_sub", "iss": "https://idp.customer.example", "sub": "248289761001" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    },
+    {
+      "id": "NEG-02",
+      "description": "exp claim を含む。SSF 1.0 §4.1.7 の MUST NOT に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "exp": 1792026400, "jti": "n2", "sub_id": { "format": "iss_sub", "iss": "https://idp.customer.example", "sub": "248289761001" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    },
+    {
+      "id": "NEG-03",
+      "description": "top-level の sub_id が無い（主体を events 内の subject だけで示す）。SSF 1.0 §3.1・§3.1.1 の MUST に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n3", "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": { "subject": { "format": "opaque", "id": "s-1" } } } }
+    },
+    {
+      "id": "NEG-04",
+      "description": "credential-change の change_type が列挙外（rotate）。CAEP 1.0 §3.3 の MUST に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n4", "sub_id": { "format": "iss_sub", "iss": "https://idp.customer.example", "sub": "248289761001" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/credential-change": { "credential_type": "password", "change_type": "rotate" } } }
+    },
+    {
+      "id": "NEG-05",
+      "description": "token-claims-change に claims が無い。CAEP 1.0 §3.2 の REQUIRED に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n5", "sub_id": { "format": "iss_sub", "iss": "https://idp.customer.example", "sub": "248289761001" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/token-claims-change": {} } }
+    },
+    {
+      "id": "NEG-06",
+      "description": "aliases を入れ子にしている。RFC 9493 §3.2.8 の MUST NOT に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n6", "sub_id": { "format": "aliases", "identifiers": [ { "format": "aliases", "identifiers": [ { "format": "opaque", "id": "x" } ] } ] }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    },
+    {
+      "id": "NEG-07",
+      "description": "本基盤が非推奨の RISC sessions-revoked を送信しようとしている。RISC 1.0 §2.11（新しい実装は CAEP session-revoked を使う MUST）と ADR-006 D6-23 に反する [N][D]。受信の基準（ルート）では適合する（互換受信）。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n7", "aud": "https://receiver.customer.example", "txn": "rv-1", "sub_id": { "format": "complex", "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-1" }, "tenant": { "format": "opaque", "id": "t-1" } }, "events": { "https://schemas.openid.net/secevent/risc/event-type/sessions-revoked": {} } }
+    },
+    {
+      "id": "NEG-08",
+      "description": "送信の session-revoked で主体を email で示している。本 profile の主体表現（complex、user=iss_sub、tenant 必須）に反し、SP 800-63C-4 §4.8 の個人情報の最小化にも沿わない [N][D]。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n8", "aud": "https://receiver.customer.example", "txn": "rv-2", "sub_id": { "format": "email", "email": "user@customer.example" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    },
+    {
+      "id": "NEG-09",
+      "description": "送信の SET に 2 件のイベントを入れている。SSF 1.0 §4.2.1 は 1 件を SHOULD とし、本 profile の送信では 1 件に限る [N][D]。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n9", "aud": "https://receiver.customer.example", "txn": "rv-3", "sub_id": { "format": "complex", "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-1" }, "tenant": { "format": "opaque", "id": "t-1" } }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {}, "https://schemas.openid.net/secevent/risc/event-type/account-disabled": {} } }
+    },
+    {
+      "id": "NEG-10",
+      "description": "送信の token-claims-change に email を含めている。SP 800-63C-4 §4.8 の SHALL NOT と ADR-021（access token に個人情報を載せない）に反する [N][D]。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n10", "aud": "https://receiver.customer.example", "txn": "rv-4", "sub_id": { "format": "complex", "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-1" }, "tenant": { "format": "opaque", "id": "t-1" } }, "events": { "https://schemas.openid.net/secevent/caep/event-type/token-claims-change": { "claims": { "email": "new@customer.example" } } } }
+    },
+    {
+      "id": "NEG-11",
+      "description": "送信で aud と txn が無い。本 profile の送信要件（aud・txn 必須）に反する [D]。RFC 8417 では aud は RECOMMENDED、txn は OPTIONAL、SSF 1.0 §4.1.9 では txn は SHOULD [N]。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n11", "sub_id": { "format": "complex", "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-1" }, "tenant": { "format": "opaque", "id": "t-1" } }, "events": { "https://schemas.openid.net/secevent/risc/event-type/account-disabled": {} } }
+    },
+    {
+      "id": "NEG-12",
+      "description": "JOSE header の typ が JWT。SSF 1.0 §4.1.1 の明示的型付け（MUST、secevent+jwt）に反する [N]。access token・ID Token との typ 混同（RS-04 §5）を防ぐ。",
+      "validatesAgainst": "#/$defs/joseHeader",
+      "expected": "invalid",
+      "instance": { "typ": "JWT", "alg": "ES256", "kid": "k-2026-10-a" }
+    },
+    {
+      "id": "NEG-13",
+      "description": "送信の aud が配列。本 profile の送信では受信者の client_id の単一文字列に限る（CON-09 の transmitter profile）[D]。受信の基準（ルート）では SSF 1.0 §4.1.8 により適合する [N]。",
+      "validatesAgainst": "#/$defs/outboundProfile",
+      "expected": "invalid",
+      "instance": { "iss": "https://p7k2.id-domain.example", "iat": 1792022800, "jti": "n13", "aud": ["c_8d2f61a0", "c_1a2b3c4d"], "txn": "rv-5", "sub_id": { "format": "complex", "user": { "format": "iss_sub", "iss": "https://p7k2.id-domain.example", "sub": "u-1" }, "tenant": { "format": "opaque", "id": "t-1" } }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    },
+    {
+      "id": "NEG-14",
+      "description": "SSF 1.0 §3.5.1 の jwt_id 形式に、形式に記述のないメンバー（sub）を加えている。RFC 9493 §3 の MUST NOT に反する [N]。",
+      "validatesAgainst": "#",
+      "expected": "invalid",
+      "instance": { "iss": "https://idp.customer.example", "iat": 1792022800, "jti": "n14", "sub_id": { "format": "jwt_id", "iss": "https://idp.customer.example", "jti": "tok-1", "sub": "248289761001" }, "events": { "https://schemas.openid.net/secevent/caep/event-type/session-revoked": {} } }
+    }
+  ]
+}

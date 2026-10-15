@@ -1,0 +1,553 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id-domain.example/contracts/schemas/access-token-claims/0.1.0/access-token-claims.schema.json",
+  "$comment": "文書ID: CON-06 / DL: DL-75 / 版: 0.1.0 / 状態: draft / 最終更新: 2026-10-15。対応要求: R-161, R-162, R-249, R-250, R-283／G-088, G-138, G-068, G-101, G-102（閉じ方: R-161・R-162・G-088 は区分 C で、本 schema は発行側検査と契約試験 DL-80 の入力までを担い、拒否率 100% の実測は未達。R-249 は区分 A で claim の封筒化を本 schema で機械検査可能にした。R-250・R-283 は 1 token 1 tid を型で表したが、資源側テナントとの照合は PEP の実測 ADR-005 H-10 が要る）。依存文書: CONVENTIONS.md, traceability/deliverables.md（DL-75 行、§2.3）, 05_adr/ADR-005-token-profile.md（claim の意味と発行条件の正本: D2, D9-3, D9-4, D9-5, V1〜V14）, 05_adr/ADR-021-irreversible-identifiers.md（名前の規則 D21-38、識別子の形式 D21-09〜D21-12, D21-22, D21-36、CI 検査 D21-42）, 05_adr/ADR-015-crypto-agility-pqc.md（暗号 profile CP、D15-14, D15-40）, 05_adr/ADR-016（版の運用 D16-02, D16-11, D16-45）, 05_adr/ADR-009（txn-v1: D09-09, D09-16, D09-29〜D09-32）, 05_adr/ADR-002（acr 区分 D2-22、U2-02）, 05_adr/reconciliation-notes.md §3.3, 04_architecture/claims-catalog.md（ARC-15。採用区分の正本）, 04_architecture/token-profile.md（ARC-02。検証規則 TP-xx と負例 NV-xx）, 02_requirements/operation-risk-tiers-assurance.md（操作 5 分類の正本）, research/RS-04-oauth-oidc-profile.md（RS-04#60, #61, #66, #67, #68）, research/RS-06（RS-06#29〜#45）, research/standards-status.md（SS-A07 RFC 9068 final、SS-A09 RFC 8693 final、SS-B04 Transaction Tokens draft-11）。正本の分担: claim の名前は本 schema と ARC-15、名前の規則は ADR-021 D21-38、意味と発行条件は ADR-005、版の運用は ADR-016、凍結区分は ADR-022（reconciliation-notes §3.3）。本 schema は AS・TTS の発行側検査（ADR-021 D21-42 (c) の CI）と契約試験の正本であり、受信側は RFC 7519 §4 に従い理解できない claim を無視しなければならない（MUST）ため、受信側の SDK は未知 claim を理由に拒否しない（ARC-02 TP-08）。署名・鍵と issuer の結合・時刻比較・aud とサービスの一致・tid と資源テナントの照合は JSON Schema で表せないので ARC-02 §4 の SDK 規則で検査する。作成方法: AI エージェント（Claude）が上記 ADR・ARC-02・ARC-15・research を通読して起草した。作成者以外の AI エージェントによる独立レビューを 2026-10-15 に実施し、記録は 11_contracts/review-notes/CON-06.md にある。いずれも AI によるレビューであり、実在の CTO/CISO の決裁ではない（CONVENTIONS §8）。",
+  "title": "内部 access token（at+jwt）の claim セット（CON-06）",
+  "description": "ルートは内部 access token（ARC-02 の K3、JOSE typ=at+jwt、RFC 9068 準拠の社内 profile）の JWT Claims Set を検証する。$defs に JOSE header、introspection 応答（外部 opaque access token を edge が照会した結果、K2）、外部 RP 向け ID Token の基盤固有 claim の名前（衝突耐性名）、Transaction Token（社内 profile txn-v1、K5）の header と claim を別定義として置く。外部 opaque access token と refresh token は claim を持たない（ADR-005 D2）ので本 schema の対象外である。",
+  "$ref": "#/$defs/internalAccessTokenClaims",
+  "x-standards": [
+    "RFC 9068 JWT Profile for OAuth 2.0 Access Tokens: final（Proposed Standard、2021-10）。standards-status SS-A07、確認日 2026-10-03。RS-04#60, #61",
+    "RFC 8693 OAuth 2.0 Token Exchange（act, scope, client_id）: final（Proposed Standard、2020-01）。SS-A09、確認日 2026-10-03。RS-04#66",
+    "RFC 7519 JSON Web Token: final（2015-05）。claim 名と NumericDate。RS-16#14",
+    "RFC 7800（cnf）, RFC 8705（x5t#S256）, RFC 9449（jkt）: final。RS-04#55, #59",
+    "RFC 7662 Token Introspection: final。RS-04#67。RFC 9701 JWT Response for Token Introspection: final。RS-04#68",
+    "OpenID Connect Core 1.0 errata set 2（acr, amr, auth_time）: Final。RS-03#58。RFC 8176（amr 値）: final",
+    "OpenID Connect Front-Channel Logout 1.0（sid の IANA 登録の参照先）: Final",
+    "Transaction Tokens draft-ietf-oauth-transaction-tokens-11: draft（WG Consensus: Waiting for Write-Up、IESG 未提出、2027-01-31 失効予定）。SS-B04（確認日 2026-10-03）、IESG 状態は ARC-15 [^13]（確認日 2026-10-15）。規範根拠ではなく、版固定の社内 profile txn-v1 として採る（ADR-021 D21-36、ADR-009）。RS-06#29〜#42",
+    "RFC 8417 Security Event Token §2.2（txn の名前と意味。IANA 登録済み）: final"
+  ],
+  "x-references": [
+    "[^1] IETF (V. Bertocci)『RFC 9068: JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens』2021-10. https://www.rfc-editor.org/rfc/rfc9068 （参照箇所: §2.1, §2.2, §2.2.1, §2.2.3.1, §4, §5, §6、確認日: 2026-10-03。§2.1 の typ と §5 の aud は独立レビューで 2026-10-15 に原典を再確認）RS-04#60, #61",
+    "[^2] IETF (M. Jones ほか)『RFC 8693: OAuth 2.0 Token Exchange』2020-01. https://www.rfc-editor.org/rfc/rfc8693 （参照箇所: §4.1 act, §4.2 scope, §4.3 client_id, §4.4 may_act、確認日: 2026-10-03）RS-04#66、RS-06#45",
+    "[^3] IETF (M. Jones, J. Bradley, N. Sakimura)『RFC 7519: JSON Web Token (JWT)』2015-05. https://www.rfc-editor.org/rfc/rfc7519 （参照箇所: §2 NumericDate, §4, §4.1.1〜§4.1.7, §4.2, §4.3、確認日: 2026-10-03）RS-16#14",
+    "[^4] IETF『RFC 7800: Proof-of-Possession Key Semantics for JSON Web Tokens』2016-04. https://www.rfc-editor.org/rfc/rfc7800 （参照箇所: §3.1、確認日: 2026-10-15。ARC-15 [^5] の照合による）",
+    "[^5] IETF『RFC 8705: OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens』2020-02. https://www.rfc-editor.org/rfc/rfc8705 （参照箇所: §3.1 x5t#S256、確認日: 2026-10-03）RS-04#59",
+    "[^6] IETF『RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)』2023-09. https://www.rfc-editor.org/rfc/rfc9449 （参照箇所: §6 jkt、確認日: 2026-10-03）RS-04#55〜#58",
+    "[^7] IETF『RFC 7662: OAuth 2.0 Token Introspection』2015-10. https://www.rfc-editor.org/rfc/rfc7662 （参照箇所: §2.2、確認日: 2026-10-03）RS-04#67",
+    "[^8] IETF『RFC 9701: JSON Web Token (JWT) Response for OAuth Token Introspection』2025-01. https://www.rfc-editor.org/rfc/rfc9701 （参照箇所: §5 の typ=token-introspection+jwt、iss・aud・iat・token_introspection（MUST）、sub・exp を含めない（SHOULD NOT）、確認日: 2026-10-03。§5 は独立レビューで 2026-10-15 に原典を再確認）RS-04#68",
+    "[^9] OpenID Foundation『OpenID Connect Core 1.0 incorporating errata set 2』Final, 2023-12-15. https://openid.net/specs/openid-connect-core-1_0.html （参照箇所: §2 acr, amr, auth_time、確認日: 2026-10-03）RS-03#58",
+    "[^10] IETF『RFC 8176: Authentication Method Reference Values』2017-06. https://www.rfc-editor.org/rfc/rfc8176 （参照箇所: §2, §6.1、確認日: 2026-10-15。ARC-15 [^38] の照合による）",
+    "[^11] A. Tulshibagwale, G. Fletcher, P. Kasselman / IETF『Transaction Tokens』draft-ietf-oauth-transaction-tokens-11, 2026-07-30（Internet-Draft、状態: draft）. https://www.ietf.org/archive/id/draft-ietf-oauth-transaction-tokens-11.txt （参照箇所: §9.1 typ, §9.2 claim, §9.2.1 scope, §11.3, §12, §13.12, §13.13, §13.15, §15.2, Document History、確認日: 2026-10-03。RS-06#29〜#42）",
+    "[^12] IETF『RFC 8417: Security Event Token (SET)』2018-07. https://www.rfc-editor.org/rfc/rfc8417 （参照箇所: §2.2 txn、確認日: 2026-10-15。ARC-15 [^11] の照合による）",
+    "[^13] IANA『JSON Web Token Claims』registry, Last updated 2026-07-20. https://www.iana.org/assignments/jwt/jwt.xhtml （参照箇所: 登録済み claim と tid, ver, ptype, gref, tctx, rctx, req_wl が未登録であること、確認日: 2026-10-15。ARC-15 [^2] の照合による）",
+    "[^14] IETF『RFC 8725: JSON Web Token Best Current Practices』BCP 225, 2020-02. https://www.rfc-editor.org/rfc/rfc8725 （参照箇所: §3.1, §3.10, §3.11, §3.12、確認日: 2026-10-03）RS-04#62"
+  ],
+  "x-open-issues": [
+    "KC-1（ARC-15 §8）: 独自 claim の内部名 ptype・gref・ver と tctx 内の root_jti・tier・ptxn は名前案。決裁者 CTO、期限 DL-75 凍結前（DEC-8 前）。tid は ADR-021 で確定。",
+    "KC-7（ARC-15 §8）: acr の値 L1・L2・L2-PR・L3 は名前案（ADR-002 D2-22 が DL-75・DL-115 に委任）。L0 で access token を発行するかは ADR-002 の所有者が決める。",
+    "未決（ADR-002 U2-02、ARC-15 KC-2）: 束縛認証器（FAL3 相当）を経た印を amr の内部値で表す案。値の名前は未定のため本 schema は amr の値を列挙で閉じない。",
+    "未決（ADR-017 L17-4、D17-50）: ptype にデバイスを加える案。追加は ver の版変更になる。",
+    "未決（ADR-005 K-6）: 内部 sender constraint I1／I2。v1 の schema は cnf を x5t#S256 または jkt の 1 メンバとし、内部 issuer の発行既定を x5t#S256（I1）とする。",
+    "未決（ADR-026 L26-1、ARC-15 KC-4）: 内部開始の取引で root_jti を持てない場合の tctx 例外。決まるまで root_jti は必須のままとし、例外を採る場合は txn-v1 の版を上げて root_jti と gref・ptxn の選択にする。",
+    "未決（ADR-017 L17-2）: tctx の起点エージェント項目。名前未定のため定義しない。",
+    "未決（ADR-005 §2.15 U2、reconciliation-notes U-02）: txn を発行する操作階層の範囲。tier の列挙は read-sensitive を含めて定義するが、現行の発行範囲は write 以上。",
+    "未決（ADR-007 KD7-1・ADR-021 K21-1、reconciliation-notes U-01）: issuer の粒度。iss は https URL の形だけを定め、値の体系は定めない。",
+    "未決（ADR-016 P16-1、ADR-017 L17-5）: authorization_details の発行開始。v1 では予約名として発行を禁止する（ADR-016 D16-44・D16-45）。",
+    "TBD（ARC-15 KC-6、所有者 CTO、期限 G4）: claim の数・サイズの上限。暫定の上限は ADR-015 D15-40 初期案の内部 JWT 1 個 6,144 byte（JSON Schema では検査できないので SDK と CI で検査する）。",
+    "TBD（DL-71、ADR-021 D21-09）: sub・tid・client_id 等の符号化（小文字 base32 26 文字か UUIDv4 36 文字）。本 schema は CON-02 の IssuedOpaqueId と同じ 2 候補を受ける形にし（$id の基底が異なり相対 $ref で解決できないため、同じ pattern を写して持つ）、DL-71 確定時に一方へ絞る。前提台帳への追加要: 本 schema の識別子 pattern は DL-71 確定までの暫定（新規仮定、A-ID 未採番）。",
+    "未決（契約間の不整合、独立レビュー CON-06 R-07）: act.sub の値の形。本 schema は ADR-021 D21-10（全類型共通の単一名前空間の sub）に従い不透明 ID とするが、11_contracts/token-exchange.openapi.yaml の内部 access token の payload 例は act.sub に SPIFFE ID を入れている。ADR-009 D09-14 は actor の身元を SVID の SAN URI から取るとするが、act.sub に書く値（SPIFFE ID か、それに対応付けた sub か）は ADR に明記がない。DL-74 で決め、両契約を揃える。",
+    "上流文書間の差（独立レビュー CON-06 R-08）: 内部 access token の scope は ARC-15 §3.3 で「条」、ARC-02 §4.3 の判別表では「必須」。本 schema は採用区分の正本 ARC-15 に従い条件付きとする。sid は ADR-005 D9-4 が利用者主体で必須とし、ARC-15 §3.4 は「条（利用者 session 由来）」とする。本 schema は ADR-005 に従い利用者主体で必須とする。ARC-02・ARC-15 の所有者が表記を揃える。",
+    "前提台帳へ追加要: act の入れ子の深さ上限 N_act の初期案 3（ADR-009 D09-16 の NA09-2）を schema で固定している。値は DL-74 で決める。"
+  ],
+  "examples": [
+    {
+      "iss": "https://q7k2.id-domain.example",
+      "sub": "mfrggzdfmztwq2lknnwg23tpob",
+      "aud": "https://api.id-domain.example/svc/invoices",
+      "exp": 1792055100,
+      "iat": 1792054800,
+      "jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42",
+      "client_id": "nbswy3dpeb3w64tmmqqgczlomr",
+      "scope": "invoices.read invoices.write",
+      "tid": "ozxw4zltnfzgk3dfnzqxi2lpny",
+      "ptype": "human",
+      "acr": "L2",
+      "amr": ["pwd", "otp", "mfa"],
+      "auth_time": 1792054500,
+      "sid": "mnxw24dmmvzgk3djmruxg2lonv",
+      "gref": "onsxe5tjmnswg33oonsw45dhoj",
+      "cnf": { "x5t#S256": "9FrXKdoHaYxFty2ugnOp4QVYWDAhTpeNZhT1ask8obY" },
+      "ver": "1.0"
+    },
+    {
+      "iss": "https://q7k2.id-domain.example",
+      "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy",
+      "aud": "https://api.id-domain.example/svc/ledger",
+      "exp": 1792055100,
+      "iat": 1792054800,
+      "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60",
+      "client_id": "hykga4jy57re7yplc7hyp6fe2v",
+      "scope": "ledger.post",
+      "tid": "ozxw4zltnfzgk3dfnzqxi2lpny",
+      "ptype": "workload",
+      "cnf": { "x5t#S256": "aE3lE7v01hAQvAMtAAohwwOrCmuu3SgXR2NPpNNFfos" },
+      "ver": "1.0"
+    },
+    {
+      "iss": "https://q7k2.id-domain.example",
+      "sub": "mfrggzdfmztwq2lknnwg23tpob",
+      "aud": "https://api.id-domain.example/svc/invoices",
+      "exp": 1792055100,
+      "iat": 1792054800,
+      "jti": "5d2e9a7c-1b4f-4e8a-9c36-7f0a2d5b8e14",
+      "client_id": "mfzgk3dbnrxw2zlsmvzxi2lonr",
+      "scope": "invoices.read",
+      "tid": "ozxw4zltnfzgk3dfnzqxi2lpny",
+      "ptype": "human",
+      "acr": "L2",
+      "amr": ["pwd", "otp", "mfa"],
+      "auth_time": 1792054500,
+      "sid": "mnxw24dmmvzgk3djmruxg2lonv",
+      "gref": "onsxe5tjmnswg33oonsw45dhoj",
+      "act": { "sub": "gxy2qrzzqwzzbjn74jrotdu6vv", "ptype": "ai_agent" },
+      "cnf": { "x5t#S256": "aE3lE7v01hAQvAMtAAohwwOrCmuu3SgXR2NPpNNFfos" },
+      "ver": "1.0"
+    }
+  ],
+  "x-examples-description": [
+    "examples[0]: 利用者（ptype=human）が L2 で認証し、BFF 経由の exchange で invoices サービス宛てに発行された内部 access token。acr・amr・auth_time・sid・gref を持つ。",
+    "examples[1]: workload（ptype=workload）が client_credentials 相当で取得した token。利用者主体ではないので acr・amr・auth_time・sid・gref を持たない。sub は workload の主体 ID で、client_id とは別の値にする（client_id の値域を sub と分ける。ADR-021 D21-23、RFC 9068 §5 [^1]）。",
+    "examples[2]: AI エージェントが利用者の代理で操作する token。sub は委任元利用者、client_id はエージェントの委任用 client、act は現在の actor（エージェント主体。ptype=ai_agent）（ADR-017 D17-08・D17-19・D17-50、RFC 8693 §4.1 [^2]）。client_id と act.sub は値域が別なので同じ値にならない（ADR-021 D21-23）。PDP は現在の actor だけを判定に使う（ADR-005 V10）。"
+  ],
+  "x-negative-examples": [
+    { "id": "NE-01", "target": "#/$defs/decodedInternalAccessToken", "expected": "invalid", "relates": "NV-15, ADR-005 V5, RFC 9068 §2.1 [^1]", "description": "JOSE header に typ がない", "instance": { "header": { "alg": "ES256", "kid": "k-8f3a91" }, "payload": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0" } } },
+    { "id": "NE-02", "target": "#/$defs/accessTokenJwsHeader", "expected": "invalid", "relates": "NV-01, RFC 8725 §3.1 [^14]", "description": "alg=none", "instance": { "typ": "at+jwt", "alg": "none", "kid": "k-8f3a91" } },
+    { "id": "NE-03", "target": "#/$defs/accessTokenJwsHeader", "expected": "invalid", "relates": "NV-09, ARC-02 TP-02", "description": "jku で攻撃者の鍵 URL を指す", "instance": { "typ": "at+jwt", "alg": "ES256", "kid": "k-8f3a91", "jku": "https://attacker.example/jwks" } },
+    { "id": "NE-04", "target": "#/$defs/accessTokenJwsHeader", "expected": "invalid", "relates": "NV-19, R-162", "description": "内部 access token の header に Txn-Token の typ を付ける（種別の取り違え）", "instance": { "typ": "txntoken+jwt", "alg": "ES256", "kid": "k-8f3a91" } },
+    { "id": "NE-05", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "NV-13, ADR-005 V6", "description": "aud が複数値（共通 aud を含む）。内部 access token の aud は呼出し先 1 サービスの文字列", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": ["https://api.id-domain.example/svc/ledger", "https://api.id-domain.example/all"], "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0" } },
+    { "id": "NE-06", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "NV-27, ADR-005 V9, R-250, R-283", "description": "tid が 2 つ（配列）", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": ["ozxw4zltnfzgk3dfnzqxi2lpny", "mfzgk3dbnrxw2zlsmvzxi2lonr"], "ptype": "workload", "ver": "1.0" } },
+    { "id": "NE-07", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "R-249, ADR-005 D9-4・V10, ADR-021 D21-38 規則 2", "description": "roles と email を載せる（万能 JWT 化と識別属性の露出）", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0", "roles": ["admin"], "email": "ops@example.com" } },
+    { "id": "NE-08", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-005 D9-4（認証文脈は利用者主体で必須）", "description": "ptype=human なのに acr・amr・auth_time・sid・gref がない", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "mfrggzdfmztwq2lknnwg23tpob", "aud": "https://api.id-domain.example/svc/invoices", "exp": 1792055100, "iat": 1792054800, "jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "client_id": "nbswy3dpeb3w64tmmqqgczlomr", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "human", "ver": "1.0" } },
+    { "id": "NE-09", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-021 D21-42 (c), ARC-15 §9（予約名前空間外の claim を発行しない）", "description": "claim registry に登録のない claim（dept）を発行する。受信側では無視されるが、発行側の検査では不合格", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0", "dept": "finance" } },
+    { "id": "NE-10", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-016 D16-45, ARC-15 DEV-8", "description": "予約名 status（Token Status List）を v1 で発行する", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0", "status": { "status_list": { "idx": 0, "uri": "https://status.example/1" } } } },
+    { "id": "NE-11", "target": "#/$defs/actor", "expected": "invalid", "relates": "ADR-009 D09-16（N_act 初期案 3）", "description": "act の入れ子が 4 段", "instance": { "sub": "aaaaaaaaaaaaaaaaaaaaaaaaaa", "ptype": "workload", "act": { "sub": "bbbbbbbbbbbbbbbbbbbbbbbbbb", "act": { "sub": "cccccccccccccccccccccccccc", "act": { "sub": "dddddddddddddddddddddddddd" } } } } },
+    { "id": "NE-12", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "R-162, ARC-02 §4.3（txn・tctx は K5 の判別 claim）", "description": "内部 access token に Txn-Token の判別 claim（txn・tctx）を入れる", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0", "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18" } },
+    { "id": "NE-13", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ARC-15 KC-7（内部は区分名、外部は衝突耐性名）", "description": "内部 access token の acr に外部 RP 向けの URI 形式を入れる", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "mfrggzdfmztwq2lknnwg23tpob", "aud": "https://api.id-domain.example/svc/invoices", "exp": 1792055100, "iat": 1792054800, "jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "client_id": "nbswy3dpeb3w64tmmqqgczlomr", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "human", "acr": "https://id-domain.example/acr/L2", "amr": ["pwd", "otp", "mfa"], "auth_time": 1792054500, "sid": "mnxw24dmmvzgk3djmruxg2lonv", "gref": "onsxe5tjmnswg33oonsw45dhoj", "ver": "1.0" } },
+    { "id": "NE-14", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "RFC 7519 §2 NumericDate [^3]", "description": "exp が文字列", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": "2026-10-15T09:05:00Z", "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0" } },
+    { "id": "NE-15", "target": "#/$defs/decodedTxnToken", "expected": "invalid", "relates": "NV-20, R-162", "description": "Txn-Token の header に at+jwt を付ける", "instance": { "header": { "typ": "at+jwt", "alg": "ES256", "kid": "k-2c7e10" }, "payload": { "iss": "https://r4m8.id-domain.example", "aud": "td-4kx9", "iat": 1792054800, "exp": 1792054860, "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18", "sub": "mfrggzdfmztwq2lknnwg23tpob", "scope": "invoice.approve", "req_wl": "spiffe://td.id-domain.example/edge/gw", "tctx": { "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "tier": "write", "ver": "1.0" } } } },
+    { "id": "NE-16", "target": "#/$defs/txnTokenClaims", "expected": "invalid", "relates": "ADR-009 D09-30, ADR-005 D9-3", "description": "rctx（要求環境。送信元 IP）を発行する", "instance": { "iss": "https://r4m8.id-domain.example", "aud": "td-4kx9", "iat": 1792054800, "exp": 1792054860, "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18", "sub": "mfrggzdfmztwq2lknnwg23tpob", "scope": "invoice.approve", "req_wl": "spiffe://td.id-domain.example/edge/gw", "tctx": { "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "tier": "write", "ver": "1.0" }, "rctx": { "req_ip": "192.0.2.10" } } },
+    { "id": "NE-17", "target": "#/$defs/txnTokenClaims", "expected": "invalid", "relates": "ADR-009 D09-29, T-021", "description": "tctx に tid がなく、取引の金額を入れる", "instance": { "iss": "https://r4m8.id-domain.example", "aud": "td-4kx9", "iat": 1792054800, "exp": 1792054860, "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18", "sub": "mfrggzdfmztwq2lknnwg23tpob", "scope": "invoice.approve", "req_wl": "spiffe://td.id-domain.example/edge/gw", "tctx": { "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "tier": "write", "ver": "1.0", "amount": 120000 } } },
+    { "id": "NE-18", "target": "#/$defs/txnTokenClaims", "expected": "invalid", "relates": "ADR-009 D09-31, ADR-016 D16-44", "description": "draft-06 の purp を発行する", "instance": { "iss": "https://r4m8.id-domain.example", "aud": "td-4kx9", "iat": 1792054800, "exp": 1792054860, "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18", "sub": "mfrggzdfmztwq2lknnwg23tpob", "scope": "invoice.approve", "purp": "invoice.approve", "req_wl": "spiffe://td.id-domain.example/edge/gw", "tctx": { "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42", "tier": "write", "ver": "1.0" } } },
+    { "id": "NE-19", "target": "#/$defs/externalIdTokenPlatformClaims", "expected": "invalid", "relates": "ADR-005 D9-5, ADR-021 D21-38 規則 3", "description": "外部 RP 向け ID Token に短い内部名 tid・ptype を出す", "instance": { "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "human" } },
+    { "id": "NE-20", "target": "#/$defs/introspectionResponse", "expected": "invalid", "relates": "RFC 7662 §2.2 [^7]", "description": "inactive の応答に sub などの情報を含める", "instance": { "active": false, "sub": "mfrggzdfmztwq2lknnwg23tpob" } },
+    { "id": "NE-21", "target": "#/$defs/confirmation", "expected": "invalid", "relates": "ADR-005 D5, V8", "description": "cnf に x5t#S256 と jkt を同時に入れる（束縛方式が一意に決まらない）", "instance": { "x5t#S256": "9FrXKdoHaYxFty2ugnOp4QVYWDAhTpeNZhT1ask8obY", "jkt": "YxpzEoN8SyxduLoOP0t4Vni1luQGCpjTwSFVxO2vc8s" } },
+    { "id": "NE-22", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-017 D17-50（独立レビューで追加）", "description": "委任 token の現在の actor（最外の act）に主体種別がない", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "mfrggzdfmztwq2lknnwg23tpob", "aud": "https://api.id-domain.example/svc/invoices", "exp": 1792055100, "iat": 1792054800, "jti": "5d2e9a7c-1b4f-4e8a-9c36-7f0a2d5b8e14", "client_id": "mfzgk3dbnrxw2zlsmvzxi2lonr", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "human", "acr": "L2", "amr": ["pwd", "otp", "mfa"], "auth_time": 1792054500, "sid": "mnxw24dmmvzgk3djmruxg2lonv", "gref": "onsxe5tjmnswg33oonsw45dhoj", "ver": "1.0", "act": { "sub": "gxy2qrzzqwzzbjn74jrotdu6vv" } } },
+    { "id": "NE-23", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-021 D21-03・D21-06, CON-02 Issuer, ARC-02 NV-14（独立レビューで追加）", "description": "iss に path（cell 名）を含める", "instance": { "iss": "https://iss.id-domain.example/cell03", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0" } },
+    { "id": "NE-24", "target": "#/$defs/internalAccessTokenClaims", "expected": "invalid", "relates": "ADR-021 D21-09・D21-10・D21-22, CON-02 IssuedOpaqueId（独立レビューで追加）", "description": "sub に主体類型の接頭辞付きの値、client_id に名前を含む値を入れる（払い出し規則の 2 候補のどちらでもない）", "instance": { "iss": "https://q7k2.id-domain.example", "sub": "usr-7f4c9e2a", "aud": "https://api.id-domain.example/svc/ledger", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "cl-web-01", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0" } },
+    { "id": "NE-25", "target": "#/$defs/introspectionResponse", "expected": "invalid", "relates": "ADR-005 D9-4（独立レビューで追加。内部 access token と同じ規則）", "description": "非人間主体（workload）の introspection 応答に利用者の認証文脈 acr・amr を入れる", "instance": { "active": true, "iss": "https://q7k2.id-domain.example", "sub": "o5xxe3dmn5qwizdtmvzhmzlsoy", "exp": 1792055100, "iat": 1792054800, "jti": "0b8f4d2a-6c1e-4f93-a7d5-2e9c8b1f4a60", "client_id": "hykga4jy57re7yplc7hyp6fe2v", "tid": "ozxw4zltnfzgk3dfnzqxi2lpny", "ptype": "workload", "ver": "1.0", "acr": "L2", "amr": ["pwd"] } }
+  ],
+  "x-negative-examples-outside-schema": "次の負例は署名・鍵・時刻・照合の検査であり JSON Schema では検出できない。ARC-02 §10.2 の NV-xx を共通 SDK・sidecar の単体回帰と契約試験（DL-80）で拒否率 100% を確かめる: NV-03（alg 取り違え）, NV-05〜NV-08（kid と鍵）, NV-11（改変）, NV-12（別サービス宛て aud）, NV-14（iss の完全一致）, NV-16〜NV-18（ID Token・introspection 応答・SET・logout token の提示）, NV-21・NV-23（時刻）, NV-24（crit）, NV-25（最大長）, NV-27 の資源テナント不一致, NV-28（過去 actor での判定）, NV-30（cnf と mTLS 証明書の不一致）, NV-34（発行台帳にない jti）。",
+  "$defs": {
+    "numericDate": {
+      "$comment": "RFC 7519 §2 の NumericDate（1970-01-01T00:00:00Z からの秒）[^3]。RFC は非整数を許すが、本 profile は整数だけを発行する [D]。",
+      "type": "integer",
+      "minimum": 0
+    },
+    "opaqueId": {
+      "$comment": "sub・tid・client_id・gref・sid・jti・txn の値。ADR-021 D21-09（122 bit 以上の CSPRNG 乱数、64 文字以下の ASCII、大文字小文字を区別、解析しない。払い出す値は小文字英数字、候補は小文字 base32 26 文字または UUIDv4 小文字 36 文字）、D21-12（tid）, D21-22（client_id）, D21-36（jti・sid・txn）。時刻・テナント・リージョン・主体類型・cell 名を埋め込まない。符号化は DL-71 で決める（TBD）ので、本 schema は発行側の検査なので、CON-02（common.schema.json）の IssuedOpaqueId と同じ 2 候補（小文字 base32 26 文字、UUIDv4 正準表記の小文字 36 文字）だけを受ける。DL-71 で一方に決まったら minor 改版で絞る。受信側は CON-02 の OpaqueId（64 文字以下の印字可能 ASCII）として扱い、本 pattern で拒否しない（ARC-02 TP-08）。",
+      "type": "string",
+      "anyOf": [
+        { "pattern": "^[a-z2-7]{26}$" },
+        { "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" }
+      ]
+    },
+    "httpsUrl": {
+      "$comment": "act.iss に使う https の URL で query と fragment を持たない（RFC 8414 の issuer 識別子の形）。token 自体の iss は issuerId（D21-03 の形）を使う。値の体系（テナント／信頼区画別）は未決（U-01）。受信側は完全一致で照合する（RFC 9068 §4 MUST [^1]、ARC-02 NV-14）。",
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^?#\\s]+$",
+      "maxLength": 255
+    },
+    "issuerId": {
+      "$comment": "token の発行者（内部 issuer・TTS・状態ストア）の iss。形は ADR-021 D21-03 の https://<p>.<id-domain>（path・query・fragment・port・末尾スラッシュなし）で、CON-02 の Issuer と同じ pattern にする。cell・リージョン・製品名・alg 名を名前に含めない（D21-06。語彙の検査は CI の許可リスト照合 D21-42 (a)(b)）。cell ごとの内部 issuer（ADR-005 V4）の値は可逆で、粒度は未決（U-01）。受信側は完全一致で照合する（RFC 9068 §4 MUST [^1]、ARC-02 NV-14）。",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 261,
+      "pattern": "^https://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
+    },
+    "serviceAudience": {
+      "$comment": "内部 access token の aud は呼出し先 1 サービスの識別子（文字列 1 値）。RFC 9068 §5 は、同じ issuer が別々の resource に出す access token を区別する aud の値を MUST とする [^1]（RS-04#61）。共通 aud を発行しない（ADR-005 V6）。共通 aud の値かどうかは JSON Schema では判定できないので AS の発行規則と SDK（NV-13）で検査する。RFC 7519 は配列も許すが、本 profile は 1 値の文字列に限る [D]。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "scopeString": {
+      "$comment": "RFC 8693 §4.2 の scope（空白区切りの文字列）[^2]。scope-token の文字種は RFC 6749 §3.3。内部 access token の scope は粗い API 能力だけ（ADR-005 D9-4）。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[\\x21\\x23-\\x5B\\x5D-\\x7E]+( [\\x21\\x23-\\x5B\\x5D-\\x7E]+)*$"
+    },
+    "profileVersion": {
+      "$comment": "token profile の版（ADR-016 D16-02 で全内部 token に必須）。値は major.minor。最低受理版は検証側の版付き設定にだけ置き、token の値から読まない（ADR-016 D16-11）。制約を強める変更は版で表す（ADR-005 V13）。",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$"
+    },
+    "principalType": {
+      "$comment": "主体種別（claim 名案 ptype、KC-1）。v1 の値は人・service account・workload・AI エージェントの 4 つ（ADR-005 D9-4）。値の文字列は本 schema の名前案（KC-1 と同時に決裁）。AuthZEN 1.0（Final）の subject.type へ変換表なしで写す（ARC-15 §3.6、RS-07#63）。sub の文字列から種別を推論しない（ADR-021 D21-10）。デバイスの追加は未決（ADR-017 L17-4）で、追加は ver の版変更になる。",
+      "type": "string",
+      "enum": ["human", "service_account", "workload", "ai_agent"]
+    },
+    "acrInternal": {
+      "$comment": "内部 token の acr 値（ARC-15 KC-7 案 (a)。ADR-002 D2-22 の保証区分名そのもの）。OIDC Core §2 [^9]。RFC 9068 §2.2.1 は acr を OPTIONAL とし、同じ認可応答から派生する token で固定する [^1]。本 profile は利用者主体で必須（ADR-005 D9-4）。上流 IdP の値をそのまま L3 の根拠にしない（RH-031）。",
+      "type": "string",
+      "enum": ["L1", "L2", "L2-PR", "L3"]
+    },
+    "amrValues": {
+      "$comment": "OIDC Core §2 の amr（文字列の配列）[^9]。値は RFC 8176 §2 の登録値（pwd, otp, mfa, hwk, swk, fpt, face, pin, sc, user など）[^10]。束縛認証器（FAL3 相当）を経た印を内部値として加える案（KC-2）の値名は未決（ADR-002 U2-02）なので、列挙で閉じない。RFC 8176 の hwk を束縛認証器の印として流用しない（ARC-15 §7.1）。",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9_-]{1,32}$" }
+    },
+    "base64urlSha256": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$"
+    },
+    "confirmation": {
+      "$comment": "cnf（RFC 7800 §3.1 [^4]）。x5t#S256 は RFC 8705 §3.1 の証明書 thumbprint [^5]、jkt は RFC 9449 §6 の JWK thumbprint [^6]。1 token に束縛方式は 1 つ。内部 access token の既定は I1（mTLS、x5t#S256）だが ADR-005 K-6 は未決。PQ 化を含む方式の追加はこの claim に閉じ、ver の版変更で追加する（ADR-005 D9-4 鍵束縛行）。",
+      "type": "object",
+      "properties": {
+        "x5t#S256": { "$ref": "#/$defs/base64urlSha256" },
+        "jkt": { "$ref": "#/$defs/base64urlSha256" }
+      },
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false
+    },
+    "actor": {
+      "$comment": "act（RFC 8693 §4.1 [^2]）。アクセス制御に使うのは最上位 claim と現在の actor（最外の act）だけ（MUST、RS-04#66）。入れ子の過去 actor は情報扱いで、STS の発行判断と監査にだけ使う（ADR-009 D09-16）。入れ子の深さは N_act 初期案 3（NA09-2、DL-74 で確定。前提台帳へ追加要）。actor の識別は sub（必須）と iss（任意）に限り、個人属性を入れない。現在の actor（最外の act）には actor の主体種別を入れる（ADR-017 D17-50。claim 名は ptype 案、KC-1）。入れ子の過去 actor の ptype は、その actor が現在の actor だったときの値を写したもので任意。act.sub の値の形（ADR-021 D21-10 の単一名前空間の sub か SPIFFE ID か）は x-open-issues を参照。",
+      "type": "object",
+      "properties": {
+        "sub": { "$ref": "#/$defs/opaqueId" },
+        "iss": { "$ref": "#/$defs/httpsUrl" },
+        "ptype": { "$ref": "#/$defs/principalType" },
+        "act": { "$ref": "#/$defs/actorLevel2" }
+      },
+      "required": ["sub", "ptype"],
+      "additionalProperties": false
+    },
+    "actorLevel2": {
+      "type": "object",
+      "properties": {
+        "sub": { "$ref": "#/$defs/opaqueId" },
+        "iss": { "$ref": "#/$defs/httpsUrl" },
+        "ptype": { "$ref": "#/$defs/principalType" },
+        "act": { "$ref": "#/$defs/actorLevel3" }
+      },
+      "required": ["sub"],
+      "additionalProperties": false
+    },
+    "actorLevel3": {
+      "type": "object",
+      "properties": {
+        "sub": { "$ref": "#/$defs/opaqueId" },
+        "iss": { "$ref": "#/$defs/httpsUrl" },
+        "ptype": { "$ref": "#/$defs/principalType" }
+      },
+      "required": ["sub"],
+      "additionalProperties": false
+    },
+    "keyId": {
+      "$comment": "kid は不透明値。alg 名・製品名・リージョン名・組織名・cell 名を含めない（ADR-005 D10-5、ADR-021 D21-42 (b)）。照合は鍵マニフェストとの完全一致だけ（ARC-02 TP-04）。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "issuedAlg": {
+      "$comment": "発行 alg。暗号 profile CP v1 の発行値は ES256（ADR-015 の CP 初期版（v1）案の表、ADR-005 D8-3、ADR-007 D7-10）。RFC 9068 §2.1 の RS256 MUST からの逸脱は ARC-02 §9.3 に記録済み（RS-04#60）。ML-DSA-44／ML-DSA-65（RFC 9964）は SDK に検証を実装するが、CP で許可されるまで発行しない（ADR-015 D15-14）。CP の改版で発行 alg が増えるときは本定義を minor 改版する。受理判定の allowlist は本 schema ではなく検証側の版付き CP から読む（ADR-005 V1）。",
+      "type": "string",
+      "enum": ["ES256"]
+    },
+    "forbiddenHeaderParams": {
+      "$comment": "jku・x5u・x5c・埋込み jwk を付けない（ARC-02 TP-02、RFC 8725 §3.10 [^14]）。crit は v1 では定義しない（制約強化に使う場合は ver の版変更と同時に定義する。ADR-005 V13）。",
+      "properties": {
+        "jku": { "not": {} },
+        "x5u": { "not": {} },
+        "x5c": { "not": {} },
+        "jwk": { "not": {} },
+        "crit": { "not": {} },
+        "cty": { "not": {} }
+      }
+    },
+    "accessTokenJwsHeader": {
+      "$comment": "K3 内部 access token の JOSE header。RFC 9068 §2.1 は typ に media type を入れることを MUST とし、値は at+jwt とすべき（SHOULD）とする [^1]（RS-04#60）。本 profile は発行時の値を at+jwt に固定する [D]。受信側は at+jwt と application/at+jwt の両方を受理し、それ以外を拒否する（RFC 9068 §4 MUST、RS-04#60）。typ のない JWT は拒否（ADR-005 V5、NV-15）。",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/forbiddenHeaderParams" }],
+      "properties": {
+        "typ": { "const": "at+jwt" },
+        "alg": { "$ref": "#/$defs/issuedAlg" },
+        "kid": { "$ref": "#/$defs/keyId" }
+      },
+      "required": ["typ", "alg", "kid"],
+      "unevaluatedProperties": false
+    },
+    "internalAccessTokenClaims": {
+      "$comment": "K3 内部 access token の JWT Claims Set（RFC 9068 準拠の社内 profile、ADR-005 D9-4 の封筒）。RFC 9068 §2.2 の REQUIRED（iss, exp, aud, sub, client_id, iat, jti）を必須にする [^1]（RS-04#60）。追加 claim は ARC-15 §3.2〜§3.6 の採用区分に従う。名前の区分: IANA 登録済み（scope, client_id, act, cnf, acr, amr, auth_time, sid）は登録どおりの意味でだけ使う（ADR-021 D21-38 規則 3）。基盤固有の tid（ADR-021 で確定）、ptype・gref・ver（名前案、KC-1）は IANA 未登録 [^13] の短い名前で、typ が版付き自社 profile の内部 token に限り許す（ADR-005 D9-5 の整合調整）。ここで { \"not\": {} } にした名前は v1 で発行しない（不・不(予)・他種別の判別 claim）。{ \"not\": {} } は JSON Schema の false と同じ意味で、false schema を扱えないコード生成器（quicktype 23 で確認）でも読めるようにこの形にする。JSON Schema で表せない規則: exp > iat、exp − iat が寿命 profile LP-1〜LP-3（TBD、DL-20）以下、aud が共通 aud でないこと、tid と資源テナントの一致、sub と client_id の値域分離（NV-38）。",
+      "type": "object",
+      "properties": {
+        "iss": { "$ref": "#/$defs/issuerId", "description": "内部 issuer（外部 AS と別、cell ごと）。RFC 7519 §4.1.1 [^3]。" },
+        "sub": { "$ref": "#/$defs/opaqueId", "description": "主体。全類型共通の単一名前空間（ADR-021 D21-10）。RFC 9068 §2.2 REQUIRED [^1]。" },
+        "aud": { "$ref": "#/$defs/serviceAudience", "description": "呼出し先 1 サービス（ADR-005 V6）。" },
+        "exp": { "$ref": "#/$defs/numericDate" },
+        "iat": { "$ref": "#/$defs/numericDate" },
+        "jti": { "$ref": "#/$defs/opaqueId", "description": "JWT の一意 ID（RFC 7519 §4.1.7）。grant・session の ID ではない（ADR-005 D13-1）。privileged の RS は発行台帳と毎要求照合（D1-6）。" },
+        "client_id": { "$ref": "#/$defs/opaqueId", "description": "RFC 8693 §4.3 [^2]。RFC 9068 §2.2 REQUIRED。AI エージェントの委任では client_id がエージェントを表す（ADR-017 D17-08）。" },
+        "scope": { "$ref": "#/$defs/scopeString", "description": "条件付き（scope 要求時）。RFC 9068 の scope は aud の資源で意味を持つ（MUST）[^1]。" },
+        "tid": { "$ref": "#/$defs/opaqueId", "description": "作用中テナント 1 値（ADR-005 V9、ADR-021 D21-12）。所属一覧は入れない（R-283）。PEP が資源から導いたテナントと照合（R-250）。" },
+        "ptype": { "$ref": "#/$defs/principalType", "description": "主体種別（名前案、KC-1）。" },
+        "act": { "$ref": "#/$defs/actor", "description": "条件付き（委任・exchange 時）。" },
+        "cnf": { "$ref": "#/$defs/confirmation", "description": "条件付き（束縛時）。内部は I1 で x5t#S256（ADR-005 K-6 未決）。" },
+        "acr": { "$ref": "#/$defs/acrInternal", "description": "利用者主体で必須（ADR-005 D9-4）。値は KC-7 案。" },
+        "amr": { "$ref": "#/$defs/amrValues", "description": "利用者主体で必須。" },
+        "auth_time": { "$ref": "#/$defs/numericDate", "description": "利用者主体で必須。refresh で変わらない（RFC 9068 §2.2.1 [^1]）。" },
+        "sid": { "$ref": "#/$defs/opaqueId", "description": "session ID（IANA 登録、参照先 Front-Channel Logout §3）。全 session 失効と CAEP session-revoked の結合キー。利用者主体で必須（ADR-005 D9-4）。" },
+        "gref": { "$ref": "#/$defs/opaqueId", "description": "grant 参照（名前案、KC-1）。一括失効の結合キー（ADR-005 D7-6）。利用者主体・第三者 grant 由来で必須。昇格 grant ID もこの欄で運ぶ案（ARC-15 KC-3、ADR-029 L29-3 未決）。" },
+        "ver": { "$ref": "#/$defs/profileVersion", "description": "token profile の版（名前案、KC-1。ADR-016 D16-02 で必須）。" },
+        "nbf": { "not": {} },
+        "may_act": { "not": {} },
+        "authorization_details": { "not": {} },
+        "status": { "not": {} },
+        "verified_claims": { "not": {} },
+        "roles": { "not": {} },
+        "groups": { "not": {} },
+        "entitlements": { "not": {} },
+        "username": { "not": {} },
+        "email": { "not": {} },
+        "email_verified": { "not": {} },
+        "phone_number": { "not": {} },
+        "name": { "not": {} },
+        "given_name": { "not": {} },
+        "family_name": { "not": {} },
+        "preferred_username": { "not": {} },
+        "nonce": { "not": {} },
+        "azp": { "not": {} },
+        "at_hash": { "not": {} },
+        "events": { "not": {} },
+        "txn": { "not": {} },
+        "tctx": { "not": {} },
+        "rctx": { "not": {} },
+        "req_wl": { "not": {} },
+        "sub_id": { "not": {} },
+        "trace_id": { "not": {} },
+        "traceparent": { "not": {} }
+      },
+      "required": ["iss", "sub", "aud", "exp", "iat", "jti", "client_id", "tid", "ptype", "ver"],
+      "allOf": [
+        {
+          "$comment": "利用者主体（ptype=human）は認証文脈（acr, amr, auth_time）と session・grant 参照（sid, gref）を必須にする（ADR-005 D9-4 の認証文脈行と grant・session 参照行）。",
+          "if": { "properties": { "ptype": { "const": "human" } }, "required": ["ptype"] },
+          "then": { "required": ["acr", "amr", "auth_time", "sid", "gref"] }
+        },
+        {
+          "$comment": "非人間主体の token に利用者の認証文脈を載せない（sub の主体と認証文脈の不一致を防ぐ）。利用者の代理で動く場合は sub が利用者（ptype=human）になり、エージェントは act と client_id で表す（ADR-017 D17-19）。",
+          "if": { "properties": { "ptype": { "enum": ["service_account", "workload", "ai_agent"] } }, "required": ["ptype"] },
+          "then": { "not": { "anyOf": [ { "required": ["acr"] }, { "required": ["amr"] }, { "required": ["auth_time"] }, { "required": ["sid"] } ] } }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "decodedInternalAccessToken": {
+      "$comment": "header と payload を組にした検査用の形（契約試験 DL-80 の入力）。署名は検査しない。",
+      "type": "object",
+      "properties": {
+        "header": { "$ref": "#/$defs/accessTokenJwsHeader" },
+        "payload": { "$ref": "#/$defs/internalAccessTokenClaims" }
+      },
+      "required": ["header", "payload"],
+      "additionalProperties": false
+    },
+    "introspectionResponse": {
+      "$comment": "外部 opaque access token（K2）を edge が状態ストアに照会した応答（RFC 7662 §2.2 [^7]、RS-04#67）。外部 opaque token 自体は claim を持たないので、外部 token の内容はこの応答で表す（ADR-005 D13-1）。内部向け応答なので短い名前を使う（ADR-005 D9-5 の整合調整）。cache は応答の exp を超えない（RFC 7662 MUST NOT）。username は返さない（ADR-021 D21-14c）。inactive の場合は active 以外を返さない。",
+      "oneOf": [
+        { "$ref": "#/$defs/introspectionActive" },
+        { "$ref": "#/$defs/introspectionInactive" }
+      ]
+    },
+    "introspectionActive": {
+      "type": "object",
+      "properties": {
+        "active": { "const": true },
+        "token_type": { "type": "string", "enum": ["Bearer", "DPoP"] },
+        "iss": { "$ref": "#/$defs/issuerId" },
+        "sub": { "$ref": "#/$defs/opaqueId" },
+        "aud": { "type": "string", "format": "uri", "maxLength": 255, "$comment": "外部 client が同意した resource（RFC 8707）。" },
+        "exp": { "$ref": "#/$defs/numericDate" },
+        "iat": { "$ref": "#/$defs/numericDate" },
+        "jti": { "$ref": "#/$defs/opaqueId", "$comment": "AS の発行記録 ID（ARC-15 §3.2 jti 行）。" },
+        "client_id": { "$ref": "#/$defs/opaqueId" },
+        "scope": { "$ref": "#/$defs/scopeString" },
+        "cnf": { "$ref": "#/$defs/confirmation" },
+        "tid": { "$ref": "#/$defs/opaqueId" },
+        "ptype": { "$ref": "#/$defs/principalType" },
+        "act": { "$ref": "#/$defs/actor" },
+        "acr": { "$ref": "#/$defs/acrInternal" },
+        "amr": { "$ref": "#/$defs/amrValues" },
+        "auth_time": { "$ref": "#/$defs/numericDate" },
+        "sid": { "$ref": "#/$defs/opaqueId" },
+        "gref": { "$ref": "#/$defs/opaqueId" },
+        "ver": { "$ref": "#/$defs/profileVersion" },
+        "username": { "not": {} }
+      },
+      "required": ["active", "iss", "sub", "exp", "iat", "jti", "client_id", "tid", "ptype", "ver"],
+      "allOf": [
+        {
+          "if": { "properties": { "ptype": { "const": "human" } }, "required": ["ptype"] },
+          "then": { "required": ["acr", "amr", "auth_time", "sid", "gref"] }
+        },
+        {
+          "$comment": "内部 access token と同じ規則（非人間主体に利用者の認証文脈を載せない）。",
+          "if": { "properties": { "ptype": { "enum": ["service_account", "workload", "ai_agent"] } }, "required": ["ptype"] },
+          "then": { "not": { "anyOf": [ { "required": ["acr"] }, { "required": ["amr"] }, { "required": ["auth_time"] }, { "required": ["sid"] } ] } }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "introspectionInactive": {
+      "type": "object",
+      "properties": { "active": { "const": false } },
+      "required": ["active"],
+      "additionalProperties": false
+    },
+    "introspectionJwtHeader": {
+      "$comment": "FAPI 範囲（層 F）の JWT 形式の introspection 応答（RFC 9701 [^8]、RS-04#68、ARC-02 補-2）。typ で access token との置換を防ぐ（MUST）。鍵族 5、ES256（ADR-020 D20-07-1）。",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/forbiddenHeaderParams" }],
+      "properties": {
+        "typ": { "const": "token-introspection+jwt" },
+        "alg": { "$ref": "#/$defs/issuedAlg" },
+        "kid": { "$ref": "#/$defs/keyId" }
+      },
+      "required": ["typ", "alg", "kid"],
+      "unevaluatedProperties": false
+    },
+    "introspectionJwtClaims": {
+      "$comment": "RFC 9701 の JWT 応答の claim。RFC 7662 の応答本体を token_introspection メンバに入れる [^8]。aud は edge。",
+      "type": "object",
+      "properties": {
+        "iss": { "$ref": "#/$defs/issuerId" },
+        "aud": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "iat": { "$ref": "#/$defs/numericDate" },
+        "token_introspection": { "$ref": "#/$defs/introspectionResponse" }
+      },
+      "required": ["iss", "aud", "iat", "token_introspection"],
+      "additionalProperties": false
+    },
+    "externalIdTokenPlatformClaims": {
+      "$comment": "内部と外部の差: 外部 RP に渡す ID Token と外部公開の応答では、基盤固有 claim を自社ドメインに基づく衝突耐性名（RFC 7519 §4.2 の Public Name [^3]）にする（ADR-005 D9-5、ADR-021 D21-38 規則 3）。<id-domain> は自社が管理するドメイン（ADR-021）で、ここでは任意のホスト名として pattern 化する。外部に出すのは tid（B2B RP が要る場合に限る）だけで、ptype・gref・ver は外部に出さない（ARC-15 §3.6）。acr を外部 RP に出す場合は https://<id-domain>/acr/<区分名> の形（KC-7 案 (a)）。標準 claim（iss, sub, aud, exp, iat, nonce, azp, acr, amr, auth_time, sid）は OIDC Core の規定に従い本 schema では定義しない。本定義は ID Token の claim セットのうち基盤固有部分だけを検査する部分 schema である。",
+      "type": "object",
+      "patternProperties": {
+        "^https://[A-Za-z0-9.-]+/claims/tid$": { "$ref": "#/$defs/opaqueId" },
+        "^acr$": { "type": "string", "pattern": "^https://[A-Za-z0-9.-]+/acr/(L1|L2|L2-PR|L3)$" }
+      },
+      "properties": {
+        "tid": { "not": {} },
+        "ptype": { "not": {} },
+        "gref": { "not": {} },
+        "ver": { "not": {} },
+        "txn": { "not": {} },
+        "tctx": { "not": {} }
+      },
+      "additionalProperties": true
+    },
+    "spiffeId": {
+      "$comment": "SPIFFE ID（spiffe://<trust domain>/<path>）。req_wl は発行を要求した edge の SPIFFE ID（ADR-009 D09-32）。",
+      "type": "string",
+      "pattern": "^spiffe://[a-z0-9._-]+(/[A-Za-z0-9._-]+)+$",
+      "maxLength": 2048
+    },
+    "operationTier": {
+      "$comment": "起点の操作階層。正本は 02_requirements/operation-risk-tiers-assurance.md §2（5 分類と副区分 /T・/B・/P）。public は token 不要なので含めない。txn の現行の発行範囲は write 以上（未決 U-02）。",
+      "type": "string",
+      "enum": ["read-sensitive", "write", "privileged/T", "privileged/P", "break-glass/B", "break-glass/P"]
+    },
+    "txnTokenJwsHeader": {
+      "$comment": "K5 Transaction Token の JOSE header。typ=txntoken+jwt は draft-11 §9.1 の MUST [^11] だが draft であり規範根拠ではない（社内 profile txn-v1 として固定）。鍵族 3b、ES256（ADR-007 D7-10）。内部 access token と鍵族・typ・受理ヘッダの 3 軸で分ける（ARC-02 §4.3）。",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/forbiddenHeaderParams" }],
+      "properties": {
+        "typ": { "const": "txntoken+jwt" },
+        "alg": { "$ref": "#/$defs/issuedAlg" },
+        "kid": { "$ref": "#/$defs/keyId" }
+      },
+      "required": ["typ", "alg", "kid"],
+      "unevaluatedProperties": false
+    },
+    "txnContext": {
+      "$comment": "tctx（連鎖で不変の値。draft-11 では RECOMMENDED [^11]、txn-v1 で必須）。項目は ADR-009 D09-29 に限る。項目名 root_jti・tier・ptxn・gref・ver は名前案（KC-1、ARC-15 §4.2）。取引の業務パラメータ（金額・対象 ID）、個人識別属性、権限は入れない。sid・gref は利用者主体で必須だが、Txn-Token は主体種別を持たないので schema では条件化できず、TTS の発行規則（起点の内部 access token の ptype）で検査する。起点エージェントの項目は未決（ADR-017 L17-2）。",
+      "type": "object",
+      "properties": {
+        "tid": { "$ref": "#/$defs/opaqueId", "description": "作用中テナント。PEP の資源側テナント照合（T-021）と期待 aud（cell）の引当て（ADR-009 D09-09）。" },
+        "root_jti": { "$ref": "#/$defs/opaqueId", "description": "edge の最初の exchange で出した内部 access token の jti。内部開始の取引の例外は未決（ADR-026 L26-1）。" },
+        "gref": { "$ref": "#/$defs/opaqueId" },
+        "sid": { "$ref": "#/$defs/opaqueId" },
+        "tier": { "$ref": "#/$defs/operationTier" },
+        "ptxn": { "$ref": "#/$defs/opaqueId", "description": "親取引の txn。内部開始の取引だけ。txn の意味を外部起点に限るかは未決（ADR-026 L26-2）。" },
+        "ver": { "$ref": "#/$defs/profileVersion", "description": "txn-v1 の版。" }
+      },
+      "required": ["tid", "root_jti", "tier", "ver"],
+      "additionalProperties": false
+    },
+    "txnTokenClaims": {
+      "$comment": "K5 Transaction Token（社内 profile txn-v1）の claim セット。draft-11 の REQUIRED（iat, exp, aud, txn, sub, scope, req_wl）に、草案で OPTIONAL の iss と RECOMMENDED の tctx を txn-v1 で必須にして加える（ARC-15 §3.5）[^11]。txn の名前と意味は RFC 8417 §2.2 で固定（IANA 登録済み）[^12]。Txn-Token は access token として使ってはならず（MUST NOT）、Authorization ヘッダでは受理しない（ARC-02 NV-19）。全体をログに残さない（MUST NOT）。rctx は発行しない（ADR-009 D09-30）。purp は draft-07 で scope に改名されたので発行しない（ADR-009 D09-31）。受信側は rctx・purp を含む未知 claim を無視する（草案の MUST）。JSON Schema で表せない規則: 同じ要求の内部 access token と sub・tid・root_jti が整合すること（ADR-009 D09-32）、aud が tid の収容 cell の値であること、scope が subject_token の scope 以下であること（MUST）。",
+      "type": "object",
+      "properties": {
+        "iss": { "$ref": "#/$defs/issuerId", "description": "cell の TTS。" },
+        "aud": { "type": "string", "minLength": 1, "maxLength": 255, "description": "cell ごとの内部 trust domain 値（SPIFFE trust domain 名とは別、ADR-009 D09-09）。" },
+        "iat": { "$ref": "#/$defs/numericDate" },
+        "exp": { "$ref": "#/$defs/numericDate" },
+        "txn": { "$ref": "#/$defs/opaqueId", "description": "取引の一意 ID。置換 token でも変えない（draft-11 §13.15 MUST NOT）。" },
+        "sub": { "$ref": "#/$defs/opaqueId", "description": "取引の主体。内部 access token の sub と一致。" },
+        "scope": { "$ref": "#/$defs/scopeString", "description": "entry point 台帳の操作 ID（ADR-009 D09-31）。個人データ処理の利用目的とは別概念。" },
+        "req_wl": { "$ref": "#/$defs/spiffeId" },
+        "tctx": { "$ref": "#/$defs/txnContext" },
+        "rctx": { "not": {} },
+        "purp": { "not": {} },
+        "jti": { "not": {} },
+        "client_id": { "not": {} },
+        "act": { "not": {} },
+        "cnf": { "not": {} },
+        "nbf": { "not": {} },
+        "tid": { "not": {} },
+        "ptype": { "not": {} },
+        "acr": { "not": {} },
+        "amr": { "not": {} },
+        "auth_time": { "not": {} }
+      },
+      "required": ["iss", "aud", "iat", "exp", "txn", "sub", "scope", "req_wl", "tctx"],
+      "unevaluatedProperties": false,
+      "examples": [
+        {
+          "iss": "https://r4m8.id-domain.example",
+          "aud": "td-4kx9",
+          "iat": 1792054800,
+          "exp": 1792054860,
+          "txn": "9a7e1c44-2b6f-4d3a-8e51-0c9f7b2d6a18",
+          "sub": "mfrggzdfmztwq2lknnwg23tpob",
+          "scope": "invoice.approve",
+          "req_wl": "spiffe://td.id-domain.example/edge/gw",
+          "tctx": {
+            "tid": "ozxw4zltnfzgk3dfnzqxi2lpny",
+            "root_jti": "3f6c2b1e-8d4a-4c7e-9b2f-5a1d0e9c7b42",
+            "gref": "onsxe5tjmnswg33oonsw45dhoj",
+            "sid": "mnxw24dmmvzgk3djmruxg2lonv",
+            "tier": "write",
+            "ver": "1.0"
+          }
+        }
+      ]
+    },
+    "decodedTxnToken": {
+      "$comment": "header と payload を組にした検査用の形（ADR-009 H09-02 の負例の入力）。",
+      "type": "object",
+      "properties": {
+        "header": { "$ref": "#/$defs/txnTokenJwsHeader" },
+        "payload": { "$ref": "#/$defs/txnTokenClaims" }
+      },
+      "required": ["header", "payload"],
+      "additionalProperties": false
+    }
+  }
+}
